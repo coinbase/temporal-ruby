@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+require_relative '../init'
+
+require 'cadence/worker'
+
+Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
+Dir[File.expand_path('../activities/*.rb', __dir__)].each { |f| require f }
+
+worker = Cadence::Worker.new
+
+worker.register_workflow(AsyncHelloWorldWorkflow)
+worker.register_workflow(BranchingWorkflow)
+worker.register_workflow(CancellingTimerWorkflow)
+worker.register_workflow(CheckWorkflow)
+worker.register_workflow(FailingWorkflow)
+worker.register_workflow(HelloWorldWorkflow)
+worker.register_workflow(LocalHelloWorldWorkflow)
+worker.register_workflow(LongWorkflow)
+worker.register_workflow(ProcessFileWorkflow)
+worker.register_workflow(SerialHelloWorldWorkflow)
+worker.register_workflow(SideEffectWorkflow)
+worker.register_workflow(SimpleTimerWorkflow)
+worker.register_workflow(TimeoutWorkflow)
+worker.register_workflow(TripBookingWorkflow)
+
+worker.register_activity(GenerateFileActivity)
+worker.register_activity(HelloWorldActivity)
+worker.register_activity(LongRunningActivity)
+worker.register_activity(ProcessFileActivity)
+worker.register_activity(RandomlyFailingActivity)
+worker.register_activity(RandomNumberActivity)
+worker.register_activity(SleepActivity)
+worker.register_activity(UploadFileActivity)
+worker.register_activity(Trip::BookFlightActivity)
+worker.register_activity(Trip::BookHotelActivity)
+worker.register_activity(Trip::CancelCarActivity)
+worker.register_activity(Trip::CancelFlightActivity)
+worker.register_activity(Trip::CancelHotelActivity)
+worker.register_activity(Trip::MakePaymentActivity)
+worker.register_activity(Trip::RentCarActivity)
+
+worker.start

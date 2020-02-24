@@ -1,0 +1,44 @@
+require 'cadence/workflow/serializer/base'
+
+module Cadence
+  class Workflow
+    module Serializer
+      class ScheduleActivity < Base
+        def to_thrift
+          CadenceThrift::Decision.new(
+            decisionType: CadenceThrift::DecisionType::ScheduleActivityTask,
+            scheduleActivityTaskDecisionAttributes:
+              CadenceThrift::ScheduleActivityTaskDecisionAttributes.new(
+                activityId: object.activity_id.to_s,
+                activityType: CadenceThrift::ActivityType.new(name: object.activity_type),
+                input: Oj.dump(object.input),
+                domain: object.domain,
+                taskList: CadenceThrift::TaskList.new(name: object.task_list),
+                scheduleToCloseTimeoutSeconds: object.timeouts[:schedule_to_close],
+                heartbeatTimeoutSeconds: object.timeouts[:heartbeat],
+                retryPolicy: serialize_retry_policy(object.retry_policy)
+              )
+          )
+        end
+
+        private
+
+        def serialize_retry_policy(retry_policy)
+          return unless retry_policy
+
+          non_retriable_errors = Array(retry_policy.non_retriable_errors).map(&:name)
+          options = {
+            initialIntervalInSeconds: retry_policy.interval,
+            backoffCoefficient: retry_policy.backoff,
+            maximumIntervalInSeconds: retry_policy.max_interval,
+            maximumAttempts: retry_policy.max_attempts,
+            nonRetriableErrorReasons: non_retriable_errors,
+            expirationIntervalInSeconds: retry_policy.expiration_interval
+          }.compact
+
+          CadenceThrift::RetryPolicy.new(options)
+        end
+      end
+    end
+  end
+end

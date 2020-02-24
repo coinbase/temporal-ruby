@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+require_relative '../init'
+
+Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
+
+workflow_class_name, *args = ARGV
+workflow_class = Object.const_get(workflow_class_name)
+workflow_id = SecureRandom.uuid
+
+# Convert integer strings to integers
+input = args.map { |arg| Integer(arg) rescue arg }
+
+run_id = Cadence.start_workflow(workflow_class, *input, options: { workflow_id: workflow_id })
+Cadence.logger.info "Started workflow: #{run_id} / #{workflow_id}"

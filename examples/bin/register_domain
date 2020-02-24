@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require_relative '../init'
+
+domain = ARGV[0]
+description = ARGV[1]
+
+fail 'Missing domain name, please run register_domain <domain_name>' unless domain
+
+Cadence.register_domain(domain, description)
