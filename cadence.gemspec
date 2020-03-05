@@ -1,7 +1,7 @@
 require_relative './lib/cadence/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cadence'
+  spec.name          = 'cadence-ruby'
   spec.version       = Cadence::VERSION
   spec.authors       = ['Anthony Dmitriyev']
   spec.email         = ['anthony.dmitriyev@coinbase.com']
@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Cadence Ruby client'
   spec.description   = 'A Ruby client for implementing Cadence workflows and activities in Ruby'
   spec.homepage      = 'https://github.com/coinbase/cadence-ruby'
-  spec.license       = 'Apache License, Version 2.0'
+  spec.license       = 'Apache-2.0'
 
   spec.require_paths = ['lib']
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
