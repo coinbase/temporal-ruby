@@ -12,13 +12,7 @@ Gem::Specification.new do |spec|
   spec.license       = 'Apache-2.0'
 
   spec.require_paths = ['lib']
-  spec.files         = `git ls-files -z`.split("\x0").reject do |f|
-    f.match(/^(assets)/) ||
-    f.match(/^(examples)/) ||
-    f.match(/^(proxy)/) ||
-    f.match(/^(spec)/) ||
-    f.match(/^(thrift)/)
-  end
+  spec.files         = Dir["{lib,rbi}/**/*.*"] + %w(cadence.gemspec Gemfile LICENSE README.md)
 
   spec.add_dependency 'thrift'
   spec.add_dependency 'oj'
