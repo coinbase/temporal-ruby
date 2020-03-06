@@ -1,17 +1,22 @@
-require 'cadence/workflow/saga'
+require 'cadence/saga/saga'
+require 'cadence/saga/result'
 
 module Cadence
-  module Concerns
-    module Saga
+  module Saga
+    module Concern
       def run_saga(&block)
-        saga = Cadence::Workflow::Saga.new(workflow)
+        saga = Cadence::Saga::Saga.new(workflow)
 
         block.call(saga)
+
+        Result.new(true)
       rescue StandardError => error # TODO: is there a need for a specialized error here?
         logger.error("Saga execution aborted: #{error.inspect}")
         logger.debug(error.backtrace.join("\n"))
 
         saga.compensate
+
+        Result.new(false, error.message)
       end
     end
   end

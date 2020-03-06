@@ -1,13 +1,13 @@
-require 'cadence/concerns/saga'
+require 'cadence/saga/concern'
 Dir[File.expand_path('../activities/trip/*.rb', __dir__)].each { |f| require f }
 
 class TripBookingWorkflow < Cadence::Workflow
-  include Cadence::Concerns::Saga
+  include Cadence::Saga::Concern
 
   def execute(trip_id)
     total = 0
 
-    run_saga do |saga|
+    result = run_saga do |saga|
       car = Trip::RentCarActivity.execute!(trip_id)
       saga.add_compensation(Trip::CancelCarActivity, car[:reservation_id])
 
@@ -21,6 +21,10 @@ class TripBookingWorkflow < Cadence::Workflow
       Trip::MakePaymentActivity.execute!(trip_id, total)
     end
 
-    return "Total amount paid: #{total}"
+    if result.completed?
+      return "Total amount paid: #{total}"
+    else
+      return "Workflow rolled back: #{result.rollback_reason}"
+    end
   end
 end

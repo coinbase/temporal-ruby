@@ -1,5 +1,5 @@
 module Cadence
-  class Workflow
+  module Saga
     class Saga
       def initialize(context)
         @context = context
