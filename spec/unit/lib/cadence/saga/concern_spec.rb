@@ -47,6 +47,7 @@ describe Cadence::Saga::Concern do
 
   context 'when execution compensates' do
     let(:logger) { instance_double('Logger') }
+    let(:error) { TestSagaConcernError.new('execution failed') }
 
     class TestSagaConcernError < StandardError
       def backtrace
@@ -55,10 +56,7 @@ describe Cadence::Saga::Concern do
     end
 
     before do
-      allow(TestSagaConcernActivity3)
-        .to receive(:execute!)
-        .and_raise(TestSagaConcernError, 'execution failed')
-
+      allow(TestSagaConcernActivity3).to receive(:execute!).and_raise(error)
       allow(context).to receive(:logger).and_return(logger)
       allow(logger).to receive(:error)
       allow(logger).to receive(:debug)
@@ -79,7 +77,7 @@ describe Cadence::Saga::Concern do
 
       expect(result).to be_instance_of(Cadence::Saga::Result)
       expect(result).to be_compensated
-      expect(result.rollback_reason).to eq('execution failed')
+      expect(result.rollback_reason).to eq(error)
     end
 
     it 'logs' do

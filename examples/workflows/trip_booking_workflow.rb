@@ -24,7 +24,7 @@ class TripBookingWorkflow < Cadence::Workflow
     if result.completed?
       return "Total amount paid: #{total}"
     else
-      return "Workflow rolled back: #{result.rollback_reason}"
+      return "Workflow rolled back: #{result.rollback_reason.message}"
     end
   end
 end

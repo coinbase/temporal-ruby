@@ -16,7 +16,7 @@ module Cadence
 
         saga.compensate
 
-        Result.new(false, error.message)
+        Result.new(false, error)
       end
     end
   end
