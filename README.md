@@ -91,8 +91,8 @@ Congratulation you've just created and executed a distributed workflow!
 To view more details about your execution, point your browser to
 <http://localhost:8088/domain/ruby-samples/workflows?range=last-3-hours&status=CLOSED>.
 
-There are plenty of [runnable examples](examples/)
-demonstrating various features of this library available, make sure to check them out.
+There are plenty of [runnable examples](examples/) demonstrating various features of this library
+available, make sure to check them out.
 
 
 ## Installing dependencies
@@ -249,12 +249,47 @@ of precedence):
 3. Globally, when configuring your Cadence library via `Cadence.configure`
 
 
+## Testing
+
+It is crucial to properly test your workflows and activities before running them in production. The
+provided testing framework is still limited in functionality, but will allow you to test basic
+use-cases.
+
+The testing framework is not required automatically when you require `cadence-ruby`, so you have to
+do this yourself (it is strongly recommended to only include this in your test environment,
+`spec_helper.rb` or similar):
+
+```ruby
+require 'cadence/testing'
+```
+
+This will allow you to execute workflows locally by running `HelloWorldWorkflow.execute_locally`.
+Any arguments provided will forwarded to your `#execute` method.
+
+In case of a higher level end-to-end integration specs, where you need to execute a Cadence workflow
+as part of your code, you can enable local testing:
+
+```ruby
+Cadence::Testing.local!
+```
+
+This will treat every `Cadence.start_workflow` call as local and perform your workflows inline. It
+also works with a block, restoring the original mode back after the execution:
+
+```ruby
+Cadence::Testing.local! do
+  Cadence.start_workflow(HelloWorldWorkflow)
+end
+```
+
+Make sure to check out [example integration specs](examples/specs/integration) for more details.
+
+
 ## TODO
 
 There's plenty of work to be done, but most importanly we need:
 
 - Write specs for everything
-- Provide a test context for workflows and activities to facilitate unit testing
 - Implement support for missing features
 
 
