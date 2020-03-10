@@ -1,10 +1,13 @@
 require 'cadence/concerns/executable'
+require 'cadence/thread_local_context'
 
 module Cadence
   class Workflow
     extend Concerns::Executable
 
     def self.execute_in_context(context, input)
+      Cadence::ThreadLocalContext.set(context)
+
       workflow = new(context)
       result = workflow.execute(*input)
 

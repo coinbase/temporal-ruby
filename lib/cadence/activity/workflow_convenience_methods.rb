@@ -11,25 +11,27 @@
 #
 # workflow.execute_activity(TestActivity, 'foo', 'bar')
 #
+require 'cadence/thread_local_context'
+
 module Cadence
   class Activity
     module WorkflowConvenienceMethods
       def execute(*input, **args)
-        context = Thread.current[:local_workflow_context]
+        context = Cadence::ThreadLocalContext.get
         raise 'Called Activity#execute outside of a Workflow context' unless context
 
         context.execute_activity(self, *input, **args)
       end
 
       def execute!(*input, **args)
-        context = Thread.current[:local_workflow_context]
+        context = Cadence::ThreadLocalContext.get
         raise 'Called Activity#execute! outside of a Workflow context' unless context
 
         context.execute_activity!(self, *input, **args)
       end
 
       def execute_locally(*input, **args)
-        context = Thread.current[:local_workflow_context]
+        context = Cadence::ThreadLocalContext.get
         raise 'Called Activity#execute_locally outside of a Workflow context' unless context
 
         context.execute_local_activity(self, *input, **args)

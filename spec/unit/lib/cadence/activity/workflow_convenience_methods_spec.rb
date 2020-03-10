@@ -1,4 +1,5 @@
 require 'cadence/activity'
+require 'cadence/thread_local_context'
 
 describe Cadence::Activity::WorkflowConvenienceMethods do
   class TestActivity < Cadence::Activity; end
@@ -9,10 +10,12 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
   let(:input) { 'input' }
   let(:options) { { param_1: true } }
 
+  after { Cadence::ThreadLocalContext.set(nil) }
+
   describe '.execute' do
     context 'with local context' do
       before do
-        Thread.current[:local_workflow_context] = context
+        Cadence::ThreadLocalContext.set(context)
         allow(context).to receive(:execute_activity)
       end
 
@@ -26,7 +29,7 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
     end
 
     context 'without local context' do
-      before { Thread.current[:local_workflow_context] = nil }
+      before { Cadence::ThreadLocalContext.set(nil) }
 
       it 'raises an error' do
         expect do
@@ -39,7 +42,7 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
   describe '.execute!' do
     context 'with local context' do
       before do
-        Thread.current[:local_workflow_context] = context
+        Cadence::ThreadLocalContext.set(context)
         allow(context).to receive(:execute_activity!)
       end
 
@@ -53,7 +56,7 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
     end
 
     context 'without local context' do
-      before { Thread.current[:local_workflow_context] = nil }
+      before { Cadence::ThreadLocalContext.set(nil) }
 
       it 'raises an error' do
         expect do
@@ -66,7 +69,7 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
   describe '.execute_locally' do
     context 'with local context' do
       before do
-        Thread.current[:local_workflow_context] = context
+        Cadence::ThreadLocalContext.set(context)
         allow(context).to receive(:execute_local_activity)
       end
 
@@ -80,7 +83,7 @@ describe Cadence::Activity::WorkflowConvenienceMethods do
     end
 
     context 'without local context' do
-      before { Thread.current[:local_workflow_context] = nil }
+      before { Cadence::ThreadLocalContext.set(nil) }
 
       it 'raises an error' do
         expect do

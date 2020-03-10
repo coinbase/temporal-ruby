@@ -38,7 +38,6 @@ module Cadence
         context = Workflow::Context.new(state_manager, dispatcher)
 
         Fiber.new do
-          Thread.current[:local_workflow_context] = context
           workflow_class.execute_in_context(context, *input)
         end.resume
       end

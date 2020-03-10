@@ -1,5 +1,6 @@
 require 'cadence/execution_options'
 require 'cadence/errors'
+require 'cadence/thread_local_context'
 require 'cadence/workflow/history/event_target'
 require 'cadence/workflow/decision'
 require 'cadence/workflow/future'
@@ -185,8 +186,7 @@ module Cadence
 
       def call_in_fiber(block, *args)
         Fiber.new do
-          # Provide workflow context for executing activities via convenience methods
-          Thread.current[:local_workflow_context] = self
+          Cadence::ThreadLocalContext.set(self)
           block.call(*args)
         end.resume
       end
