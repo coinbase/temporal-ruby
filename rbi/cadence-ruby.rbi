@@ -1,8 +1,10 @@
 module Cadence
   class Activity; end
+  class ActivityException; end
   module Saga
     module Concern; end
   end
+  module Testing; end
   class Workflow; end
   class Worker; end
 end
