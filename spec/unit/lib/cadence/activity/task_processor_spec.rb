@@ -5,7 +5,7 @@ describe Cadence::Activity::TaskProcessor do
 
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
   let(:task) { Fabricate(:activity_task, activity_name: activity_name, input: Oj.dump(input)) }
-
+  let(:metadata) { Cadence::Activity::Metadata.from_task(task) }
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Cadence::Client::ThriftClient') }
   let(:input) { ['arg1', 'arg2'] }
@@ -16,10 +16,8 @@ describe Cadence::Activity::TaskProcessor do
     let(:context) { instance_double('Cadence::Activity::Context') }
 
     before do
-      allow(Cadence::Activity::Context)
-        .to receive(:new)
-        .with(client, task.taskToken)
-        .and_return(context)
+      allow(Cadence::Activity::Metadata).to receive(:from_task).with(task).and_return(metadata)
+      allow(Cadence::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 
       allow(client).to receive(:respond_activity_task_completed)
       allow(client).to receive(:respond_activity_task_failed)

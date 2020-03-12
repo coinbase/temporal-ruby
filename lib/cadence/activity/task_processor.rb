@@ -1,4 +1,5 @@
 require 'cadence/client'
+require 'cadence/activity/metadata'
 require 'cadence/activity/context'
 
 module Cadence
@@ -20,7 +21,8 @@ module Cadence
           return
         end
 
-        context = Activity::Context.new(client, task_token)
+        metadata = Activity::Metadata.from_task(task)
+        context = Activity::Context.new(client, metadata)
         result = activity_class.execute_in_context(context, parse_input(task.input))
 
         respond_completed(result)

@@ -217,6 +217,12 @@ class CloseUserAccountActivity < Cadence::Activity
 end
 ```
 
+It is important to make your activities **idempotent**, because they can get retried by Cadence (in
+case a timeout is reached or your activity has thrown an error). You normally want to avoid
+generating additional side effects during subsequent activity execution. To achieve this you can use
+`activity.idem` from your activities that will return a unique token per activity execution
+(repeated attempts will have the same token).
+
 
 ## Worker
 
