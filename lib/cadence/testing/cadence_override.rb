@@ -17,7 +17,7 @@ module Cadence
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        context = Cadence::Testing::LocalWorkflowContext.new
+        context = Cadence::Testing::LocalWorkflowContext.new(options[:workflow_id])
 
         workflow.execute_in_context(context, input)
       end

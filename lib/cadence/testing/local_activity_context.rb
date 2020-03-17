@@ -1,12 +1,18 @@
 require 'securerandom'
+require 'cadence/uuid'
 
 module Cadence
   module Testing
     class LocalActivityContext
-      attr_reader :idem
+      attr_reader :run_idem, :workflow_idem
 
-      def initialize
-        @idem = SecureRandom.uuid
+      alias idem run_idem
+
+      def initialize(run_id, workflow_id)
+        activity_id = SecureRandom.uuid
+
+        @run_idem = UUID.v5(run_id, activity_id)
+        @workflow_idem = UUID.v5(workflow_id, activity_id)
       end
 
       def logger

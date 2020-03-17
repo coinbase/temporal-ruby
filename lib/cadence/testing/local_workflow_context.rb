@@ -1,8 +1,14 @@
+require 'securerandom'
 require 'cadence/testing/local_activity_context'
 
 module Cadence
   module Testing
     class LocalWorkflowContext
+      def initialize(workflow_id = nil)
+        @run_id = SecureRandom.uuid
+        @workflow_id = workflow_id || SecureRandom.uuid
+      end
+
       def logger
         Cadence.logger
       end
@@ -19,7 +25,7 @@ module Cadence
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        context = LocalActivityContext.new
+        context = LocalActivityContext.new(run_id, workflow_id)
         activity_class.execute_in_context(context, input)
       end
 
@@ -73,6 +79,10 @@ module Cadence
       def cancel(target, cancelation_id)
         raise NotImplementedError, 'not yet available for testing'
       end
+
+      private
+
+      attr_reader :run_id, :workflow_id
     end
   end
 end
