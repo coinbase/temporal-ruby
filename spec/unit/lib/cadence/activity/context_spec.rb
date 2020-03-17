@@ -39,12 +39,21 @@ describe Cadence::Activity::Context do
     end
   end
 
-  describe '#idem' do
+  describe '#run_idem' do
     let(:metadata_hash) { Fabricate(:activity_metadata, id: '123', workflow_run_id: '123').to_h }
     let(:expected_uuid) { '601f1889-667e-5aeb-b33b-8c12572835da' }
 
     it 'returns idempotency token' do
-      expect(subject.idem).to eq(expected_uuid)
+      expect(subject.run_idem).to eq(expected_uuid)
+    end
+  end
+
+  describe '#workflow_idem' do
+    let(:metadata_hash) { Fabricate(:activity_metadata, id: '123', workflow_id: '123').to_h }
+    let(:expected_uuid) { '601f1889-667e-5aeb-b33b-8c12572835da' }
+
+    it 'returns idempotency token' do
+      expect(subject.workflow_idem).to eq(expected_uuid)
     end
   end
 end

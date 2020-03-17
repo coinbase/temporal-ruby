@@ -219,9 +219,14 @@ end
 
 It is important to make your activities **idempotent**, because they can get retried by Cadence (in
 case a timeout is reached or your activity has thrown an error). You normally want to avoid
-generating additional side effects during subsequent activity execution. To achieve this you can use
-`activity.idem` from your activities that will return a unique token per activity execution
-(repeated attempts will have the same token).
+generating additional side effects during subsequent activity execution.
+
+To achieve this there are two methods (returning a UUID token) available from your activity class:
+
+- `activity.run_idem` — unique within for the current workflow execution (scoped to run_id)
+- `activity.workflow_idem` — unique across all execution of the workflow (scoped to workflow_id)
+
+Both tokens will remain the same across multiple retry attempts of the activity.
 
 
 ## Worker

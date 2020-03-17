@@ -20,8 +20,13 @@ module Cadence
         Cadence.logger
       end
 
-      def idem
+      def run_idem
         UUID.v5(metadata.workflow_run_id.to_s, metadata.id.to_s)
+      end
+      alias idem run_idem
+
+      def workflow_idem
+        UUID.v5(metadata.workflow_id.to_s, metadata.id.to_s)
       end
 
       private
