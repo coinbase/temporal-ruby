@@ -1,11 +1,18 @@
 require 'oj'
 require 'thrift'
 require 'securerandom'
+require 'cadence/client/errors'
 require 'gen/thrift/workflow_service'
 
 module Cadence
   module Client
     class ThriftClient
+      WORKFLOW_ID_REUSE_POLICY = {
+        allow_failed: CadenceThrift::WorkflowIdReusePolicy::AllowDuplicateFailedOnly,
+        allow: CadenceThrift::WorkflowIdReusePolicy::AllowDuplicate,
+        reject: CadenceThrift::WorkflowIdReusePolicy::RejectDuplicate
+      }.freeze
+
       def initialize(host, port, identity)
         @url = "http://#{host}:#{port}"
         @identity = identity
@@ -48,7 +55,16 @@ module Cadence
         send_request('DeprecateDomain', request)
       end
 
-      def start_workflow_execution(domain:, workflow_id:, workflow_name:, task_list:, input: nil, execution_timeout:, task_timeout:)
+      def start_workflow_execution(
+        domain:,
+        workflow_id:,
+        workflow_name:,
+        task_list:,
+        input: nil,
+        execution_timeout:,
+        task_timeout:,
+        workflow_id_reuse_policy: nil
+      )
         request = CadenceThrift::StartWorkflowExecutionRequest.new(
           identity: identity,
           domain: domain,
@@ -64,6 +80,13 @@ module Cadence
           taskStartToCloseTimeoutSeconds: task_timeout,
           requestId: SecureRandom.uuid
         )
+
+        if workflow_id_reuse_policy
+          policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
+          raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
+
+          request.workflowIdReusePolicy = policy
+        end
 
         send_request('StartWorkflowExecution', request)
       end

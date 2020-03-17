@@ -39,7 +39,8 @@ describe Cadence do
               task_list: 'default-test-task-list',
               input: [42],
               task_timeout: Cadence.configuration.timeouts[:task],
-              execution_timeout: Cadence.configuration.timeouts[:execution]
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: nil
             )
         end
 
@@ -59,7 +60,8 @@ describe Cadence do
               task_list: 'test-task-list',
               input: [42],
               task_timeout: Cadence.configuration.timeouts[:task],
-              execution_timeout: Cadence.configuration.timeouts[:execution]
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: nil
             )
         end
 
@@ -81,7 +83,8 @@ describe Cadence do
               task_list: 'default-test-task-list',
               input: [42, { arg_1: 1, arg_2: 2 }],
               task_timeout: Cadence.configuration.timeouts[:task],
-              execution_timeout: Cadence.configuration.timeouts[:execution]
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: nil
             )
         end
 
@@ -97,7 +100,27 @@ describe Cadence do
               task_list: 'default-test-task-list',
               input: [42],
               task_timeout: Cadence.configuration.timeouts[:task],
-              execution_timeout: Cadence.configuration.timeouts[:execution]
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: nil
+            )
+        end
+
+        it 'starts a workflow with a workflow id reuse policy' do
+          described_class.start_workflow(
+            TestStartWorkflow, 42, options: { workflow_id_reuse_policy: :allow }
+          )
+
+          expect(client)
+            .to have_received(:start_workflow_execution)
+            .with(
+              domain: 'default-test-domain',
+              workflow_id: an_instance_of(String),
+              workflow_name: 'TestStartWorkflow',
+              task_list: 'default-test-task-list',
+              input: [42],
+              task_timeout: Cadence.configuration.timeouts[:task],
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: :allow
             )
         end
       end
@@ -119,7 +142,8 @@ describe Cadence do
               task_list: 'test-task-list',
               input: [42],
               task_timeout: Cadence.configuration.timeouts[:task],
-              execution_timeout: Cadence.configuration.timeouts[:execution]
+              execution_timeout: Cadence.configuration.timeouts[:execution],
+              workflow_id_reuse_policy: nil
             )
         end
       end

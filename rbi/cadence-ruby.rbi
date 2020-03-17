@@ -1,6 +1,10 @@
 module Cadence
   class Activity; end
   class ActivityException; end
+  module Client
+    class Error; end
+    class ArgumentError; end
+  end
   module Saga
     module Concern; end
   end

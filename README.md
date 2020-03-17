@@ -244,6 +244,31 @@ or `INT` signal is received. By only registering a subset of your workflows/acti
 worker you can split processing across as many workers as you need.
 
 
+## Starting a workflow
+
+All communication is handled via Cadence service, so in order to start a workflow you need to send a
+message to Cadence:
+
+```ruby
+Cadence.start_workflow(HelloWorldWorkflow)
+```
+
+Optionally you can pass input and other options to the workflow:
+
+```ruby
+Cadence.start_workflow(RenewSubscriptionWorkflow, user_id, options: { workflow_id: user_id })
+```
+
+Passing in a `workflow_id` allows you to prevent concurrent execution of a workflow — a subsequent
+call with the same `workflow_id` will always get rejected while it is still running, raising
+`CadenceThrift::WorkflowExecutionAlreadyStartedError`. You can adjust the behaviour for finished
+workflows by supplying the `workflow_id_reuse_policy:` argument with one of these options:
+
+- `:allow_failed` will allow re-running workflows that have failed (terminated, cancelled, timed out or failed)
+- `:allow` will allow re-running any finished workflows both failed and completed
+- `:reject` will reject any subsequent attempt to run a workflow
+
+
 ## Execution Options
 
 There are lots of ways in which you can configure your Workflows and Activities. The common ones

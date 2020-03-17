@@ -21,7 +21,8 @@ module Cadence
         task_list: execution_options.task_list,
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
-        task_timeout: execution_options.timeouts[:task]
+        task_timeout: execution_options.timeouts[:task],
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy]
       )
 
       response.runId
