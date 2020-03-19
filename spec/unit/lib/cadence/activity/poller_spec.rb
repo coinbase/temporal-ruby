@@ -56,7 +56,7 @@ describe Cadence::Activity::Poller do
         # stop poller before inspecting
         subject.stop; subject.wait
 
-        expect(Cadence::Activity::TaskProcessor).to have_received(:new).with(task, lookup)
+        expect(Cadence::Activity::TaskProcessor).to have_received(:new).with(task, lookup, client)
         expect(task_processor).to have_received(:process)
       end
     end

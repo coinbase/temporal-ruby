@@ -4,57 +4,54 @@ require 'cadence/workflow/serializer'
 
 module Cadence
   class Workflow
-    # TODO: DecisionTaskProcessor?
-    class Decider
-      def initialize(workflow_lookup, client)
-        @workflow_lookup = workflow_lookup
+    class DecisionTaskProcessor
+      def initialize(task, workflow_lookup, client)
+        @task = task
+        @task_token = task.taskToken
+        @workflow_name = task.workflowType.name
+        @workflow_class = workflow_lookup.find(workflow_name)
         @client = client
       end
 
-      def process(decision_task)
-        task_token = decision_task.taskToken
-        workflow_name = decision_task.workflowType.name
-
+      def process
         Cadence.logger.info("Processing a decision task for #{workflow_name}")
 
-        workflow_klass = workflow_lookup.find(workflow_name)
-
-        unless workflow_klass
-          Cadence.logger.error("Workflow #{workflow_name} does not exist")
-          fail_task(task_token, 'Workflow does not exist')
-
+        unless workflow_class
+          fail_task('Workflow does not exist')
           return
         end
 
-        history = Workflow::History.new(decision_task.history.events)
+        history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
-        executor = Workflow::Executor.new(workflow_klass, history)
+        executor = Workflow::Executor.new(workflow_class, history)
         decisions = executor.run
 
-        Cadence.logger.debug("Flushing decisions: #{decisions.map(&:last)}")
-
-        complete_task(task_token, decisions)
+        complete_task(decisions)
       rescue StandardError => error
-        Cadence.logger.error("Decider failed to process #{decision_task.workflowExecution.workflowId}: #{error.inspect}")
+        Cadence.logger.error("Decison task for #{workflow_name} failed with: #{error.inspect}")
         Cadence.logger.debug(error.backtrace.join("\n"))
       end
 
       private
 
-      attr_reader :workflow_lookup, :client
+      attr_reader :task, :task_token, :workflow_name, :workflow_class, :client
 
       def serialize_decisions(decisions)
         decisions.map { |(_, decision)| Workflow::Serializer.serialize(decision) }
       end
 
-      def complete_task(task_token, decisions)
+      def complete_task(decisions)
+        Cadence.logger.info("Decision task for #{workflow_name} completed")
+
         client.respond_decision_task_completed(
           task_token: task_token,
           decisions: serialize_decisions(decisions)
         )
       end
 
-      def fail_task(task_token, message)
+      def fail_task(message)
+        Cadence.logger.error("Decision task for #{workflow_name} failed with: #{message}")
+
         client.respond_decision_task_failed(
           task_token: task_token,
           cause: CadenceThrift::DecisionTaskFailedCause::UNHANDLED_DECISION,

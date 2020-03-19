@@ -63,7 +63,8 @@ module Cadence
       end
 
       def process(task)
-        TaskProcessor.new(task, activity_lookup).process
+        client = Cadence::Client.generate
+        TaskProcessor.new(task, activity_lookup, client).process
       end
 
       def thread_pool

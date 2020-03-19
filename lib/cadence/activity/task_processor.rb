@@ -1,16 +1,15 @@
-require 'cadence/client'
 require 'cadence/activity/metadata'
 require 'cadence/activity/context'
 
 module Cadence
   class Activity
     class TaskProcessor
-      def initialize(task, activity_lookup)
+      def initialize(task, activity_lookup, client)
         @task = task
         @task_token = task.taskToken
         @activity_name = task.activityType.name
         @activity_class = activity_lookup.find(activity_name)
-        @activity_lookup = activity_lookup
+        @client = client
       end
 
       def process
@@ -32,28 +31,24 @@ module Cadence
 
       private
 
-      attr_reader :task, :task_token, :activity_name, :activity_class, :activity_lookup
-
-      def client
-        @client ||= Cadence::Client.generate
-      end
+      attr_reader :task, :task_token, :activity_name, :activity_class, :client
 
       def parse_input(input)
         input.to_s.empty? ? nil : Oj.load(input)
       end
 
       def respond_completed(result)
-        Cadence.logger.info("Activity #{activity_class} completed")
+        Cadence.logger.info("Activity #{activity_name} completed")
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
-        Cadence.logger.error("Unable to complete Activity #{activity_class}: #{error.inspect}")
+        Cadence.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
       end
 
       def respond_failed(reason, details)
-        Cadence.logger.error("Activity #{activity_class} failed with: #{reason}")
+        Cadence.logger.error("Activity #{activity_name} failed with: #{reason}")
         client.respond_activity_task_failed(task_token: task_token, reason: reason, details: details)
       rescue StandardError => error
-        Cadence.logger.error("Unable to fail Activity #{activity_class}: #{error.inspect}")
+        Cadence.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
       end
     end
   end

@@ -1,7 +1,7 @@
 require 'cadence/activity/task_processor'
 
 describe Cadence::Activity::TaskProcessor do
-  subject { described_class.new(task, lookup) }
+  subject { described_class.new(task, lookup, client) }
 
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
   let(:task) { Fabricate(:activity_task, activity_name: activity_name, input: Oj.dump(input)) }
@@ -9,8 +9,6 @@ describe Cadence::Activity::TaskProcessor do
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Cadence::Client::ThriftClient') }
   let(:input) { ['arg1', 'arg2'] }
-
-  before { allow(Cadence::Client).to receive(:generate).and_return(client) }
 
   describe '#process' do
     let(:context) { instance_double('Cadence::Activity::Context') }

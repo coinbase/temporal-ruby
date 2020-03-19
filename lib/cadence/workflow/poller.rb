@@ -1,5 +1,5 @@
 require 'cadence/client'
-require 'cadence/workflow/decider'
+require 'cadence/workflow/decision_task_processor'
 
 module Cadence
   class Workflow
@@ -33,10 +33,6 @@ module Cadence
         @client ||= Cadence::Client.generate
       end
 
-      def decider
-        @decider ||= Decider.new(workflow_lookup, client)
-      end
-
       def shutting_down?
         @shutting_down
       end
@@ -58,12 +54,7 @@ module Cadence
       end
 
       def process(task)
-        start_time = Time.now
-
-        decider.process(task)
-
-        time_diff = (Time.now - start_time) * 1000
-        Cadence.logger.info("Decision task processed in #{time_diff}ms")
+        DecisionTaskProcessor.new(task, workflow_lookup, client).process
       end
     end
   end
