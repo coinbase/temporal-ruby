@@ -10,6 +10,8 @@ Fabricator(:activity_task, from: CadenceThrift::PollForActivityTaskResponse) do
   input ''
   workflowType { Fabricate(:workflow_type) }
   workflowExecution { Fabricate(:workflow_execution) }
+  scheduledTimestampOfThisAttempt { Time.now.to_f * 10**9 }
+  startedTimestamp { Time.now.to_f * 10**9 }
 end
 
 Fabricator(:activity_type, from: CadenceThrift::ActivityType) do

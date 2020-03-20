@@ -14,7 +14,10 @@ module Cadence
       end
 
       def process
+        start_time = Time.now
+
         Cadence.logger.info("Processing a decision task for #{workflow_name}")
+        Cadence.metrics.timing('decision_task.queue_time', queue_time_ms, workflow: workflow_name)
 
         unless workflow_class
           fail_task('Workflow does not exist')
@@ -30,11 +33,19 @@ module Cadence
       rescue StandardError => error
         Cadence.logger.error("Decison task for #{workflow_name} failed with: #{error.inspect}")
         Cadence.logger.debug(error.backtrace.join("\n"))
+      ensure
+        time_diff_ms = ((Time.now - start_time) * 1000).round
+        Cadence.metrics.timing('decision_task.latency', time_diff_ms, workflow: workflow_name)
+        Cadence.logger.debug("Decision task processed in #{time_diff_ms}ms")
       end
 
       private
 
       attr_reader :task, :task_token, :workflow_name, :workflow_class, :client
+
+      def queue_time_ms
+        ((task.startedTimestamp - task.scheduledTimestamp) / 1_000_000).round
+      end
 
       def serialize_decisions(decisions)
         decisions.map { |(_, decision)| Workflow::Serializer.serialize(decision) }

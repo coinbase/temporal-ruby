@@ -19,6 +19,8 @@ describe Cadence::Activity::TaskProcessor do
 
       allow(client).to receive(:respond_activity_task_completed)
       allow(client).to receive(:respond_activity_task_failed)
+
+      allow(Cadence.metrics).to receive(:timing)
     end
 
     context 'when activity is not registered' do
@@ -74,6 +76,22 @@ describe Cadence::Activity::TaskProcessor do
 
           subject.process
         end
+
+        it 'sends queue_time metric' do
+          subject.process
+
+          expect(Cadence.metrics)
+            .to have_received(:timing)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name)
+        end
+
+        it 'sends latency metric' do
+          subject.process
+
+          expect(Cadence.metrics)
+            .to have_received(:timing)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
+        end
       end
 
       context 'when activity raises an exception' do
@@ -103,6 +121,22 @@ describe Cadence::Activity::TaskProcessor do
             .and_raise(StandardError)
 
           subject.process
+        end
+
+        it 'sends queue_time metric' do
+          subject.process
+
+          expect(Cadence.metrics)
+            .to have_received(:timing)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name)
+        end
+
+        it 'sends latency metric' do
+          subject.process
+
+          expect(Cadence.metrics)
+            .to have_received(:timing)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
         end
       end
     end

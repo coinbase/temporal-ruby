@@ -13,7 +13,10 @@ module Cadence
       end
 
       def process
+        start_time = Time.now
+
         Cadence.logger.info("Processing activity task for #{activity_name}")
+        Cadence.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
         if !activity_class
           respond_failed('ActivityNotRegistered', 'Activity is not registered with this worker')
@@ -27,11 +30,19 @@ module Cadence
         respond_completed(result)
       rescue StandardError => error
         respond_failed(error.class.name, error.message)
+      ensure
+        time_diff_ms = ((Time.now - start_time) * 1000).round
+        Cadence.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
+        Cadence.logger.debug("Activity task processed in #{time_diff_ms}ms")
       end
 
       private
 
       attr_reader :task, :task_token, :activity_name, :activity_class, :client
+
+      def queue_time_ms
+        ((task.startedTimestamp - task.scheduledTimestampOfThisAttempt) / 1_000_000).round
+      end
 
       def parse_input(input)
         input.to_s.empty? ? nil : Oj.load(input)
