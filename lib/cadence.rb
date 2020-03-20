@@ -4,6 +4,7 @@ require 'cadence/execution_options'
 require 'cadence/client'
 require 'cadence/activity'
 require 'cadence/workflow'
+require 'cadence/metrics'
 
 module Cadence
   class << self
@@ -52,6 +53,10 @@ module Cadence
 
     def logger
       configuration.logger
+    end
+
+    def metrics
+      @metrics ||= Metrics.new(configuration.metrics_adapter)
     end
 
     private

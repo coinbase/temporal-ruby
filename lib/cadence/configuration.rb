@@ -1,9 +1,10 @@
 require 'logger'
+require 'cadence/metrics_adapters/null'
 
 module Cadence
   class Configuration
     attr_reader :timeouts
-    attr_accessor :client_type, :host, :port, :logger, :domain, :task_list
+    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :domain, :task_list
 
     DEFAULT_TIMEOUTS = {
       execution: 60,         # End-to-end workflow time
@@ -20,6 +21,7 @@ module Cadence
     def initialize
       @client_type = :thrift
       @logger = Logger.new(STDOUT, progname: 'cadence_client')
+      @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
       @domain = DEFAULT_DOMAIN
       @task_list = DEFAULT_TASK_LIST
