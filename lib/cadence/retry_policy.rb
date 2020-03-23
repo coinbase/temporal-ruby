@@ -18,6 +18,10 @@ module Cadence
       unless [interval, max_interval, expiration_interval].compact.all? { |arg| arg.is_a?(Integer) }
         raise InvalidRetryPolicy, 'All intervals must be specified in whole seconds'
       end
+
+      unless [interval, max_interval, expiration_interval].compact.all? { |arg| arg > 0 }
+        raise InvalidRetryPolicy, 'All intervals must be greater than 0'
+      end
     end
   end
 end

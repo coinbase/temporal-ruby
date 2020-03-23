@@ -53,22 +53,24 @@ describe Cadence::RetryPolicy do
         include_examples 'error', 'max_attempts or expiration_interval must be set'
       end
 
-      context 'with :interval set to a float' do
-        let(:attributes) { valid_attributes.tap { |h| h[:interval] = 1.5 } }
+      %i[interval max_interval expiration_interval].each do |attr|
+        context "with #{attr} set to a float" do
+          let(:attributes) { valid_attributes.tap { |h| h[attr] = 1.5 } }
 
-        include_examples 'error', 'All intervals must be specified in whole seconds'
-      end
+          include_examples 'error', 'All intervals must be specified in whole seconds'
+        end
 
-      context 'with :max_interval set to a float' do
-        let(:attributes) { valid_attributes.tap { |h| h[:max_interval] = 1.5 } }
+        context "with #{attr} set to zero" do
+          let(:attributes) { valid_attributes.tap { |h| h[attr] = 0 } }
 
-        include_examples 'error', 'All intervals must be specified in whole seconds'
-      end
+          include_examples 'error', 'All intervals must be greater than 0'
+        end
 
-      context 'with :expiration_interval set to a float' do
-        let(:attributes) { valid_attributes.tap { |h| h[:expiration_interval] = 1.5 } }
+        context "with #{attr} set to negative value" do
+          let(:attributes) { valid_attributes.tap { |h| h[attr] = -2 } }
 
-        include_examples 'error', 'All intervals must be specified in whole seconds'
+          include_examples 'error', 'All intervals must be greater than 0'
+        end
       end
     end
   end
