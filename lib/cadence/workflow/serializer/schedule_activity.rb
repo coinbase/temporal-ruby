@@ -15,6 +15,8 @@ module Cadence
                 domain: object.domain,
                 taskList: CadenceThrift::TaskList.new(name: object.task_list),
                 scheduleToCloseTimeoutSeconds: object.timeouts[:schedule_to_close],
+                scheduleToStartTimeoutSeconds: object.timeouts[:schedule_to_start],
+                startToCloseTimeoutSeconds: object.timeouts[:start_to_close],
                 heartbeatTimeoutSeconds: object.timeouts[:heartbeat],
                 retryPolicy: serialize_retry_policy(object.retry_policy)
               )
