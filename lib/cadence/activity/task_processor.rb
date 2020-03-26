@@ -1,5 +1,6 @@
 require 'cadence/activity/metadata'
 require 'cadence/activity/context'
+require 'cadence/json'
 
 module Cadence
   class Activity
@@ -25,7 +26,7 @@ module Cadence
 
         metadata = Activity::Metadata.from_task(task)
         context = Activity::Context.new(client, metadata)
-        result = activity_class.execute_in_context(context, parse_input(task.input))
+        result = activity_class.execute_in_context(context, JSON.deserialize(task.input))
 
         respond_completed(result)
       rescue StandardError => error
@@ -42,10 +43,6 @@ module Cadence
 
       def queue_time_ms
         ((task.startedTimestamp - task.scheduledTimestampOfThisAttempt) / 1_000_000).round
-      end
-
-      def parse_input(input)
-        input.to_s.empty? ? nil : Oj.load(input)
       end
 
       def respond_completed(result)

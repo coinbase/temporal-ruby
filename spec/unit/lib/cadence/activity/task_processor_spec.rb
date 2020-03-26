@@ -4,7 +4,9 @@ describe Cadence::Activity::TaskProcessor do
   subject { described_class.new(task, lookup, client) }
 
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
-  let(:task) { Fabricate(:activity_task, activity_name: activity_name, input: Oj.dump(input)) }
+  let(:task) do
+    Fabricate(:activity_task, activity_name: activity_name, input: Cadence::JSON.serialize(input))
+  end
   let(:metadata) { Cadence::Activity::Metadata.from_task(task) }
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Cadence::Client::ThriftClient') }

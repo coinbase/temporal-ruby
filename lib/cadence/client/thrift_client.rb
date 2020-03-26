@@ -1,6 +1,6 @@
-require 'oj'
 require 'thrift'
 require 'securerandom'
+require 'cadence/json'
 require 'cadence/client/errors'
 require 'gen/thrift/workflow_service'
 
@@ -75,7 +75,7 @@ module Cadence
           taskList: CadenceThrift::TaskList.new(
             name: task_list
           ),
-          input: Oj.dump(input),
+          input: JSON.serialize(input),
           executionStartToCloseTimeoutSeconds: execution_timeout,
           taskStartToCloseTimeoutSeconds: task_timeout,
           requestId: SecureRandom.uuid
@@ -128,7 +128,7 @@ module Cadence
           identity: identity,
           taskToken: task_token,
           cause: cause,
-          details: Oj.dump(details)
+          details: JSON.serialize(details)
         )
         send_request('RespondDecisionTaskFailed', request)
       end
@@ -147,7 +147,7 @@ module Cadence
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = CadenceThrift::RecordActivityTaskHeartbeatRequest.new(
           taskToken: task_token,
-          details: Oj.dump(details),
+          details: JSON.serialize(details),
           identity: identity
         )
         send_request('RecordActivityTaskHeartbeat', request)
@@ -161,7 +161,7 @@ module Cadence
         request = CadenceThrift::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           taskToken: task_token,
-          result: Oj.dump(result)
+          result: JSON.serialize(result)
         )
         send_request('RespondActivityTaskCompleted', request)
       end
@@ -175,7 +175,7 @@ module Cadence
           identity: identity,
           taskToken: task_token,
           reason: reason,
-          details: Oj.dump(details)
+          details: JSON.serialize(details)
         )
         send_request('RespondActivityTaskFailed', request)
       end
@@ -187,7 +187,7 @@ module Cadence
       def respond_activity_task_canceled(task_token:, details: nil)
         request = CadenceThrift::RespondActivityTaskCanceledRequest.new(
           taskToken: task_token,
-          details: Oj.dump(details),
+          details: JSON.serialize(details),
           identity: identity
         )
         send_request('RespondActivityTaskCanceled', request)
@@ -209,7 +209,7 @@ module Cadence
             runId: run_id
           ),
           signalName: signal,
-          input: Oj.dump(input),
+          input: JSON.serialize(input),
           identity: identity
         )
         send_request('SignalWorkflowExecution', request)

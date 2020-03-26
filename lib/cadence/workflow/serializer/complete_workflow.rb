@@ -1,4 +1,5 @@
 require 'cadence/workflow/serializer/base'
+require 'cadence/json'
 
 module Cadence
   class Workflow
@@ -9,7 +10,7 @@ module Cadence
             decisionType: CadenceThrift::DecisionType::CompleteWorkflowExecution,
             completeWorkflowExecutionDecisionAttributes:
               CadenceThrift::CompleteWorkflowExecutionDecisionAttributes.new(
-                result: Oj.dump(object.result)
+                result: JSON.serialize(object.result)
               )
           )
         end

@@ -1,5 +1,4 @@
-require 'oj'
-
+require 'cadence/json'
 require 'cadence/errors'
 require 'cadence/workflow/decision'
 require 'cadence/workflow/decision_state_machine'
@@ -249,7 +248,7 @@ module Cadence
       end
 
       def safe_parse(binary)
-        binary.to_s.empty? ? nil : Oj.load(binary)
+        JSON.deserialize(binary)
       end
     end
   end
