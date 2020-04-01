@@ -12,9 +12,10 @@ require 'cadence/workflow/replay_aware_logger'
 module Cadence
   class Workflow
     class Context
-      def initialize(state_manager, dispatcher)
+      def initialize(state_manager, dispatcher, metadata)
         @state_manager = state_manager
         @dispatcher = dispatcher
+        @metadata = metadata
       end
 
       def logger
@@ -178,7 +179,7 @@ module Cadence
 
       private
 
-      attr_reader :state_manager, :dispatcher
+      attr_reader :state_manager, :dispatcher, :metadata
 
       def schedule_decision(decision)
         state_manager.schedule(decision)

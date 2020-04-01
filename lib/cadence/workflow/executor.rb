@@ -34,11 +34,11 @@ module Cadence
 
       attr_reader :workflow_class, :dispatcher, :state_manager, :history, :new_decisions
 
-      def execute_workflow(*input)
-        context = Workflow::Context.new(state_manager, dispatcher)
+      def execute_workflow(input, metadata)
+        context = Workflow::Context.new(state_manager, dispatcher, metadata)
 
         Fiber.new do
-          workflow_class.execute_in_context(context, *input)
+          workflow_class.execute_in_context(context, input)
         end.resume
       end
     end
