@@ -29,6 +29,10 @@ module Cadence
         UUID.v5(metadata.workflow_id.to_s, metadata.id.to_s)
       end
 
+      def headers
+        metadata.headers
+      end
+
       private
 
       attr_reader :client, :metadata

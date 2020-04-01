@@ -56,4 +56,12 @@ describe Cadence::Activity::Context do
       expect(subject.workflow_idem).to eq(expected_uuid)
     end
   end
+
+  describe '#headers' do
+    let(:metadata_hash) { Fabricate(:activity_metadata, headers: { 'Foo' => 'Bar' }).to_h }
+
+    it 'returns headers' do
+      expect(subject.headers).to eq('Foo' => 'Bar')
+    end
+  end
 end

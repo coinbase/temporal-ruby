@@ -23,6 +23,11 @@ module Cadence
         return @timeouts if args.empty?
         @timeouts = args.first
       end
+
+      def headers(*args)
+        return @headers if args.empty?
+        @headers = args.first
+      end
     end
   end
 end

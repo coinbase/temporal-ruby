@@ -12,6 +12,15 @@ describe Cadence::Activity::Metadata do
       expect(subject.workflow_run_id).to eq(task.workflowExecution.runId)
       expect(subject.workflow_id).to eq(task.workflowExecution.workflowId)
       expect(subject.workflow_name).to eq(task.workflowType.name)
+      expect(subject.headers).to eq({})
+    end
+
+    context 'with headers' do
+      let(:task) { Fabricate(:activity_task, headers: { 'Foo' => 'Bar' }) }
+
+      it 'assigns headers' do
+        expect(subject.headers).to eq('Foo' => 'Bar')
+      end
     end
   end
 
@@ -26,6 +35,7 @@ describe Cadence::Activity::Metadata do
       expect(subject.workflow_run_id).to eq(args.workflow_run_id)
       expect(subject.workflow_id).to eq(args.workflow_id)
       expect(subject.workflow_name).to eq(args.workflow_name)
+      expect(subject.headers).to eq(args.headers)
     end
 
     it 'returns frozen object' do

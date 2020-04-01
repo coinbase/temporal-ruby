@@ -19,7 +19,8 @@ module Cadence
                 scheduleToStartTimeoutSeconds: object.timeouts[:schedule_to_start],
                 startToCloseTimeoutSeconds: object.timeouts[:start_to_close],
                 heartbeatTimeoutSeconds: object.timeouts[:heartbeat],
-                retryPolicy: serialize_retry_policy(object.retry_policy)
+                retryPolicy: serialize_retry_policy(object.retry_policy),
+                header: serialize_headers(object.headers)
               )
           )
         end
@@ -40,6 +41,12 @@ module Cadence
           }.compact
 
           CadenceThrift::RetryPolicy.new(options)
+        end
+
+        def serialize_headers(headers)
+          return unless headers
+
+          CadenceThrift::Header.new(fields: object.headers)
         end
       end
     end

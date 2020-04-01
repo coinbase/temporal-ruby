@@ -23,7 +23,8 @@ module Cadence
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
         task_timeout: execution_options.timeouts[:task],
-        workflow_id_reuse_policy: options[:workflow_id_reuse_policy]
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+        headers: execution_options.headers
       )
 
       response.runId

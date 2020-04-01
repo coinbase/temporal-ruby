@@ -32,7 +32,8 @@ module Cadence
 
         executions[workflow_id] = :started
 
-        context = Cadence::Testing::LocalWorkflowContext.new(workflow_id)
+        execution_options = ExecutionOptions.new(workflow, options)
+        context = Cadence::Testing::LocalWorkflowContext.new(workflow_id, execution_options.headers)
 
         begin
           workflow.execute_in_context(context, input).tap do

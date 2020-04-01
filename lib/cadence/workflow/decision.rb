@@ -2,7 +2,7 @@ module Cadence
   class Workflow
     module Decision
       # TODO: Move these classes into their own directories under workflow/decision/*
-      ScheduleActivity = Struct.new(:activity_type, :activity_id, :input, :domain, :task_list, :retry_policy, :timeouts, keyword_init: true)
+      ScheduleActivity = Struct.new(:activity_type, :activity_id, :input, :domain, :task_list, :retry_policy, :timeouts, :headers, keyword_init: true)
       RequestActivityCancellation = Struct.new(:activity_id, keyword_init: true)
       RecordMarker = Struct.new(:name, :details, keyword_init: true)
       StartTimer = Struct.new(:timeout, :timer_id, keyword_init: true)

@@ -63,7 +63,8 @@ module Cadence
         input: nil,
         execution_timeout:,
         task_timeout:,
-        workflow_id_reuse_policy: nil
+        workflow_id_reuse_policy: nil,
+        headers: nil
       )
         request = CadenceThrift::StartWorkflowExecutionRequest.new(
           identity: identity,
@@ -78,7 +79,10 @@ module Cadence
           input: JSON.serialize(input),
           executionStartToCloseTimeoutSeconds: execution_timeout,
           taskStartToCloseTimeoutSeconds: task_timeout,
-          requestId: SecureRandom.uuid
+          requestId: SecureRandom.uuid,
+          header: CadenceThrift::Header.new(
+            fields: headers
+          )
         )
 
         if workflow_id_reuse_policy

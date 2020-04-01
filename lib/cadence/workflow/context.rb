@@ -24,6 +24,10 @@ module Cadence
         @logger
       end
 
+      def headers
+        metadata.headers
+      end
+
       def execute_activity(activity_class, *input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
@@ -37,7 +41,8 @@ module Cadence
           domain: execution_options.domain,
           task_list: execution_options.task_list,
           retry_policy: execution_options.retry_policy,
-          timeouts: execution_options.timeouts
+          timeouts: execution_options.timeouts,
+          headers: execution_options.headers
         )
 
         target, cancelation_id = schedule_decision(decision)

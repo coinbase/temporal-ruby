@@ -4,7 +4,7 @@ require 'cadence/metrics_adapters/null'
 module Cadence
   class Configuration
     attr_reader :timeouts
-    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :domain, :task_list
+    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :domain, :task_list, :headers
 
     DEFAULT_TIMEOUTS = {
       execution: 60,          # End-to-end workflow time
@@ -15,6 +15,7 @@ module Cadence
       heartbeat: nil          # Max time between heartbeats (off by default)
     }.freeze
 
+    DEFAULT_HEADERS = {}.freeze
     DEFAULT_DOMAIN = 'default-domain'.freeze
     DEFAULT_TASK_LIST = 'default-task-list'.freeze
 
@@ -25,10 +26,11 @@ module Cadence
       @timeouts = DEFAULT_TIMEOUTS
       @domain = DEFAULT_DOMAIN
       @task_list = DEFAULT_TASK_LIST
+      @headers = DEFAULT_HEADERS
     end
 
     def timeouts=(new_timeouts)
-      @timeouts = timeouts.merge(new_timeouts)
+      @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
     end
   end
 end

@@ -1,12 +1,16 @@
 require 'securerandom'
 require 'cadence/testing/local_activity_context'
+require 'cadence/execution_options'
 
 module Cadence
   module Testing
     class LocalWorkflowContext
-      def initialize(workflow_id = nil)
+      attr_reader :headers
+
+      def initialize(workflow_id = nil, headers = {})
         @run_id = SecureRandom.uuid
         @workflow_id = workflow_id || SecureRandom.uuid
+        @headers = headers
       end
 
       def logger
@@ -25,7 +29,9 @@ module Cadence
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        context = LocalActivityContext.new(run_id, workflow_id)
+        execution_options = ExecutionOptions.new(activity_class, options)
+        context = LocalActivityContext.new(run_id, workflow_id, execution_options.headers)
+
         activity_class.execute_in_context(context, input)
       end
 
