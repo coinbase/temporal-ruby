@@ -223,8 +223,17 @@ module Cadence
         raise NotImplementedError
       end
 
-      def reset_workflow_execution
-        raise NotImplementedError
+      def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, decision_task_event_id:)
+        request = CadenceThrift::ResetWorkflowExecutionRequest.new(
+          domain: domain,
+          workflowExecution: CadenceThrift::WorkflowExecution.new(
+            workflowId: workflow_id,
+            runId: run_id
+          ),
+          reason: reason,
+          decisionFinishEventId: decision_task_event_id
+        )
+        send_request('ResetWorkflowExecution', request)
       end
 
       def terminate_workflow_execution

@@ -11,6 +11,10 @@ module Cadence
         @iterator = @events.each
       end
 
+      def last_completed_decision_task
+        events.select { |event| event.type == 'DecisionTaskCompleted' }.last
+      end
+
       # It is very important to replay the History window by window in order to
       # simulate the exact same state the workflow was in when it processed the
       # decision task for the first time.

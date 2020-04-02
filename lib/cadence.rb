@@ -4,6 +4,7 @@ require 'cadence/execution_options'
 require 'cadence/client'
 require 'cadence/activity'
 require 'cadence/workflow'
+require 'cadence/workflow/history'
 require 'cadence/metrics'
 
 module Cadence
@@ -42,6 +43,28 @@ module Cadence
         signal: signal,
         input: input
       )
+    end
+
+    def reset_workflow(domain, workflow_id, run_id, reason = 'manual reset')
+      history_response = client.get_workflow_execution_history(
+        domain: domain,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      decision_task_event = history.last_completed_decision_task
+
+      raise Error, 'Could not find a completed decision task event' unless decision_task_event
+
+      response = client.reset_workflow_execution(
+        domain: domain,
+        workflow_id: workflow_id,
+        run_id: run_id,
+        reason: reason,
+        decision_task_event_id: decision_task_event.id
+      )
+
+      response.runId
     end
 
     def configure(&block)

@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require_relative '../init'
+
+domain, workflow_id, run_id = ARGV
+
+run_id = Cadence.reset_workflow(domain, workflow_id, run_id)
+Cadence.logger.info "Reset workflow: #{run_id}"
