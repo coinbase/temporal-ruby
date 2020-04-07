@@ -319,11 +319,18 @@ module Cadence
       end
 
       def send_request(name, request)
+        start_time = Time.now
+
         # synchronize these calls because transport headers are mutated
-        mutex.synchronize do
+        result = mutex.synchronize do
           transport.add_headers 'Rpc-Procedure' => "WorkflowService::#{name}"
           connection.public_send(name, request)
         end
+
+        time_diff_ms = ((Time.now - start_time) * 1000).round
+        Cadence.metrics.timing('request.latency', time_diff_ms, request_name: name)
+
+        result
       end
     end
   end
