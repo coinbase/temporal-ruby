@@ -1,5 +1,6 @@
 require 'cadence/client'
 require 'cadence/thread_pool'
+require 'cadence/middleware/chain'
 require 'cadence/activity/task_processor'
 
 module Cadence
@@ -7,10 +8,11 @@ module Cadence
     class Poller
       THREAD_POOL_SIZE = 20
 
-      def initialize(domain, task_list, activity_lookup)
+      def initialize(domain, task_list, activity_lookup, middleware = [])
         @domain = domain
         @task_list = task_list
         @activity_lookup = activity_lookup
+        @middleware = middleware
         @shutting_down = false
       end
 
@@ -30,7 +32,7 @@ module Cadence
 
       private
 
-      attr_reader :domain, :task_list, :activity_lookup, :thread
+      attr_reader :domain, :task_list, :activity_lookup, :middleware, :thread
 
       def client
         @client ||= Cadence::Client.generate
@@ -64,7 +66,9 @@ module Cadence
 
       def process(task)
         client = Cadence::Client.generate
-        TaskProcessor.new(task, activity_lookup, client).process
+        middleware_chain = Middleware::Chain.new(middleware)
+
+        TaskProcessor.new(task, activity_lookup, client, middleware_chain).process
       end
 
       def thread_pool

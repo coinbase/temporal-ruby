@@ -7,6 +7,7 @@ describe Cadence::Activity::Metadata do
 
     it 'generates metadata' do
       expect(subject.id).to eq(task.activityId)
+      expect(subject.name).to eq(task.activityType.name)
       expect(subject.task_token).to eq(task.taskToken)
       expect(subject.attempt).to eq(task.attempt)
       expect(subject.workflow_run_id).to eq(task.workflowExecution.runId)
@@ -30,6 +31,7 @@ describe Cadence::Activity::Metadata do
 
     it 'sets the attributes' do
       expect(subject.id).to eq(args.id)
+      expect(subject.name).to eq(args.name)
       expect(subject.task_token).to eq(args.task_token)
       expect(subject.attempt).to eq(args.attempt)
       expect(subject.workflow_run_id).to eq(args.workflow_run_id)

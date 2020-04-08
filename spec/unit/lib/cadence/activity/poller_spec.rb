@@ -1,4 +1,5 @@
 require 'cadence/activity/poller'
+require 'cadence/middleware/entry'
 
 describe Cadence::Activity::Poller do
   let(:client) { instance_double('Cadence::Client::ThriftClient') }
@@ -6,12 +7,15 @@ describe Cadence::Activity::Poller do
   let(:task_list) { 'test-task-list' }
   let(:lookup) { instance_double('Cadence::ExecutableLookup') }
   let(:thread_pool) { instance_double(Cadence::ThreadPool, wait_for_available_threads: nil) }
+  let(:middleware_chain) { instance_double(Cadence::Middleware::Chain) }
+  let(:middleware) { [] }
 
-  subject { described_class.new(domain, task_list, lookup) }
+  subject { described_class.new(domain, task_list, lookup, middleware) }
 
   before do
     allow(Cadence::Client).to receive(:generate).and_return(client)
     allow(Cadence::ThreadPool).to receive(:new).and_return(thread_pool)
+    allow(Cadence::Middleware::Chain).to receive(:new).and_return(middleware_chain)
   end
 
   describe '#start' do
@@ -56,8 +60,33 @@ describe Cadence::Activity::Poller do
         # stop poller before inspecting
         subject.stop; subject.wait
 
-        expect(Cadence::Activity::TaskProcessor).to have_received(:new).with(task, lookup, client)
+        expect(Cadence::Activity::TaskProcessor)
+          .to have_received(:new)
+          .with(task, lookup, client, middleware_chain)
         expect(task_processor).to have_received(:process)
+      end
+
+      context 'with middleware configured' do
+        class TestPollerMiddleware
+          def initialize(_); end
+          def call(_); end
+        end
+
+        let(:middleware) { [entry_1, entry_2] }
+        let(:entry_1) { Cadence::Middleware::Entry.new(TestPollerMiddleware, '1') }
+        let(:entry_2) { Cadence::Middleware::Entry.new(TestPollerMiddleware, '2') }
+
+        it 'initializes middleware chain and passes it down to TaskProcessor' do
+          subject.start
+
+          # stop poller before inspecting
+          subject.stop; subject.wait
+
+          expect(Cadence::Middleware::Chain).to have_received(:new).with(middleware)
+          expect(Cadence::Activity::TaskProcessor)
+            .to have_received(:new)
+            .with(task, lookup, client, middleware_chain)
+        end
       end
     end
 

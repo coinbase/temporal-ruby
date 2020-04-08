@@ -13,6 +13,19 @@ describe Cadence::Worker do
     task_list 'default-task-list'
   end
 
+  class TestWorkerDecisionMiddleware
+    def call(_); end
+  end
+
+  class TestWorkerActivityMiddleware
+    def call(_); end
+  end
+
+  class TestWorkerActivity < Cadence::Activity
+    domain 'default-domain'
+    task_list 'default-task-list'
+  end
+
   THREAD_SYNC_DELAY = 0.01
 
   before do
@@ -72,6 +85,44 @@ describe Cadence::Worker do
     end
   end
 
+  describe '#add_decision_middleware' do
+    let(:middleware) { subject.send(:decision_middleware) }
+
+    it 'adds middleware entry to the list of middlewares' do
+      subject.add_decision_middleware(TestWorkerDecisionMiddleware)
+      subject.add_decision_middleware(TestWorkerDecisionMiddleware, 'arg1', 'arg2')
+
+      expect(middleware.size).to eq(2)
+
+      expect(middleware[0]).to be_an_instance_of(Cadence::Middleware::Entry)
+      expect(middleware[0].klass).to eq(TestWorkerDecisionMiddleware)
+      expect(middleware[0].args).to eq([])
+
+      expect(middleware[1]).to be_an_instance_of(Cadence::Middleware::Entry)
+      expect(middleware[1].klass).to eq(TestWorkerDecisionMiddleware)
+      expect(middleware[1].args).to eq(['arg1', 'arg2'])
+    end
+  end
+
+  describe '#add_activity_middleware' do
+    let(:middleware) { subject.send(:activity_middleware) }
+
+    it 'adds middleware entry to the list of middlewares' do
+      subject.add_activity_middleware(TestWorkerActivityMiddleware)
+      subject.add_activity_middleware(TestWorkerActivityMiddleware, 'arg1', 'arg2')
+
+      expect(middleware.size).to eq(2)
+
+      expect(middleware[0]).to be_an_instance_of(Cadence::Middleware::Entry)
+      expect(middleware[0].klass).to eq(TestWorkerActivityMiddleware)
+      expect(middleware[0].args).to eq([])
+
+      expect(middleware[1]).to be_an_instance_of(Cadence::Middleware::Entry)
+      expect(middleware[1].klass).to eq(TestWorkerActivityMiddleware)
+      expect(middleware[1].args).to eq(['arg1', 'arg2'])
+    end
+  end
+
   describe '#start' do
     let(:workflow_poller_1) { instance_double(Cadence::Workflow::Poller, start: nil) }
     let(:workflow_poller_2) { instance_double(Cadence::Workflow::Poller, start: nil) }
@@ -83,22 +134,22 @@ describe Cadence::Worker do
 
       allow(Cadence::Workflow::Poller)
         .to receive(:new)
-        .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup))
+        .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup), [])
         .and_return(workflow_poller_1)
 
       allow(Cadence::Workflow::Poller)
         .to receive(:new)
-        .with('other-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup))
+        .with('other-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup), [])
         .and_return(workflow_poller_2)
 
       allow(Cadence::Activity::Poller)
         .to receive(:new)
-        .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup))
+        .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup), [])
         .and_return(activity_poller_1)
 
       allow(Cadence::Activity::Poller)
         .to receive(:new)
-        .with('default-domain', 'other-task-list', an_instance_of(Cadence::ExecutableLookup))
+        .with('default-domain', 'other-task-list', an_instance_of(Cadence::ExecutableLookup), [])
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
@@ -112,6 +163,48 @@ describe Cadence::Worker do
       expect(workflow_poller_2).to have_received(:start)
       expect(activity_poller_1).to have_received(:start)
       expect(activity_poller_2).to have_received(:start)
+    end
+
+    context 'when middleware is configured' do
+      let(:entry_1) { instance_double(Cadence::Middleware::Entry) }
+      let(:entry_2) { instance_double(Cadence::Middleware::Entry) }
+
+      before do
+        allow(Cadence::Middleware::Entry)
+          .to receive(:new)
+          .with(TestWorkerDecisionMiddleware, [])
+          .and_return(entry_1)
+
+        allow(Cadence::Middleware::Entry)
+          .to receive(:new)
+          .with(TestWorkerActivityMiddleware, [])
+          .and_return(entry_2)
+
+        subject.add_decision_middleware(TestWorkerDecisionMiddleware)
+        subject.add_activity_middleware(TestWorkerActivityMiddleware)
+      end
+
+      it 'starts pollers with correct middleware' do
+        allow(subject).to receive(:shutting_down?).and_return(true)
+
+        allow(Cadence::Workflow::Poller)
+          .to receive(:new)
+          .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup), [entry_1])
+          .and_return(workflow_poller_1)
+
+        allow(Cadence::Activity::Poller)
+          .to receive(:new)
+          .with('default-domain', 'default-task-list', an_instance_of(Cadence::ExecutableLookup), [entry_2])
+          .and_return(activity_poller_1)
+
+        subject.register_workflow(TestWorkerWorkflow)
+        subject.register_activity(TestWorkerActivity)
+
+        subject.start
+
+        expect(workflow_poller_1).to have_received(:start)
+        expect(activity_poller_1).to have_received(:start)
+      end
     end
 
     it 'sleeps while waiting for the shutdown' do

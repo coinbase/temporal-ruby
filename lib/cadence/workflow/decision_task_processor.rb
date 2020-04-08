@@ -5,12 +5,13 @@ require 'cadence/workflow/serializer'
 module Cadence
   class Workflow
     class DecisionTaskProcessor
-      def initialize(task, workflow_lookup, client)
+      def initialize(task, workflow_lookup, client, middleware_chain)
         @task = task
         @task_token = task.taskToken
         @workflow_name = task.workflowType.name
         @workflow_class = workflow_lookup.find(workflow_name)
         @client = client
+        @middleware_chain = middleware_chain
       end
 
       def process
@@ -27,7 +28,10 @@ module Cadence
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        decisions = executor.run
+
+        decisions = middleware_chain.invoke(task) do
+          executor.run
+        end
 
         complete_task(decisions)
       rescue StandardError => error
@@ -41,7 +45,7 @@ module Cadence
 
       private
 
-      attr_reader :task, :task_token, :workflow_name, :workflow_class, :client
+      attr_reader :task, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
 
       def queue_time_ms
         ((task.startedTimestamp - task.scheduledTimestamp) / 1_000_000).round

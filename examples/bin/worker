@@ -5,6 +5,7 @@ require 'cadence/worker'
 
 Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../activities/*.rb', __dir__)].each { |f| require f }
+Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 
 worker = Cadence::Worker.new
 
@@ -38,5 +39,8 @@ worker.register_activity(Trip::CancelFlightActivity)
 worker.register_activity(Trip::CancelHotelActivity)
 worker.register_activity(Trip::MakePaymentActivity)
 worker.register_activity(Trip::RentCarActivity)
+
+worker.add_decision_middleware(LoggingMiddleware, 'decision')
+worker.add_activity_middleware(LoggingMiddleware, 'activity')
 
 worker.start

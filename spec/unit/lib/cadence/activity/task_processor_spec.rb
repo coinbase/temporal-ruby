@@ -1,7 +1,8 @@
 require 'cadence/activity/task_processor'
+require 'cadence/middleware/chain'
 
 describe Cadence::Activity::TaskProcessor do
-  subject { described_class.new(task, lookup, client) }
+  subject { described_class.new(task, lookup, client, middleware_chain) }
 
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
   let(:task) do
@@ -10,6 +11,7 @@ describe Cadence::Activity::TaskProcessor do
   let(:metadata) { Cadence::Activity::Metadata.from_task(task) }
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Cadence::Client::ThriftClient') }
+  let(:middleware_chain) { Cadence::Middleware::Chain.new }
   let(:input) { ['arg1', 'arg2'] }
 
   describe '#process' do
@@ -21,6 +23,8 @@ describe Cadence::Activity::TaskProcessor do
 
       allow(client).to receive(:respond_activity_task_completed)
       allow(client).to receive(:respond_activity_task_failed)
+
+      allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Cadence.metrics).to receive(:timing)
     end
@@ -61,6 +65,12 @@ describe Cadence::Activity::TaskProcessor do
           subject.process
 
           expect(activity_class).to have_received(:execute_in_context).with(context, input)
+        end
+
+        it 'invokes the middleware chain' do
+          subject.process
+
+          expect(middleware_chain).to have_received(:invoke).with(metadata)
         end
 
         it 'completes the activity task' do
@@ -109,6 +119,12 @@ describe Cadence::Activity::TaskProcessor do
           expect(activity_class).to have_received(:execute_in_context).with(context, input)
         end
 
+        it 'invokes the middleware chain' do
+          subject.process
+
+          expect(middleware_chain).to have_received(:invoke).with(metadata)
+        end
+
         it 'fails the activity task' do
           subject.process
 
@@ -142,6 +158,5 @@ describe Cadence::Activity::TaskProcessor do
         end
       end
     end
-
   end
 end

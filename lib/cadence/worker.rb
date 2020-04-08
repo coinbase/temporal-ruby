@@ -3,6 +3,7 @@ require 'cadence/workflow/poller'
 require 'cadence/activity/poller'
 require 'cadence/execution_options'
 require 'cadence/executable_lookup'
+require 'cadence/middleware/entry'
 
 module Cadence
   class Worker
@@ -10,6 +11,8 @@ module Cadence
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
+      @decision_middleware = []
+      @activity_middleware = []
       @shutting_down = false
     end
 
@@ -25,6 +28,14 @@ module Cadence
       key = [execution_options.domain, execution_options.task_list]
 
       @activities[key].add(execution_options.name, activity_class)
+    end
+
+    def add_decision_middleware(middleware_class, *args)
+      @decision_middleware << Middleware::Entry.new(middleware_class, args)
+    end
+
+    def add_activity_middleware(middleware_class, *args)
+      @activity_middleware << Middleware::Entry.new(middleware_class, args)
     end
 
     def start
@@ -54,18 +65,18 @@ module Cadence
 
     private
 
-    attr_reader :activities, :workflows, :pollers
+    attr_reader :activities, :workflows, :pollers, :decision_middleware, :activity_middleware
 
     def shutting_down?
       @shutting_down
     end
 
     def workflow_poller_for(domain, task_list, lookup)
-      Workflow::Poller.new(domain, task_list, lookup.freeze)
+      Workflow::Poller.new(domain, task_list, lookup.freeze, decision_middleware)
     end
 
     def activity_poller_for(domain, task_list, lookup)
-      Activity::Poller.new(domain, task_list, lookup.freeze)
+      Activity::Poller.new(domain, task_list, lookup.freeze, activity_middleware)
     end
 
     def trap_signals
