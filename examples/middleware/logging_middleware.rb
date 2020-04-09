@@ -1,21 +1,30 @@
 class LoggingMiddleware
-  def initialize(scope)
-    @scope = scope
+  def initialize(app_name)
+    @app_name = app_name
   end
 
   def call(metadata)
-    Cadence.logger.info("#{scope}: Started")
+    entity_name = name_from(metadata)
+    Cadence.logger.info("[#{app_name}]: Started #{entity_name}")
 
     yield
 
-    Cadence.logger.info("#{scope}: Finished")
+    Cadence.logger.info("[#{app_name}]: Finished #{entity_name}")
   rescue StandardError => e
-    Cadence.logger.error("#{scope}: Error")
+    Cadence.logger.error("[#{app_name}]: Error #{entity_name}")
 
     raise
   end
 
   private
 
-  attr_reader :scope
+  attr_reader :app_name
+
+  def name_from(metadata)
+    if metadata.activity?
+      metadata.name
+    elsif metadata.decision?
+      metadata.workflow_name
+    end
+  end
 end

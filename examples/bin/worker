@@ -40,7 +40,7 @@ worker.register_activity(Trip::CancelHotelActivity)
 worker.register_activity(Trip::MakePaymentActivity)
 worker.register_activity(Trip::RentCarActivity)
 
-worker.add_decision_middleware(LoggingMiddleware, 'decision')
-worker.add_activity_middleware(LoggingMiddleware, 'activity')
+worker.add_decision_middleware(LoggingMiddleware, 'EXAMPLE')
+worker.add_activity_middleware(LoggingMiddleware, 'EXAMPLE')
 
 worker.start

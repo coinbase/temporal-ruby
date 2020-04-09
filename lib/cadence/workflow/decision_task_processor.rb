@@ -1,6 +1,7 @@
 require 'cadence/workflow/executor'
 require 'cadence/workflow/history'
 require 'cadence/workflow/serializer'
+require 'cadence/metadata'
 
 module Cadence
   class Workflow
@@ -28,8 +29,9 @@ module Cadence
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
+        metadata = Metadata.generate(Metadata::DECISION_TYPE, task)
 
-        decisions = middleware_chain.invoke(task) do
+        decisions = middleware_chain.invoke(metadata) do
           executor.run
         end
 
