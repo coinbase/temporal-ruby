@@ -1,4 +1,4 @@
-require 'cadence/activity/metadata'
+require 'cadence/metadata'
 require 'cadence/activity/context'
 require 'cadence/json'
 
@@ -25,7 +25,7 @@ module Cadence
           return
         end
 
-        metadata = Activity::Metadata.from_task(task)
+        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task)
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do

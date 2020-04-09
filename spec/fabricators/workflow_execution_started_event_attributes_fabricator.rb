@@ -7,6 +7,7 @@ Fabricator(
 ) do
   transient :headers
 
+  workflowType { Fabricate(:workflow_type) }
   originalExecutionRunId { SecureRandom.uuid }
   attempt 1
   header { |attrs| Fabricate(:header, fields: attrs[:headers]) if attrs[:headers] }

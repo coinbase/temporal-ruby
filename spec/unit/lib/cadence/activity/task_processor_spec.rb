@@ -8,7 +8,7 @@ describe Cadence::Activity::TaskProcessor do
   let(:task) do
     Fabricate(:activity_task, activity_name: activity_name, input: Cadence::JSON.serialize(input))
   end
-  let(:metadata) { Cadence::Activity::Metadata.from_task(task) }
+  let(:metadata) { Cadence::Metadata.generate(Cadence::Metadata::ACTIVITY_TYPE, task) }
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Cadence::Client::ThriftClient') }
   let(:middleware_chain) { Cadence::Middleware::Chain.new }
@@ -18,7 +18,10 @@ describe Cadence::Activity::TaskProcessor do
     let(:context) { instance_double('Cadence::Activity::Context') }
 
     before do
-      allow(Cadence::Activity::Metadata).to receive(:from_task).with(task).and_return(metadata)
+      allow(Cadence::Metadata)
+        .to receive(:generate)
+        .with(Cadence::Metadata::ACTIVITY_TYPE, task)
+        .and_return(metadata)
       allow(Cadence::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 
       allow(client).to receive(:respond_activity_task_completed)

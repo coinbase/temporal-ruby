@@ -1,20 +1,9 @@
-module Cadence
-  class Activity
-    class Metadata
-      attr_reader :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
+require 'cadence/metadata/base'
 
-      def self.from_task(task)
-        new(
-          id: task.activityId,
-          name: task.activityType.name,
-          task_token: task.taskToken,
-          attempt: task.attempt,
-          workflow_run_id: task.workflowExecution.runId,
-          workflow_id: task.workflowExecution.workflowId,
-          workflow_name: task.workflowType.name,
-          headers: task.header&.fields || {}
-        )
-      end
+module Cadence
+  module Metadata
+    class Activity < Base
+      attr_reader :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
 
       def initialize(id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:, headers: {})
         @id = id
@@ -27,6 +16,10 @@ module Cadence
         @headers = headers
 
         freeze
+      end
+
+      def activity?
+        true
       end
     end
   end
