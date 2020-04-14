@@ -1,5 +1,6 @@
 require 'cadence/workflow/decision'
 require 'cadence/workflow/serializer/schedule_activity'
+require 'cadence/workflow/serializer/start_child_workflow'
 require 'cadence/workflow/serializer/request_activity_cancellation'
 require 'cadence/workflow/serializer/record_marker'
 require 'cadence/workflow/serializer/start_timer'
@@ -12,6 +13,7 @@ module Cadence
     module Serializer
       SERIALIZERS_MAP = {
         Workflow::Decision::ScheduleActivity => Serializer::ScheduleActivity,
+        Workflow::Decision::StartChildWorkflow => Serializer::StartChildWorkflow,
         Workflow::Decision::RequestActivityCancellation => Serializer::RequestActivityCancellation,
         Workflow::Decision::RecordMarker => Serializer::RecordMarker,
         Workflow::Decision::StartTimer => Serializer::StartTimer,

@@ -35,6 +35,20 @@ module Cadence
         activity_class.execute_in_context(context, input)
       end
 
+      def execute_workflow(workflow_class, *input, **args)
+        raise NotImplementedError, 'not yet available for testing'
+      end
+
+      def execute_workflow!(workflow_class, *input, **args)
+        options = args.delete(:options) || {}
+        input << args unless args.empty?
+
+        execution_options = ExecutionOptions.new(workflow_class, options)
+        context = LocalWorkflowContext.new(workflow_id, execution_options.headers)
+
+        workflow_class.execute_in_context(context, input)
+      end
+
       def side_effect(&block)
         block.call
       end

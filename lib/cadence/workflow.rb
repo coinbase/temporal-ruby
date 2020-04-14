@@ -1,9 +1,11 @@
 require 'cadence/concerns/executable'
+require 'cadence/workflow/convenience_methods'
 require 'cadence/thread_local_context'
 
 module Cadence
   class Workflow
     extend Concerns::Executable
+    extend ConvenienceMethods
 
     def self.execute_in_context(context, input)
       Cadence::ThreadLocalContext.set(context)

@@ -1,3 +1,5 @@
+require 'securerandom'
+
 require 'cadence/execution_options'
 require 'cadence/errors'
 require 'cadence/thread_local_context'
@@ -84,6 +86,53 @@ module Cadence
           context = Activity::Context.new(nil, nil)
           activity_class.execute_in_context(context, input)
         end
+      end
+
+      def execute_workflow(workflow_class, *input, **args)
+        options = args.delete(:options) || {}
+        input << args unless args.empty?
+
+        execution_options = ExecutionOptions.new(workflow_class, options)
+
+        decision = Decision::StartChildWorkflow.new(
+          workflow_id: options[:workflow_id] || SecureRandom.uuid,
+          workflow_type: execution_options.name,
+          input: input,
+          domain: execution_options.domain,
+          task_list: execution_options.task_list,
+          retry_policy: execution_options.retry_policy,
+          timeouts: execution_options.timeouts,
+          headers: execution_options.headers
+        )
+
+        target, cancelation_id = schedule_decision(decision)
+        future = Future.new(target, self, cancelation_id: cancelation_id)
+
+        dispatcher.register_handler(target, 'completed') do |result|
+          future.set(result)
+          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+        end
+
+        dispatcher.register_handler(target, 'failed') do |reason, details|
+          future.fail(reason, details)
+        end
+
+        future
+      end
+
+      def execute_workflow!(workflow_class, *input, **args)
+        future = execute_worfklow(workflow_class, *input, **args)
+        result = future.get
+
+        if future.failed?
+          reason, details = result
+
+          error_class = safe_constantize(reason) || StandardError.new(details)
+
+          raise error_class, details
+        end
+
+        result
       end
 
       def side_effect(&block)

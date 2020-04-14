@@ -33,6 +33,8 @@ module Cadence
           case decision
           when Decision::ScheduleActivity
             decision.activity_id ||= decision_id
+          when Decision::StartChildWorkflow
+            decision.workflow_id ||= decision_id
           when Decision::StartTimer
             decision.timer_id ||= decision_id
           end
@@ -185,25 +187,32 @@ module Cadence
           # todo
 
         when 'StartChildWorkflowExecutionInitiated'
-          # todo
+          state_machine.schedule
+          discard_decision(event.decision_id)
 
         when 'StartChildWorkflowExecutionFailed'
-          # todo
+          state_machine.fail
+          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause))
 
         when 'ChildWorkflowExecutionStarted'
-          # todo
+          state_machine.start
 
         when 'ChildWorkflowExecutionCompleted'
-          # todo
+          state_machine.complete
+          dispatch(target, 'completed', safe_parse(event.attributes.result))
 
         when 'ChildWorkflowExecutionFailed'
-          # todo
+          state_machine.fail
+          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details))
 
         when 'ChildWorkflowExecutionCanceled'
-          # todo
+          state_machine.cancel
+          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details))
 
         when 'ChildWorkflowExecutionTimedOut'
-          # todo
+          state_machine.time_out
+          type = CadenceThrift::TimeoutType::VALUE_MAP[event.attributes.timeoutType]
+          dispatch(target, 'failed', 'Cadence::TimeoutError', "Timeout type: #{type}")
 
         when 'ChildWorkflowExecutionTerminated'
           # todo
@@ -240,6 +249,8 @@ module Cadence
             History::EventTarget::CANCEL_TIMER_REQUEST_TYPE
           when Decision::CompleteWorkflow, Decision::FailWorkflow
             History::EventTarget::WORKFLOW_TYPE
+          when Decision::StartChildWorkflow
+            History::EventTarget::CHILD_WORKFLOW_TYPE
           end
 
         History::EventTarget.new(decision_id, target_type)

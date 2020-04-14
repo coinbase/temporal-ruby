@@ -12,6 +12,13 @@ module Cadence
           RequestCancelExternalWorkflowExecutionFailed
           WorkflowExecutionSignaled
           WorkflowExecutionTerminated
+          SignalExternalWorkflowExecutionFailed
+          ExternalWorkflowExecutionCancelRequested
+          ExternalWorkflowExecutionSignaled
+          UpsertWorkflowSearchAttributes
+        ].freeze
+
+        CHILD_WORKFLOW_EVENTS = %w[
           StartChildWorkflowExecutionFailed
           ChildWorkflowExecutionStarted
           ChildWorkflowExecutionCompleted
@@ -19,10 +26,6 @@ module Cadence
           ChildWorkflowExecutionCanceled
           ChildWorkflowExecutionTimedOut
           ChildWorkflowExecutionTerminated
-          SignalExternalWorkflowExecutionFailed
-          ExternalWorkflowExecutionCancelRequested
-          ExternalWorkflowExecutionSignaled
-          UpsertWorkflowSearchAttributes
         ].freeze
 
         attr_reader :id, :timestamp, :type, :attributes
@@ -45,8 +48,9 @@ module Cadence
           when 'WorkflowExecutionSignaled'
             1 # fixed id for everything related to current workflow
           when *EVENT_TYPES
-            # TODO: this will not work for child workflows
             attributes.scheduledEventId
+          when *CHILD_WORKFLOW_EVENTS
+            attributes.initiatedEventId
           else
             id
           end
