@@ -6,6 +6,7 @@ describe Cadence::Metadata::Decision do
     let(:args) { Fabricate(:decision_metadata) }
 
     it 'sets the attributes' do
+      expect(subject.domain).to eq(args.domain)
       expect(subject.id).to eq(args.id)
       expect(subject.task_token).to eq(args.task_token)
       expect(subject.attempt).to eq(args.attempt)

@@ -2,8 +2,9 @@ require 'cadence/activity/task_processor'
 require 'cadence/middleware/chain'
 
 describe Cadence::Activity::TaskProcessor do
-  subject { described_class.new(task, lookup, client, middleware_chain) }
+  subject { described_class.new(task, domain, lookup, client, middleware_chain) }
 
+  let(:domain) { 'test-domain' }
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
   let(:task) do
     Fabricate(:activity_task, activity_name: activity_name, input: Cadence::JSON.serialize(input))
@@ -15,12 +16,12 @@ describe Cadence::Activity::TaskProcessor do
   let(:input) { ['arg1', 'arg2'] }
 
   describe '#process' do
-    let(:context) { instance_double('Cadence::Activity::Context') }
+    let(:context) { instance_double('Cadence::Activity::Context', async?: false) }
 
     before do
       allow(Cadence::Metadata)
         .to receive(:generate)
-        .with(Cadence::Metadata::ACTIVITY_TYPE, task)
+        .with(Cadence::Metadata::ACTIVITY_TYPE, task, domain)
         .and_return(metadata)
       allow(Cadence::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 
@@ -107,6 +108,16 @@ describe Cadence::Activity::TaskProcessor do
             .to have_received(:timing)
             .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
         end
+
+        context 'with async activity' do
+          before { allow(context).to receive(:async?).and_return(true) }
+
+          it 'does not complete the activity task' do
+            subject.process
+
+            expect(client).not_to have_received(:respond_activity_task_completed)
+          end
+        end
       end
 
       context 'when activity raises an exception' do
@@ -158,6 +169,18 @@ describe Cadence::Activity::TaskProcessor do
           expect(Cadence.metrics)
             .to have_received(:timing)
             .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
+        end
+
+        context 'with async activity' do
+          before { allow(context).to receive(:async?).and_return(true) }
+
+          it 'fails the activity task' do
+            subject.process
+
+            expect(client)
+              .to have_received(:respond_activity_task_failed)
+              .with(task_token: task.taskToken, reason: 'StandardError', details: 'activity failed')
+          end
         end
       end
     end

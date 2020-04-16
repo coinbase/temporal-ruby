@@ -179,6 +179,67 @@ describe Cadence do
           .with(name: 'new-domain', description: 'domain description')
       end
     end
+
+    context 'activity operations' do
+      let(:domain) { 'test-domain' }
+      let(:activity_id) { rand(100).to_s }
+      let(:workflow_id) { SecureRandom.uuid }
+      let(:run_id) { SecureRandom.uuid }
+      let(:async_token) do
+        Cadence::Activity::AsyncToken.encode(domain, activity_id, workflow_id, run_id)
+      end
+
+      describe '.complete_activity' do
+        before { allow(client).to receive(:respond_activity_task_completed_by_id).and_return(nil) }
+
+        it 'completes activity with a result' do
+          described_class.complete_activity(async_token, 'all work completed')
+
+          expect(client)
+            .to have_received(:respond_activity_task_completed_by_id)
+            .with(
+              domain: domain,
+              activity_id: activity_id,
+              workflow_id: workflow_id,
+              run_id: run_id,
+              result: 'all work completed'
+            )
+        end
+
+        it 'completes activity without a result' do
+          described_class.complete_activity(async_token)
+
+          expect(client)
+            .to have_received(:respond_activity_task_completed_by_id)
+            .with(
+              domain: domain,
+              activity_id: activity_id,
+              workflow_id: workflow_id,
+              run_id: run_id,
+              result: nil
+            )
+        end
+      end
+
+      describe '.fail_activity' do
+        before { allow(client).to receive(:respond_activity_task_failed_by_id).and_return(nil) }
+
+        it 'fails activity with a provided error' do
+          described_class.fail_activity(async_token, StandardError.new('something went wrong'))
+
+          expect(client)
+            .to have_received(:respond_activity_task_failed_by_id)
+            .with(
+              domain: domain,
+              activity_id: activity_id,
+              workflow_id: workflow_id,
+              run_id: run_id,
+              reason: 'StandardError',
+              details: 'something went wrong'
+            )
+        end
+      end
+    end
   end
 
   describe '.configure' do

@@ -10,12 +10,12 @@ module Cadence
     WORKFLOW_TYPE = :workflow
 
     class << self
-      def generate(type, data)
+      def generate(type, data, domain = nil)
         case type
         when ACTIVITY_TYPE
-          activity_metadata_from(data)
+          activity_metadata_from(data, domain)
         when DECISION_TYPE
-          decision_metadata_from(data)
+          decision_metadata_from(data, domain)
         when WORKFLOW_TYPE
           workflow_metadata_from(data)
         else
@@ -25,8 +25,9 @@ module Cadence
 
       private
 
-      def activity_metadata_from(task)
+      def activity_metadata_from(task, domain)
         Metadata::Activity.new(
+          domain: domain,
           id: task.activityId,
           name: task.activityType.name,
           task_token: task.taskToken,
@@ -38,8 +39,9 @@ module Cadence
         )
       end
 
-      def decision_metadata_from(task)
+      def decision_metadata_from(task, domain)
         Metadata::Decision.new(
+          domain: domain,
           id: task.startedEventId,
           task_token: task.taskToken,
           attempt: task.attempt,

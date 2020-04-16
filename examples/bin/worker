@@ -9,6 +9,7 @@ Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 
 worker = Cadence::Worker.new
 
+worker.register_workflow(AsyncActivityWorkflow)
 worker.register_workflow(AsyncHelloWorldWorkflow)
 worker.register_workflow(BranchingWorkflow)
 worker.register_workflow(CancellingTimerWorkflow)
@@ -25,6 +26,7 @@ worker.register_workflow(SimpleTimerWorkflow)
 worker.register_workflow(TimeoutWorkflow)
 worker.register_workflow(TripBookingWorkflow)
 
+worker.register_activity(AsyncActivity)
 worker.register_activity(GenerateFileActivity)
 worker.register_activity(HelloWorldActivity)
 worker.register_activity(LongRunningActivity)

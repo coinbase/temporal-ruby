@@ -68,7 +68,7 @@ module Cadence
         client = Cadence::Client.generate
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, activity_lookup, client, middleware_chain).process
+        TaskProcessor.new(task, domain, activity_lookup, client, middleware_chain).process
       end
 
       def thread_pool

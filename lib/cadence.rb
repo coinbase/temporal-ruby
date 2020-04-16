@@ -3,6 +3,7 @@ require 'cadence/configuration'
 require 'cadence/execution_options'
 require 'cadence/client'
 require 'cadence/activity'
+require 'cadence/activity/async_token'
 require 'cadence/workflow'
 require 'cadence/workflow/history'
 require 'cadence/metrics'
@@ -65,6 +66,31 @@ module Cadence
       )
 
       response.runId
+    end
+
+    def complete_activity(async_token, result = nil)
+      details = Activity::AsyncToken.decode(async_token)
+
+      client.respond_activity_task_completed_by_id(
+        domain: details.domain,
+        activity_id: details.activity_id,
+        workflow_id: details.workflow_id,
+        run_id: details.run_id,
+        result: result
+      )
+    end
+
+    def fail_activity(async_token, error)
+      details = Activity::AsyncToken.decode(async_token)
+
+      client.respond_activity_task_failed_by_id(
+        domain: details.domain,
+        activity_id: details.activity_id,
+        workflow_id: details.workflow_id,
+        run_id: details.run_id,
+        reason: error.class.name,
+        details: error.message
+      )
     end
 
     def configure(&block)

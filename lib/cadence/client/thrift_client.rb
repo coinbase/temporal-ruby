@@ -170,8 +170,16 @@ module Cadence
         send_request('RespondActivityTaskCompleted', request)
       end
 
-      def respond_activity_task_completed_by_id
-        raise NotImplementedError
+      def respond_activity_task_completed_by_id(domain:, activity_id:, workflow_id:, run_id:, result:)
+        request = CadenceThrift::RespondActivityTaskCompletedByIDRequest.new(
+          identity: identity,
+          domain: domain,
+          workflowID: workflow_id,
+          runID: run_id,
+          activityID: activity_id,
+          result: JSON.serialize(result)
+        )
+        send_request('RespondActivityTaskCompletedByID', request)
       end
 
       def respond_activity_task_failed(task_token:, reason:, details: nil)
@@ -184,8 +192,17 @@ module Cadence
         send_request('RespondActivityTaskFailed', request)
       end
 
-      def respond_activity_task_failed_by_id
-        raise NotImplementedError
+      def respond_activity_task_failed_by_id(domain:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
+        request = CadenceThrift::RespondActivityTaskFailedByIDRequest.new(
+          identity: identity,
+          domain: domain,
+          workflowID: workflow_id,
+          runID: run_id,
+          activityID: activity_id,
+          reason: reason,
+          details: JSON.serialize(details)
+        )
+        send_request('RespondActivityTaskFailedByID', request)
       end
 
       def respond_activity_task_canceled(task_token:, details: nil)

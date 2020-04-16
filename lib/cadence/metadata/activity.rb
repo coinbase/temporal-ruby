@@ -3,9 +3,10 @@ require 'cadence/metadata/base'
 module Cadence
   module Metadata
     class Activity < Base
-      attr_reader :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
+      attr_reader :domain, :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
 
-      def initialize(id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:, headers: {})
+      def initialize(domain:, id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:, headers: {})
+        @domain = domain
         @id = id
         @name = name
         @task_token = task_token

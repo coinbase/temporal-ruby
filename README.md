@@ -228,6 +228,52 @@ To achieve this there are two methods (returning a UUID token) available from yo
 
 Both tokens will remain the same across multiple retry attempts of the activity.
 
+### Asynchronous completion
+
+When dealing with asynchronous business logic in your activities, you might need to wait for an
+external event to complete your activity (e.g. a callback or a webhook). This can be achieved by
+manually completing your activity using a provided `async_token` from activity's context:
+
+```ruby
+class AsyncActivity < Cadence::Activity
+  def execute(user_id)
+    user = User.find_by(id: user_id)
+
+    # Pass the async_token to complete your activity later
+    ExternalSystem.verify_user(user, activity.async_token)
+
+    activity.async # prevents activity from completing immediately
+  end
+end
+```
+
+Later when a confirmation is received you'll need to complete your activity manually using the token
+provided:
+
+```ruby
+Cadence.complete_activity(async_token, result)
+```
+
+Similarly you can fail the activity by calling:
+
+```ruby
+Cadence.fail_activity(async_token, MyError.new('Something went wrong'))
+```
+
+This doesn't change the behaviour from the workflow's perspective — as any other activity the result
+will be returned or an error raised.
+
+*NOTE: Make sure to configure your timeouts accordingly and not to set heartbeat timeout (off by
+default) since you won't be able to emit heartbeats and your async activities will keep timing out.*
+
+Similar behaviour can also be achieved in other ways (one which might be more preferable in your
+specific use-case), e.g.:
+
+- by polling for a result within your activity (long-running activities with heartbeat)
+- using retry policy to keep retrying activity until a result is available
+- completing your activity after the initial call is made, but then waiting on a completion signal
+from your workflow
+
 
 ## Worker
 

@@ -2,6 +2,7 @@
 # and provides context and methods for interacting with Cadence
 #
 require 'cadence/uuid'
+require 'cadence/activity/async_token'
 
 module Cadence
   class Activity
@@ -9,6 +10,24 @@ module Cadence
       def initialize(client, metadata)
         @client = client
         @metadata = metadata
+        @async = false
+      end
+
+      def async
+        @async = true
+      end
+
+      def async?
+        @async
+      end
+
+      def async_token
+        AsyncToken.encode(
+          metadata.domain,
+          metadata.id,
+          metadata.workflow_id,
+          metadata.workflow_run_id
+        )
       end
 
       def heartbeat(details = nil)

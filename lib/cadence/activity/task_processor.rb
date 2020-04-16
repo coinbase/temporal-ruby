@@ -5,8 +5,9 @@ require 'cadence/json'
 module Cadence
   class Activity
     class TaskProcessor
-      def initialize(task, activity_lookup, client, middleware_chain)
+      def initialize(task, domain, activity_lookup, client, middleware_chain)
         @task = task
+        @domain = domain
         @task_token = task.taskToken
         @activity_name = task.activityType.name
         @activity_class = activity_lookup.find(activity_name)
@@ -25,14 +26,15 @@ module Cadence
           return
         end
 
-        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task)
+        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, domain)
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
           activity_class.execute_in_context(context, JSON.deserialize(task.input))
         end
 
-        respond_completed(result)
+        # Do not complete asynchronous activities, these should be completed manually
+        respond_completed(result) unless context.async?
       rescue StandardError => error
         respond_failed(error.class.name, error.message)
       ensure
@@ -43,7 +45,7 @@ module Cadence
 
       private
 
-      attr_reader :task, :task_token, :activity_name, :activity_class, :client, :middleware_chain
+      attr_reader :task, :domain, :task_token, :activity_name, :activity_class, :client, :middleware_chain
 
       def queue_time_ms
         ((task.startedTimestamp - task.scheduledTimestampOfThisAttempt) / 1_000_000).round

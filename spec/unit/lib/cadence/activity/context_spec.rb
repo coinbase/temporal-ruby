@@ -29,6 +29,41 @@ describe Cadence::Activity::Context do
     end
   end
 
+  describe '#async!' do
+    it 'marks activity context as async' do
+      expect { subject.async }.to change { subject.async? }.from(false).to(true)
+    end
+  end
+
+  describe '#async?' do
+    subject { context.async? }
+    let(:context) { described_class.new(client, metadata) }
+
+    context 'when context is sync' do
+      it { is_expected.to eq(false) }
+    end
+
+    context 'when context is async' do
+      before { context.async }
+
+      it { is_expected.to eq(true) }
+    end
+  end
+
+  describe '#async_token' do
+    it 'returns async token' do
+      expect(subject.async_token)
+        .to eq(
+          Cadence::Activity::AsyncToken.encode(
+            metadata.domain,
+            metadata.id,
+            metadata.workflow_id,
+            metadata.workflow_run_id
+          )
+        )
+    end
+  end
+
   describe '#logger' do
     let(:logger) { instance_double('Logger') }
 

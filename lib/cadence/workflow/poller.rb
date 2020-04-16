@@ -60,7 +60,7 @@ module Cadence
       end
 
       def process(task)
-        DecisionTaskProcessor.new(task, workflow_lookup, client, middleware_chain).process
+        DecisionTaskProcessor.new(task, domain, workflow_lookup, client, middleware_chain).process
       end
     end
   end

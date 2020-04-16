@@ -6,8 +6,9 @@ require 'cadence/metadata'
 module Cadence
   class Workflow
     class DecisionTaskProcessor
-      def initialize(task, workflow_lookup, client, middleware_chain)
+      def initialize(task, domain, workflow_lookup, client, middleware_chain)
         @task = task
+        @domain = domain
         @task_token = task.taskToken
         @workflow_name = task.workflowType.name
         @workflow_class = workflow_lookup.find(workflow_name)
@@ -29,7 +30,7 @@ module Cadence
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        metadata = Metadata.generate(Metadata::DECISION_TYPE, task)
+        metadata = Metadata.generate(Metadata::DECISION_TYPE, task, domain)
 
         decisions = middleware_chain.invoke(metadata) do
           executor.run
@@ -47,7 +48,7 @@ module Cadence
 
       private
 
-      attr_reader :task, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
+      attr_reader :task, :domain, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
 
       def queue_time_ms
         ((task.startedTimestamp - task.scheduledTimestamp) / 1_000_000).round
