@@ -1,0 +1,39 @@
+version: '3'
+services:
+  cadence:
+    image: ubercadence/server:master-auto-setup
+    ports:
+     - "7933:7933"
+     - "7934:7934"
+     - "7935:7935"
+     - "7939:7939"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra"
+      - "PROMETHEUS_ENDPOINT=localhost"
+      - "DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml"
+    depends_on:
+      - cassandra
+
+  cadence-web:
+    image: ubercadence/web:latest
+    environment:
+      - "CADENCE_TCHANNEL_PEERS=cadence:7933"
+    ports:
+      - "8088:8088"
+    depends_on:
+      - cadence
+
+  cassandra:
+    image: cassandra:3.11
+    ports:
+      - "9042:9042"
+
+  proxy:
+    image: antstorm/cadence-tchannel-proxy:latest
+    environment:
+      - "BIND_ADDRESS=0.0.0.0:6666"
+      - "CADENCE_ADDRESS=cadence:7933"
+    ports:
+      - "6666:6666"
+    depends_on:
+      - cadence
