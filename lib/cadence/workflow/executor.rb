@@ -13,7 +13,6 @@ module Cadence
         @dispatcher = Dispatcher.new
         @state_manager = StateManager.new(dispatcher)
         @history = history
-        @new_decisions = []
       end
 
       def run
@@ -32,7 +31,7 @@ module Cadence
 
       private
 
-      attr_reader :workflow_class, :dispatcher, :state_manager, :history, :new_decisions
+      attr_reader :workflow_class, :dispatcher, :state_manager, :history
 
       def execute_workflow(input, metadata)
         context = Workflow::Context.new(state_manager, dispatcher, metadata)
