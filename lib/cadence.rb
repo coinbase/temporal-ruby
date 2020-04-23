@@ -46,23 +46,16 @@ module Cadence
       )
     end
 
-    def reset_workflow(domain, workflow_id, run_id, reason = 'manual reset')
-      history_response = client.get_workflow_execution_history(
-        domain: domain,
-        workflow_id: workflow_id,
-        run_id: run_id
-      )
-      history = Workflow::History.new(history_response.history.events)
-      decision_task_event = history.last_completed_decision_task
-
-      raise Error, 'Could not find a completed decision task event' unless decision_task_event
+    def reset_workflow(domain, workflow_id, run_id, decision_task_id: nil, reason: 'manual reset')
+      decision_task_id ||= get_last_completed_decision_task(domain, workflow_id, run_id)
+      raise Error, 'Could not find a completed decision task event' unless decision_task_id
 
       response = client.reset_workflow_execution(
         domain: domain,
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
-        decision_task_event_id: decision_task_event.id
+        decision_task_event_id: decision_task_id
       )
 
       response.runId
@@ -113,6 +106,18 @@ module Cadence
 
     def client
       @client ||= Cadence::Client.generate
+    end
+
+    def get_last_completed_decision_task(domain, workflow_id, run_id)
+      history_response = client.get_workflow_execution_history(
+        domain: domain,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      decision_task_event = history.last_completed_decision_task
+
+      decision_task_event&.id
     end
   end
 end
