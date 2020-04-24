@@ -1,6 +1,7 @@
 require 'securerandom'
 require 'cadence/testing/local_activity_context'
 require 'cadence/execution_options'
+require 'cadence/metadata/activity'
 
 module Cadence
   module Testing
@@ -30,7 +31,19 @@ module Cadence
         input << args unless args.empty?
 
         execution_options = ExecutionOptions.new(activity_class, options)
-        context = LocalActivityContext.new(run_id, workflow_id, execution_options.headers)
+        activity_id = options[:activity_id] || SecureRandom.uuid
+        metadata = Metadata::Activity.new(
+          domain: execution_options.domain,
+          id: activity_id,
+          name: execution_options.name,
+          task_token: nil,
+          attempt: 1,
+          workflow_run_id: run_id,
+          workflow_id: workflow_id,
+          workflow_name: nil, # not yet used, but will be in the future
+          headers: execution_options.headers
+        )
+        context = LocalActivityContext.new(metadata)
 
         activity_class.execute_in_context(context, input)
       end
