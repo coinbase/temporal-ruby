@@ -297,8 +297,15 @@ module Cadence
         raise NotImplementedError
       end
 
-      def describe_workflow_execution
-        raise NotImplementedError
+      def describe_workflow_execution(domain:, workflow_id:, run_id:)
+        request = CadenceThrift::DescribeWorkflowExecutionRequest.new(
+          domain: domain,
+          execution: CadenceThrift::WorkflowExecution.new(
+            workflowId: workflow_id,
+            runId: run_id
+          )
+        )
+        send_request('DescribeWorkflowExecution', request)
       end
 
       def describe_task_list(domain:, task_list:)

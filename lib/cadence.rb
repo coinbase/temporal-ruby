@@ -6,6 +6,7 @@ require 'cadence/activity'
 require 'cadence/activity/async_token'
 require 'cadence/workflow'
 require 'cadence/workflow/history'
+require 'cadence/workflow/execution_info'
 require 'cadence/metrics'
 
 module Cadence
@@ -59,6 +60,16 @@ module Cadence
       )
 
       response.runId
+    end
+
+    def fetch_workflow_execution_info(domain, workflow_id, run_id)
+      response = client.describe_workflow_execution(
+        domain: domain,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+
+      Workflow::ExecutionInfo.generate_from(response.workflowExecutionInfo)
     end
 
     def complete_activity(async_token, result = nil)

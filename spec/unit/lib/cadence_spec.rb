@@ -180,6 +180,32 @@ describe Cadence do
       end
     end
 
+    describe '.fetch_workflow_execution_info' do
+      let(:response) do
+        instance_double(
+          CadenceThrift::DescribeWorkflowExecutionResponse,
+          workflowExecutionInfo: info_thrift
+        )
+      end
+      let(:info_thrift) { Fabricate(:workflow_execution_info_thrift) }
+
+      before { allow(client).to receive(:describe_workflow_execution).and_return(response) }
+
+      it 'requests execution info from Cadence' do
+        described_class.fetch_workflow_execution_info('domain', '111', '222')
+
+        expect(client)
+          .to have_received(:describe_workflow_execution)
+          .with(domain: 'domain', workflow_id: '111', run_id: '222')
+      end
+
+      it 'returns Workflow::ExecutionInfo' do
+        info = described_class.fetch_workflow_execution_info('domain', '111', '222')
+
+        expect(info).to be_a(Cadence::Workflow::ExecutionInfo)
+      end
+    end
+
     context 'activity operations' do
       let(:domain) { 'test-domain' }
       let(:activity_id) { rand(100).to_s }
