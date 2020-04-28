@@ -7,7 +7,7 @@ describe Cadence::Activity::TaskProcessor do
   let(:domain) { 'test-domain' }
   let(:lookup) { instance_double('Cadence::ExecutableLookup', find: nil) }
   let(:task) do
-    Fabricate(:activity_task, activity_name: activity_name, input: Cadence::JSON.serialize(input))
+    Fabricate(:activity_task_thrift, activity_name: activity_name, input: Cadence::JSON.serialize(input))
   end
   let(:metadata) { Cadence::Metadata.generate(Cadence::Metadata::ACTIVITY_TYPE, task) }
   let(:activity_name) { 'TestActivity' }

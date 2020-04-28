@@ -1,3 +1,5 @@
+require 'cadence/utils'
+
 module Cadence
   class Workflow
     class History
@@ -32,7 +34,7 @@ module Cadence
 
         def initialize(raw_event)
           @id = raw_event.eventId
-          @timestamp = parse_timestamp(raw_event.timestamp)
+          @timestamp = Utils.time_from_nanos(raw_event.timestamp)
           @type = CadenceThrift::EventType::VALUE_MAP[raw_event.eventType]
           @attributes = extract_attributes(raw_event)
 
@@ -57,11 +59,6 @@ module Cadence
         end
 
         private
-
-        def parse_timestamp(timestamp)
-          seconds, nanoseconds = timestamp.divmod(1_000_000_000)
-          Time.at(seconds, nanoseconds, :nsec)
-        end
 
         def extract_attributes(raw_event)
           attributes_argument = "#{type}EventAttributes"

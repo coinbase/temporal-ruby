@@ -36,7 +36,7 @@ describe Cadence::Activity::Poller do
 
     context 'when an activity task is received' do
       let(:task_processor) { instance_double(Cadence::Activity::TaskProcessor, process: nil) }
-      let(:task) { Fabricate(:activity_task) }
+      let(:task) { Fabricate(:activity_task_thrift) }
 
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)

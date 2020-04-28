@@ -6,7 +6,7 @@ describe Cadence::Metadata do
 
     context 'with activity type' do
       let(:type) { described_class::ACTIVITY_TYPE }
-      let(:data) { Fabricate(:activity_task) }
+      let(:data) { Fabricate(:activity_task_thrift) }
       let(:domain) { 'test-domain' }
 
       it 'generates metadata' do
@@ -22,7 +22,7 @@ describe Cadence::Metadata do
       end
 
       context 'with headers' do
-        let(:data) { Fabricate(:activity_task, headers: { 'Foo' => 'Bar' }) }
+        let(:data) { Fabricate(:activity_task_thrift, headers: { 'Foo' => 'Bar' }) }
 
         it 'assigns headers' do
           expect(subject.headers).to eq('Foo' => 'Bar')
@@ -32,7 +32,7 @@ describe Cadence::Metadata do
 
     context 'with decision type' do
       let(:type) { described_class::DECISION_TYPE }
-      let(:data) { Fabricate(:decision_task) }
+      let(:data) { Fabricate(:decision_task_thrift) }
       let(:domain) { 'test-domain' }
 
       it 'generates metadata' do
@@ -48,7 +48,7 @@ describe Cadence::Metadata do
 
     context 'with workflow type' do
       let(:type) { described_class::WORKFLOW_TYPE }
-      let(:data) { Fabricate(:worklfow_execution_started_event_attributes) }
+      let(:data) { Fabricate(:worklfow_execution_started_event_attributes_thrift) }
       let(:domain) { nil }
 
       it 'generates metadata' do
@@ -59,7 +59,7 @@ describe Cadence::Metadata do
 
       context 'with headers' do
         let(:data) do
-          Fabricate(:worklfow_execution_started_event_attributes, headers: { 'Foo' => 'Bar' })
+          Fabricate(:worklfow_execution_started_event_attributes_thrift, headers: { 'Foo' => 'Bar' })
         end
 
         it 'assigns headers' do
