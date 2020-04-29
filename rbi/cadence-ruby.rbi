@@ -14,8 +14,12 @@ module Cadence
   module Saga
     module Concern; end
   end
-  module Testing; end
-  class Workflow; end
+  module Testing
+    class LocalActivityContext; end
+  end
+  class Workflow
+    class ExecutionInfo; end
+  end
   class Worker; end
 end
 module CadenceThrift
