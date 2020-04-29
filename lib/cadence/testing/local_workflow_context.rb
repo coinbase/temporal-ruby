@@ -2,14 +2,18 @@ require 'securerandom'
 require 'cadence/testing/local_activity_context'
 require 'cadence/execution_options'
 require 'cadence/metadata/activity'
+require 'cadence/workflow/future'
+require 'cadence/workflow/history/event_target'
 
 module Cadence
   module Testing
     class LocalWorkflowContext
       attr_reader :headers
 
-      def initialize(workflow_id = nil, headers = {})
-        @run_id = SecureRandom.uuid
+      def initialize(execution = nil, workflow_id = nil, run_id = nil, headers = {})
+        @last_event_id = 0
+        @execution = execution
+        @run_id = run_id || SecureRandom.uuid
         @workflow_id = workflow_id || SecureRandom.uuid
         @headers = headers
       end
@@ -19,11 +23,54 @@ module Cadence
       end
 
       def execute_activity(activity_class, *input, **args)
-        raise NotImplementedError, 'not yet available for testing'
+        options = args.delete(:options) || {}
+        input << args unless args.empty?
+
+        event_id = next_event_id
+        activity_id = options[:activity_id] || event_id
+
+        target = Workflow::History::EventTarget.new(event_id, Workflow::History::EventTarget::ACTIVITY_TYPE)
+        future = Workflow::Future.new(target, self, cancelation_id: activity_id)
+
+        execution_options = ExecutionOptions.new(activity_class, options)
+        metadata = Metadata::Activity.new(
+          domain: execution_options.domain,
+          id: activity_id,
+          name: execution_options.name,
+          task_token: nil,
+          attempt: 1,
+          workflow_run_id: run_id,
+          workflow_id: workflow_id,
+          workflow_name: nil, # not yet used, but will be in the future
+          headers: execution_options.headers
+        )
+        context = LocalActivityContext.new(metadata)
+
+        result = activity_class.execute_in_context(context, input)
+
+        if context.async?
+          execution.register_future(context.async_token, future)
+        else
+          # Fulfil the future straigt away for non-async activities
+          future.set(result)
+        end
+
+        future
       end
 
       def execute_activity!(activity_class, *input, **args)
-        execute_local_activity(activity_class, *input, **args)
+        future = execute_activity(activity_class, *input, **args)
+        result = future.get
+
+        if future.failed?
+          reason, details = result
+
+          error_class = safe_constantize(reason) || Cadence::ActivityException
+
+          raise error_class, details
+        end
+
+        result
       end
 
       def execute_local_activity(activity_class, *input, **args)
@@ -79,22 +126,24 @@ module Cadence
       end
 
       def complete(result = nil)
-        result # return the result
+        result
       end
 
       def fail(reason, details = nil)
-        p reason
-        p details
+        error_class = safe_constantize(reason) || StandardError
 
-        raise reason
+        raise error_class, details
       end
 
       def wait_for_all(*futures)
-        raise NotImplementedError, 'not yet available for testing'
+        futures.each(&:wait)
+
+        return
       end
 
       def wait_for(future)
-        raise NotImplementedError, 'not yet available for testing'
+        # Point of communication
+        Fiber.yield while !future.finished?
       end
 
       def now
@@ -115,7 +164,18 @@ module Cadence
 
       private
 
-      attr_reader :run_id, :workflow_id
+      attr_reader :execution, :run_id, :workflow_id
+
+      def next_event_id
+        @last_event_id += 1
+        @last_event_id
+      end
+
+      def safe_constantize(const)
+        Object.const_get(const) if Object.const_defined?(const)
+      rescue NameError
+        nil
+      end
     end
   end
 end

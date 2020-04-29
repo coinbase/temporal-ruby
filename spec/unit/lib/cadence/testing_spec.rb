@@ -58,22 +58,29 @@ describe Cadence::Testing::CadenceOverride do
           )
         end
 
+        let(:execution) { instance_double(Cadence::Testing::WorkflowExecution, status: status) }
         let(:workflow_id) { SecureRandom.uuid }
+        let(:run_id) { SecureRandom.uuid }
         let(:error_class) { CadenceThrift::WorkflowExecutionAlreadyStartedError }
 
-        before { Cadence.send(:executions)[workflow_id] = state }
+        # Simulate exiwting execution
+        before do
+          if execution
+            Cadence.send(:executions)[[workflow_id, run_id]] = execution
+          end
+        end
 
         context 'reuse policy is :allow_failed' do
           let(:policy) { :allow_failed }
 
           context 'when workflow was not yet started' do
-            let(:state) { nil }
+            let(:execution) { nil }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
 
           context 'when workflow is started' do
-            let(:state) { :started }
+            let(:status) { Cadence::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)
@@ -81,7 +88,7 @@ describe Cadence::Testing::CadenceOverride do
           end
 
           context 'when workflow has completed' do
-            let(:state) { :completed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::COMPLETED_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)
@@ -89,9 +96,9 @@ describe Cadence::Testing::CadenceOverride do
           end
 
           context 'when workflow has failed' do
-            let(:state) { :failed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::FAILED_STATUS }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
         end
 
@@ -99,13 +106,13 @@ describe Cadence::Testing::CadenceOverride do
           let(:policy) { :allow }
 
           context 'when workflow was not yet started' do
-            let(:state) { nil }
+            let(:execution) { nil }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
 
           context 'when workflow is started' do
-            let(:state) { :started }
+            let(:status) { Cadence::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)
@@ -113,15 +120,15 @@ describe Cadence::Testing::CadenceOverride do
           end
 
           context 'when workflow has completed' do
-            let(:state) { :completed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::COMPLETED_STATUS }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
 
           context 'when workflow has failed' do
-            let(:state) { :failed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::FAILED_STATUS }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
         end
 
@@ -129,13 +136,13 @@ describe Cadence::Testing::CadenceOverride do
           let(:policy) { :reject }
 
           context 'when workflow was not yet started' do
-            let(:state) { nil }
+            let(:execution) { nil }
 
-            it { is_expected.to eq(nil) }
+            it { is_expected.to be_a(String) }
           end
 
           context 'when workflow is started' do
-            let(:state) { :started }
+            let(:status) { Cadence::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)
@@ -143,7 +150,7 @@ describe Cadence::Testing::CadenceOverride do
           end
 
           context 'when workflow has completed' do
-            let(:state) { :completed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::COMPLETED_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)
@@ -151,7 +158,7 @@ describe Cadence::Testing::CadenceOverride do
           end
 
           context 'when workflow has failed' do
-            let(:state) { :failed }
+            let(:status) { Cadence::Workflow::ExecutionInfo::FAILED_STATUS }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class)

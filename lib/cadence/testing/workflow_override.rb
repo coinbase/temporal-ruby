@@ -5,12 +5,7 @@ module Cadence
     module WorkflowOverride
       def execute_locally(*input)
         context = Cadence::Testing::LocalWorkflowContext.new
-        Cadence::ThreadLocalContext.set(context)
-
-        workflow = new(context)
-        result = workflow.execute(*input)
-
-        result
+        execute_in_context(context, input)
       end
     end
   end
