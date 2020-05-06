@@ -14,7 +14,7 @@ module Cadence
       result = workflow.execute(*input)
 
       context.complete(result)
-    rescue StandardError => error
+    rescue StandardError, ScriptError => error
       Cadence.logger.error("Workflow execution failed with: #{error.inspect}")
       Cadence.logger.debug(error.backtrace.join("\n"))
 

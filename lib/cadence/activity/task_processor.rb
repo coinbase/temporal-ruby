@@ -35,7 +35,7 @@ module Cadence
 
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
-      rescue StandardError => error
+      rescue StandardError, ScriptError => error
         respond_failed(error.class.name, error.message)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round

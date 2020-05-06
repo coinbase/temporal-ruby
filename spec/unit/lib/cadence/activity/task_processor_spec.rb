@@ -121,11 +121,9 @@ describe Cadence::Activity::TaskProcessor do
       end
 
       context 'when activity raises an exception' do
-        before do
-          allow(activity_class)
-            .to receive(:execute_in_context)
-            .and_raise(StandardError, 'activity failed')
-        end
+        let(:exception) { StandardError.new('activity failed') }
+
+        before { allow(activity_class).to receive(:execute_in_context).and_raise(exception) }
 
         it 'runs the specified activity' do
           subject.process
@@ -144,7 +142,11 @@ describe Cadence::Activity::TaskProcessor do
 
           expect(client)
             .to have_received(:respond_activity_task_failed)
-            .with(task_token: task.taskToken, reason: 'StandardError', details: 'activity failed')
+            .with(
+              task_token: task.taskToken,
+              reason: exception.class.name,
+              details: exception.message
+            )
         end
 
         it 'ignores client exception' do
@@ -169,6 +171,32 @@ describe Cadence::Activity::TaskProcessor do
           expect(Cadence.metrics)
             .to have_received(:timing)
             .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
+        end
+
+        context 'with ScriptError exception' do
+          let(:exception) { NotImplementedError.new('this was not supposed to be called') }
+
+          it 'fails the activity task' do
+            subject.process
+
+            expect(client)
+              .to have_received(:respond_activity_task_failed)
+              .with(
+                task_token: task.taskToken,
+                reason: exception.class.name,
+                details: exception.message
+              )
+          end
+        end
+
+        context 'with SystemExit exception' do
+          let(:exception) { SystemExit.new('Houston, we have a problem') }
+
+          it 'does not handle the exception' do
+            expect { subject.process }.to raise_error(exception)
+
+            expect(client).not_to have_received(:respond_activity_task_failed)
+          end
         end
 
         context 'with async activity' do
