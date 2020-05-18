@@ -73,7 +73,9 @@ module Cadence
 
         execution_options = ExecutionOptions.new(workflow, options)
         headers = execution_options.headers
-        context = Cadence::Testing::LocalWorkflowContext.new(execution, workflow_id, run_id, headers)
+        context = Cadence::Testing::LocalWorkflowContext.new(
+          execution, workflow_id, run_id, workflow.disabled_releases, headers
+        )
 
         execution.run do
           workflow.execute_in_context(context, input)

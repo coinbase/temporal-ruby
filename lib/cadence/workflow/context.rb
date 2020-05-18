@@ -7,6 +7,7 @@ require 'cadence/workflow/history/event_target'
 require 'cadence/workflow/decision'
 require 'cadence/workflow/future'
 require 'cadence/workflow/replay_aware_logger'
+require 'cadence/workflow/state_manager'
 
 # This context class is available in the workflow implementation
 # and provides context and methods for interacting with Cadence
@@ -28,6 +29,10 @@ module Cadence
 
       def headers
         metadata.headers
+      end
+
+      def has_release?(release_name)
+        state_manager.release?(release_name.to_s)
       end
 
       def execute_activity(activity_class, *input, **args)
@@ -121,7 +126,7 @@ module Cadence
       end
 
       def execute_workflow!(workflow_class, *input, **args)
-        future = execute_worfklow(workflow_class, *input, **args)
+        future = execute_workflow(workflow_class, *input, **args)
         result = future.get
 
         if future.failed?
@@ -136,10 +141,11 @@ module Cadence
       end
 
       def side_effect(&block)
-        marker = state_manager.check_next_marker
-        result = marker ? marker.last : block.call
+        marker = state_manager.next_side_effect
+        return marker.last if marker
 
-        decision = Decision::RecordMarker.new(name: 'SIDE_EFFECT', details: result)
+        result = block.call
+        decision = Decision::RecordMarker.new(name: StateManager::SIDE_EFFECT_MARKER, details: result)
         schedule_decision(decision)
 
         result
@@ -150,7 +156,6 @@ module Cadence
       end
 
       def start_timer(timeout, timer_id = nil)
-        timer_id ||= SecureRandom.uuid
         decision = Decision::StartTimer.new(timeout: timeout, timer_id: timer_id)
         target, cancelation_id = schedule_decision(decision)
         future = Future.new(target, self, cancelation_id: cancelation_id)

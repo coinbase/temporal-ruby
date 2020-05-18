@@ -331,6 +331,75 @@ of precedence):
 3. Globally, when configuring your Cadence library via `Cadence.configure`
 
 
+## Breaking Changes
+
+Since the workflow execution has to be deterministic, breaking changes can not be simply added and
+deployed — this will undermine the consistency of running workflows and might lead to unexpected
+behaviour. However, breaking changes are often needed and these include:
+
+- Adding new activities, timers, child workflows, etc.
+- Remove existing activities, timers, child workflows, etc.
+- Rearranging existing activities, timers, child workflows, etc.
+- Adding/removing signal handlers
+
+In order to add a breaking change you can use `workflow.has_release?(release_name)` method in your
+workflows, which is guaranteed to return a consistent result whether or not it was called prior to
+shipping the new release. It is also consistent for all the subsequent calls with the same
+`release_name` — all of them will return the original result. Consider the following example:
+
+```ruby
+class MyWorkflow < Cadence::Workflow
+  def execute
+    ActivityOld1.execute!
+
+    workflow.sleep(10)
+
+    ActivityOld2.execute!
+
+    return
+  end
+end
+```
+
+which got updated to:
+
+```ruby
+class MyWorkflow < Cadence::Workflow
+  def execute
+    Activity1.execute!
+
+    if workflow.has_release?(:fix_1)
+      ActivityNew1.execute!
+    end
+
+    workflow.sleep(10)
+
+    if workflow.has_release?(:fix_1)
+      ActivityNew2.execute!
+    else
+      ActivityOld.execute!
+    end
+
+    if workflow.has_release?(:fix_2)
+      ActivityNew3.execute!
+    end
+
+    return
+  end
+end
+```
+
+If the release got deployed while the original workflow was waiting on a timer, `ActivityNew1` and
+`ActivityNew2` won't get executed, because they are part of the same change (same release_name),
+however `ActivityNew3` will get executed, since the release wasn't yet checked at the time. And for
+every new execution of the workflow — all new activities will get executed, while `ActivityOld` will
+not.
+
+Later on you can clean it up and drop all the checks if you don't have any older workflows running
+or expect them to ever be executed (e.g. reset).
+
+*NOTE: Releases with different names do not depend on each other in any way.*
+
 ## Testing
 
 It is crucial to properly test your workflows and activities before running them in production. The
