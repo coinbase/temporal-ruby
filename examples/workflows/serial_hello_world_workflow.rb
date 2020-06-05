@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class SerialHelloWorldWorkflow < Cadence::Workflow
+class SerialHelloWorldWorkflow < Temporal::Workflow
   def execute(*names)
     names.each do |name|
       HelloWorldActivity.execute!(name)

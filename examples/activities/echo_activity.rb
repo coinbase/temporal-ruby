@@ -1,4 +1,4 @@
-class EchoActivity < Cadence::Activity
+class EchoActivity < Temporal::Activity
   def execute(text)
     p "ECHO: #{text}"
   end

@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class AsyncHelloWorldWorkflow < Cadence::Workflow
+class AsyncHelloWorldWorkflow < Temporal::Workflow
   def execute(num)
     futures = num.times.map do |i|
       HelloWorldActivity.execute("param_#{i}")

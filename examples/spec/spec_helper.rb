@@ -19,7 +19,7 @@ $LOAD_PATH.unshift File.expand_path('../', __dir__)
 require 'bundler'
 Bundler.require :default, :test
 
-require 'cadence/testing'
+require 'temporal/testing'
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate

@@ -1,11 +1,11 @@
-require 'cadence/concerns/typed'
+require 'temporal/concerns/typed'
 
-class ProcessFileActivity < Cadence::Activity
-  include Cadence::Concerns::Typed
+class ProcessFileActivity < Temporal::Activity
+  include Temporal::Concerns::Typed
 
   task_list 'file-processing'
 
-  input Cadence::Types::String
+  input Temporal::Types::String
 
   def execute(input)
     file_contents = File.read(input)

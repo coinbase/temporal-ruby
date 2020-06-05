@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class CheckWorkflow < Cadence::Workflow
+class CheckWorkflow < Temporal::Workflow
   def execute
     future_1 = HelloWorldActivity.execute('alpha')
     future_2 = HelloWorldActivity.execute('beta')

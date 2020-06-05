@@ -1,7 +1,7 @@
 require 'activities/sleep_activity'
 require 'activities/hello_world_activity'
 
-class CancellingTimerWorkflow < Cadence::Workflow
+class CancellingTimerWorkflow < Temporal::Workflow
   def execute(activity_timeout, timer_timeout)
     timer = workflow.start_timer(timer_timeout)
     activity = SleepActivity.execute(activity_timeout)

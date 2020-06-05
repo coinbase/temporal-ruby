@@ -1,8 +1,8 @@
-# Ruby Cadence Examples
+# Ruby Temporal Examples
 
-This directory contains examples demonstraiting different features or this library and Cadence.
+This directory contains examples demonstraiting different features or this library and Temporal.
 
-To try these out you need to have Cadence and TChannel Proxy running ([setup instructions](https://github.com/coinbase/cadence-ruby#installing-dependencies)).
+To try these out you need to have Temporal and TChannel Proxy running ([setup instructions](https://github.com/coinbase/temporal-ruby#installing-dependencies)).
 
 Install all the gem dependencies by running:
 

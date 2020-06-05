@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class SideEffectWorkflow < Cadence::Workflow
+class SideEffectWorkflow < Temporal::Workflow
   def execute
     input_1 = workflow.side_effect { SecureRandom.uuid }
     input_2 = workflow.side_effect { SecureRandom.uuid }

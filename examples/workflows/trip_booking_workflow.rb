@@ -1,8 +1,8 @@
-require 'cadence/saga/concern'
+require 'temporal/saga/concern'
 Dir[File.expand_path('../activities/trip/*.rb', __dir__)].each { |f| require f }
 
-class TripBookingWorkflow < Cadence::Workflow
-  include Cadence::Saga::Concern
+class TripBookingWorkflow < Temporal::Workflow
+  include Temporal::Saga::Concern
 
   def execute(trip_id)
     total = 0

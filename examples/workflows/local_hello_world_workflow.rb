@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class LocalHelloWorldWorkflow < Cadence::Workflow
+class LocalHelloWorldWorkflow < Temporal::Workflow
   def execute
     HelloWorldActivity.execute_locally('Alice')
     HelloWorldActivity.execute!('Bob')

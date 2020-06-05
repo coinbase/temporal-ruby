@@ -1,5 +1,5 @@
 module Trip
-  class RentCarActivity < Cadence::Activity
+  class RentCarActivity < Temporal::Activity
     def execute(trip_id)
       logger.info "Renting a car for trip #{trip_id}"
 

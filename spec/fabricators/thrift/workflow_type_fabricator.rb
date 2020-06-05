@@ -1,5 +1,5 @@
-require 'gen/thrift/cadence_types'
+require 'gen/thrift/temporal_types'
 
-Fabricator(:workflow_type_thrift, from: CadenceThrift::WorkflowType) do
+Fabricator(:workflow_type_thrift, from: TemporalThrift::WorkflowType) do
   name 'TestWorkflow'
 end

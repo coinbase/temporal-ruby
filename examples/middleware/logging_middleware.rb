@@ -5,13 +5,13 @@ class LoggingMiddleware
 
   def call(metadata)
     entity_name = name_from(metadata)
-    Cadence.logger.info("[#{app_name}]: Started #{entity_name}")
+    Temporal.logger.info("[#{app_name}]: Started #{entity_name}")
 
     yield
 
-    Cadence.logger.info("[#{app_name}]: Finished #{entity_name}")
+    Temporal.logger.info("[#{app_name}]: Finished #{entity_name}")
   rescue StandardError => e
-    Cadence.logger.error("[#{app_name}]: Error #{entity_name}")
+    Temporal.logger.error("[#{app_name}]: Error #{entity_name}")
 
     raise
   end

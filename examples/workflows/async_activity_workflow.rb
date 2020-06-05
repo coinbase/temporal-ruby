@@ -1,6 +1,6 @@
 require 'activities/async_activity'
 
-class AsyncActivityWorkflow < Cadence::Workflow
+class AsyncActivityWorkflow < Temporal::Workflow
   def execute
     AsyncActivity.execute!
   end

@@ -1,8 +1,8 @@
-require 'gen/thrift/cadence_types'
+require 'gen/thrift/temporal_types'
 require 'securerandom'
-require 'cadence/utils'
+require 'temporal/utils'
 
-Fabricator(:activity_task_thrift, from: CadenceThrift::PollForActivityTaskResponse) do
+Fabricator(:activity_task_thrift, from: TemporalThrift::PollForActivityTaskResponse) do
   transient :task_token, :activity_name, :headers
 
   activityId { SecureRandom.uuid }
@@ -11,7 +11,7 @@ Fabricator(:activity_task_thrift, from: CadenceThrift::PollForActivityTaskRespon
   input ''
   workflowType { Fabricate(:workflow_type_thrift) }
   workflowExecution { Fabricate(:workflow_execution_thrift) }
-  scheduledTimestampOfThisAttempt { Cadence::Utils.time_to_nanos(Time.now) }
-  startedTimestamp { Cadence::Utils.time_to_nanos(Time.now) }
+  scheduledTimestampOfThisAttempt { Temporal::Utils.time_to_nanos(Time.now) }
+  startedTimestamp { Temporal::Utils.time_to_nanos(Time.now) }
   header { |attrs| Fabricate(:header_thrift, fields: attrs[:headers]) if attrs[:headers] }
 end

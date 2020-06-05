@@ -1,4 +1,4 @@
-class HelloWorldActivity < Cadence::Activity
+class HelloWorldActivity < Temporal::Activity
   def execute(name)
     p "Hello World, #{name}"
 

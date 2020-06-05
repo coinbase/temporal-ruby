@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
 
-gem 'cadence-ruby', path: '../'
+gem 'temporal-ruby', path: '../'
 
 gem 'rspec', group: :test

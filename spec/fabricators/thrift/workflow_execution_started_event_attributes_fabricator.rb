@@ -1,9 +1,9 @@
-require 'gen/thrift/cadence_types'
+require 'gen/thrift/temporal_types'
 require 'securerandom'
 
 Fabricator(
   :worklfow_execution_started_event_attributes_thrift,
-  from: CadenceThrift::WorkflowExecutionStartedEventAttributes
+  from: TemporalThrift::WorkflowExecutionStartedEventAttributes
 ) do
   transient :headers
 

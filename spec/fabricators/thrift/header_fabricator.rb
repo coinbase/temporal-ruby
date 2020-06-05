@@ -1,6 +1,6 @@
-require 'gen/thrift/cadence_types'
+require 'gen/thrift/temporal_types'
 require 'securerandom'
 
-Fabricator(:header_thrift, from: CadenceThrift::Header) do
+Fabricator(:header_thrift, from: TemporalThrift::Header) do
   fields { {} }
 end

@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-class SimpleTimerWorkflow < Cadence::Workflow
+class SimpleTimerWorkflow < Temporal::Workflow
   def execute(timeout)
     workflow.sleep(timeout)
 

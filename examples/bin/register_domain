@@ -6,4 +6,4 @@ description = ARGV[1]
 
 fail 'Missing domain name, please run register_domain <domain_name>' unless domain
 
-Cadence.register_domain(domain, description)
+Temporal.register_domain(domain, description)

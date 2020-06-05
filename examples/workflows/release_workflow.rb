@@ -1,6 +1,6 @@
 require 'activities/echo_activity'
 
-class ReleaseWorkflow < Cadence::Workflow
+class ReleaseWorkflow < Temporal::Workflow
   def execute
     EchoActivity.execute!('Original activity 1')
 

@@ -1,6 +1,6 @@
 require 'activities/randomly_failing_activity'
 
-class FailingWorkflow < Cadence::Workflow
+class FailingWorkflow < Temporal::Workflow
   def execute
     RandomlyFailingActivity.execute!
 

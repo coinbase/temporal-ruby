@@ -1,5 +1,5 @@
 module Trip
-  class CancelCarActivity < Cadence::Activity
+  class CancelCarActivity < Temporal::Activity
     def execute(reservation_id)
       logger.info "Cancelling car reservation: #{reservation_id}"
 

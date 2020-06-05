@@ -1,11 +1,11 @@
-require 'cadence/concerns/typed'
+require 'temporal/concerns/typed'
 
-class RandomNumberActivity < Cadence::Activity
-  include Cadence::Concerns::Typed
+class RandomNumberActivity < Temporal::Activity
+  include Temporal::Concerns::Typed
 
   input do
-    attribute :min, Cadence::Types::Integer.default(0)
-    attribute :max, Cadence::Types::Integer
+    attribute :min, Temporal::Types::Integer.default(0)
+    attribute :max, Temporal::Types::Integer
   end
 
   def execute(input)

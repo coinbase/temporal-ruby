@@ -9,11 +9,11 @@ end
 
 case command.to_sym
 when :complete
-  Cadence.complete_activity(async_token, message)
-  Cadence.logger.info 'Activity successfully completed!'
+  Temporal.complete_activity(async_token, message)
+  Temporal.logger.info 'Activity successfully completed!'
 when :fail
-  Cadence.fail_activity(async_token, StandardError.new(message))
-  Cadence.logger.info 'Activity successfully failed!'
+  Temporal.fail_activity(async_token, StandardError.new(message))
+  Temporal.logger.info 'Activity successfully failed!'
 else
   fail "Wrong command #{command}, use 'complete' or 'fail'"
 end

@@ -1,4 +1,4 @@
-class AsyncActivity < Cadence::Activity
+class AsyncActivity < Temporal::Activity
   timeouts start_to_close: 120
 
   def execute

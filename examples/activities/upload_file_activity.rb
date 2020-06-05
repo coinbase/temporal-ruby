@@ -1,14 +1,14 @@
-require 'cadence/concerns/typed'
+require 'temporal/concerns/typed'
 require 'fileutils'
 
-class UploadFileActivity < Cadence::Activity
-  include Cadence::Concerns::Typed
+class UploadFileActivity < Temporal::Activity
+  include Temporal::Concerns::Typed
 
   task_list 'file-processing'
 
   input do
-    attribute :local_path, Cadence::Types::String
-    attribute :remote_path, Cadence::Types::String
+    attribute :local_path, Temporal::Types::String
+    attribute :remote_path, Temporal::Types::String
   end
 
   def execute(input)

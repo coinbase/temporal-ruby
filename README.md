@@ -1,33 +1,33 @@
-# Ruby worker for Cadence
+# Ruby worker for Temporal [Under Development]
 
-<img src="./assets/cadence_logo_2.png" width="250" align="right" alt="Cadence" />
+<img src="./assets/temporal_logo.png" width="250" align="right" alt="Temporal" />
 
-A pure Ruby library for defining and running Cadence workflows and activities.
+A pure Ruby library for defining and running Temporal workflows and activities.
 
-To find more about Cadence please visit <https://cadenceworkflow.io/>.
+To find more about Temporal please visit <https://temporal.io/>.
 
 
 ## Getting Started
 
-*NOTE: Make sure you have both Cadence and TChannel Proxy up and running. Head over to
+*NOTE: Make sure you have both Temporal and TChannel Proxy up and running. Head over to
 [this section](#installing-dependencies) for installation instructions.*
 
 Clone this repository:
 
 ```sh
-> git clone git@github.com:coinbase/cadence-ruby.git
+> git clone git@github.com:coinbase/temporal-ruby.git
 ```
 
 Include this gem to your `Gemfile`:
 
 ```ruby
-gem 'cadence-ruby', path: 'path/to/a/cloned/cadence-ruby/'
+gem 'temporal-ruby', path: 'path/to/a/cloned/temporal-ruby/'
 ```
 
 Define an activity:
 
 ```ruby
-class HelloActivity < Cadence::Workflow
+class HelloActivity < Temporal::Workflow
   def execute(name)
     puts "Hello #{name}!"
 
@@ -41,7 +41,7 @@ Define a workflow:
 ```ruby
 require 'path/to/hello_activity'
 
-class HelloWorldWorkflow < Cadence::Workflow
+class HelloWorldWorkflow < Temporal::Workflow
   def execute
     HelloActivity.execute!('World')
 
@@ -50,10 +50,10 @@ class HelloWorldWorkflow < Cadence::Workflow
 end
 ```
 
-Configure your Cadence connection:
+Configure your Temporal connection:
 
 ```ruby
-Cadence.configure do |config|
+Temporal.configure do |config|
   config.host = 'localhost'
   config.port = 6666 # this should point to the tchannel proxy
   config.domain = 'ruby-samples'
@@ -61,18 +61,18 @@ Cadence.configure do |config|
 end
 ```
 
-Register domain with the Cadence service:
+Register domain with the Temporal service:
 
 ```ruby
-Cadence.register_domain('ruby-samples', 'A safe space for playing with Cadence Ruby')
+Temporal.register_domain('ruby-samples', 'A safe space for playing with Temporal Ruby')
 ```
 
 Configure and start your worker process:
 
 ```ruby
-require 'cadence/worker'
+require 'temporal/worker'
 
-worker = Cadence::Worker.new
+worker = Temporal::Worker.new
 worker.register_workflow(HelloWorldWorkflow)
 worker.register_activity(HelloActivity)
 worker.start
@@ -83,7 +83,7 @@ And finally start your workflow:
 ```ruby
 require 'path/to/hello_world_workflow'
 
-Cadence.start_workflow(HelloWorldWorkflow)
+Temporal.start_workflow(HelloWorldWorkflow)
 ```
 
 Congratulation you've just created and executed a distributed workflow!
@@ -97,25 +97,25 @@ available, make sure to check them out.
 
 ## Installing dependencies
 
-In order to run your Ruby workers you need to have the Cadence service and the TChannel Proxy
+In order to run your Ruby workers you need to have the Temporal service and the TChannel Proxy
 running. Below are the instructions on setting these up:
 
-### Cadence
+### Temporal
 
-Cadence service handles all the persistence, fault tolerance and coordination of your workflows and
+Temporal service handles all the persistence, fault tolerance and coordination of your workflows and
 activities. To set it up locally, download and boot the Docker Compose file from the official repo:
 
 ```sh
-> curl -O https://raw.githubusercontent.com/uber/cadence/master/docker/docker-compose.yml
+> curl -O https://raw.githubusercontent.com/temporalio/temporal/master/docker/docker-compose.yml
 
 > docker-compose up
 ```
 
 ### TChannel Proxy
 
-Right now the Cadence service only communicates with the workers using Thrift over TChannel.
+Right now the Temporal service only communicates with the workers using Thrift over TChannel.
 Unfortunately there isn't a working TChannel protocol implementation for Ruby, so in order to
-connect to the Cadence service a simple proxy was created. You can run it using:
+connect to the Temporal service a simple proxy was created. You can run it using:
 
 ```sh
 > cd proxy
@@ -139,7 +139,7 @@ queries, etc) as it can break your workflows.*
 Here's an example workflow:
 
 ```ruby
-class RenewSubscriptionWorkflow < Cadence::Workflow
+class RenewSubscriptionWorkflow < Temporal::Workflow
   def execute(user_id)
     subscription = FetchUserSubscriptionActivity.execute!(user_id)
     subscription ||= CreateUserSubscriptionActivity.execute!(user_id)
@@ -199,8 +199,8 @@ An activity is a basic unit of work that performs the desired action (potentiall
 side-effects). It can return a result or raise an error. It is defined like so:
 
 ```ruby
-class CloseUserAccountActivity < Cadence::Activity
-  class UserNotFound < Cadence::ActivityException; end
+class CloseUserAccountActivity < Temporal::Activity
+  class UserNotFound < Temporal::ActivityException; end
 
   def execute(user_id)
     user = User.find_by(id: user_id)
@@ -217,7 +217,7 @@ class CloseUserAccountActivity < Cadence::Activity
 end
 ```
 
-It is important to make your activities **idempotent**, because they can get retried by Cadence (in
+It is important to make your activities **idempotent**, because they can get retried by Temporal (in
 case a timeout is reached or your activity has thrown an error). You normally want to avoid
 generating additional side effects during subsequent activity execution.
 
@@ -235,7 +235,7 @@ external event to complete your activity (e.g. a callback or a webhook). This ca
 manually completing your activity using a provided `async_token` from activity's context:
 
 ```ruby
-class AsyncActivity < Cadence::Activity
+class AsyncActivity < Temporal::Activity
   def execute(user_id)
     user = User.find_by(id: user_id)
 
@@ -251,13 +251,13 @@ Later when a confirmation is received you'll need to complete your activity manu
 provided:
 
 ```ruby
-Cadence.complete_activity(async_token, result)
+Temporal.complete_activity(async_token, result)
 ```
 
 Similarly you can fail the activity by calling:
 
 ```ruby
-Cadence.fail_activity(async_token, MyError.new('Something went wrong'))
+Temporal.fail_activity(async_token, MyError.new('Something went wrong'))
 ```
 
 This doesn't change the behaviour from the workflow's perspective — as any other activity the result
@@ -277,13 +277,13 @@ from your workflow
 
 ## Worker
 
-Worker is a process that communicates with the Cadence server and manages Workflow and Activity
+Worker is a process that communicates with the Temporal server and manages Workflow and Activity
 execution. To start a worker:
 
 ```ruby
-require 'cadence/worker'
+require 'temporal/worker'
 
-worker = Cadence::Worker.new
+worker = Temporal::Worker.new
 worker.register_workflow(HelloWorldWorkflow)
 worker.register_activity(SomeActivity)
 worker.register_activity(SomeOtherActivity)
@@ -297,22 +297,22 @@ worker you can split processing across as many workers as you need.
 
 ## Starting a workflow
 
-All communication is handled via Cadence service, so in order to start a workflow you need to send a
-message to Cadence:
+All communication is handled via Temporal service, so in order to start a workflow you need to send a
+message to Temporal:
 
 ```ruby
-Cadence.start_workflow(HelloWorldWorkflow)
+Temporal.start_workflow(HelloWorldWorkflow)
 ```
 
 Optionally you can pass input and other options to the workflow:
 
 ```ruby
-Cadence.start_workflow(RenewSubscriptionWorkflow, user_id, options: { workflow_id: user_id })
+Temporal.start_workflow(RenewSubscriptionWorkflow, user_id, options: { workflow_id: user_id })
 ```
 
 Passing in a `workflow_id` allows you to prevent concurrent execution of a workflow — a subsequent
 call with the same `workflow_id` will always get rejected while it is still running, raising
-`CadenceThrift::WorkflowExecutionAlreadyStartedError`. You can adjust the behaviour for finished
+`TemporalThrift::WorkflowExecutionAlreadyStartedError`. You can adjust the behaviour for finished
 workflows by supplying the `workflow_id_reuse_policy:` argument with one of these options:
 
 - `:allow_failed` will allow re-running workflows that have failed (terminated, cancelled, timed out or failed)
@@ -328,7 +328,7 @@ of precedence):
 
 1. Inline when starting or registering a workflow/activity (use `options:` argument)
 2. In your workflow/activity class definitions by calling a class method (e.g. `domain 'my-domain'`)
-3. Globally, when configuring your Cadence library via `Cadence.configure`
+3. Globally, when configuring your Temporal library via `Temporal.configure`
 
 
 ## Breaking Changes
@@ -348,7 +348,7 @@ shipping the new release. It is also consistent for all the subsequent calls wit
 `release_name` — all of them will return the original result. Consider the following example:
 
 ```ruby
-class MyWorkflow < Cadence::Workflow
+class MyWorkflow < Temporal::Workflow
   def execute
     ActivityOld1.execute!
 
@@ -364,7 +364,7 @@ end
 which got updated to:
 
 ```ruby
-class MyWorkflow < Cadence::Workflow
+class MyWorkflow < Temporal::Workflow
   def execute
     Activity1.execute!
 
@@ -406,30 +406,30 @@ It is crucial to properly test your workflows and activities before running them
 provided testing framework is still limited in functionality, but will allow you to test basic
 use-cases.
 
-The testing framework is not required automatically when you require `cadence-ruby`, so you have to
+The testing framework is not required automatically when you require `temporal-ruby`, so you have to
 do this yourself (it is strongly recommended to only include this in your test environment,
 `spec_helper.rb` or similar):
 
 ```ruby
-require 'cadence/testing'
+require 'temporal/testing'
 ```
 
 This will allow you to execute workflows locally by running `HelloWorldWorkflow.execute_locally`.
 Any arguments provided will forwarded to your `#execute` method.
 
-In case of a higher level end-to-end integration specs, where you need to execute a Cadence workflow
+In case of a higher level end-to-end integration specs, where you need to execute a Temporal workflow
 as part of your code, you can enable local testing:
 
 ```ruby
-Cadence::Testing.local!
+Temporal::Testing.local!
 ```
 
-This will treat every `Cadence.start_workflow` call as local and perform your workflows inline. It
+This will treat every `Temporal.start_workflow` call as local and perform your workflows inline. It
 also works with a block, restoring the original mode back after the execution:
 
 ```ruby
-Cadence::Testing.local! do
-  Cadence.start_workflow(HelloWorldWorkflow)
+Temporal::Testing.local! do
+  Temporal.start_workflow(HelloWorldWorkflow)
 end
 ```
 

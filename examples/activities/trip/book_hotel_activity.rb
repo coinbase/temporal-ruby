@@ -1,5 +1,5 @@
 module Trip
-  class BookHotelActivity < Cadence::Activity
+  class BookHotelActivity < Temporal::Activity
     def execute(trip_id)
       logger.info "Booking hotel room for trip #{trip_id}"
 

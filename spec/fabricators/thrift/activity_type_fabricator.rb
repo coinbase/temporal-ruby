@@ -1,5 +1,5 @@
-require 'gen/thrift/cadence_types'
+require 'gen/thrift/temporal_types'
 
-Fabricator(:activity_type_thrift, from: CadenceThrift::ActivityType) do
+Fabricator(:activity_type_thrift, from: TemporalThrift::ActivityType) do
   name 'TestActivity'
 end

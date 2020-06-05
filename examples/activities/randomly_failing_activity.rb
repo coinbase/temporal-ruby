@@ -1,6 +1,6 @@
-class RandomlyFailingActivity < Cadence::Activity
-  class WrongGuess < Cadence::ActivityException; end
-  class TerminalGuess < Cadence::ActivityException; end
+class RandomlyFailingActivity < Temporal::Activity
+  class WrongGuess < Temporal::ActivityException; end
+  class TerminalGuess < Temporal::ActivityException; end
 
   retry_policy(
     interval: 1,

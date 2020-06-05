@@ -14,7 +14,7 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-require 'cadence'
+require 'temporal'
 Dir[File.expand_path('config/*.rb', __dir__)].sort.each { |f| require f }
 
 RSpec.configure do |config|

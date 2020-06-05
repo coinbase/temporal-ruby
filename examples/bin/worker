@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 require_relative '../init'
 
-require 'cadence/worker'
+require 'temporal/worker'
 
 Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../activities/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 
-worker = Cadence::Worker.new
+worker = Temporal::Worker.new
 
 worker.register_workflow(AsyncActivityWorkflow)
 worker.register_workflow(AsyncHelloWorldWorkflow)

@@ -1,7 +1,7 @@
 require 'activities/random_number_activity'
 require 'activities/hello_world_activity'
 
-class BranchingWorkflow < Cadence::Workflow
+class BranchingWorkflow < Temporal::Workflow
   def execute
     random_number = RandomNumberActivity.execute!(max: 100)
 

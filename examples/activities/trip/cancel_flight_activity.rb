@@ -1,5 +1,5 @@
 module Trip
-  class CancelFlightActivity < Cadence::Activity
+  class CancelFlightActivity < Temporal::Activity
     def execute(reservation_id)
       logger.info "Cancelling flight reservation: #{reservation_id}"
 

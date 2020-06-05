@@ -1,5 +1,5 @@
-class LongRunningActivity < Cadence::Activity
-  class Canceled < Cadence::ActivityException; end
+class LongRunningActivity < Temporal::Activity
+  class Canceled < Temporal::ActivityException; end
 
   def execute(cycles, interval)
     cycles.times do

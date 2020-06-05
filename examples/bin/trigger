@@ -10,5 +10,5 @@ workflow_id = SecureRandom.uuid
 # Convert integer strings to integers
 input = args.map { |arg| Integer(arg) rescue arg }
 
-run_id = Cadence.start_workflow(workflow_class, *input, options: { workflow_id: workflow_id })
-Cadence.logger.info "Started workflow: #{run_id} / #{workflow_id}"
+run_id = Temporal.start_workflow(workflow_class, *input, options: { workflow_id: workflow_id })
+Temporal.logger.info "Started workflow: #{run_id} / #{workflow_id}"

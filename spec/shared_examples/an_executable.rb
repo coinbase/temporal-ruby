@@ -35,7 +35,7 @@ shared_examples 'an executable' do
     after { described_class.remove_instance_variable(:@retry_policy) }
 
     it 'gets current retry policy' do
-      retry_policy = Cadence::RetryPolicy.new
+      retry_policy = Temporal::RetryPolicy.new
       described_class.instance_variable_set(:@retry_policy, retry_policy)
 
       expect(described_class.retry_policy).to eq(retry_policy)
@@ -46,13 +46,13 @@ shared_examples 'an executable' do
       described_class.retry_policy(policy)
 
       expect(described_class.instance_variable_get(:@retry_policy))
-        .to eq(Cadence::RetryPolicy.new(policy))
+        .to eq(Temporal::RetryPolicy.new(policy))
     end
 
     it 'raises when setting invalid retry policy' do
       expect do
         described_class.retry_policy(interval: 0.1)
-      end.to raise_error(Cadence::RetryPolicy::InvalidRetryPolicy)
+      end.to raise_error(Temporal::RetryPolicy::InvalidRetryPolicy)
     end
   end
 
