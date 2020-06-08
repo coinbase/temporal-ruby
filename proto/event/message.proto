@@ -1,0 +1,467 @@
+// The MIT License
+//
+// Copyright (c) 2020 Temporal Technologies Inc.  All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+package event;
+
+option go_package = "go.temporal.io/temporal-proto/event";
+option java_package = "io.temporal.proto.event";
+option java_multiple_files = true;
+option ruby_package = "Temporal::Proto";
+
+import "event/enum.proto";
+import "common/enum.proto";
+import "common/message.proto";
+import "failure/message.proto";
+import "execution/message.proto";
+import "tasklist/message.proto";
+
+message WorkflowExecutionStartedEventAttributes {
+    common.WorkflowType workflowType = 1;
+    string parentWorkflowNamespace = 2;
+    common.WorkflowExecution parentWorkflowExecution = 3;
+    int64 parentInitiatedEventId = 4;
+    tasklist.TaskList taskList = 5;
+    common.Payloads input = 6;
+    // Total workflow execution timeout including retries and continue as new
+    int32 workflowExecutionTimeoutSeconds = 7;
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 8;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 9;
+    string continuedExecutionRunId = 10;
+    common.ContinueAsNewInitiator initiator = 11;
+    failure.Failure continuedFailure = 12;
+    common.Payloads lastCompletionResult = 13;
+    // This is the runId when the WorkflowExecutionStarted event is written.
+    string originalExecutionRunId = 14;
+    string identity = 15;
+    // This is the very first runId along the chain of ContinueAsNew and Reset.
+    string firstExecutionRunId = 16;
+    common.RetryPolicy retryPolicy = 17;
+    int32 attempt = 18;
+    // The absolute time at which workflow is timed out.
+    // This time is passed without change to the next run/retry of a workflow.
+    int64 workflowExecutionExpirationTimestamp = 19;
+    string cronSchedule = 20;
+    int32 firstDecisionTaskBackoffSeconds = 21;
+    common.Memo memo = 22;
+    common.SearchAttributes searchAttributes = 23;
+    execution.ResetPoints prevAutoResetPoints = 24;
+    common.Header header = 25;
+}
+
+message WorkflowExecutionCompletedEventAttributes {
+    common.Payloads result = 1;
+    int64 decisionTaskCompletedEventId = 2;
+}
+
+message WorkflowExecutionFailedEventAttributes {
+    failure.Failure failure = 1;
+    common.RetryStatus retryStatus = 2;
+    int64 decisionTaskCompletedEventId = 3;
+}
+
+message WorkflowExecutionTimedOutEventAttributes {
+    common.RetryStatus retryStatus = 1;
+}
+
+message WorkflowExecutionContinuedAsNewEventAttributes {
+    string newExecutionRunId = 1;
+    common.WorkflowType workflowType = 2;
+    tasklist.TaskList taskList = 3;
+    common.Payloads input = 4;
+    // workflowExecutionTimeout is omitted as it shouldn'be overridden from within a workflow
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 5;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 6;
+    int64 decisionTaskCompletedEventId = 7;
+    int32 backoffStartIntervalInSeconds = 8;
+    common.ContinueAsNewInitiator initiator = 9;
+    failure.Failure failure = 10;
+    common.Payloads lastCompletionResult = 11;
+    common.Header header = 12;
+    common.Memo memo = 13;
+    common.SearchAttributes searchAttributes = 14;
+}
+
+message DecisionTaskScheduledEventAttributes {
+    tasklist.TaskList taskList = 1;
+    int32 startToCloseTimeoutSeconds = 2;
+    int64 attempt = 3;
+}
+
+message DecisionTaskStartedEventAttributes {
+    int64 scheduledEventId = 1;
+    string identity = 2;
+    string requestId = 3;
+}
+
+message DecisionTaskCompletedEventAttributes {
+    int64 scheduledEventId = 1;
+    int64 startedEventId = 2;
+    string identity = 3;
+    string binaryChecksum = 4;
+}
+
+message DecisionTaskTimedOutEventAttributes {
+    int64 scheduledEventId = 1;
+    int64 startedEventId = 2;
+    common.TimeoutType timeoutType = 3;
+}
+
+message DecisionTaskFailedEventAttributes {
+    int64 scheduledEventId = 1;
+    int64 startedEventId = 2;
+    DecisionTaskFailedCause cause = 3;
+    failure.Failure failure = 4;
+    string identity = 5;
+    // for reset workflow
+    string baseRunId = 6;
+    string newRunId = 7;
+    int64 forkEventVersion = 8;
+    string binaryChecksum = 9;
+}
+
+message ActivityTaskScheduledEventAttributes {
+    string activityId = 1;
+    common.ActivityType activityType = 2;
+    string namespace = 3;
+    tasklist.TaskList taskList = 4;
+    common.Header header = 5;
+    common.Payloads input = 6;
+    // Indicates how long the caller is willing to wait for an activity completion.
+    // Limits for how long retries are happening. Either this or startToCloseTimeoutSeconds is required.
+    int32 scheduleToCloseTimeoutSeconds = 7;
+    // Limits time an activity task can stay in a task queue before a worker picks it up.
+    // This timeout is always non retryable as all a retry would achieve is to put it back into the same queue.
+    // Defaults to scheduleToCloseTimeoutSeconds or workflow execution timeout if not specified.
+    int32 scheduleToStartTimeoutSeconds = 8;
+    // Maximum time an activity is allowed to execute after a pick up by a worker.
+    // This timeout is always retryable. Either this or scheduleToCloseTimeoutSeconds is required.
+    int32 startToCloseTimeoutSeconds = 9;
+    // Maximum time between successful worker heartbeats.
+    int32 heartbeatTimeoutSeconds = 10;
+    int64 decisionTaskCompletedEventId = 11;
+    // Activities are provided by a default retry policy controlled through the service dynamic configuration.
+    // Retries are happening up to scheduleToCloseTimeout.
+    // To disable retries set retryPolicy.maximumAttempts to 1.
+    common.RetryPolicy retryPolicy = 12;
+}
+
+message ActivityTaskStartedEventAttributes {
+    int64 scheduledEventId = 1;
+    string identity = 2;
+    string requestId = 3;
+    int32 attempt = 4;
+    failure.Failure lastFailure = 5;
+}
+
+message ActivityTaskCompletedEventAttributes {
+    common.Payloads result = 1;
+    int64 scheduledEventId = 2;
+    int64 startedEventId = 3;
+    string identity = 4;
+}
+
+message ActivityTaskFailedEventAttributes {
+    failure.Failure failure = 1;
+    int64 scheduledEventId = 2;
+    int64 startedEventId = 3;
+    string identity = 4;
+    common.RetryStatus retryStatus = 5;
+}
+
+message ActivityTaskTimedOutEventAttributes {
+    // For retry activity, it may have a failure before timeout. It is stored as `cause` in `failure`.
+    failure.Failure failure = 1;
+    int64 scheduledEventId = 2;
+    int64 startedEventId = 3;
+    common.RetryStatus retryStatus = 4;
+}
+
+message ActivityTaskCancelRequestedEventAttributes {
+    int64 scheduledEventId = 1;
+    int64 decisionTaskCompletedEventId = 2;
+}
+
+message ActivityTaskCanceledEventAttributes {
+    common.Payloads details = 1;
+    int64 latestCancelRequestedEventId = 2;
+    int64 scheduledEventId = 3;
+    int64 startedEventId = 4;
+    string identity = 5;
+}
+
+message TimerStartedEventAttributes {
+    string timerId = 1;
+    int64 startToFireTimeoutSeconds = 2;
+    int64 decisionTaskCompletedEventId = 3;
+}
+
+message TimerFiredEventAttributes {
+    string timerId = 1;
+    int64 startedEventId = 2;
+}
+
+message TimerCanceledEventAttributes {
+    string timerId = 1;
+    int64 startedEventId = 2;
+    int64 decisionTaskCompletedEventId = 3;
+    string identity = 4;
+}
+
+message CancelTimerFailedEventAttributes {
+    string timerId = 1;
+    string cause = 2;
+    int64 decisionTaskCompletedEventId = 3;
+    string identity = 4;
+}
+
+message WorkflowExecutionCancelRequestedEventAttributes {
+    string cause = 1;
+    int64 externalInitiatedEventId = 2;
+    common.WorkflowExecution externalWorkflowExecution = 3;
+    string identity = 4;
+}
+
+message WorkflowExecutionCanceledEventAttributes {
+    int64 decisionTaskCompletedEventId = 1;
+    common.Payloads details = 2;
+}
+
+message MarkerRecordedEventAttributes {
+    string markerName = 1;
+    map<string, common.Payloads> details = 2;
+    int64 decisionTaskCompletedEventId = 3;
+    common.Header header = 4;
+    failure.Failure failure = 5;
+}
+
+message WorkflowExecutionSignaledEventAttributes {
+    string signalName = 1;
+    common.Payloads input = 2;
+    string identity = 3;
+}
+
+message WorkflowExecutionTerminatedEventAttributes {
+    string reason = 1;
+    common.Payloads details = 2;
+    string identity = 3;
+}
+
+message RequestCancelExternalWorkflowExecutionInitiatedEventAttributes {
+    int64 decisionTaskCompletedEventId = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    string control = 4;
+    bool childWorkflowOnly = 5;
+}
+
+message RequestCancelExternalWorkflowExecutionFailedEventAttributes {
+    CancelExternalWorkflowExecutionFailedCause cause = 1;
+    int64 decisionTaskCompletedEventId = 2;
+    string namespace = 3;
+    common.WorkflowExecution workflowExecution = 4;
+    int64 initiatedEventId = 5;
+    string control = 6;
+}
+
+message ExternalWorkflowExecutionCancelRequestedEventAttributes {
+    int64 initiatedEventId = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+}
+
+message SignalExternalWorkflowExecutionInitiatedEventAttributes {
+    int64 decisionTaskCompletedEventId = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    string signalName = 4;
+    common.Payloads input = 5;
+    string control = 6;
+    bool childWorkflowOnly = 7;
+}
+
+message SignalExternalWorkflowExecutionFailedEventAttributes {
+    SignalExternalWorkflowExecutionFailedCause cause = 1;
+    int64 decisionTaskCompletedEventId = 2;
+    string namespace = 3;
+    common.WorkflowExecution workflowExecution = 4;
+    int64 initiatedEventId = 5;
+    string control = 6;
+}
+
+message ExternalWorkflowExecutionSignaledEventAttributes {
+    int64 initiatedEventId = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    string control = 4;
+}
+
+message UpsertWorkflowSearchAttributesEventAttributes {
+    int64 decisionTaskCompletedEventId = 1;
+    common.SearchAttributes searchAttributes = 2;
+}
+
+message StartChildWorkflowExecutionInitiatedEventAttributes {
+    string namespace = 1;
+    string workflowId = 2;
+    common.WorkflowType workflowType = 3;
+    tasklist.TaskList taskList = 4;
+    common.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new
+    int32 workflowExecutionTimeoutSeconds = 6;
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 7;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 8;
+    common.ParentClosePolicy parentClosePolicy = 9;
+    string control = 10;
+    int64 decisionTaskCompletedEventId = 11;
+    common.WorkflowIdReusePolicy workflowIdReusePolicy = 12;
+    common.RetryPolicy retryPolicy = 13;
+    string cronSchedule = 14;
+    common.Header header = 15;
+    common.Memo memo = 16;
+    common.SearchAttributes searchAttributes = 17;
+}
+
+message StartChildWorkflowExecutionFailedEventAttributes {
+    string namespace = 1;
+    string workflowId = 2;
+    common.WorkflowType workflowType = 3;
+    StartChildWorkflowExecutionFailedCause cause = 4;
+    string control = 5;
+    int64 initiatedEventId = 6;
+    int64 decisionTaskCompletedEventId = 7;
+}
+
+message ChildWorkflowExecutionStartedEventAttributes {
+    string namespace = 1;
+    int64 initiatedEventId = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    common.WorkflowType workflowType = 4;
+    common.Header header = 5;
+}
+
+message ChildWorkflowExecutionCompletedEventAttributes {
+    common.Payloads result = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    common.WorkflowType workflowType = 4;
+    int64 initiatedEventId = 5;
+    int64 startedEventId = 6;
+}
+
+message ChildWorkflowExecutionFailedEventAttributes {
+    failure.Failure failure = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    common.WorkflowType workflowType = 4;
+    int64 initiatedEventId = 5;
+    int64 startedEventId = 6;
+    common.RetryStatus retryStatus = 7;
+}
+
+message ChildWorkflowExecutionCanceledEventAttributes {
+    common.Payloads details = 1;
+    string namespace = 2;
+    common.WorkflowExecution workflowExecution = 3;
+    common.WorkflowType workflowType = 4;
+    int64 initiatedEventId = 5;
+    int64 startedEventId = 6;
+}
+
+message ChildWorkflowExecutionTimedOutEventAttributes {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    common.WorkflowType workflowType = 3;
+    int64 initiatedEventId = 4;
+    int64 startedEventId = 5;
+    common.RetryStatus retryStatus = 6;
+}
+
+message ChildWorkflowExecutionTerminatedEventAttributes {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    common.WorkflowType workflowType = 3;
+    int64 initiatedEventId = 4;
+    int64 startedEventId = 5;
+}
+
+message HistoryEvent {
+    int64 eventId = 1;
+    int64 timestamp = 2;
+    EventType eventType = 3;
+    int64 version = 4;
+    int64 taskId = 5;
+    oneof attributes {
+        WorkflowExecutionStartedEventAttributes workflowExecutionStartedEventAttributes = 6;
+        WorkflowExecutionCompletedEventAttributes workflowExecutionCompletedEventAttributes = 7;
+        WorkflowExecutionFailedEventAttributes workflowExecutionFailedEventAttributes = 8;
+        WorkflowExecutionTimedOutEventAttributes workflowExecutionTimedOutEventAttributes = 9;
+        DecisionTaskScheduledEventAttributes decisionTaskScheduledEventAttributes = 10;
+        DecisionTaskStartedEventAttributes decisionTaskStartedEventAttributes = 11;
+        DecisionTaskCompletedEventAttributes decisionTaskCompletedEventAttributes = 12;
+        DecisionTaskTimedOutEventAttributes decisionTaskTimedOutEventAttributes = 13;
+        DecisionTaskFailedEventAttributes decisionTaskFailedEventAttributes = 14;
+        ActivityTaskScheduledEventAttributes activityTaskScheduledEventAttributes = 15;
+        ActivityTaskStartedEventAttributes activityTaskStartedEventAttributes = 16;
+        ActivityTaskCompletedEventAttributes activityTaskCompletedEventAttributes = 17;
+        ActivityTaskFailedEventAttributes activityTaskFailedEventAttributes = 18;
+        ActivityTaskTimedOutEventAttributes activityTaskTimedOutEventAttributes = 19;
+        TimerStartedEventAttributes timerStartedEventAttributes = 20;
+        TimerFiredEventAttributes timerFiredEventAttributes = 21;
+        ActivityTaskCancelRequestedEventAttributes activityTaskCancelRequestedEventAttributes = 22;
+        ActivityTaskCanceledEventAttributes activityTaskCanceledEventAttributes = 23;
+        TimerCanceledEventAttributes timerCanceledEventAttributes = 24;
+        CancelTimerFailedEventAttributes cancelTimerFailedEventAttributes = 25;
+        MarkerRecordedEventAttributes markerRecordedEventAttributes = 26;
+        WorkflowExecutionSignaledEventAttributes workflowExecutionSignaledEventAttributes = 27;
+        WorkflowExecutionTerminatedEventAttributes workflowExecutionTerminatedEventAttributes = 28;
+        WorkflowExecutionCancelRequestedEventAttributes workflowExecutionCancelRequestedEventAttributes = 29;
+        WorkflowExecutionCanceledEventAttributes workflowExecutionCanceledEventAttributes = 30;
+        RequestCancelExternalWorkflowExecutionInitiatedEventAttributes requestCancelExternalWorkflowExecutionInitiatedEventAttributes = 31;
+        RequestCancelExternalWorkflowExecutionFailedEventAttributes requestCancelExternalWorkflowExecutionFailedEventAttributes = 32;
+        ExternalWorkflowExecutionCancelRequestedEventAttributes externalWorkflowExecutionCancelRequestedEventAttributes = 33;
+        WorkflowExecutionContinuedAsNewEventAttributes workflowExecutionContinuedAsNewEventAttributes = 34;
+        StartChildWorkflowExecutionInitiatedEventAttributes startChildWorkflowExecutionInitiatedEventAttributes = 35;
+        StartChildWorkflowExecutionFailedEventAttributes startChildWorkflowExecutionFailedEventAttributes = 36;
+        ChildWorkflowExecutionStartedEventAttributes childWorkflowExecutionStartedEventAttributes = 37;
+        ChildWorkflowExecutionCompletedEventAttributes childWorkflowExecutionCompletedEventAttributes = 38;
+        ChildWorkflowExecutionFailedEventAttributes childWorkflowExecutionFailedEventAttributes = 39;
+        ChildWorkflowExecutionCanceledEventAttributes childWorkflowExecutionCanceledEventAttributes = 40;
+        ChildWorkflowExecutionTimedOutEventAttributes childWorkflowExecutionTimedOutEventAttributes = 41;
+        ChildWorkflowExecutionTerminatedEventAttributes childWorkflowExecutionTerminatedEventAttributes = 42;
+        SignalExternalWorkflowExecutionInitiatedEventAttributes signalExternalWorkflowExecutionInitiatedEventAttributes = 43;
+        SignalExternalWorkflowExecutionFailedEventAttributes signalExternalWorkflowExecutionFailedEventAttributes = 44;
+        ExternalWorkflowExecutionSignaledEventAttributes externalWorkflowExecutionSignaledEventAttributes = 45;
+        UpsertWorkflowSearchAttributesEventAttributes upsertWorkflowSearchAttributesEventAttributes = 46;
+    }
+}
+
+message History {
+    repeated HistoryEvent events = 1;
+}

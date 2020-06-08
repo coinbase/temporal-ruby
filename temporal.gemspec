@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   spec.files         = Dir["{lib,rbi}/**/*.*"] + %w(temporal.gemspec Gemfile LICENSE README.md)
 
-  spec.add_dependency 'thrift'
+  spec.add_dependency 'grpc'
   spec.add_dependency 'oj'
   spec.add_dependency 'dry-types', '~> 1.2.0'
   spec.add_dependency 'dry-struct', '~> 1.1.1'
@@ -22,4 +22,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'fabrication'
+  spec.add_development_dependency 'grpc-tools'
 end

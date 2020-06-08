@@ -1,0 +1,564 @@
+// The MIT License
+//
+// Copyright (c) 2020 Temporal Technologies Inc.  All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+package workflowservice;
+
+option go_package = "go.temporal.io/temporal-proto/workflowservice";
+option java_package = "io.temporal.proto.workflowservice";
+option java_multiple_files = true;
+option ruby_package = "Temporal::Proto";
+
+import "common/enum.proto";
+import "common/message.proto";
+import "event/enum.proto";
+import "event/message.proto";
+import "execution/message.proto";
+import "decision/message.proto";
+import "failure/message.proto";
+import "filter/enum.proto";
+import "filter/message.proto";
+import "namespace/message.proto";
+import "namespace/enum.proto";
+import "query/enum.proto";
+import "query/message.proto";
+import "replication/message.proto";
+import "tasklist/enum.proto";
+import "tasklist/message.proto";
+import "version/message.proto";
+
+message RegisterNamespaceRequest {
+    string name = 1;
+    string description = 2;
+    string ownerEmail = 3;
+    int32 workflowExecutionRetentionPeriodInDays = 4;
+    bool emitMetric = 5;
+    repeated replication.ClusterReplicationConfiguration clusters = 6;
+    string activeClusterName = 7;
+    // A key-value map for any customized purpose.
+    map<string, string> data = 8;
+    string securityToken = 9;
+    bool isGlobalNamespace = 10;
+    namespace.ArchivalStatus historyArchivalStatus = 11;
+    string historyArchivalURI = 12;
+    namespace.ArchivalStatus visibilityArchivalStatus = 13;
+    string visibilityArchivalURI = 14;
+}
+
+message RegisterNamespaceResponse {
+}
+
+message ListNamespacesRequest {
+    int32 pageSize = 1;
+    bytes nextPageToken = 2;
+}
+
+message ListNamespacesResponse {
+    repeated DescribeNamespaceResponse namespaces = 1;
+    bytes nextPageToken = 2;
+}
+
+message DescribeNamespaceRequest {
+    string name = 1;
+    string id = 2;
+}
+
+message DescribeNamespaceResponse {
+    namespace.NamespaceInfo namespaceInfo = 1;
+    namespace.NamespaceConfiguration configuration = 2;
+    replication.NamespaceReplicationConfiguration replicationConfiguration = 3;
+    int64 failoverVersion = 4;
+    bool isGlobalNamespace = 5;
+}
+
+message UpdateNamespaceRequest {
+    string name = 1;
+    namespace.UpdateNamespaceInfo updatedInfo = 2;
+    namespace.NamespaceConfiguration configuration = 3;
+    replication.NamespaceReplicationConfiguration replicationConfiguration = 4;
+    string securityToken = 5;
+    string deleteBadBinary = 6;
+}
+
+message UpdateNamespaceResponse {
+    namespace.NamespaceInfo namespaceInfo = 1;
+    namespace.NamespaceConfiguration configuration = 2;
+    replication.NamespaceReplicationConfiguration replicationConfiguration = 3;
+    int64 failoverVersion = 4;
+    bool isGlobalNamespace = 5;
+}
+
+message DeprecateNamespaceRequest {
+    string name = 1;
+    string securityToken = 2;
+}
+
+message DeprecateNamespaceResponse {
+}
+
+message StartWorkflowExecutionRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    common.WorkflowType workflowType = 3;
+    tasklist.TaskList taskList = 4;
+    common.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new.
+    int32 workflowExecutionTimeoutSeconds = 6;
+    // Timeout of a single workflow run.
+    int32 workflowRunTimeoutSeconds = 7;
+    // Timeout of a single workflow task.
+    int32 workflowTaskTimeoutSeconds = 8;
+    string identity = 9;
+    string requestId = 10;
+    common.WorkflowIdReusePolicy workflowIdReusePolicy = 11;
+    // Retries up to workflowExecutionTimeoutSeconds.
+    common.RetryPolicy retryPolicy = 12;
+    string cronSchedule = 13;
+    common.Memo memo = 14;
+    common.SearchAttributes searchAttributes = 15;
+    common.Header header = 16;
+}
+
+message StartWorkflowExecutionResponse {
+    string runId = 1;
+}
+
+message GetWorkflowExecutionHistoryRequest {
+    string namespace = 1;
+    common.WorkflowExecution execution = 2;
+    int32 maximumPageSize = 3;
+    bytes nextPageToken = 4;
+    bool waitForNewEvent = 5;
+    filter.HistoryEventFilterType historyEventFilterType = 6;
+    bool skipArchival = 7;
+}
+
+message GetWorkflowExecutionHistoryResponse {
+    event.History history = 1;
+    repeated common.DataBlob rawHistory = 2;
+    bytes nextPageToken = 3;
+    bool archived = 4;
+}
+
+message PollForDecisionTaskRequest {
+    string namespace = 1;
+    tasklist.TaskList taskList = 2;
+    string identity = 3;
+    string binaryChecksum = 4;
+}
+
+message PollForDecisionTaskResponse {
+    bytes taskToken = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    common.WorkflowType workflowType = 3;
+    int64 previousStartedEventId = 4;
+    int64 startedEventId = 5;
+    int64 attempt = 6;
+    int64 backlogCountHint = 7;
+    event.History history = 8;
+    bytes nextPageToken = 9;
+    query.WorkflowQuery query = 10;
+    tasklist.TaskList workflowExecutionTaskList = 11;
+    int64 scheduledTimestamp = 12;
+    int64 startedTimestamp = 13;
+    map<string, query.WorkflowQuery> queries = 14;
+}
+
+message RespondDecisionTaskCompletedRequest {
+    bytes taskToken = 1;
+    repeated decision.Decision decisions = 2;
+    string identity = 3;
+    decision.StickyExecutionAttributes stickyAttributes = 4;
+    bool returnNewDecisionTask = 5;
+    bool forceCreateNewDecisionTask = 6;
+    string binaryChecksum = 7;
+    map<string, query.WorkflowQueryResult> queryResults = 8;
+}
+
+message RespondDecisionTaskCompletedResponse {
+    PollForDecisionTaskResponse decisionTask = 1;
+}
+
+message RespondDecisionTaskFailedRequest {
+    bytes taskToken = 1;
+    event.DecisionTaskFailedCause cause = 2;
+    failure.Failure failure = 3;
+    string identity = 4;
+    string binaryChecksum = 5;
+}
+
+message RespondDecisionTaskFailedResponse {
+}
+
+message PollForActivityTaskRequest {
+    string namespace = 1;
+    tasklist.TaskList taskList = 2;
+    string identity = 3;
+    tasklist.TaskListMetadata taskListMetadata = 4;
+}
+
+message PollForActivityTaskResponse {
+    bytes taskToken = 1;
+    string workflowNamespace = 2;
+    common.WorkflowType workflowType = 3;
+    common.WorkflowExecution workflowExecution = 4;
+    common.ActivityType activityType = 5;
+    string activityId = 6;
+    common.Header header = 7;
+    common.Payloads input = 8;
+    common.Payloads heartbeatDetails = 9;
+    int64 scheduledTimestamp = 10;
+    int64 scheduledTimestampOfThisAttempt = 11;
+    int64 startedTimestamp = 12;
+    int32 attempt = 13;
+    int32 scheduleToCloseTimeoutSeconds = 14;
+    int32 startToCloseTimeoutSeconds = 15;
+    int32 heartbeatTimeoutSeconds = 16;
+    // This is an actual retry policy the service uses.
+    // It can be different from the one provided (or not) during activity scheduling
+    // as the service can override the provided one in case its values are not specified
+    // or exceed configured system limits.
+    common.RetryPolicy retryPolicy = 17;
+}
+
+message RecordActivityTaskHeartbeatRequest {
+    bytes taskToken = 1;
+    common.Payloads details = 2;
+    string identity = 3;
+}
+
+message RecordActivityTaskHeartbeatResponse {
+    bool cancelRequested = 1;
+}
+
+message RecordActivityTaskHeartbeatByIdRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    string runId = 3;
+    string activityId = 4;
+    common.Payloads details = 5;
+    string identity = 6;
+}
+
+message RecordActivityTaskHeartbeatByIdResponse {
+    bool cancelRequested = 1;
+}
+
+message RespondActivityTaskCompletedRequest {
+    bytes taskToken = 1;
+    common.Payloads result = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskCompletedResponse {
+}
+
+message RespondActivityTaskCompletedByIdRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    string runId = 3;
+    string activityId = 4;
+    common.Payloads result = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskCompletedByIdResponse {
+}
+
+message RespondActivityTaskFailedRequest {
+    bytes taskToken = 1;
+    failure.Failure failure = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskFailedResponse {
+}
+
+message RespondActivityTaskFailedByIdRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    string runId = 3;
+    string activityId = 4;
+    failure.Failure failure = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskFailedByIdResponse {
+}
+
+message RespondActivityTaskCanceledRequest {
+    bytes taskToken = 1;
+    common.Payloads details = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskCanceledResponse {
+}
+
+message RespondActivityTaskCanceledByIdRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    string runId = 3;
+    string activityId = 4;
+    common.Payloads details = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskCanceledByIdResponse {
+}
+
+message RequestCancelWorkflowExecutionRequest {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    string identity = 3;
+    string requestId = 4;
+}
+
+message RequestCancelWorkflowExecutionResponse {
+}
+
+message SignalWorkflowExecutionRequest {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    string signalName = 3;
+    common.Payloads input = 4;
+    string identity = 5;
+    string requestId = 6;
+    string control = 7;
+}
+
+message SignalWorkflowExecutionResponse {
+}
+
+message SignalWithStartWorkflowExecutionRequest {
+    string namespace = 1;
+    string workflowId = 2;
+    common.WorkflowType workflowType = 3;
+    tasklist.TaskList taskList = 4;
+    common.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new
+    int32 workflowExecutionTimeoutSeconds = 6;
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 7;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 8;
+    string identity = 9;
+    string requestId = 10;
+    common.WorkflowIdReusePolicy workflowIdReusePolicy = 11;
+    string signalName = 12;
+    common.Payloads signalInput = 13;
+    string control = 14;
+    common.RetryPolicy retryPolicy = 15;
+    string cronSchedule = 16;
+    common.Memo memo = 17;
+    common.SearchAttributes searchAttributes = 18;
+    common.Header header = 19;
+}
+
+message SignalWithStartWorkflowExecutionResponse {
+    string runId = 1;
+}
+
+message ResetWorkflowExecutionRequest {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    string reason = 3;
+    int64 decisionFinishEventId = 4;
+    string requestId = 5;
+}
+
+message ResetWorkflowExecutionResponse {
+    string runId = 1;
+}
+
+message TerminateWorkflowExecutionRequest {
+    string namespace = 1;
+    common.WorkflowExecution workflowExecution = 2;
+    string reason = 3;
+    common.Payloads details = 4;
+    string identity = 5;
+}
+
+message TerminateWorkflowExecutionResponse {
+}
+
+message ListOpenWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 maximumPageSize = 2;
+    bytes nextPageToken = 3;
+    filter.StartTimeFilter startTimeFilter = 4;
+    oneof filters {
+        filter.WorkflowExecutionFilter executionFilter = 5;
+        filter.WorkflowTypeFilter typeFilter = 6;
+    }
+}
+
+message ListOpenWorkflowExecutionsResponse {
+    repeated execution.WorkflowExecutionInfo executions = 1;
+    bytes nextPageToken = 2;
+}
+
+message ListClosedWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 maximumPageSize = 2;
+    bytes nextPageToken = 3;
+    filter.StartTimeFilter startTimeFilter = 4;
+    oneof filters {
+        filter.WorkflowExecutionFilter executionFilter = 5;
+        filter.WorkflowTypeFilter typeFilter = 6;
+        filter.StatusFilter statusFilter = 7;
+    }
+}
+
+message ListClosedWorkflowExecutionsResponse {
+    repeated execution.WorkflowExecutionInfo executions = 1;
+    bytes nextPageToken = 2;
+}
+
+message ListWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 pageSize = 2;
+    bytes nextPageToken = 3;
+    string query = 4;
+}
+
+message ListWorkflowExecutionsResponse {
+    repeated execution.WorkflowExecutionInfo executions = 1;
+    bytes nextPageToken = 2;
+}
+
+message ListArchivedWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 pageSize = 2;
+    bytes nextPageToken = 3;
+    string query = 4;
+}
+
+message ListArchivedWorkflowExecutionsResponse {
+    repeated execution.WorkflowExecutionInfo executions = 1;
+    bytes nextPageToken = 2;
+}
+
+message ScanWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 pageSize = 2;
+    bytes nextPageToken = 3;
+    string query = 4;
+}
+
+message ScanWorkflowExecutionsResponse {
+    repeated execution.WorkflowExecutionInfo executions = 1;
+    bytes nextPageToken = 2;
+}
+
+message CountWorkflowExecutionsRequest {
+    string namespace = 1;
+    string query = 2;
+}
+
+message CountWorkflowExecutionsResponse {
+    int64 count = 1;
+}
+
+message GetSearchAttributesRequest {
+}
+
+message GetSearchAttributesResponse {
+    map<string, common.IndexedValueType> keys = 1;
+}
+
+// TODO:  deprecated APIs
+message RespondQueryTaskCompletedRequest {
+    bytes taskToken = 1;
+    query.QueryResultType completedType = 2;
+    common.Payloads queryResult = 3;
+    string errorMessage = 4;
+    version.WorkerVersionInfo workerVersionInfo = 5;
+}
+
+message RespondQueryTaskCompletedResponse {
+}
+
+message ResetStickyTaskListRequest {
+    string namespace = 1;
+    common.WorkflowExecution execution = 2;
+}
+
+message ResetStickyTaskListResponse {
+}
+
+message QueryWorkflowRequest {
+    string namespace = 1;
+    common.WorkflowExecution execution = 2;
+    query.WorkflowQuery query = 3;
+    // QueryRejectCondition can used to reject the query if workflow state does not satisfy condition
+    query.QueryRejectCondition queryRejectCondition = 4;
+    query.QueryConsistencyLevel queryConsistencyLevel = 5;
+}
+
+message QueryWorkflowResponse {
+    common.Payloads queryResult = 1;
+    query.QueryRejected queryRejected = 2;
+}
+
+message DescribeWorkflowExecutionRequest {
+    string namespace = 1;
+    common.WorkflowExecution execution = 2;
+}
+
+message DescribeWorkflowExecutionResponse {
+    execution.WorkflowExecutionConfiguration executionConfiguration = 1;
+    execution.WorkflowExecutionInfo workflowExecutionInfo = 2;
+    repeated execution.PendingActivityInfo pendingActivities = 3;
+    repeated execution.PendingChildExecutionInfo pendingChildren = 4;
+}
+
+message DescribeTaskListRequest {
+    string namespace = 1;
+    tasklist.TaskList taskList = 2;
+    tasklist.TaskListType taskListType = 3;
+    bool includeTaskListStatus = 4;
+}
+
+message DescribeTaskListResponse {
+    repeated tasklist.PollerInfo pollers = 1;
+    tasklist.TaskListStatus taskListStatus = 2;
+}
+
+message GetClusterInfoRequest {
+}
+
+// GetClusterInfoResponse contains information about Temporal cluster
+message GetClusterInfoResponse {
+    version.SupportedClientVersions supportedClientVersions = 1;
+}
+
+message ListTaskListPartitionsRequest {
+    string namespace = 1;
+    tasklist.TaskList taskList = 2;
+}
+
+message ListTaskListPartitionsResponse {
+    repeated tasklist.TaskListPartitionMetadata activityTaskListPartitions = 1;
+    repeated tasklist.TaskListPartitionMetadata decisionTaskListPartitions = 2;
+}

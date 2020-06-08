@@ -1,0 +1,182 @@
+// The MIT License
+//
+// Copyright (c) 2020 Temporal Technologies Inc.  All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+package decision;
+
+option go_package = "go.temporal.io/temporal-proto/decision";
+option java_package = "io.temporal.proto.decision";
+option java_multiple_files = true;
+option ruby_package = "Temporal::Proto";
+
+import "common/enum.proto";
+import "decision/enum.proto";
+import "common/message.proto";
+import "failure/message.proto";
+import "tasklist/message.proto";
+
+message ScheduleActivityTaskDecisionAttributes {
+    string activityId = 1;
+    common.ActivityType activityType = 2;
+    string namespace = 3;
+    tasklist.TaskList taskList = 4;
+    common.Header header = 5;
+    common.Payloads input = 6;
+    // Indicates how long the caller is willing to wait for an activity completion.
+    // Limits for how long retries are happening. Either this or startToCloseTimeoutSeconds is required.
+    // When not specified defaults to the workflow execution timeout.
+    int32 scheduleToCloseTimeoutSeconds = 7;
+    // Limits time an activity task can stay in a task queue before a worker picks it up.
+    // This timeout is always non retryable as all a retry would achieve is to put it back into the same queue.
+    // Defaults to scheduleToCloseTimeoutSeconds or workflow execution timeout if not specified.
+    int32 scheduleToStartTimeoutSeconds = 8;
+    // Maximum time an activity is allowed to execute after a pick up by a worker.
+    // This timeout is always retryable. Either this or scheduleToCloseTimeoutSeconds is required.
+    int32 startToCloseTimeoutSeconds = 9;
+    // Maximum time between successful worker heartbeats.
+    // Optional. By default no heartbeat is required.
+    int32 heartbeatTimeoutSeconds = 10;
+    // Activity retry policy. Note that activity is retried by default according to a default retry policy.
+    // To disable retries provide a retry policy with maximumAttempts equals to 1.
+    // The retries happen up to scheduleToCloseTimeout.
+    common.RetryPolicy retryPolicy = 11;
+}
+
+message RequestCancelActivityTaskDecisionAttributes {
+    int64 scheduledEventId = 1;
+}
+
+message StartTimerDecisionAttributes {
+    string timerId = 1;
+    int64 startToFireTimeoutSeconds = 2;
+}
+
+message CompleteWorkflowExecutionDecisionAttributes {
+    common.Payloads result = 1;
+}
+
+message FailWorkflowExecutionDecisionAttributes {
+    failure.Failure failure = 1;
+}
+
+message CancelTimerDecisionAttributes {
+    string timerId = 1;
+}
+
+message CancelWorkflowExecutionDecisionAttributes {
+    common.Payloads details = 1;
+}
+
+message RequestCancelExternalWorkflowExecutionDecisionAttributes {
+    string namespace = 1;
+    string workflowId = 2;
+    string runId = 3;
+    string control = 4;
+    bool childWorkflowOnly = 5;
+}
+
+message SignalExternalWorkflowExecutionDecisionAttributes {
+    string namespace = 1;
+    common.WorkflowExecution execution = 2;
+    string signalName = 3;
+    common.Payloads input = 4;
+    string control = 5;
+    bool childWorkflowOnly = 6;
+}
+
+message UpsertWorkflowSearchAttributesDecisionAttributes {
+    common.SearchAttributes searchAttributes = 1;
+}
+
+message RecordMarkerDecisionAttributes {
+    string markerName = 1;
+    map<string, common.Payloads> details = 2;
+    common.Header header = 3;
+    failure.Failure failure = 4;
+}
+
+message ContinueAsNewWorkflowExecutionDecisionAttributes {
+    common.WorkflowType workflowType = 1;
+    tasklist.TaskList taskList = 2;
+    common.Payloads input = 3;
+    // workflowExecutionTimeout is omitted as it shouldn'be overridden from within a workflow
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 4;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 5;
+    int32 backoffStartIntervalInSeconds = 6;
+    common.RetryPolicy retryPolicy = 7;
+    common.ContinueAsNewInitiator initiator = 8;
+    failure.Failure failure = 9;
+    common.Payloads lastCompletionResult = 10;
+    string cronSchedule = 11;
+    common.Header header = 12;
+    common.Memo memo = 13;
+    common.SearchAttributes searchAttributes = 14;
+}
+
+message StartChildWorkflowExecutionDecisionAttributes {
+    string namespace = 1;
+    string workflowId = 2;
+    common.WorkflowType workflowType = 3;
+    tasklist.TaskList taskList = 4;
+    common.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new
+    int32 workflowExecutionTimeoutSeconds = 6;
+    // Timeout of a single workflow run
+    int32 workflowRunTimeoutSeconds = 7;
+    // Timeout of a single workflow task
+    int32 workflowTaskTimeoutSeconds = 8;
+    common.ParentClosePolicy parentClosePolicy = 9;
+    string control = 10;
+    common.WorkflowIdReusePolicy workflowIdReusePolicy = 11;
+    common.RetryPolicy retryPolicy = 12;
+    string cronSchedule = 13;
+    common.Header header = 14;
+    common.Memo memo = 15;
+    common.SearchAttributes searchAttributes = 16;
+}
+
+message Decision {
+    DecisionType decisionType = 1;
+    oneof attributes {
+        ScheduleActivityTaskDecisionAttributes scheduleActivityTaskDecisionAttributes = 2;
+        StartTimerDecisionAttributes startTimerDecisionAttributes = 3;
+        CompleteWorkflowExecutionDecisionAttributes completeWorkflowExecutionDecisionAttributes = 4;
+        FailWorkflowExecutionDecisionAttributes failWorkflowExecutionDecisionAttributes = 5;
+        RequestCancelActivityTaskDecisionAttributes requestCancelActivityTaskDecisionAttributes = 6;
+        CancelTimerDecisionAttributes cancelTimerDecisionAttributes = 7;
+        CancelWorkflowExecutionDecisionAttributes cancelWorkflowExecutionDecisionAttributes = 8;
+        RequestCancelExternalWorkflowExecutionDecisionAttributes requestCancelExternalWorkflowExecutionDecisionAttributes = 9;
+        RecordMarkerDecisionAttributes recordMarkerDecisionAttributes = 10;
+        ContinueAsNewWorkflowExecutionDecisionAttributes continueAsNewWorkflowExecutionDecisionAttributes = 11;
+        StartChildWorkflowExecutionDecisionAttributes startChildWorkflowExecutionDecisionAttributes = 12;
+        SignalExternalWorkflowExecutionDecisionAttributes signalExternalWorkflowExecutionDecisionAttributes = 13;
+        UpsertWorkflowSearchAttributesDecisionAttributes upsertWorkflowSearchAttributesDecisionAttributes = 14;
+    }
+}
+
+message StickyExecutionAttributes {
+    tasklist.TaskList workerTaskList = 1;
+    int32 scheduleToStartTimeoutSeconds = 2;
+}
