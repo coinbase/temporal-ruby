@@ -30,7 +30,7 @@ module Temporal
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, JSON.deserialize(task.input))
+          activity_class.execute_in_context(context, JSON.deserialize(task.input.payloads.first.data))
         end
 
         # Do not complete asynchronous activities, these should be completed manually

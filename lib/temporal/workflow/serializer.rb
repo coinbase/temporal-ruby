@@ -24,7 +24,7 @@ module Temporal
 
       def self.serialize(object)
         serializer = SERIALIZERS_MAP[object.class]
-        serializer.new(object).to_thrift
+        serializer.new(object).to_proto
       end
     end
   end

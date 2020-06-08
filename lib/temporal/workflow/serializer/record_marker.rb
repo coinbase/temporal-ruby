@@ -5,13 +5,19 @@ module Temporal
   class Workflow
     module Serializer
       class RecordMarker < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::RecordMarker,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::RecordMarker,
             recordMarkerDecisionAttributes:
-              TemporalThrift::RecordMarkerDecisionAttributes.new(
+              Temporal::Proto::RecordMarkerDecisionAttributes.new(
                 markerName: object.name,
-                details: JSON.serialize(object.details)
+                details: Temporal::Proto::Payloads.new(
+                  payloads:[
+                    Temporal::Proto::Payload.new(
+                      data: JSON.serialize(object.details)
+                    )
+                  ]
+                )
               )
           )
         end

@@ -22,15 +22,13 @@ module Temporal
       ].freeze
 
       def self.generate_from(response)
-        status = ::TemporalThrift::WorkflowExecutionCloseStatus::VALUE_MAP[response.closeStatus]
-
         new(
           workflow: response.type.name,
           workflow_id: response.execution.workflowId,
           run_id: response.execution.runId,
           start_time: Utils.time_from_nanos(response.startTime),
           close_time: Utils.time_from_nanos(response.closeTime),
-          status: status&.to_sym || RUNNING_STATUS,
+          status: response.closeStatus || RUNNING_STATUS,
           history_length: response.historyLength,
         ).freeze
       end

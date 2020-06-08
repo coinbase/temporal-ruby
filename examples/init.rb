@@ -10,7 +10,7 @@ metrics_logger = Logger.new(STDOUT, progname: 'metrics')
 
 Temporal.configure do |config|
   config.host = 'localhost'
-  config.port = 6666
+  config.port = 7233
   config.domain = 'ruby-samples'
   config.task_list = 'general'
   config.metrics_adapter = Temporal::MetricsAdapters::Log.new(metrics_logger)

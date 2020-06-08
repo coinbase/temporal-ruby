@@ -5,16 +5,22 @@ module Temporal
   class Workflow
     module Serializer
       class StartChildWorkflow < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::StartChildWorkflowExecution,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::StartChildWorkflowExecution,
             startChildWorkflowExecutionDecisionAttributes:
-              TemporalThrift::StartChildWorkflowExecutionDecisionAttributes.new(
-                domain: object.domain,
+              Temporal::Proto::StartChildWorkflowExecutionDecisionAttributes.new(
+                namespace: object.domain,
                 workflowId: object.workflow_id.to_s,
-                workflowType: TemporalThrift::WorkflowType.new(name: object.workflow_type),
-                taskList: TemporalThrift::TaskList.new(name: object.task_list),
-                input: JSON.serialize(object.input),
+                workflowType: Temporal::Proto::WorkflowType.new(name: object.workflow_type),
+                taskList: Temporal::Proto::TaskList.new(name: object.task_list),
+                input: Temporal::Proto::Payloads.new(
+                  payloads: [
+                    Temporal::Proto::Payload.new(
+                      data: JSON.serialize(object.input)
+                    )
+                  ]
+                ),
                 executionStartToCloseTimeoutSeconds: object.timeouts[:execution],
                 taskStartToCloseTimeoutSeconds: object.timeouts[:task],
                 retryPolicy: serialize_retry_policy(object.retry_policy),
@@ -38,13 +44,13 @@ module Temporal
             expirationIntervalInSeconds: retry_policy.expiration_interval
           }.compact
 
-          TemporalThrift::RetryPolicy.new(options)
+          Temporal::Proto::RetryPolicy.new(options)
         end
 
         def serialize_headers(headers)
           return unless headers
 
-          TemporalThrift::Header.new(fields: object.headers)
+          Temporal::Proto::Header.new(fields: object.headers)
         end
       end
     end

@@ -1,5 +1,6 @@
 require 'oj'
-require 'gen/thrift/shared_types'
+require 'gen/grpc/common/message_pb'
+require 'gen/grpc/decision/message_pb'
 
 module Temporal
   class Workflow
@@ -9,8 +10,8 @@ module Temporal
           @object = object
         end
 
-        def to_thrift
-          raise NotImplementedError, 'serializer needs to implement #to_thrift'
+        def to_proto
+          raise NotImplementedError, 'serializer needs to implement #to_proto'
         end
 
         private

@@ -5,13 +5,14 @@ module Temporal
   class Workflow
     module Serializer
       class FailWorkflow < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::FailWorkflowExecution,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::FailWorkflowExecution,
             failWorkflowExecutionDecisionAttributes:
-              TemporalThrift::FailWorkflowExecutionDecisionAttributes.new(
-                reason: object.reason,
-                details: JSON.serialize(object.details)
+              Temporal::Proto::FailWorkflowExecutionDecisionAttributes.new(
+                failure: Temporal::Proto::Failure.new(message: object.reason)
+                # reason: object.reason,
+                # details: JSON.serialize(object.details)
               )
           )
         end

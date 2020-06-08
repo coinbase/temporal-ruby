@@ -5,12 +5,18 @@ module Temporal
   class Workflow
     module Serializer
       class CompleteWorkflow < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::CompleteWorkflowExecution,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::CompleteWorkflowExecution,
             completeWorkflowExecutionDecisionAttributes:
-              TemporalThrift::CompleteWorkflowExecutionDecisionAttributes.new(
-                result: JSON.serialize(object.result)
+              Temporal::Proto::CompleteWorkflowExecutionDecisionAttributes.new(
+                result: Temporal::Proto::Payloads.new(
+                  payloads: [
+                    Temporal::Proto::Payload.new(
+                      data: JSON.serialize(object.result)
+                    )
+                  ]
+                )
               )
           )
         end

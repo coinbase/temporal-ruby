@@ -4,11 +4,11 @@ module Temporal
   class Workflow
     module Serializer
       class CancelTimer < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::CancelTimer,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::CancelTimer,
             cancelTimerDecisionAttributes:
-              TemporalThrift::CancelTimerDecisionAttributes.new(
+              Temporal::Proto::CancelTimerDecisionAttributes.new(
                 timerId: object.timer_id.to_s
               )
           )

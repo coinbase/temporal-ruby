@@ -51,7 +51,7 @@ module Temporal
           Temporal.logger.debug("Polling for activity tasks (#{domain} / #{task_list})")
 
           task = poll_for_task
-          next unless task&.activityId
+          next if task.activityId.empty?
 
           thread_pool.schedule { process(task) }
         end

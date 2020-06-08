@@ -4,11 +4,11 @@ module Temporal
   class Workflow
     module Serializer
       class RequestActivityCancellation < Base
-        def to_thrift
-          TemporalThrift::Decision.new(
-            decisionType: TemporalThrift::DecisionType::RequestCancelActivityTask,
+        def to_proto
+          Temporal::Proto::Decision.new(
+            decisionType: Temporal::Proto::DecisionType::RequestCancelActivityTask,
             requestCancelActivityTaskDecisionAttributes:
-              TemporalThrift::RequestCancelActivityTaskDecisionAttributes.new(
+              Temporal::Proto::RequestCancelActivityTaskDecisionAttributes.new(
                 activityId: object.activity_id.to_s
               )
           )

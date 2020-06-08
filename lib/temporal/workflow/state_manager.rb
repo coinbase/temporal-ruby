@@ -101,7 +101,7 @@ module Temporal
           dispatch(
             History::EventTarget.workflow,
             'started',
-            safe_parse(event.attributes.input),
+            safe_parse(event.attributes.input.payloads),
             Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
           )
 
@@ -138,15 +138,15 @@ module Temporal
 
         when 'ActivityTaskCompleted'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result))
+          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
 
         when 'ActivityTaskFailed'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details))
+          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
 
         when 'ActivityTaskTimedOut'
           state_machine.time_out
-          type = TemporalThrift::TimeoutType::VALUE_MAP[event.attributes.timeoutType]
+          type = event.attributes.timeoutType.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
         when 'ActivityTaskCancelRequested'
@@ -159,7 +159,7 @@ module Temporal
 
         when 'ActivityTaskCanceled'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details))
+          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
 
         when 'TimerStarted'
           state_machine.start
@@ -194,10 +194,10 @@ module Temporal
 
         when 'MarkerRecorded'
           state_machine.complete
-          handle_marker(event.id, event.attributes.markerName, safe_parse(event.attributes.details))
+          handle_marker(event.id, event.attributes.markerName, safe_parse(event.attributes.details.payloads))
 
         when 'WorkflowExecutionSignaled'
-          dispatch(target, 'signaled', event.attributes.signalName, safe_parse(event.attributes.input))
+          dispatch(target, 'signaled', event.attributes.signalName, safe_parse(event.attributes.input.payloads))
 
         when 'WorkflowExecutionTerminated'
           # todo
@@ -211,26 +211,26 @@ module Temporal
 
         when 'StartChildWorkflowExecutionFailed'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause))
+          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause.payloads))
 
         when 'ChildWorkflowExecutionStarted'
           state_machine.start
 
         when 'ChildWorkflowExecutionCompleted'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result))
+          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
 
         when 'ChildWorkflowExecutionFailed'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details))
+          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
 
         when 'ChildWorkflowExecutionCanceled'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details))
+          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
 
         when 'ChildWorkflowExecutionTimedOut'
           state_machine.time_out
-          type = TemporalThrift::TimeoutType::VALUE_MAP[event.attributes.timeoutType]
+          type = event.attributes.timeoutType.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
         when 'ChildWorkflowExecutionTerminated'
@@ -306,7 +306,8 @@ module Temporal
         end
       end
 
-      def safe_parse(binary)
+      def safe_parse(payloads)
+        binary = payloads.first.data
         JSON.deserialize(binary)
       end
     end

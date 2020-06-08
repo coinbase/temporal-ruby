@@ -35,7 +35,7 @@ module Temporal
         def initialize(raw_event)
           @id = raw_event.eventId
           @timestamp = Utils.time_from_nanos(raw_event.timestamp)
-          @type = TemporalThrift::EventType::VALUE_MAP[raw_event.eventType]
+          @type = raw_event.eventType.to_s
           @attributes = extract_attributes(raw_event)
 
           freeze

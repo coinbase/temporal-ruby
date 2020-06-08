@@ -48,7 +48,7 @@ module Temporal
           Temporal.logger.debug("Polling for decision tasks (#{domain} / #{task_list})")
 
           task = poll_for_task
-          process(task) if task&.workflowType
+          process(task) if task.workflowType
         end
       end
 
