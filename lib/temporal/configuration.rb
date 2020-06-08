@@ -20,7 +20,7 @@ module Temporal
     DEFAULT_TASK_LIST = 'default-task-list'.freeze
 
     def initialize
-      @client_type = :thrift
+      @client_type = :grpc
       @logger = Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS

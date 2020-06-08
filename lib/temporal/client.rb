@@ -1,9 +1,9 @@
-require 'temporal/client/thrift_client'
+require 'temporal/client/grpc_client'
 
 module Temporal
   module Client
     CLIENT_TYPES_MAP = {
-      thrift: Temporal::Client::ThriftClient
+      grpc: Temporal::Client::GRPCClient
     }.freeze
 
     def self.generate

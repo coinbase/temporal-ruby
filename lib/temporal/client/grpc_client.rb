@@ -1,58 +1,59 @@
-require 'thrift'
+require 'grpc'
 require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
-require 'gen/thrift/workflow_service'
+
+$LOAD_PATH << File.expand_path('../../gen/grpc', __dir__)
+require 'workflowservice/service_services_pb'
 
 module Temporal
   module Client
-    class ThriftClient
+    class GRPCClient
       WORKFLOW_ID_REUSE_POLICY = {
-        allow_failed: TemporalThrift::WorkflowIdReusePolicy::AllowDuplicateFailedOnly,
-        allow: TemporalThrift::WorkflowIdReusePolicy::AllowDuplicate,
-        reject: TemporalThrift::WorkflowIdReusePolicy::RejectDuplicate
+        allow_failed: Temporal::Proto::WorkflowIdReusePolicy::AllowDuplicateFailedOnly,
+        allow: Temporal::Proto::WorkflowIdReusePolicy::AllowDuplicate,
+        reject: Temporal::Proto::WorkflowIdReusePolicy::RejectDuplicate
       }.freeze
 
       def initialize(host, port, identity)
-        @url = "http://#{host}:#{port}"
+        @url = "#{host}:#{port}"
         @identity = identity
-        @mutex = Mutex.new
       end
 
-      def register_domain(name:, description: nil, global: false, metrics: false, retention_period: 10)
-        request = TemporalThrift::RegisterDomainRequest.new(
+      def register_namespace(name:, description: nil, global: false, metrics: false, retention_period: 10)
+        request = Temporal::Proto::RegisterNamespaceRequest.new(
           name: name,
           description: description,
           emitMetric: metrics,
-          isGlobalDomain: global,
+          isGlobalNamespace: global,
           workflowExecutionRetentionPeriodInDays: retention_period
         )
-        send_request('RegisterDomain', request)
+        client.register_namespace(request)
       end
 
-      def describe_domain(name:)
-        request = TemporalThrift::DescribeDomainRequest.new(name: name)
-        send_request('DescribeDomain', request)
+      def describe_namespace(name:)
+        request = Temporal::Proto::DescribeNamespaceRequest.new(name: name)
+        client.describe_namespace(request)
       end
 
-      def list_domains(page_size:)
-        request = TemporalThrift::ListDomainsRequest.new(pageSize: page_size)
-        send_request('ListDomains', request)
+      def list_namespaces(page_size:)
+        request = Temporal::Proto::ListNamespacesRequest.new(pageSize: page_size)
+        client.list_namespaces(request)
       end
 
-      def update_domain(name:, description:)
-        request = TemporalThrift::UpdateDomainRequest.new(
+      def update_namespace(name:, description:)
+        request = Temporal::Proto::UpdateNamespaceRequest.new(
           name: name,
-          updateInfo: TemporalThrift::UpdateDomainRequest.new(
+          updateInfo: Temporal::Proto::UpdateNamespaceRequest.new(
             description: description
           )
         )
-        send_request('UpdateDomain', request)
+        client.update_namespace(request)
       end
 
-      def deprecate_domain(name:)
-        request = TemporalThrift::DeprecateDomainRequest.new(name: name)
-        send_request('DeprecateDomain', request)
+      def deprecate_namespace(name:)
+        request = Temporal::Proto::DeprecateNamespaceRequest.new(name: name)
+        client.deprecate_namespace(request)
       end
 
       def start_workflow_execution(
@@ -66,21 +67,24 @@ module Temporal
         workflow_id_reuse_policy: nil,
         headers: nil
       )
-        request = TemporalThrift::StartWorkflowExecutionRequest.new(
+        request = Temporal::Proto::StartWorkflowExecutionRequest.new(
           identity: identity,
-          domain: domain,
-          workflowType: TemporalThrift::WorkflowType.new(
+          namespace: domain,
+          workflowType: Temporal::Proto::WorkflowType.new(
             name: workflow_name
           ),
           workflowId: workflow_id,
-          taskList: TemporalThrift::TaskList.new(
+          taskList: Temporal::Proto::TaskList.new(
             name: task_list
           ),
-          input: JSON.serialize(input),
-          executionStartToCloseTimeoutSeconds: execution_timeout,
-          taskStartToCloseTimeoutSeconds: task_timeout,
+          input: Temporal::Proto::Payloads.new(
+            payloads: [Temporal::Proto::Payload.new(data: JSON.serialize(input))]
+          ),
+          workflowExecutionTimeoutSeconds: execution_timeout,
+          workflowRunTimeoutSeconds: execution_timeout,
+          workflowTaskTimeoutSeconds: task_timeout,
           requestId: SecureRandom.uuid,
-          header: TemporalThrift::Header.new(
+          header: Temporal::Proto::Header.new(
             fields: headers
           )
         )
@@ -92,69 +96,69 @@ module Temporal
           request.workflowIdReusePolicy = policy
         end
 
-        send_request('StartWorkflowExecution', request)
+        client.start_workflow_execution(request)
       end
 
       def get_workflow_execution_history(domain:, workflow_id:, run_id:)
-        request = TemporalThrift::GetWorkflowExecutionHistoryRequest.new(
-          domain: domain,
-          execution: TemporalThrift::WorkflowExecution.new(
+        request = Temporal::Proto::GetWorkflowExecutionHistoryRequest.new(
+          namespace: domain,
+          execution: Temporal::Proto::WorkflowExecution.new(
             workflowId: workflow_id,
             runId: run_id
           )
         )
 
-        send_request('GetWorkflowExecutionHistory', request)
+        client.get_workflow_execution_history(request)
       end
 
       def poll_for_decision_task(domain:, task_list:)
-        request = TemporalThrift::PollForDecisionTaskRequest.new(
+        request = Temporal::Proto::PollForDecisionTaskRequest.new(
           identity: identity,
-          domain: domain,
-          taskList: TemporalThrift::TaskList.new(
+          namespace: domain,
+          taskList: Temporal::Proto::TaskList.new(
             name: task_list
           )
         )
-        send_request('PollForDecisionTask', request)
+        client.poll_for_decision_task(request)
       end
 
       def respond_decision_task_completed(task_token:, decisions:)
-        request = TemporalThrift::RespondDecisionTaskCompletedRequest.new(
+        request = Temporal::Proto::RespondDecisionTaskCompletedRequest.new(
           identity: identity,
           taskToken: task_token,
           decisions: Array(decisions)
         )
-        send_request('RespondDecisionTaskCompleted', request)
+        client.respond_decision_task_completed(request)
       end
 
       def respond_decision_task_failed(task_token:, cause:, details: nil)
-        request = TemporalThrift::RespondDecisionTaskFailedRequest.new(
+        request = Temporal::Proto::RespondDecisionTaskFailedRequest.new(
           identity: identity,
           taskToken: task_token,
           cause: cause,
           details: JSON.serialize(details)
         )
-        send_request('RespondDecisionTaskFailed', request)
+        client.respond_decision_task_failed(request)
       end
 
       def poll_for_activity_task(domain:, task_list:)
-        request = TemporalThrift::PollForActivityTaskRequest.new(
+        request = Temporal::Proto::PollForActivityTaskRequest.new(
           identity: identity,
-          domain: domain,
-          taskList: TemporalThrift::TaskList.new(
+          namespace: domain,
+          taskList: Temporal::Proto::TaskList.new(
             name: task_list
           )
         )
-        send_request('PollForActivityTask', request)
+        client.poll_for_activity_task(request)
       end
 
       def record_activity_task_heartbeat(task_token:, details: nil)
-        request = TemporalThrift::RecordActivityTaskHeartbeatRequest.new(
+        request = Temporal::Proto::RecordActivityTaskHeartbeatRequest.new(
           taskToken: task_token,
           details: JSON.serialize(details),
           identity: identity
         )
-        send_request('RecordActivityTaskHeartbeat', request)
+        client.record_activity_task_heartbeat(request)
       end
 
       def record_activity_task_heartbeat_by_id
@@ -162,56 +166,60 @@ module Temporal
       end
 
       def respond_activity_task_completed(task_token:, result:)
-        request = TemporalThrift::RespondActivityTaskCompletedRequest.new(
+        request = Temporal::Proto::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           taskToken: task_token,
-          result: JSON.serialize(result)
+          result: Temporal::Proto::Payloads.new(
+            payloads: [
+              Temporal::Proto::Payload.new(data: JSON.serialize(result))
+            ]
+          ),
         )
-        send_request('RespondActivityTaskCompleted', request)
+        client.respond_activity_task_completed(request)
       end
 
       def respond_activity_task_completed_by_id(domain:, activity_id:, workflow_id:, run_id:, result:)
-        request = TemporalThrift::RespondActivityTaskCompletedByIDRequest.new(
+        request = Temporal::Proto::RespondActivityTaskCompletedByIDRequest.new(
           identity: identity,
-          domain: domain,
+          namespace: domain,
           workflowID: workflow_id,
           runID: run_id,
           activityID: activity_id,
           result: JSON.serialize(result)
         )
-        send_request('RespondActivityTaskCompletedByID', request)
+        client.respond_activity_task_completed_by_id(request)
       end
 
       def respond_activity_task_failed(task_token:, reason:, details: nil)
-        request = TemporalThrift::RespondActivityTaskFailedRequest.new(
+        request = Temporal::Proto::RespondActivityTaskFailedRequest.new(
           identity: identity,
           taskToken: task_token,
           reason: reason,
           details: JSON.serialize(details)
         )
-        send_request('RespondActivityTaskFailed', request)
+        client.respond_activity_task_failed(request)
       end
 
       def respond_activity_task_failed_by_id(domain:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
-        request = TemporalThrift::RespondActivityTaskFailedByIDRequest.new(
+        request = Temporal::Proto::RespondActivityTaskFailedByIDRequest.new(
           identity: identity,
-          domain: domain,
+          namespace: domain,
           workflowID: workflow_id,
           runID: run_id,
           activityID: activity_id,
           reason: reason,
           details: JSON.serialize(details)
         )
-        send_request('RespondActivityTaskFailedByID', request)
+        client.respond_activity_task_failed_by_id(request)
       end
 
       def respond_activity_task_canceled(task_token:, details: nil)
-        request = TemporalThrift::RespondActivityTaskCanceledRequest.new(
+        request = Temporal::Proto::RespondActivityTaskCanceledRequest.new(
           taskToken: task_token,
           details: JSON.serialize(details),
           identity: identity
         )
-        send_request('RespondActivityTaskCanceled', request)
+        client.respond_activity_task_canceled(request)
       end
 
       def respond_activity_task_canceled_by_id
@@ -223,9 +231,9 @@ module Temporal
       end
 
       def signal_workflow_execution(domain:, workflow_id:, run_id:, signal:, input: nil)
-        request = TemporalThrift::SignalWorkflowExecutionRequest.new(
-          domain: domain,
-          workflowExecution: TemporalThrift::WorkflowExecution.new(
+        request = Temporal::Proto::SignalWorkflowExecutionRequest.new(
+          namespace: domain,
+          workflowExecution: Temporal::Proto::WorkflowExecution.new(
             workflowId: workflow_id,
             runId: run_id
           ),
@@ -233,7 +241,7 @@ module Temporal
           input: JSON.serialize(input),
           identity: identity
         )
-        send_request('SignalWorkflowExecution', request)
+        client.signal_workflow_execution(request)
       end
 
       def signal_with_start_workflow_execution
@@ -241,16 +249,16 @@ module Temporal
       end
 
       def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, decision_task_event_id:)
-        request = TemporalThrift::ResetWorkflowExecutionRequest.new(
-          domain: domain,
-          workflowExecution: TemporalThrift::WorkflowExecution.new(
+        request = Temporal::Proto::ResetWorkflowExecutionRequest.new(
+          namespace: domain,
+          workflowExecution: Temporal::Proto::WorkflowExecution.new(
             workflowId: workflow_id,
             runId: run_id
           ),
           reason: reason,
           decisionFinishEventId: decision_task_event_id
         )
-        send_request('ResetWorkflowExecution', request)
+        client.reset_workflow_execution(request)
       end
 
       def terminate_workflow_execution
@@ -298,63 +306,34 @@ module Temporal
       end
 
       def describe_workflow_execution(domain:, workflow_id:, run_id:)
-        request = TemporalThrift::DescribeWorkflowExecutionRequest.new(
-          domain: domain,
-          execution: TemporalThrift::WorkflowExecution.new(
+        request = Temporal::Proto::DescribeWorkflowExecutionRequest.new(
+          namespace: domain,
+          execution: Temporal::Proto::WorkflowExecution.new(
             workflowId: workflow_id,
             runId: run_id
           )
         )
-        send_request('DescribeWorkflowExecution', request)
+        client.describe_workflow_execution(request)
       end
 
       def describe_task_list(domain:, task_list:)
-        request = TemporalThrift::DescribeTaskListRequest.new(
-          domain: domain,
-          taskList: TemporalThrift::TaskList.new(
+        request = Temporal::Proto::DescribeTaskListRequest.new(
+          namespace: domain,
+          taskList: Temporal::Proto::TaskList.new(
             name: task_list
           ),
-          taskListType: TemporalThrift::TaskListType::Decision,
+          taskListType: Temporal::Proto::TaskListType::Decision,
           includeTaskListStatus: true
         )
-        send_request('DescribeTaskList', request)
+        client.describe_task_list(request)
       end
 
       private
 
-      attr_reader :url, :identity, :mutex
+      attr_reader :url, :identity
 
-      def transport
-        @transport ||= Thrift::HTTPClientTransport.new(url).tap do |http|
-          http.add_headers(
-            'Rpc-Caller' => 'ruby-client',
-            'Rpc-Encoding' => 'thrift',
-            'Rpc-Service' => 'temporal-proxy',
-            'Context-TTL-MS' => '25000'
-          )
-        end
-      end
-
-      def connection
-        @connection ||= begin
-          protocol = Thrift::BinaryProtocol.new(transport)
-          TemporalThrift::WorkflowService::Client.new(protocol)
-        end
-      end
-
-      def send_request(name, request)
-        start_time = Time.now
-
-        # synchronize these calls because transport headers are mutated
-        result = mutex.synchronize do
-          transport.add_headers 'Rpc-Procedure' => "WorkflowService::#{name}"
-          connection.public_send(name, request)
-        end
-
-        time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing('request.latency', time_diff_ms, request_name: name)
-
-        result
+      def client
+        @client ||= Temporal::Proto::WorkflowService::Stub.new(url, :this_channel_is_insecure, timeout: 5)
       end
     end
   end
