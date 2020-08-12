@@ -2,7 +2,7 @@
 
 This directory contains examples demonstraiting different features or this library and Temporal.
 
-To try these out you need to have Temporal and TChannel Proxy running ([setup instructions](https://github.com/coinbase/temporal-ruby#installing-dependencies)).
+To try these out you need to have a running Temporal service ([setup instructions](https://github.com/coinbase/temporal-ruby#installing-dependencies)).
 
 Install all the gem dependencies by running:
 
@@ -10,7 +10,7 @@ Install all the gem dependencies by running:
 > bundle install
 ```
 
-Modify the `init.rb` file to point to your TChannel Proxy.
+Modify the `init.rb` file to point to your Temporal cluster.
 
 Start a worker process:
 

@@ -9,9 +9,6 @@ To find more about Temporal please visit <https://temporal.io/>.
 
 ## Getting Started
 
-*NOTE: Make sure you have both Temporal and TChannel Proxy up and running. Head over to
-[this section](#installing-dependencies) for installation instructions.*
-
 Clone this repository:
 
 ```sh
@@ -21,7 +18,7 @@ Clone this repository:
 Include this gem to your `Gemfile`:
 
 ```ruby
-gem 'temporal-ruby', path: 'path/to/a/cloned/temporal-ruby/'
+gem 'temporal-ruby', github: 'coinbase/temporal-ruby'
 ```
 
 Define an activity:
@@ -55,7 +52,7 @@ Configure your Temporal connection:
 ```ruby
 Temporal.configure do |config|
   config.host = 'localhost'
-  config.port = 6666 # this should point to the tchannel proxy
+  config.port = 7233
   config.domain = 'ruby-samples'
   config.task_list = 'hello-world'
 end
@@ -97,11 +94,6 @@ available, make sure to check them out.
 
 ## Installing dependencies
 
-In order to run your Ruby workers you need to have the Temporal service and the TChannel Proxy
-running. Below are the instructions on setting these up:
-
-### Temporal
-
 Temporal service handles all the persistence, fault tolerance and coordination of your workflows and
 activities. To set it up locally, download and boot the Docker Compose file from the official repo:
 
@@ -110,21 +102,6 @@ activities. To set it up locally, download and boot the Docker Compose file from
 
 > docker-compose up
 ```
-
-### TChannel Proxy
-
-Right now the Temporal service only communicates with the workers using Thrift over TChannel.
-Unfortunately there isn't a working TChannel protocol implementation for Ruby, so in order to
-connect to the Temporal service a simple proxy was created. You can run it using:
-
-```sh
-> cd proxy
-
-> bin/proxy
-```
-
-The code and detailed instructions can be found [here](proxy/).
-
 
 ## Workflows
 
