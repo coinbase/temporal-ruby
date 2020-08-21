@@ -9,8 +9,8 @@ module Temporal
       def initialize(task, domain, workflow_lookup, client, middleware_chain)
         @task = task
         @domain = domain
-        @task_token = task.taskToken
-        @workflow_name = task.workflowType.name
+        @task_token = task.task_token
+        @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)
         @client = client
         @middleware_chain = middleware_chain
@@ -51,7 +51,7 @@ module Temporal
       attr_reader :task, :domain, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
 
       def queue_time_ms
-        ((task.startedTimestamp - task.scheduledTimestamp) / 1_000_000).round
+        ((task.started_timestamp - task.scheduled_timestamp) / 1_000_000).round
       end
 
       def serialize_decisions(decisions)

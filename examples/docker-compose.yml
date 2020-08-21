@@ -1,12 +1,12 @@
-version: '3'
+version: '3.5'
+
 services:
   temporal:
     image: temporalio/auto-setup:latest
     ports:
-      - "7233:7233"
+     - "7233:7233"
     environment:
       - "CASSANDRA_SEEDS=cassandra"
-      - "PROMETHEUS_ENDPOINT=localhost"
       - "DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml"
     depends_on:
       - cassandra

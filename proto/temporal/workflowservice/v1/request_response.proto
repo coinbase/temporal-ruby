@@ -1,0 +1,564 @@
+// The MIT License
+//
+// Copyright (c) 2020 Temporal Technologies Inc.  All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+package temporal.workflowservice.v1;
+
+option go_package = "go.temporal.io/temporal-proto/workflowservice/v1;workflowservice";
+option java_package = "io.temporal.workflowservice.v1";
+option java_multiple_files = true;
+option java_outer_classname = "RequestResponseProto";
+option ruby_package = "Temporal::Proto::WorkflowService::V1";
+
+import "temporal/enums/v1/workflow.proto";
+import "temporal/enums/v1/namespace.proto";
+import "temporal/enums/v1/failed_cause.proto";
+import "temporal/enums/v1/common.proto";
+import "temporal/enums/v1/query.proto";
+import "temporal/enums/v1/task_list.proto";
+import "temporal/common/v1/message.proto";
+import "temporal/history/v1/message.proto";
+import "temporal/workflow/v1/message.proto";
+import "temporal/decision/v1/message.proto";
+import "temporal/failure/v1/message.proto";
+import "temporal/filter/v1/message.proto";
+import "temporal/namespace/v1/message.proto";
+import "temporal/query/v1/message.proto";
+import "temporal/replication/v1/message.proto";
+import "temporal/tasklist/v1/message.proto";
+import "temporal/version/v1/message.proto";
+
+message RegisterNamespaceRequest {
+    string name = 1;
+    string description = 2;
+    string owner_email = 3;
+    int32 workflow_execution_retention_period_in_days = 4;
+    bool emit_metric = 5;
+    repeated temporal.replication.v1.ClusterReplicationConfig clusters = 6;
+    string active_cluster_name = 7;
+    // A key-value map for any customized purpose.
+    map<string, string> data = 8;
+    string security_token = 9;
+    bool is_global_namespace = 10;
+    temporal.enums.v1.ArchivalStatus history_archival_status = 11;
+    string history_archival_uri = 12;
+    temporal.enums.v1.ArchivalStatus visibility_archival_status = 13;
+    string visibility_archival_uri = 14;
+}
+
+message RegisterNamespaceResponse {
+}
+
+message ListNamespacesRequest {
+    int32 page_size = 1;
+    bytes next_page_token = 2;
+}
+
+message ListNamespacesResponse {
+    repeated DescribeNamespaceResponse namespaces = 1;
+    bytes next_page_token = 2;
+}
+
+message DescribeNamespaceRequest {
+    string name = 1;
+    string id = 2;
+}
+
+message DescribeNamespaceResponse {
+    temporal.namespace.v1.NamespaceInfo namespace_info = 1;
+    temporal.namespace.v1.NamespaceConfig config = 2;
+    temporal.replication.v1.NamespaceReplicationConfig replication_config = 3;
+    int64 failover_version = 4;
+    bool is_global_namespace = 5;
+}
+
+message UpdateNamespaceRequest {
+    string name = 1;
+    temporal.namespace.v1.UpdateNamespaceInfo update_info = 2;
+    temporal.namespace.v1.NamespaceConfig config = 3;
+    temporal.replication.v1.NamespaceReplicationConfig replication_config = 4;
+    string security_token = 5;
+    string delete_bad_binary = 6;
+}
+
+message UpdateNamespaceResponse {
+    temporal.namespace.v1.NamespaceInfo namespace_info = 1;
+    temporal.namespace.v1.NamespaceConfig config = 2;
+    temporal.replication.v1.NamespaceReplicationConfig replication_config = 3;
+    int64 failover_version = 4;
+    bool is_global_namespace = 5;
+}
+
+message DeprecateNamespaceRequest {
+    string name = 1;
+    string security_token = 2;
+}
+
+message DeprecateNamespaceResponse {
+}
+
+message StartWorkflowExecutionRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    temporal.tasklist.v1.TaskList task_list = 4;
+    temporal.common.v1.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new.
+    int32 workflow_execution_timeout_seconds = 6;
+    // Timeout of a single workflow run.
+    int32 workflow_run_timeout_seconds = 7;
+    // Timeout of a single workflow task.
+    int32 workflow_task_timeout_seconds = 8;
+    string identity = 9;
+    string request_id = 10;
+    temporal.enums.v1.WorkflowIdReusePolicy workflow_id_reuse_policy = 11;
+    // Retries up to workflowExecutionTimeoutSeconds.
+    temporal.common.v1.RetryPolicy retry_policy = 12;
+    string cron_schedule = 13;
+    temporal.common.v1.Memo memo = 14;
+    temporal.common.v1.SearchAttributes search_attributes = 15;
+    temporal.common.v1.Header header = 16;
+}
+
+message StartWorkflowExecutionResponse {
+    string run_id = 1;
+}
+
+message GetWorkflowExecutionHistoryRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution execution = 2;
+    int32 maximum_page_size = 3;
+    bytes next_page_token = 4;
+    bool wait_for_new_event = 5;
+    temporal.enums.v1.HistoryEventFilterType history_event_filter_type = 6;
+    bool skip_archival = 7;
+}
+
+message GetWorkflowExecutionHistoryResponse {
+    temporal.history.v1.History history = 1;
+    repeated temporal.common.v1.DataBlob raw_history = 2;
+    bytes next_page_token = 3;
+    bool archived = 4;
+}
+
+message PollForDecisionTaskRequest {
+    string namespace = 1;
+    temporal.tasklist.v1.TaskList task_list = 2;
+    string identity = 3;
+    string binary_checksum = 4;
+}
+
+message PollForDecisionTaskResponse {
+    bytes task_token = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    int64 previous_started_event_id = 4;
+    int64 started_event_id = 5;
+    int64 attempt = 6;
+    int64 backlog_count_hint = 7;
+    temporal.history.v1.History history = 8;
+    bytes next_page_token = 9;
+    temporal.query.v1.WorkflowQuery query = 10;
+    temporal.tasklist.v1.TaskList workflow_execution_task_list = 11;
+    int64 scheduled_timestamp = 12;
+    int64 started_timestamp = 13;
+    map<string, temporal.query.v1.WorkflowQuery> queries = 14;
+}
+
+message RespondDecisionTaskCompletedRequest {
+    bytes task_token = 1;
+    repeated temporal.decision.v1.Decision decisions = 2;
+    string identity = 3;
+    temporal.tasklist.v1.StickyExecutionAttributes sticky_attributes = 4;
+    bool return_new_decision_task = 5;
+    bool force_create_new_decision_task = 6;
+    string binary_checksum = 7;
+    map<string, temporal.query.v1.WorkflowQueryResult> query_results = 8;
+}
+
+message RespondDecisionTaskCompletedResponse {
+    PollForDecisionTaskResponse decision_task = 1;
+}
+
+message RespondDecisionTaskFailedRequest {
+    bytes task_token = 1;
+    temporal.enums.v1.DecisionTaskFailedCause cause = 2;
+    temporal.failure.v1.Failure failure = 3;
+    string identity = 4;
+    string binary_checksum = 5;
+}
+
+message RespondDecisionTaskFailedResponse {
+}
+
+message PollForActivityTaskRequest {
+    string namespace = 1;
+    temporal.tasklist.v1.TaskList task_list = 2;
+    string identity = 3;
+    temporal.tasklist.v1.TaskListMetadata task_list_metadata = 4;
+}
+
+message PollForActivityTaskResponse {
+    bytes task_token = 1;
+    string workflow_namespace = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    temporal.common.v1.WorkflowExecution workflow_execution = 4;
+    temporal.common.v1.ActivityType activity_type = 5;
+    string activity_id = 6;
+    temporal.common.v1.Header header = 7;
+    temporal.common.v1.Payloads input = 8;
+    temporal.common.v1.Payloads heartbeat_details = 9;
+    int64 scheduled_timestamp = 10;
+    int64 scheduled_timestamp_of_this_attempt = 11;
+    int64 started_timestamp = 12;
+    int32 attempt = 13;
+    int32 schedule_to_close_timeout_seconds = 14;
+    int32 start_to_close_timeout_seconds = 15;
+    int32 heartbeat_timeout_seconds = 16;
+    // This is an actual retry policy the service uses.
+    // It can be different from the one provided (or not) during activity scheduling
+    // as the service can override the provided one in case its values are not specified
+    // or exceed configured system limits.
+    temporal.common.v1.RetryPolicy retry_policy = 17;
+}
+
+message RecordActivityTaskHeartbeatRequest {
+    bytes task_token = 1;
+    temporal.common.v1.Payloads details = 2;
+    string identity = 3;
+}
+
+message RecordActivityTaskHeartbeatResponse {
+    bool cancel_requested = 1;
+}
+
+message RecordActivityTaskHeartbeatByIdRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    string run_id = 3;
+    string activity_id = 4;
+    temporal.common.v1.Payloads details = 5;
+    string identity = 6;
+}
+
+message RecordActivityTaskHeartbeatByIdResponse {
+    bool cancel_requested = 1;
+}
+
+message RespondActivityTaskCompletedRequest {
+    bytes task_token = 1;
+    temporal.common.v1.Payloads result = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskCompletedResponse {
+}
+
+message RespondActivityTaskCompletedByIdRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    string run_id = 3;
+    string activity_id = 4;
+    temporal.common.v1.Payloads result = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskCompletedByIdResponse {
+}
+
+message RespondActivityTaskFailedRequest {
+    bytes task_token = 1;
+    temporal.failure.v1.Failure failure = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskFailedResponse {
+}
+
+message RespondActivityTaskFailedByIdRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    string run_id = 3;
+    string activity_id = 4;
+    temporal.failure.v1.Failure failure = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskFailedByIdResponse {
+}
+
+message RespondActivityTaskCanceledRequest {
+    bytes task_token = 1;
+    temporal.common.v1.Payloads details = 2;
+    string identity = 3;
+}
+
+message RespondActivityTaskCanceledResponse {
+}
+
+message RespondActivityTaskCanceledByIdRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    string run_id = 3;
+    string activity_id = 4;
+    temporal.common.v1.Payloads details = 5;
+    string identity = 6;
+}
+
+message RespondActivityTaskCanceledByIdResponse {
+}
+
+message RequestCancelWorkflowExecutionRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    string identity = 3;
+    string request_id = 4;
+}
+
+message RequestCancelWorkflowExecutionResponse {
+}
+
+message SignalWorkflowExecutionRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    string signal_name = 3;
+    temporal.common.v1.Payloads input = 4;
+    string identity = 5;
+    string request_id = 6;
+    string control = 7;
+}
+
+message SignalWorkflowExecutionResponse {
+}
+
+message SignalWithStartWorkflowExecutionRequest {
+    string namespace = 1;
+    string workflow_id = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    temporal.tasklist.v1.TaskList task_list = 4;
+    temporal.common.v1.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new
+    int32 workflow_execution_timeout_seconds = 6;
+    // Timeout of a single workflow run
+    int32 workflow_run_timeout_seconds = 7;
+    // Timeout of a single workflow task
+    int32 workflow_task_timeout_seconds = 8;
+    string identity = 9;
+    string request_id = 10;
+    temporal.enums.v1.WorkflowIdReusePolicy workflow_id_reuse_policy = 11;
+    string signal_name = 12;
+    temporal.common.v1.Payloads signal_input = 13;
+    string control = 14;
+    temporal.common.v1.RetryPolicy retry_policy = 15;
+    string cron_schedule = 16;
+    temporal.common.v1.Memo memo = 17;
+    temporal.common.v1.SearchAttributes search_attributes = 18;
+    temporal.common.v1.Header header = 19;
+}
+
+message SignalWithStartWorkflowExecutionResponse {
+    string run_id = 1;
+}
+
+message ResetWorkflowExecutionRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    string reason = 3;
+    int64 decision_finish_event_id = 4;
+    string request_id = 5;
+}
+
+message ResetWorkflowExecutionResponse {
+    string run_id = 1;
+}
+
+message TerminateWorkflowExecutionRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    string reason = 3;
+    temporal.common.v1.Payloads details = 4;
+    string identity = 5;
+}
+
+message TerminateWorkflowExecutionResponse {
+}
+
+message ListOpenWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 maximum_page_size = 2;
+    bytes next_page_token = 3;
+    temporal.filter.v1.StartTimeFilter start_time_filter = 4;
+    oneof filters {
+        temporal.filter.v1.WorkflowExecutionFilter execution_filter = 5;
+        temporal.filter.v1.WorkflowTypeFilter type_filter = 6;
+    }
+}
+
+message ListOpenWorkflowExecutionsResponse {
+    repeated temporal.workflow.v1.WorkflowExecutionInfo executions = 1;
+    bytes next_page_token = 2;
+}
+
+message ListClosedWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 maximum_page_size = 2;
+    bytes next_page_token = 3;
+    temporal.filter.v1.StartTimeFilter start_time_filter = 4;
+    oneof filters {
+        temporal.filter.v1.WorkflowExecutionFilter execution_filter = 5;
+        temporal.filter.v1.WorkflowTypeFilter type_filter = 6;
+        temporal.filter.v1.StatusFilter status_filter = 7;
+    }
+}
+
+message ListClosedWorkflowExecutionsResponse {
+    repeated temporal.workflow.v1.WorkflowExecutionInfo executions = 1;
+    bytes next_page_token = 2;
+}
+
+message ListWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 page_size = 2;
+    bytes next_page_token = 3;
+    string query = 4;
+}
+
+message ListWorkflowExecutionsResponse {
+    repeated temporal.workflow.v1.WorkflowExecutionInfo executions = 1;
+    bytes next_page_token = 2;
+}
+
+message ListArchivedWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 page_size = 2;
+    bytes next_page_token = 3;
+    string query = 4;
+}
+
+message ListArchivedWorkflowExecutionsResponse {
+    repeated temporal.workflow.v1.WorkflowExecutionInfo executions = 1;
+    bytes next_page_token = 2;
+}
+
+message ScanWorkflowExecutionsRequest {
+    string namespace = 1;
+    int32 page_size = 2;
+    bytes next_page_token = 3;
+    string query = 4;
+}
+
+message ScanWorkflowExecutionsResponse {
+    repeated temporal.workflow.v1.WorkflowExecutionInfo executions = 1;
+    bytes next_page_token = 2;
+}
+
+message CountWorkflowExecutionsRequest {
+    string namespace = 1;
+    string query = 2;
+}
+
+message CountWorkflowExecutionsResponse {
+    int64 count = 1;
+}
+
+message GetSearchAttributesRequest {
+}
+
+message GetSearchAttributesResponse {
+    map<string, temporal.enums.v1.IndexedValueType> keys = 1;
+}
+
+// TODO:  deprecated APIs
+message RespondQueryTaskCompletedRequest {
+    bytes task_token = 1;
+    temporal.enums.v1.QueryResultType completed_type = 2;
+    temporal.common.v1.Payloads query_result = 3;
+    string error_message = 4;
+    temporal.version.v1.WorkerVersionInfo worker_version_info = 5;
+}
+
+message RespondQueryTaskCompletedResponse {
+}
+
+message ResetStickyTaskListRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution execution = 2;
+}
+
+message ResetStickyTaskListResponse {
+}
+
+message QueryWorkflowRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution execution = 2;
+    temporal.query.v1.WorkflowQuery query = 3;
+    // QueryRejectCondition can used to reject the query if workflow state does not satisfy condition
+    temporal.enums.v1.QueryRejectCondition query_reject_condition = 4;
+}
+
+message QueryWorkflowResponse {
+    temporal.common.v1.Payloads query_result = 1;
+    temporal.query.v1.QueryRejected query_rejected = 2;
+}
+
+message DescribeWorkflowExecutionRequest {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution execution = 2;
+}
+
+message DescribeWorkflowExecutionResponse {
+    temporal.workflow.v1.WorkflowExecutionConfig execution_config = 1;
+    temporal.workflow.v1.WorkflowExecutionInfo workflow_execution_info = 2;
+    repeated temporal.workflow.v1.PendingActivityInfo pending_activities = 3;
+    repeated temporal.workflow.v1.PendingChildExecutionInfo pending_children = 4;
+}
+
+message DescribeTaskListRequest {
+    string namespace = 1;
+    temporal.tasklist.v1.TaskList task_list = 2;
+    temporal.enums.v1.TaskListType task_list_type = 3;
+    bool include_task_list_status = 4;
+}
+
+message DescribeTaskListResponse {
+    repeated temporal.tasklist.v1.PollerInfo pollers = 1;
+    temporal.tasklist.v1.TaskListStatus task_list_status = 2;
+}
+
+message GetClusterInfoRequest {
+}
+
+// GetClusterInfoResponse contains information about Temporal cluster
+message GetClusterInfoResponse {
+    temporal.version.v1.SupportedSDKVersions supported_sdk_versions = 1;
+}
+
+message ListTaskListPartitionsRequest {
+    string namespace = 1;
+    temporal.tasklist.v1.TaskList task_list = 2;
+}
+
+message ListTaskListPartitionsResponse {
+    repeated temporal.tasklist.v1.TaskListPartitionMetadata activity_task_list_partitions = 1;
+    repeated temporal.tasklist.v1.TaskListPartitionMetadata decision_task_list_partitions = 2;
+}

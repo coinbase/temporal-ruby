@@ -3,7 +3,7 @@ require 'temporal/workflow'
 
 describe Temporal do
   describe 'client operations' do
-    let(:client) { instance_double(Temporal::Client::ThriftClient) }
+    let(:client) { instance_double(Temporal::Client::GRPCClient) }
 
     before { allow(Temporal::Client).to receive(:generate).and_return(client) }
     after { described_class.remove_instance_variable(:@client) }

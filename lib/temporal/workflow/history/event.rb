@@ -30,12 +30,14 @@ module Temporal
           ChildWorkflowExecutionTerminated
         ].freeze
 
+        PREFIX = 'EVENT_TYPE_'.freeze
+
         attr_reader :id, :timestamp, :type, :attributes
 
         def initialize(raw_event)
-          @id = raw_event.eventId
+          @id = raw_event.event_id
           @timestamp = Utils.time_from_nanos(raw_event.timestamp)
-          @type = raw_event.eventType.to_s
+          @type = raw_event.event_type.to_s.gsub(PREFIX, '')
           @attributes = extract_attributes(raw_event)
 
           freeze
@@ -46,13 +48,13 @@ module Temporal
         def decision_id
           case type
           when 'TimerFired'
-            attributes.startedEventId
+            attributes.started_event_id
           when 'WorkflowExecutionSignaled'
             1 # fixed id for everything related to current workflow
           when *EVENT_TYPES
-            attributes.scheduledEventId
+            attributes.scheduled_event_id
           when *CHILD_WORKFLOW_EVENTS
-            attributes.initiatedEventId
+            attributes.initiated_event_id
           else
             id
           end
@@ -61,7 +63,7 @@ module Temporal
         private
 
         def extract_attributes(raw_event)
-          attributes_argument = "#{type}EventAttributes"
+          attributes_argument = "#{type.downcase}_event_attributes"
           attributes_argument[0] = attributes_argument[0].downcase
           raw_event.public_send(attributes_argument)
         end

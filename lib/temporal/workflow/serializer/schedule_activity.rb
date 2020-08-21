@@ -6,26 +6,26 @@ module Temporal
     module Serializer
       class ScheduleActivity < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::ScheduleActivityTask,
-            scheduleActivityTaskDecisionAttributes:
-              Temporal::Proto::ScheduleActivityTaskDecisionAttributes.new(
-                activityId: object.activity_id.to_s,
-                activityType: Temporal::Proto::ActivityType.new(name: object.activity_type),
-                input: Temporal::Proto::Payloads.new(
+          Temporal::Proto::Decision::V1::Decision.new(
+            decision_type: Temporal::Proto::Enums::V1::DecisionType::DECISION_TYPE_SCHEDULE_ACTIVITY_TASK,
+            schedule_activity_task_decision_attributes:
+              Temporal::Proto::Decision::V1::ScheduleActivityTaskDecisionAttributes.new(
+                activity_id: object.activity_id.to_s,
+                activity_type: Temporal::Proto::Common::V1::ActivityType.new(name: object.activity_type),
+                input: Temporal::Proto::Common::V1::Payloads.new(
                   payloads: [
-                    Temporal::Proto::Payload.new(
+                    Temporal::Proto::Common::V1::Payload.new(
                       data: JSON.serialize(object.input)
                     )
                   ]
                 ),
                 namespace: object.domain,
-                taskList: Temporal::Proto::TaskList.new(name: object.task_list),
-                scheduleToCloseTimeoutSeconds: object.timeouts[:schedule_to_close],
-                scheduleToStartTimeoutSeconds: object.timeouts[:schedule_to_start],
-                startToCloseTimeoutSeconds: object.timeouts[:start_to_close],
-                heartbeatTimeoutSeconds: object.timeouts[:heartbeat],
-                retryPolicy: serialize_retry_policy(object.retry_policy),
+                task_list: Temporal::Proto::TaskList::V1::TaskList.new(name: object.task_list),
+                schedule_to_close_timeout_seconds: object.timeouts[:schedule_to_close],
+                schedule_to_start_timeout_seconds: object.timeouts[:schedule_to_start],
+                start_to_close_timeout_seconds: object.timeouts[:start_to_close],
+                heartbeat_timeout_seconds: object.timeouts[:heartbeat],
+                retry_policy: serialize_retry_policy(object.retry_policy),
                 header: serialize_headers(object.headers)
               )
           )
@@ -38,21 +38,21 @@ module Temporal
 
           non_retriable_errors = Array(retry_policy.non_retriable_errors).map(&:name)
           options = {
-            initialIntervalInSeconds: retry_policy.interval,
-            backoffCoefficient: retry_policy.backoff,
-            maximumIntervalInSeconds: retry_policy.max_interval,
-            maximumAttempts: retry_policy.max_attempts,
-            nonRetriableErrorReasons: non_retriable_errors,
-            expirationIntervalInSeconds: retry_policy.expiration_interval
+            initial_interval_in_seconds: retry_policy.interval,
+            backoff_coefficient: retry_policy.backoff,
+            maximum_interval_in_seconds: retry_policy.max_interval,
+            maximum_attempts: retry_policy.max_attempts,
+            non_retriable_error_reasons: non_retriable_errors,
+            expiration_interval_in_seconds: retry_policy.expiration_interval
           }.compact
 
-          Temporal::Proto::RetryPolicy.new(options)
+          Temporal::Proto::Common::V1::RetryPolicy.new(options)
         end
 
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Proto::Header.new(fields: object.headers)
+          Temporal::Proto::Common::V1::Header.new(fields: object.headers)
         end
       end
     end

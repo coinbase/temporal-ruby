@@ -8,8 +8,8 @@ module Temporal
       def initialize(task, domain, activity_lookup, client, middleware_chain)
         @task = task
         @domain = domain
-        @task_token = task.taskToken
-        @activity_name = task.activityType.name
+        @task_token = task.task_token
+        @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
         @client = client
         @middleware_chain = middleware_chain
@@ -48,7 +48,7 @@ module Temporal
       attr_reader :task, :domain, :task_token, :activity_name, :activity_class, :client, :middleware_chain
 
       def queue_time_ms
-        ((task.startedTimestamp - task.scheduledTimestampOfThisAttempt) / 1_000_000).round
+        ((task.started_timestamp - task.scheduled_timestamp_of_this_attempt) / 1_000_000).round
       end
 
       def respond_completed(result)

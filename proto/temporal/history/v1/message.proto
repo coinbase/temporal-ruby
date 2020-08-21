@@ -1,0 +1,469 @@
+// The MIT License
+//
+// Copyright (c) 2020 Temporal Technologies Inc.  All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+syntax = "proto3";
+
+package temporal.history.v1;
+
+option go_package = "go.temporal.io/temporal-proto/history/v1;history";
+option java_package = "io.temporal.history.v1";
+option java_multiple_files = true;
+option java_outer_classname = "MessageProto";
+option ruby_package = "Temporal::Proto::History::V1";
+
+import "temporal/enums/v1/event_type.proto";
+import "temporal/enums/v1/failed_cause.proto";
+import "temporal/enums/v1/workflow.proto";
+import "temporal/common/v1/message.proto";
+import "temporal/failure/v1/message.proto";
+import "temporal/workflow/v1/message.proto";
+import "temporal/tasklist/v1/message.proto";
+
+message WorkflowExecutionStartedEventAttributes {
+    temporal.common.v1.WorkflowType workflow_type = 1;
+    string parent_workflow_namespace = 2;
+    temporal.common.v1.WorkflowExecution parent_workflow_execution = 3;
+    int64 parent_initiated_event_id = 4;
+    temporal.tasklist.v1.TaskList task_list = 5;
+    temporal.common.v1.Payloads input = 6;
+    // Total workflow execution timeout including retries and continue as new.
+    int32 workflow_execution_timeout_seconds = 7;
+    // Timeout of a single workflow run.
+    int32 workflow_run_timeout_seconds = 8;
+    // Timeout of a single workflow task.
+    int32 workflow_task_timeout_seconds = 9;
+    string continued_execution_run_id = 10;
+    temporal.enums.v1.ContinueAsNewInitiator initiator = 11;
+    temporal.failure.v1.Failure continued_failure = 12;
+    temporal.common.v1.Payloads last_completion_result = 13;
+    // This is the runId when the WorkflowExecutionStarted event is written.
+    string original_execution_run_id = 14;
+    string identity = 15;
+    // This is the very first runId along the chain of ContinueAsNew and Reset.
+    string first_execution_run_id = 16;
+    temporal.common.v1.RetryPolicy retry_policy = 17;
+    int32 attempt = 18;
+    // The absolute time at which workflow is timed out.
+    // This time is passed without change to the next run/retry of a workflow.
+    int64 workflow_execution_expiration_timestamp = 19;
+    string cron_schedule = 20;
+    int32 first_decision_task_backoff_seconds = 21;
+    temporal.common.v1.Memo memo = 22;
+    temporal.common.v1.SearchAttributes search_attributes = 23;
+    temporal.workflow.v1.ResetPoints prev_auto_reset_points = 24;
+    temporal.common.v1.Header header = 25;
+}
+
+message WorkflowExecutionCompletedEventAttributes {
+    temporal.common.v1.Payloads result = 1;
+    int64 decision_task_completed_event_id = 2;
+}
+
+message WorkflowExecutionFailedEventAttributes {
+    temporal.failure.v1.Failure failure = 1;
+    temporal.enums.v1.RetryStatus retry_status = 2;
+    int64 decision_task_completed_event_id = 3;
+}
+
+message WorkflowExecutionTimedOutEventAttributes {
+    temporal.enums.v1.RetryStatus retry_status = 1;
+}
+
+message WorkflowExecutionContinuedAsNewEventAttributes {
+    string new_execution_run_id = 1;
+    temporal.common.v1.WorkflowType workflow_type = 2;
+    temporal.tasklist.v1.TaskList task_list = 3;
+    temporal.common.v1.Payloads input = 4;
+    // workflow_execution_timeout is omitted as it shouldn'be overridden from within a workflow.
+    // Timeout of a single workflow run.
+    int32 workflow_run_timeout_seconds = 5;
+    // Timeout of a single workflow task.
+    int32 workflow_task_timeout_seconds = 6;
+    int64 decision_task_completed_event_id = 7;
+    int32 backoff_start_interval_in_seconds = 8;
+    temporal.enums.v1.ContinueAsNewInitiator initiator = 9;
+    temporal.failure.v1.Failure failure = 10;
+    temporal.common.v1.Payloads last_completion_result = 11;
+    temporal.common.v1.Header header = 12;
+    temporal.common.v1.Memo memo = 13;
+    temporal.common.v1.SearchAttributes search_attributes = 14;
+}
+
+message DecisionTaskScheduledEventAttributes {
+    temporal.tasklist.v1.TaskList task_list = 1;
+    int32 start_to_close_timeout_seconds = 2;
+    int64 attempt = 3;
+}
+
+message DecisionTaskStartedEventAttributes {
+    int64 scheduled_event_id = 1;
+    string identity = 2;
+    string request_id = 3;
+}
+
+message DecisionTaskCompletedEventAttributes {
+    int64 scheduled_event_id = 1;
+    int64 started_event_id = 2;
+    string identity = 3;
+    string binary_checksum = 4;
+}
+
+message DecisionTaskTimedOutEventAttributes {
+    int64 scheduled_event_id = 1;
+    int64 started_event_id = 2;
+    temporal.enums.v1.TimeoutType timeout_type = 3;
+}
+
+message DecisionTaskFailedEventAttributes {
+    int64 scheduled_event_id = 1;
+    int64 started_event_id = 2;
+    temporal.enums.v1.DecisionTaskFailedCause cause = 3;
+    temporal.failure.v1.Failure failure = 4;
+    string identity = 5;
+    // For reset workflow.
+    string base_run_id = 6;
+    string new_run_id = 7;
+    int64 fork_event_version = 8;
+    string binary_checksum = 9;
+}
+
+message ActivityTaskScheduledEventAttributes {
+    string activity_id = 1;
+    temporal.common.v1.ActivityType activity_type = 2;
+    string namespace = 3;
+    temporal.tasklist.v1.TaskList task_list = 4;
+    temporal.common.v1.Header header = 5;
+    temporal.common.v1.Payloads input = 6;
+    // Indicates how long the caller is willing to wait for an activity completion.
+    // Limits for how long retries are happening. Either this or start_to_close_timeout_seconds must be specified.
+    int32 schedule_to_close_timeout_seconds = 7;
+    // Limits time an activity task can stay in a task queue before a worker picks it up.
+    // This timeout is always non retryable as all a retry would achieve is to put it back into the same queue.
+    // Defaults to schedule_to_close_timeout_seconds or workflow execution timeout if not specified.
+    int32 schedule_to_start_timeout_seconds = 8;
+    // Maximum time an activity is allowed to execute after a pick up by a worker.
+    // This timeout is always retryable. Either this or schedule_to_close_timeout_seconds must be specified.
+    int32 start_to_close_timeout_seconds = 9;
+    // Maximum time between successful worker heartbeats.
+    int32 heartbeat_timeout_seconds = 10;
+    int64 decision_task_completed_event_id = 11;
+    // Activities are provided by a default retry policy controlled through the service dynamic configuration.
+    // Retries are happening up to schedule_to_close_timeout.
+    // To disable retries set retry_policy.maximum_attempts to 1.
+    temporal.common.v1.RetryPolicy retry_policy = 12;
+}
+
+message ActivityTaskStartedEventAttributes {
+    int64 scheduled_event_id = 1;
+    string identity = 2;
+    string request_id = 3;
+    int32 attempt = 4;
+    temporal.failure.v1.Failure last_failure = 5;
+}
+
+message ActivityTaskCompletedEventAttributes {
+    temporal.common.v1.Payloads result = 1;
+    int64 scheduled_event_id = 2;
+    int64 started_event_id = 3;
+    string identity = 4;
+}
+
+message ActivityTaskFailedEventAttributes {
+    temporal.failure.v1.Failure failure = 1;
+    int64 scheduled_event_id = 2;
+    int64 started_event_id = 3;
+    string identity = 4;
+    temporal.enums.v1.RetryStatus retry_status = 5;
+}
+
+message ActivityTaskTimedOutEventAttributes {
+    // For retry activity, it may have a failure before timeout. It is stored as `cause` in `failure`.
+    temporal.failure.v1.Failure failure = 1;
+    int64 scheduled_event_id = 2;
+    int64 started_event_id = 3;
+    temporal.enums.v1.RetryStatus retry_status = 4;
+}
+
+message ActivityTaskCancelRequestedEventAttributes {
+    int64 scheduled_event_id = 1;
+    int64 decision_task_completed_event_id = 2;
+}
+
+message ActivityTaskCanceledEventAttributes {
+    temporal.common.v1.Payloads details = 1;
+    int64 latest_cancel_requested_event_id = 2;
+    int64 scheduled_event_id = 3;
+    int64 started_event_id = 4;
+    string identity = 5;
+}
+
+message TimerStartedEventAttributes {
+    string timer_id = 1;
+    int64 start_to_fire_timeout_seconds = 2;
+    int64 decision_task_completed_event_id = 3;
+}
+
+message TimerFiredEventAttributes {
+    string timer_id = 1;
+    int64 started_event_id = 2;
+}
+
+message TimerCanceledEventAttributes {
+    string timer_id = 1;
+    int64 started_event_id = 2;
+    int64 decision_task_completed_event_id = 3;
+    string identity = 4;
+}
+
+message CancelTimerFailedEventAttributes {
+    string timer_id = 1;
+    string cause = 2;
+    int64 decision_task_completed_event_id = 3;
+    string identity = 4;
+}
+
+message WorkflowExecutionCancelRequestedEventAttributes {
+    string cause = 1;
+    int64 external_initiated_event_id = 2;
+    temporal.common.v1.WorkflowExecution external_workflow_execution = 3;
+    string identity = 4;
+}
+
+message WorkflowExecutionCanceledEventAttributes {
+    int64 decision_task_completed_event_id = 1;
+    temporal.common.v1.Payloads details = 2;
+}
+
+message MarkerRecordedEventAttributes {
+    string marker_name = 1;
+    map<string, temporal.common.v1.Payloads> details = 2;
+    int64 decision_task_completed_event_id = 3;
+    temporal.common.v1.Header header = 4;
+    temporal.failure.v1.Failure failure = 5;
+}
+
+message WorkflowExecutionSignaledEventAttributes {
+    string signal_name = 1;
+    temporal.common.v1.Payloads input = 2;
+    string identity = 3;
+}
+
+message WorkflowExecutionTerminatedEventAttributes {
+    string reason = 1;
+    temporal.common.v1.Payloads details = 2;
+    string identity = 3;
+}
+
+message RequestCancelExternalWorkflowExecutionInitiatedEventAttributes {
+    int64 decision_task_completed_event_id = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    string control = 4;
+    bool child_workflow_only = 5;
+}
+
+message RequestCancelExternalWorkflowExecutionFailedEventAttributes {
+    temporal.enums.v1.CancelExternalWorkflowExecutionFailedCause cause = 1;
+    int64 decision_task_completed_event_id = 2;
+    string namespace = 3;
+    temporal.common.v1.WorkflowExecution workflow_execution = 4;
+    int64 initiated_event_id = 5;
+    string control = 6;
+}
+
+message ExternalWorkflowExecutionCancelRequestedEventAttributes {
+    int64 initiated_event_id = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+}
+
+message SignalExternalWorkflowExecutionInitiatedEventAttributes {
+    int64 decision_task_completed_event_id = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    string signal_name = 4;
+    temporal.common.v1.Payloads input = 5;
+    string control = 6;
+    bool child_workflow_only = 7;
+}
+
+message SignalExternalWorkflowExecutionFailedEventAttributes {
+    temporal.enums.v1.SignalExternalWorkflowExecutionFailedCause cause = 1;
+    int64 decision_task_completed_event_id = 2;
+    string namespace = 3;
+    temporal.common.v1.WorkflowExecution workflow_execution = 4;
+    int64 initiated_event_id = 5;
+    string control = 6;
+}
+
+message ExternalWorkflowExecutionSignaledEventAttributes {
+    int64 initiated_event_id = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    string control = 4;
+}
+
+message UpsertWorkflowSearchAttributesEventAttributes {
+    int64 decision_task_completed_event_id = 1;
+    temporal.common.v1.SearchAttributes search_attributes = 2;
+}
+
+message StartChildWorkflowExecutionInitiatedEventAttributes {
+    string namespace = 1;
+    string workflow_id = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    temporal.tasklist.v1.TaskList task_list = 4;
+    temporal.common.v1.Payloads input = 5;
+    // Total workflow execution timeout including retries and continue as new.
+    int32 workflow_execution_timeout_seconds = 6;
+    // Timeout of a single workflow run.
+    int32 workflow_run_timeout_seconds = 7;
+    // Timeout of a single workflow task.
+    int32 workflow_task_timeout_seconds = 8;
+    temporal.enums.v1.ParentClosePolicy parent_close_policy = 9;
+    string control = 10;
+    int64 decision_task_completed_event_id = 11;
+    temporal.enums.v1.WorkflowIdReusePolicy workflow_id_reuse_policy = 12;
+    temporal.common.v1.RetryPolicy retry_policy = 13;
+    string cron_schedule = 14;
+    temporal.common.v1.Header header = 15;
+    temporal.common.v1.Memo memo = 16;
+    temporal.common.v1.SearchAttributes search_attributes = 17;
+}
+
+message StartChildWorkflowExecutionFailedEventAttributes {
+    string namespace = 1;
+    string workflow_id = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    temporal.enums.v1.StartChildWorkflowExecutionFailedCause cause = 4;
+    string control = 5;
+    int64 initiated_event_id = 6;
+    int64 decision_task_completed_event_id = 7;
+}
+
+message ChildWorkflowExecutionStartedEventAttributes {
+    string namespace = 1;
+    int64 initiated_event_id = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    temporal.common.v1.WorkflowType workflow_type = 4;
+    temporal.common.v1.Header header = 5;
+}
+
+message ChildWorkflowExecutionCompletedEventAttributes {
+    temporal.common.v1.Payloads result = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    temporal.common.v1.WorkflowType workflow_type = 4;
+    int64 initiated_event_id = 5;
+    int64 started_event_id = 6;
+}
+
+message ChildWorkflowExecutionFailedEventAttributes {
+    temporal.failure.v1.Failure failure = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    temporal.common.v1.WorkflowType workflow_type = 4;
+    int64 initiated_event_id = 5;
+    int64 started_event_id = 6;
+    temporal.enums.v1.RetryStatus retry_status = 7;
+}
+
+message ChildWorkflowExecutionCanceledEventAttributes {
+    temporal.common.v1.Payloads details = 1;
+    string namespace = 2;
+    temporal.common.v1.WorkflowExecution workflow_execution = 3;
+    temporal.common.v1.WorkflowType workflow_type = 4;
+    int64 initiated_event_id = 5;
+    int64 started_event_id = 6;
+}
+
+message ChildWorkflowExecutionTimedOutEventAttributes {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    int64 initiated_event_id = 4;
+    int64 started_event_id = 5;
+    temporal.enums.v1.RetryStatus retry_status = 6;
+}
+
+message ChildWorkflowExecutionTerminatedEventAttributes {
+    string namespace = 1;
+    temporal.common.v1.WorkflowExecution workflow_execution = 2;
+    temporal.common.v1.WorkflowType workflow_type = 3;
+    int64 initiated_event_id = 4;
+    int64 started_event_id = 5;
+}
+
+message HistoryEvent {
+    int64 event_id = 1;
+    int64 timestamp = 2;
+    temporal.enums.v1.EventType event_type = 3;
+    int64 version = 4;
+    int64 task_id = 5;
+    oneof attributes {
+        WorkflowExecutionStartedEventAttributes workflow_execution_started_event_attributes = 6;
+        WorkflowExecutionCompletedEventAttributes workflow_execution_completed_event_attributes = 7;
+        WorkflowExecutionFailedEventAttributes workflow_execution_failed_event_attributes = 8;
+        WorkflowExecutionTimedOutEventAttributes workflow_execution_timed_out_event_attributes = 9;
+        DecisionTaskScheduledEventAttributes decision_task_scheduled_event_attributes = 10;
+        DecisionTaskStartedEventAttributes decision_task_started_event_attributes = 11;
+        DecisionTaskCompletedEventAttributes decision_task_completed_event_attributes = 12;
+        DecisionTaskTimedOutEventAttributes decision_task_timed_out_event_attributes = 13;
+        DecisionTaskFailedEventAttributes decision_task_failed_event_attributes = 14;
+        ActivityTaskScheduledEventAttributes activity_task_scheduled_event_attributes = 15;
+        ActivityTaskStartedEventAttributes activity_task_started_event_attributes = 16;
+        ActivityTaskCompletedEventAttributes activity_task_completed_event_attributes = 17;
+        ActivityTaskFailedEventAttributes activity_task_failed_event_attributes = 18;
+        ActivityTaskTimedOutEventAttributes activity_task_timed_out_event_attributes = 19;
+        TimerStartedEventAttributes timer_started_event_attributes = 20;
+        TimerFiredEventAttributes timer_fired_event_attributes = 21;
+        ActivityTaskCancelRequestedEventAttributes activity_task_cancel_requested_event_attributes = 22;
+        ActivityTaskCanceledEventAttributes activity_task_canceled_event_attributes = 23;
+        TimerCanceledEventAttributes timer_canceled_event_attributes = 24;
+        CancelTimerFailedEventAttributes cancel_timer_failed_event_attributes = 25;
+        MarkerRecordedEventAttributes marker_recorded_event_attributes = 26;
+        WorkflowExecutionSignaledEventAttributes workflow_execution_signaled_event_attributes = 27;
+        WorkflowExecutionTerminatedEventAttributes workflow_execution_terminated_event_attributes = 28;
+        WorkflowExecutionCancelRequestedEventAttributes workflow_execution_cancel_requested_event_attributes = 29;
+        WorkflowExecutionCanceledEventAttributes workflow_execution_canceled_event_attributes = 30;
+        RequestCancelExternalWorkflowExecutionInitiatedEventAttributes request_cancel_external_workflow_execution_initiated_event_attributes = 31;
+        RequestCancelExternalWorkflowExecutionFailedEventAttributes request_cancel_external_workflow_execution_failed_event_attributes = 32;
+        ExternalWorkflowExecutionCancelRequestedEventAttributes external_workflow_execution_cancel_requested_event_attributes = 33;
+        WorkflowExecutionContinuedAsNewEventAttributes workflow_execution_continued_as_new_event_attributes = 34;
+        StartChildWorkflowExecutionInitiatedEventAttributes start_child_workflow_execution_initiated_event_attributes = 35;
+        StartChildWorkflowExecutionFailedEventAttributes start_child_workflow_execution_failed_event_attributes = 36;
+        ChildWorkflowExecutionStartedEventAttributes child_workflow_execution_started_event_attributes = 37;
+        ChildWorkflowExecutionCompletedEventAttributes child_workflow_execution_completed_event_attributes = 38;
+        ChildWorkflowExecutionFailedEventAttributes child_workflow_execution_failed_event_attributes = 39;
+        ChildWorkflowExecutionCanceledEventAttributes child_workflow_execution_canceled_event_attributes = 40;
+        ChildWorkflowExecutionTimedOutEventAttributes child_workflow_execution_timed_out_event_attributes = 41;
+        ChildWorkflowExecutionTerminatedEventAttributes child_workflow_execution_terminated_event_attributes = 42;
+        SignalExternalWorkflowExecutionInitiatedEventAttributes signal_external_workflow_execution_initiated_event_attributes = 43;
+        SignalExternalWorkflowExecutionFailedEventAttributes signal_external_workflow_execution_failed_event_attributes = 44;
+        ExternalWorkflowExecutionSignaledEventAttributes external_workflow_execution_signaled_event_attributes = 45;
+        UpsertWorkflowSearchAttributesEventAttributes upsert_workflow_search_attributes_event_attributes = 46;
+    }
+}
+
+message History {
+    repeated HistoryEvent events = 1;
+}

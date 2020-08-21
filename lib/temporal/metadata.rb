@@ -28,13 +28,13 @@ module Temporal
       def activity_metadata_from(task, domain)
         Metadata::Activity.new(
           domain: domain,
-          id: task.activityId,
-          name: task.activityType.name,
-          task_token: task.taskToken,
+          id: task.activity_id,
+          name: task.activity_type.name,
+          task_token: task.task_token,
           attempt: task.attempt,
-          workflow_run_id: task.workflowExecution.runId,
-          workflow_id: task.workflowExecution.workflowId,
-          workflow_name: task.workflowType.name,
+          workflow_run_id: task.workflow_execution.run_id,
+          workflow_id: task.workflow_execution.workflow_id,
+          workflow_name: task.workflow_type.name,
           headers: task.header&.fields || {}
         )
       end
@@ -42,19 +42,19 @@ module Temporal
       def decision_metadata_from(task, domain)
         Metadata::Decision.new(
           domain: domain,
-          id: task.startedEventId,
-          task_token: task.taskToken,
+          id: task.started_event_id,
+          task_token: task.task_token,
           attempt: task.attempt,
-          workflow_run_id: task.workflowExecution.runId,
-          workflow_id: task.workflowExecution.workflowId,
-          workflow_name: task.workflowType.name
+          workflow_run_id: task.workflow_execution.run_id,
+          workflow_id: task.workflow_execution.workflow_id,
+          workflow_name: task.workflow_type.name
         )
       end
 
       def workflow_metadata_from(event)
         Metadata::Workflow.new(
-          name: event.workflowType.name,
-          run_id: event.originalExecutionRunId,
+          name: event.workflow_type.name,
+          run_id: event.original_execution_run_id,
           attempt: event.attempt,
           headers: event.header&.fields || {}
         )

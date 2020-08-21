@@ -96,7 +96,7 @@ module Temporal
         target = History::EventTarget.from_event(event)
 
         case event.type
-        when 'WorkflowExecutionStarted'
+        when 'WORKFLOW_EXECUTION_STARTED'
           state_machine.start
           dispatch(
             History::EventTarget.workflow,
@@ -105,147 +105,147 @@ module Temporal
             Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
           )
 
-        when 'WorkflowExecutionCompleted'
+        when 'WORKFLOW_EXECUTION_COMPLETED'
           # todo
 
-        when 'WorkflowExecutionFailed'
+        when 'WORKFLOW_EXECUTION_FAILED'
           # todo
 
-        when 'WorkflowExecutionTimedOut'
+        when 'WORKFLOW_EXECUTION_TIMED_OUT'
           # todo
 
-        when 'DecisionTaskScheduled'
+        when 'DECISION_TASK_SCHEDULED'
           # todo
 
-        when 'DecisionTaskStarted'
+        when 'DECISION_TASK_STARTED'
           # todo
 
-        when 'DecisionTaskCompleted'
+        when 'DECISION_TASK_COMPLETED'
           # todo
 
-        when 'DecisionTaskTimedOut'
+        when 'DECISION_TASK_TIMED_OUT'
           # todo
 
-        when 'DecisionTaskFailed'
+        when 'DECISION_TASK_FAILED'
           # todo
 
-        when 'ActivityTaskScheduled'
+        when 'ACTIVITY_TASK_SCHEDULED'
           state_machine.schedule
           discard_decision(event.decision_id)
 
-        when 'ActivityTaskStarted'
+        when 'ACTIVITY_TASK_STARTED'
           state_machine.start
 
-        when 'ActivityTaskCompleted'
+        when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
           dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
 
-        when 'ActivityTaskFailed'
+        when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
           dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
 
-        when 'ActivityTaskTimedOut'
+        when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
           type = event.attributes.timeoutType.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
-        when 'ActivityTaskCancelRequested'
+        when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
           discard_decision(event.decision_id)
 
-        when 'RequestCancelActivityTaskFailed'
+        when 'REQUEST_CANCEL_ACTIVITY_TASK_FAILED'
           state_machine.fail
           dispatch(target, 'failed', event.attributes.cause, nil)
 
-        when 'ActivityTaskCanceled'
+        when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
           dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
 
-        when 'TimerStarted'
+        when 'TIMER_STARTED'
           state_machine.start
           discard_decision(event.decision_id)
 
-        when 'TimerFired'
+        when 'TIMER_FIRED'
           state_machine.complete
           dispatch(target, 'fired')
 
-        when 'CancelTimerFailed'
+        when 'CANCEL_TIMER_FAILED'
           state_machine.failed
           dispatch(target, 'failed', event.attributes.cause, nil)
 
-        when 'TimerCanceled'
+        when 'TIMER_CANCELED'
           state_machine.cancel
           dispatch(target, 'canceled')
 
-        when 'WorkflowExecutionCancelRequested'
+        when 'WORKFLOW_EXECUTION_CANCEL_REQUESTED'
           # todo
 
-        when 'WorkflowExecutionCanceled'
+        when 'WORKFLOW_EXECUTION_CANCELED'
           # todo
 
-        when 'RequestCancelExternalWorkflowExecutionInitiated'
+        when 'REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED'
           # todo
 
-        when 'RequestCancelExternalWorkflowExecutionFailed'
+        when 'REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED'
           # todo
 
-        when 'ExternalWorkflowExecutionCancelRequested'
+        when 'EXTERNAL_WORKFLOW_EXECUTION_CANCEL_REQUESTED'
           # todo
 
-        when 'MarkerRecorded'
+        when 'MARKER_RECORDED'
           state_machine.complete
           handle_marker(event.id, event.attributes.markerName, safe_parse(event.attributes.details.payloads))
 
-        when 'WorkflowExecutionSignaled'
+        when 'WORKFLOW_EXECUTION_SIGNALED'
           dispatch(target, 'signaled', event.attributes.signalName, safe_parse(event.attributes.input.payloads))
 
-        when 'WorkflowExecutionTerminated'
+        when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
 
-        when 'WorkflowExecutionContinuedAsNew'
+        when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
           # todo
 
-        when 'StartChildWorkflowExecutionInitiated'
+        when 'START_CHILD_WORKFLOW_EXECUTION_INITIATED'
           state_machine.schedule
           discard_decision(event.decision_id)
 
-        when 'StartChildWorkflowExecutionFailed'
+        when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
           dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause.payloads))
 
-        when 'ChildWorkflowExecutionStarted'
+        when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           state_machine.start
 
-        when 'ChildWorkflowExecutionCompleted'
+        when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
           dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
 
-        when 'ChildWorkflowExecutionFailed'
+        when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
           dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
 
-        when 'ChildWorkflowExecutionCanceled'
+        when 'CHILD_WORKFLOW_EXECUTION_CANCELED'
           state_machine.cancel
           dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
 
-        when 'ChildWorkflowExecutionTimedOut'
+        when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
           type = event.attributes.timeoutType.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
-        when 'ChildWorkflowExecutionTerminated'
+        when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
           # todo
 
-        when 'SignalExternalWorkflowExecutionInitiated'
+        when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED'
           # todo
 
-        when 'SignalExternalWorkflowExecutionFailed'
+        when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED'
           # todo
 
-        when 'ExternalWorkflowExecutionSignaled'
+        when 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED'
           # todo
 
-        when 'UpsertWorkflowSearchAttributes'
+        when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
           # todo
 
         else

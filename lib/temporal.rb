@@ -30,7 +30,7 @@ module Temporal
         headers: execution_options.headers
       )
 
-      response.runId
+      response.run_id
     end
 
     def register_domain(name, description = nil)
