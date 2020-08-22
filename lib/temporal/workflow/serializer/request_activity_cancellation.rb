@@ -5,10 +5,10 @@ module Temporal
     module Serializer
       class RequestActivityCancellation < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::RequestCancelActivityTask,
+          Temporal::Api::Decision.new(
+            decisionType: Temporal::Api::DecisionType::RequestCancelActivityTask,
             requestCancelActivityTaskDecisionAttributes:
-              Temporal::Proto::RequestCancelActivityTaskDecisionAttributes.new(
+              Temporal::Api::RequestCancelActivityTaskDecisionAttributes.new(
                 activityId: object.activity_id.to_s
               )
           )

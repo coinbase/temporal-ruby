@@ -5,10 +5,10 @@ module Temporal
     module Serializer
       class StartTimer < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::StartTimer,
+          Temporal::Api::Decision.new(
+            decisionType: Temporal::Api::DecisionType::StartTimer,
             startTimerDecisionAttributes:
-              Temporal::Proto::StartTimerDecisionAttributes.new(
+              Temporal::Api::StartTimerDecisionAttributes.new(
                 timerId: object.timer_id.to_s,
                 startToFireTimeoutSeconds: object.timeout
               )

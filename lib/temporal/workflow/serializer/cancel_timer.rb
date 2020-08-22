@@ -5,10 +5,10 @@ module Temporal
     module Serializer
       class CancelTimer < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::CancelTimer,
+          Temporal::Api::Decision.new(
+            decisionType: Temporal::Api::DecisionType::CancelTimer,
             cancelTimerDecisionAttributes:
-              Temporal::Proto::CancelTimerDecisionAttributes.new(
+              Temporal::Api::CancelTimerDecisionAttributes.new(
                 timerId: object.timer_id.to_s
               )
           )

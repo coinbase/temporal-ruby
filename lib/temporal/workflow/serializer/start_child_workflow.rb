@@ -6,17 +6,17 @@ module Temporal
     module Serializer
       class StartChildWorkflow < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::StartChildWorkflowExecution,
+          Temporal::Api::Decision.new(
+            decisionType: Temporal::Api::DecisionType::StartChildWorkflowExecution,
             startChildWorkflowExecutionDecisionAttributes:
-              Temporal::Proto::StartChildWorkflowExecutionDecisionAttributes.new(
+              Temporal::Api::StartChildWorkflowExecutionDecisionAttributes.new(
                 namespace: object.domain,
                 workflowId: object.workflow_id.to_s,
-                workflowType: Temporal::Proto::WorkflowType.new(name: object.workflow_type),
-                taskList: Temporal::Proto::TaskList.new(name: object.task_list),
-                input: Temporal::Proto::Payloads.new(
+                workflowType: Temporal::Api::WorkflowType.new(name: object.workflow_type),
+                taskList: Temporal::Api::TaskList.new(name: object.task_list),
+                input: Temporal::Api::Payloads.new(
                   payloads: [
-                    Temporal::Proto::Payload.new(
+                    Temporal::Api::Payload.new(
                       data: JSON.serialize(object.input)
                     )
                   ]
@@ -44,13 +44,13 @@ module Temporal
             expirationIntervalInSeconds: retry_policy.expiration_interval
           }.compact
 
-          Temporal::Proto::RetryPolicy.new(options)
+          Temporal::Api::RetryPolicy.new(options)
         end
 
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Proto::Header.new(fields: object.headers)
+          Temporal::Api::Header.new(fields: object.headers)
         end
       end
     end

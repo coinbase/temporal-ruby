@@ -11,9 +11,9 @@ module Temporal
   module Client
     class GRPCClient
       WORKFLOW_ID_REUSE_POLICY = {
-        allow_failed: Temporal::Proto::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-        allow: Temporal::Proto::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-        reject: Temporal::Proto::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
+        allow_failed: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+        allow: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+        reject: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
       }.freeze
 
       def initialize(host, port, identity)
@@ -22,7 +22,7 @@ module Temporal
       end
 
       def register_domain(name:, description: nil, global: false, metrics: false, retention_period: 10)
-        request = Temporal::Proto::WorkflowService::V1::RegisterNamespaceRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           name: name,
           description: description,
           emit_metric: metrics,
@@ -33,19 +33,19 @@ module Temporal
       end
 
       def describe_domain(name:)
-        request = Temporal::Proto::WorkflowService::V1::DescribeNamespaceRequest.new(name: name)
+        request = Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest.new(name: name)
         client.describe_namespace(request)
       end
 
       def list_domains(page_size:)
-        request = Temporal::Proto::WorkflowService::V1::ListNamespacesRequest.new(pageSize: page_size)
+        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(pageSize: page_size)
         client.list_namespaces(request)
       end
 
       def update_domain(name:, description:)
-        request = Temporal::Proto::WorkflowService::V1::UpdateNamespaceRequest.new(
+        request = Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest.new(
           name: name,
-          update_info: Temporal::Proto::WorkflowService::V1::UpdateNamespaceInfo.new(
+          update_info: Temporal::Api::WorkflowService::V1::UpdateNamespaceInfo.new(
             description: description
           )
         )
@@ -53,7 +53,7 @@ module Temporal
       end
 
       def deprecate_domain(name:)
-        request = Temporal::Proto::WorkflowService::V1::DeprecateNamespaceRequest.new(name: name)
+        request = Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(name: name)
         client.deprecate_namespace(request)
       end
 
@@ -68,24 +68,24 @@ module Temporal
         workflow_id_reuse_policy: nil,
         headers: nil
       )
-        request = Temporal::Proto::WorkflowService::V1::StartWorkflowExecutionRequest.new(
+        request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
           namespace: domain,
-          workflow_type: Temporal::Proto::Common::V1::WorkflowType.new(
+          workflow_type: Temporal::Api::Common::V1::WorkflowType.new(
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          task_list: Temporal::Proto::TaskList::V1::TaskList.new(
+          task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           ),
-          input: Temporal::Proto::Common::V1::Payloads.new(
-            payloads: [Temporal::Proto::Common::V1::Payload.new(data: JSON.serialize(input))]
+          input: Temporal::Api::Common::V1::Payloads.new(
+            payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
           ),
           workflow_execution_timeout_seconds: execution_timeout,
           workflow_run_timeout_seconds: execution_timeout,
           workflow_task_timeout_seconds: task_timeout,
           request_id: SecureRandom.uuid,
-          header: Temporal::Proto::Common::V1::Header.new(
+          header: Temporal::Api::Common::V1::Header.new(
             fields: headers
           )
         )
@@ -101,9 +101,9 @@ module Temporal
       end
 
       def get_workflow_execution_history(domain:, workflow_id:, run_id:)
-        request = Temporal::Proto::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
+        request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: domain,
-          execution: Temporal::Proto::Temporal::Proto::Common::V1::WorkflowExecution.new(
+          execution: Temporal::Api::Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           )
@@ -113,10 +113,10 @@ module Temporal
       end
 
       def poll_for_decision_task(domain:, task_list:)
-        request = Temporal::Proto::WorkflowService::V1::PollForDecisionTaskRequest.new(
+        request = Temporal::Api::WorkflowService::V1::PollForDecisionTaskRequest.new(
           identity: identity,
           namespace: domain,
-          task_list: Temporal::Proto::TaskList::V1::TaskList.new(
+          task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           )
         )
@@ -124,7 +124,7 @@ module Temporal
       end
 
       def respond_decision_task_completed(task_token:, decisions:)
-        request = Temporal::Proto::WorkflowService::V1::RespondDecisionTaskCompletedRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondDecisionTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
           decisions: Array(decisions)
@@ -133,7 +133,7 @@ module Temporal
       end
 
       def respond_decision_task_failed(task_token:, cause:, details: nil)
-        request = Temporal::Proto::WorkflowService::V1::RespondDecisionTaskFailedRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondDecisionTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
           cause: cause,
@@ -143,10 +143,10 @@ module Temporal
       end
 
       def poll_for_activity_task(domain:, task_list:)
-        request = Temporal::Proto::WorkflowService::V1::PollForActivityTaskRequest.new(
+        request = Temporal::Api::WorkflowService::V1::PollForActivityTaskRequest.new(
           identity: identity,
           namespace: domain,
-          task_list: Temporal::Proto::TaskList::V1::TaskList.new(
+          task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           )
         )
@@ -154,7 +154,7 @@ module Temporal
       end
 
       def record_activity_task_heartbeat(task_token:, details: nil)
-        request = Temporal::Proto::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
           details: JSON.serialize(details),
           identity: identity
@@ -167,12 +167,12 @@ module Temporal
       end
 
       def respond_activity_task_completed(task_token:, result:)
-        request = Temporal::Proto::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal::Proto::Common::V1::Payloads.new(
+          result: Temporal::Api::Common::V1::Payloads.new(
             payloads: [
-              Temporal::Proto::Common::V1::Payload.new(data: JSON.serialize(result))
+              Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(result))
             ]
           ),
         )
@@ -180,7 +180,7 @@ module Temporal
       end
 
       def respond_activity_task_completed_by_id(domain:, activity_id:, workflow_id:, run_id:, result:)
-        request = Temporal::Proto::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest.new(
           identity: identity,
           namespace: domain,
           workflow_id: workflow_id,
@@ -192,7 +192,7 @@ module Temporal
       end
 
       def respond_activity_task_failed(task_token:, reason:, details: nil)
-        request = Temporal::Proto::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
           reason: reason,
@@ -202,7 +202,7 @@ module Temporal
       end
 
       def respond_activity_task_failed_by_id(domain:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
-        request = Temporal::Proto::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
           identity: identity,
           namespace: domain,
           workflow_id: workflow_id,
@@ -215,7 +215,7 @@ module Temporal
       end
 
       def respond_activity_task_canceled(task_token:, details: nil)
-        request = Temporal::Proto::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
+        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           task_token: task_token,
           details: JSON.serialize(details),
           identity: identity
@@ -232,9 +232,9 @@ module Temporal
       end
 
       def signal_workflow_execution(domain:, workflow_id:, run_id:, signal:, input: nil)
-        request = Temporal::Proto::WorkflowService::V1::SignalWorkflowExecutionRequest.new(
+        request = Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionRequest.new(
           namespace: domain,
-          workflow_execution: Temporal::Proto::Common::V1::WorkflowExecution.new(
+          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
@@ -250,9 +250,9 @@ module Temporal
       end
 
       def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, decision_task_event_id:)
-        request = Temporal::Proto::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
+        request = Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: domain,
-          workflow_execution: Temporal::Proto::Common::V1::WorkflowExecution.new(
+          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
@@ -307,9 +307,9 @@ module Temporal
       end
 
       def describe_workflow_execution(domain:, workflow_id:, run_id:)
-        request = Temporal::Proto::WorkflowService::V1::DescribeWorkflowExecutionRequest.new(
+        request = Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest.new(
           namespace: domain,
-          execution: Temporal::Proto::Common::V1::WorkflowExecution.new(
+          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           )
@@ -318,12 +318,12 @@ module Temporal
       end
 
       def describe_task_list(domain:, task_list:)
-        request = Temporal::Proto::WorkflowService::V1::DescribeTaskListRequest.new(
+        request = Temporal::Api::WorkflowService::V1::DescribeTaskListRequest.new(
           namespace: domain,
-          task_list: Temporal::Proto::TaskList::V1::TaskList.new(
+          task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           ),
-          task_list_type: Temporal::Proto::Enums::V1::TaskListType::Decision,
+          task_list_type: Temporal::Api::Enums::V1::TaskListType::Decision,
           include_task_list_status: true
         )
         client.describe_task_list(request)
@@ -334,7 +334,7 @@ module Temporal
       attr_reader :url, :identity
 
       def client
-        @client ||= Temporal::Proto::WorkflowService::V1::WorkflowService::Stub.new(
+        @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           :this_channel_is_insecure,
           timeout: 5

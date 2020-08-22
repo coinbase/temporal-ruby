@@ -6,21 +6,21 @@ module Temporal
     module Serializer
       class ScheduleActivity < Base
         def to_proto
-          Temporal::Proto::Decision::V1::Decision.new(
-            decision_type: Temporal::Proto::Enums::V1::DecisionType::DECISION_TYPE_SCHEDULE_ACTIVITY_TASK,
+          Temporal::Api::Decision::V1::Decision.new(
+            decision_type: Temporal::Api::Enums::V1::DecisionType::DECISION_TYPE_SCHEDULE_ACTIVITY_TASK,
             schedule_activity_task_decision_attributes:
-              Temporal::Proto::Decision::V1::ScheduleActivityTaskDecisionAttributes.new(
+              Temporal::Api::Decision::V1::ScheduleActivityTaskDecisionAttributes.new(
                 activity_id: object.activity_id.to_s,
-                activity_type: Temporal::Proto::Common::V1::ActivityType.new(name: object.activity_type),
-                input: Temporal::Proto::Common::V1::Payloads.new(
+                activity_type: Temporal::Api::Common::V1::ActivityType.new(name: object.activity_type),
+                input: Temporal::Api::Common::V1::Payloads.new(
                   payloads: [
-                    Temporal::Proto::Common::V1::Payload.new(
+                    Temporal::Api::Common::V1::Payload.new(
                       data: JSON.serialize(object.input)
                     )
                   ]
                 ),
                 namespace: object.domain,
-                task_list: Temporal::Proto::TaskList::V1::TaskList.new(name: object.task_list),
+                task_list: Temporal::Api::TaskList::V1::TaskList.new(name: object.task_list),
                 schedule_to_close_timeout_seconds: object.timeouts[:schedule_to_close],
                 schedule_to_start_timeout_seconds: object.timeouts[:schedule_to_start],
                 start_to_close_timeout_seconds: object.timeouts[:start_to_close],
@@ -46,13 +46,13 @@ module Temporal
             expiration_interval_in_seconds: retry_policy.expiration_interval
           }.compact
 
-          Temporal::Proto::Common::V1::RetryPolicy.new(options)
+          Temporal::Api::Common::V1::RetryPolicy.new(options)
         end
 
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Proto::Common::V1::Header.new(fields: object.headers)
+          Temporal::Api::Common::V1::Header.new(fields: object.headers)
         end
       end
     end

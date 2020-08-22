@@ -6,14 +6,14 @@ module Temporal
     module Serializer
       class RecordMarker < Base
         def to_proto
-          Temporal::Proto::Decision.new(
-            decisionType: Temporal::Proto::DecisionType::RecordMarker,
+          Temporal::Api::Decision.new(
+            decisionType: Temporal::Api::DecisionType::RecordMarker,
             recordMarkerDecisionAttributes:
-              Temporal::Proto::RecordMarkerDecisionAttributes.new(
+              Temporal::Api::RecordMarkerDecisionAttributes.new(
                 markerName: object.name,
-                details: Temporal::Proto::Payloads.new(
+                details: Temporal::Api::Payloads.new(
                   payloads:[
-                    Temporal::Proto::Payload.new(
+                    Temporal::Api::Payload.new(
                       data: JSON.serialize(object.details)
                     )
                   ]
