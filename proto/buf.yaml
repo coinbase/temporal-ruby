@@ -1,6 +1,0 @@
-build:
-  roots:
-    - .
-lint:
-  use:
-    - DEFAULT
