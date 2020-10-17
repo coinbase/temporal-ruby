@@ -24,7 +24,7 @@ gem 'temporal-ruby', github: 'coinbase/temporal-ruby'
 Define an activity:
 
 ```ruby
-class HelloActivity < Temporal::Workflow
+class HelloActivity < Temporal::Activity
   def execute(name)
     puts "Hello #{name}!"
 
