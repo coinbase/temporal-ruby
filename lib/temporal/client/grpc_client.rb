@@ -112,34 +112,34 @@ module Temporal
         client.get_workflow_execution_history(request)
       end
 
-      def poll_for_decision_task(domain:, task_list:)
-        request = Temporal::Api::WorkflowService::V1::PollForDecisionTaskRequest.new(
+      def poll_for_workflow_task(domain:, task_list:)
+        request = Temporal::Api::WorkflowService::V1::PollForWorkflowTaskRequest.new(
           identity: identity,
           namespace: domain,
           task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           )
         )
-        client.poll_for_decision_task(request)
+        client.poll_for_workflow_task(request)
       end
 
-      def respond_decision_task_completed(task_token:, decisions:)
-        request = Temporal::Api::WorkflowService::V1::RespondDecisionTaskCompletedRequest.new(
+      def respond_workflow_task_completed(task_token:, commands:)
+        request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          decisions: Array(decisions)
+          commands: Array(commands)
         )
-        client.respond_decision_task_completed(request)
+        client.respond_workflow_task_completed(request)
       end
 
-      def respond_decision_task_failed(task_token:, cause:, details: nil)
-        request = Temporal::Api::WorkflowService::V1::RespondDecisionTaskFailedRequest.new(
+      def respond_workflow_task_failed(task_token:, cause:, details: nil)
+        request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
           cause: cause,
           details: JSON.serialize(details)
         )
-        client.respond_decision_task_failed(request)
+        client.respond_workflow_task_failed(request)
       end
 
       def poll_for_activity_task(domain:, task_list:)
@@ -249,7 +249,7 @@ module Temporal
         raise NotImplementedError
       end
 
-      def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, decision_task_event_id:)
+      def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
         request = Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: domain,
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
@@ -257,7 +257,7 @@ module Temporal
             run_id: run_id
           ),
           reason: reason,
-          decision_finish_event_id: decision_task_event_id
+          workflow_task_finish_event_id: workflow_task_event_id
         )
         client.reset_workflow_execution(request)
       end
@@ -323,7 +323,7 @@ module Temporal
           task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           ),
-          task_list_type: Temporal::Api::Enums::V1::TaskListType::Decision,
+          task_list_type: Temporal::Api::Enums::V1::TaskListType::Workflow,
           include_task_list_status: true
         )
         client.describe_task_list(request)
