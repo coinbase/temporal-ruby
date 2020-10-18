@@ -257,7 +257,7 @@ module Temporal
             run_id: run_id
           ),
           reason: reason,
-          workflow_finish_event_id: workflow_task_event_id
+          workflow_task_finish_event_id: workflow_task_event_id
         )
         client.reset_workflow_execution(request)
       end
