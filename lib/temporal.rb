@@ -59,7 +59,7 @@ module Temporal
         decision_task_event_id: decision_task_id
       )
 
-      response.runId
+      response.run_id
     end
 
     def fetch_workflow_execution_info(domain, workflow_id, run_id)
