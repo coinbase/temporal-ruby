@@ -50,47 +50,47 @@ module Temporal
             # entity within Temporal, used as a container for all resources like workflow executions, task queues, etc.  Namespace
             # acts as a sandbox and provides isolation for all resources within the namespace.  All resources belongs to exactly one
             # namespace.
-            rpc :RegisterNamespace, Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest, Temporal::Api::WorkflowService::V1::RegisterNamespaceResponse
+            rpc :RegisterNamespace, ::Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest, ::Temporal::Api::WorkflowService::V1::RegisterNamespaceResponse
             # DescribeNamespace returns the information and configuration for a registered namespace.
-            rpc :DescribeNamespace, Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest, Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse
+            rpc :DescribeNamespace, ::Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest, ::Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse
             # ListNamespaces returns the information and configuration for all namespaces.
-            rpc :ListNamespaces, Temporal::Api::WorkflowService::V1::ListNamespacesRequest, Temporal::Api::WorkflowService::V1::ListNamespacesResponse
+            rpc :ListNamespaces, ::Temporal::Api::WorkflowService::V1::ListNamespacesRequest, ::Temporal::Api::WorkflowService::V1::ListNamespacesResponse
             # (-- api-linter: core::0134::method-signature=disabled
             #     aip.dev/not-precedent: UpdateNamespace RPC doesn't follow Google API format. --)
             # (-- api-linter: core::0134::response-message-name=disabled
             #     aip.dev/not-precedent: UpdateNamespace RPC doesn't follow Google API format. --)
             # UpdateNamespace is used to update the information and configuration for a registered namespace.
-            rpc :UpdateNamespace, Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest, Temporal::Api::WorkflowService::V1::UpdateNamespaceResponse
+            rpc :UpdateNamespace, ::Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest, ::Temporal::Api::WorkflowService::V1::UpdateNamespaceResponse
             # DeprecateNamespace is used to update state of a registered namespace to DEPRECATED.  Once the namespace is deprecated
             # it cannot be used to start new workflow executions.  Existing workflow executions will continue to run on
             # deprecated namespaces.
-            rpc :DeprecateNamespace, Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest, Temporal::Api::WorkflowService::V1::DeprecateNamespaceResponse
+            rpc :DeprecateNamespace, ::Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest, ::Temporal::Api::WorkflowService::V1::DeprecateNamespaceResponse
             # StartWorkflowExecution starts a new long running workflow instance.  It will create the instance with
             # 'WorkflowExecutionStarted' event in history and also schedule the first WorkflowTask for the worker to make the
             # first command for this instance.  It will return 'WorkflowExecutionAlreadyStartedFailure', if an instance already
             # exists with same workflowId.
-            rpc :StartWorkflowExecution, Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse
+            rpc :StartWorkflowExecution, ::Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse
             # GetWorkflowExecutionHistory returns the history of specified workflow execution.  It fails with 'NotFoundFailure' if specified workflow
             # execution in unknown to the service.
-            rpc :GetWorkflowExecutionHistory, Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest, Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse
+            rpc :GetWorkflowExecutionHistory, ::Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest, ::Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse
             # PollWorkflowTaskQueue is called by application worker to process WorkflowTask from a specific task queue.  A
             # WorkflowTask is dispatched to callers for active workflow executions, with pending workflow tasks.
             # Application is then expected to call 'RespondWorkflowTaskCompleted' API when it is done processing the WorkflowTask.
             # It will also create a 'WorkflowTaskStarted' event in the history for that session before handing off WorkflowTask to
             # application worker.
-            rpc :PollWorkflowTaskQueue, Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest, Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueResponse
+            rpc :PollWorkflowTaskQueue, ::Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest, ::Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueResponse
             # RespondWorkflowTaskCompleted is called by application worker to complete a WorkflowTask handed as a result of
             # 'PollWorkflowTaskQueue' API call.  Completing a WorkflowTask will result in new events for the workflow execution and
             # potentially new ActivityTask being created for corresponding commands.  It will also create a WorkflowTaskCompleted
             # event in the history for that session.  Use the 'taskToken' provided as response of PollWorkflowTaskQueue API call
             # for completing the WorkflowTask.
             # The response could contain a new workflow task if there is one or if the request asking for one.
-            rpc :RespondWorkflowTaskCompleted, Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest, Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse
+            rpc :RespondWorkflowTaskCompleted, ::Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest, ::Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse
             # RespondWorkflowTaskFailed is called by application worker to indicate failure.  This results in
             # WorkflowTaskFailedEvent written to the history and a new WorkflowTask created.  This API can be used by client to
             # either clear sticky task queue or report any panics during WorkflowTask processing.  Temporal will only append first
             # WorkflowTaskFailed event to the history of workflow execution for consecutive failures.
-            rpc :RespondWorkflowTaskFailed, Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest, Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedResponse
+            rpc :RespondWorkflowTaskFailed, ::Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest, ::Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedResponse
             # PollActivityTaskQueue is called by application worker to process ActivityTask from a specific task queue.  ActivityTask
             # is dispatched to callers whenever a ScheduleTask command is made for a workflow execution.
             # Application is expected to call 'RespondActivityTaskCompleted' or 'RespondActivityTaskFailed' once it is done
@@ -98,13 +98,13 @@ module Temporal
             # Application also needs to call 'RecordActivityTaskHeartbeat' API within 'heartbeatTimeoutSeconds' interval to
             # prevent the task from getting timed out.  An event 'ActivityTaskStarted' event is also written to workflow execution
             # history before the ActivityTask is dispatched to application worker.
-            rpc :PollActivityTaskQueue, Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest, Temporal::Api::WorkflowService::V1::PollActivityTaskQueueResponse
+            rpc :PollActivityTaskQueue, ::Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest, ::Temporal::Api::WorkflowService::V1::PollActivityTaskQueueResponse
             # RecordActivityTaskHeartbeat is called by application worker while it is processing an ActivityTask.  If worker fails
             # to heartbeat within 'heartbeatTimeoutSeconds' interval for the ActivityTask, then it will be marked as timedout and
             # 'ActivityTaskTimedOut' event will be written to the workflow history.  Calling 'RecordActivityTaskHeartbeat' will
             # fail with 'NotFoundFailure' in such situations.  Use the 'taskToken' provided as response of
             # PollActivityTaskQueue API call for heart beating.
-            rpc :RecordActivityTaskHeartbeat, Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest, Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatResponse
+            rpc :RecordActivityTaskHeartbeat, ::Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest, ::Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatResponse
             # (-- api-linter: core::0136::prepositions=disabled
             #     aip.dev/not-precedent: "By" is used to indicate request type. --)
             # RecordActivityTaskHeartbeatById is called by application worker while it is processing an ActivityTask.  If worker fails
@@ -112,13 +112,13 @@ module Temporal
             # 'ActivityTaskTimedOut' event will be written to the workflow history.  Calling 'RecordActivityTaskHeartbeatById' will
             # fail with 'NotFoundFailure' in such situations.  Instead of using 'taskToken' like in RecordActivityTaskHeartbeat,
             # use Namespace, WorkflowId and ActivityId
-            rpc :RecordActivityTaskHeartbeatById, Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatByIdRequest, Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatByIdResponse
+            rpc :RecordActivityTaskHeartbeatById, ::Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatByIdRequest, ::Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatByIdResponse
             # RespondActivityTaskCompleted is called by application worker when it is done processing an ActivityTask.  It will
             # result in a new 'ActivityTaskCompleted' event being written to the workflow history and a new WorkflowTask
             # created for the workflow so new commands could be made.  Use the 'taskToken' provided as response of
             # PollActivityTaskQueue API call for completion. It fails with 'NotFoundFailure' if the taskToken is not valid
             # anymore due to activity timeout.
-            rpc :RespondActivityTaskCompleted, Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedResponse
+            rpc :RespondActivityTaskCompleted, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedResponse
             # (-- api-linter: core::0136::prepositions=disabled
             #     aip.dev/not-precedent: "By" is used to indicate request type. --)
             # RespondActivityTaskCompletedById is called by application worker when it is done processing an ActivityTask.
@@ -126,13 +126,13 @@ module Temporal
             # created for the workflow so new commands could be made.  Similar to RespondActivityTaskCompleted but use Namespace,
             # WorkflowId and ActivityId instead of 'taskToken' for completion. It fails with 'NotFoundFailure'
             # if the these Ids are not valid anymore due to activity timeout.
-            rpc :RespondActivityTaskCompletedById, Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdResponse
+            rpc :RespondActivityTaskCompletedById, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdResponse
             # RespondActivityTaskFailed is called by application worker when it is done processing an ActivityTask.  It will
             # result in a new 'ActivityTaskFailed' event being written to the workflow history and a new WorkflowTask
             # created for the workflow instance so new commands could be made.  Use the 'taskToken' provided as response of
             # PollActivityTaskQueue API call for completion. It fails with 'NotFoundFailure' if the taskToken is not valid
             # anymore due to activity timeout.
-            rpc :RespondActivityTaskFailed, Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedResponse
+            rpc :RespondActivityTaskFailed, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedResponse
             # (-- api-linter: core::0136::prepositions=disabled
             #     aip.dev/not-precedent: "By" is used to indicate request type. --)
             # RespondActivityTaskFailedById is called by application worker when it is done processing an ActivityTask.
@@ -140,13 +140,13 @@ module Temporal
             # created for the workflow instance so new commands could be made.  Similar to RespondActivityTaskFailed but use
             # Namespace, WorkflowId and ActivityId instead of 'taskToken' for completion. It fails with 'NotFoundFailure'
             # if the these Ids are not valid anymore due to activity timeout.
-            rpc :RespondActivityTaskFailedById, Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdResponse
+            rpc :RespondActivityTaskFailedById, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdResponse
             # RespondActivityTaskCanceled is called by application worker when it is successfully canceled an ActivityTask.  It will
             # result in a new 'ActivityTaskCanceled' event being written to the workflow history and a new WorkflowTask
             # created for the workflow instance so new commands could be made.  Use the 'taskToken' provided as response of
             # PollActivityTaskQueue API call for completion. It fails with 'NotFoundFailure' if the taskToken is not valid
             # anymore due to activity timeout.
-            rpc :RespondActivityTaskCanceled, Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledResponse
+            rpc :RespondActivityTaskCanceled, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledResponse
             # (-- api-linter: core::0136::prepositions=disabled
             #     aip.dev/not-precedent: "By" is used to indicate request type. --)
             # RespondActivityTaskCanceledById is called by application worker when it is successfully canceled an ActivityTask.
@@ -154,15 +154,15 @@ module Temporal
             # created for the workflow instance so new commands could be made.  Similar to RespondActivityTaskCanceled but use
             # Namespace, WorkflowId and ActivityId instead of 'taskToken' for completion. It fails with 'NotFoundFailure'
             # if the these Ids are not valid anymore due to activity timeout.
-            rpc :RespondActivityTaskCanceledById, Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledByIdRequest, Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledByIdResponse
+            rpc :RespondActivityTaskCanceledById, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledByIdRequest, ::Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledByIdResponse
             # RequestCancelWorkflowExecution is called by application worker when it wants to request cancellation of a workflow instance.
             # It will result in a new 'WorkflowExecutionCancelRequested' event being written to the workflow history and a new WorkflowTask
             # created for the workflow instance so new commands could be made. It fails with 'NotFoundFailure' if the workflow is not valid
             # anymore due to completion or doesn't exist.
-            rpc :RequestCancelWorkflowExecution, Temporal::Api::WorkflowService::V1::RequestCancelWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::RequestCancelWorkflowExecutionResponse
+            rpc :RequestCancelWorkflowExecution, ::Temporal::Api::WorkflowService::V1::RequestCancelWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::RequestCancelWorkflowExecutionResponse
             # SignalWorkflowExecution is used to send a signal event to running workflow execution.  This results in
             # WorkflowExecutionSignaled event recorded in the history and a workflow task being created for the execution.
-            rpc :SignalWorkflowExecution, Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionResponse
+            rpc :SignalWorkflowExecution, ::Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionResponse
             # (-- api-linter: core::0136::prepositions=disabled
             #     aip.dev/not-precedent: "With" is used to indicate combined operation. --)
             # SignalWithStartWorkflowExecution is used to ensure sending signal to a workflow.
@@ -170,31 +170,31 @@ module Temporal
             # and a workflow task being created for the execution.
             # If the workflow is not running or not found, this results in WorkflowExecutionStarted and WorkflowExecutionSignaled
             # events being recorded in history, and a workflow task being created for the execution
-            rpc :SignalWithStartWorkflowExecution, Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse
+            rpc :SignalWithStartWorkflowExecution, ::Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse
             # ResetWorkflowExecution reset an existing workflow execution to WorkflowTaskCompleted event(exclusive).
             # And it will immediately terminating the current execution instance.
-            rpc :ResetWorkflowExecution, Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse
+            rpc :ResetWorkflowExecution, ::Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse
             # TerminateWorkflowExecution terminates an existing workflow execution by recording WorkflowExecutionTerminated event
             # in the history and immediately terminating the execution instance.
-            rpc :TerminateWorkflowExecution, Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse
+            rpc :TerminateWorkflowExecution, ::Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse
             # ListOpenWorkflowExecutions is a visibility API to list the open executions in a specific namespace.
-            rpc :ListOpenWorkflowExecutions, Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse
+            rpc :ListOpenWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse
             # ListClosedWorkflowExecutions is a visibility API to list the closed executions in a specific namespace.
-            rpc :ListClosedWorkflowExecutions, Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsResponse
+            rpc :ListClosedWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsResponse
             # ListWorkflowExecutions is a visibility API to list workflow executions in a specific namespace.
-            rpc :ListWorkflowExecutions, Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse
+            rpc :ListWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse
             # ListArchivedWorkflowExecutions is a visibility API to list archived workflow executions in a specific namespace.
-            rpc :ListArchivedWorkflowExecutions, Temporal::Api::WorkflowService::V1::ListArchivedWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::ListArchivedWorkflowExecutionsResponse
+            rpc :ListArchivedWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::ListArchivedWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::ListArchivedWorkflowExecutionsResponse
             # ScanWorkflowExecutions is a visibility API to list large amount of workflow executions in a specific namespace without order.
-            rpc :ScanWorkflowExecutions, Temporal::Api::WorkflowService::V1::ScanWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::ScanWorkflowExecutionsResponse
+            rpc :ScanWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::ScanWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::ScanWorkflowExecutionsResponse
             # CountWorkflowExecutions is a visibility API to count of workflow executions in a specific namespace.
-            rpc :CountWorkflowExecutions, Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest, Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsResponse
+            rpc :CountWorkflowExecutions, ::Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest, ::Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsResponse
             # GetSearchAttributes is a visibility API to get all legal keys that could be used in list APIs
-            rpc :GetSearchAttributes, Temporal::Api::WorkflowService::V1::GetSearchAttributesRequest, Temporal::Api::WorkflowService::V1::GetSearchAttributesResponse
+            rpc :GetSearchAttributes, ::Temporal::Api::WorkflowService::V1::GetSearchAttributesRequest, ::Temporal::Api::WorkflowService::V1::GetSearchAttributesResponse
             # RespondQueryTaskCompleted is called by application worker to complete a QueryTask (which is a WorkflowTask for query)
             # as a result of 'PollWorkflowTaskQueue' API call. Completing a QueryTask will unblock the client call to 'QueryWorkflow'
             # API and return the query result to client as a response to 'QueryWorkflow' API call.
-            rpc :RespondQueryTaskCompleted, Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest, Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse
+            rpc :RespondQueryTaskCompleted, ::Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest, ::Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse
             # ResetStickyTaskQueue resets the sticky task queue related information in mutable state of a given workflow.
             # Things cleared are:
             # 1. StickyTaskQueue
@@ -202,17 +202,17 @@ module Temporal
             # 3. ClientLibraryVersion
             # 4. ClientFeatureVersion
             # 5. ClientImpl
-            rpc :ResetStickyTaskQueue, Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueRequest, Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueResponse
+            rpc :ResetStickyTaskQueue, ::Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueRequest, ::Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueResponse
             # QueryWorkflow returns query result for a specified workflow execution
-            rpc :QueryWorkflow, Temporal::Api::WorkflowService::V1::QueryWorkflowRequest, Temporal::Api::WorkflowService::V1::QueryWorkflowResponse
+            rpc :QueryWorkflow, ::Temporal::Api::WorkflowService::V1::QueryWorkflowRequest, ::Temporal::Api::WorkflowService::V1::QueryWorkflowResponse
             # DescribeWorkflowExecution returns information about the specified workflow execution.
-            rpc :DescribeWorkflowExecution, Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest, Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse
+            rpc :DescribeWorkflowExecution, ::Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest, ::Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse
             # DescribeTaskQueue returns information about the target task queue, right now this API returns the
             # pollers which polled this task queue in last few minutes.
-            rpc :DescribeTaskQueue, Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest, Temporal::Api::WorkflowService::V1::DescribeTaskQueueResponse
+            rpc :DescribeTaskQueue, ::Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest, ::Temporal::Api::WorkflowService::V1::DescribeTaskQueueResponse
             # GetClusterInfo returns information about temporal cluster
-            rpc :GetClusterInfo, Temporal::Api::WorkflowService::V1::GetClusterInfoRequest, Temporal::Api::WorkflowService::V1::GetClusterInfoResponse
-            rpc :ListTaskQueuePartitions, Temporal::Api::WorkflowService::V1::ListTaskQueuePartitionsRequest, Temporal::Api::WorkflowService::V1::ListTaskQueuePartitionsResponse
+            rpc :GetClusterInfo, ::Temporal::Api::WorkflowService::V1::GetClusterInfoRequest, ::Temporal::Api::WorkflowService::V1::GetClusterInfoResponse
+            rpc :ListTaskQueuePartitions, ::Temporal::Api::WorkflowService::V1::ListTaskQueuePartitionsRequest, ::Temporal::Api::WorkflowService::V1::ListTaskQueuePartitionsResponse
           end
 
           Stub = Service.rpc_stub_class
