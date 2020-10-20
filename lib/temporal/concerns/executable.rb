@@ -8,9 +8,13 @@ module Temporal
         @namespace = args.first
       end
 
+      def task_queue(*args)
+        return @task_queue if args.empty?
+        @task_queue = args.first
+      end
+
       def task_list(*args)
-        return @task_list if args.empty?
-        @task_list = args.first
+        task_queue(*args)
       end
 
       def retry_policy(*args)

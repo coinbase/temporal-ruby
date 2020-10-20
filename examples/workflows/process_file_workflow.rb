@@ -3,7 +3,7 @@ require 'activities/upload_file_activity'
 require 'activities/process_file_activity'
 
 class ProcessFileWorkflow < Temporal::Workflow
-  task_list 'file-processing'
+  task_queue 'file-processing'
 
   def execute
     local_directory = File.expand_path('~/Development/tmp/temporal/local/').to_s

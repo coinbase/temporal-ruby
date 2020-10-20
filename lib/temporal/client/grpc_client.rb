@@ -62,7 +62,7 @@ module Temporal
         namespace:,
         workflow_id:,
         workflow_name:,
-        task_list:,
+        task_queue:,
         input: nil,
         execution_timeout:,
         task_timeout:,
@@ -76,8 +76,8 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           ),
           input: Temporal::Api::Common::V1::Payloads.new(
             payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
@@ -113,12 +113,12 @@ module Temporal
         client.get_workflow_execution_history(request)
       end
 
-      def poll_for_workflow_task(namespace:, task_list:)
+      def poll_for_workflow_task(namespace:, task_queue:)
         request = Temporal::Api::WorkflowService::V1::PollForWorkflowTaskRequest.new(
           identity: identity,
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           )
         )
         client.poll_for_workflow_task(request)
@@ -143,12 +143,12 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_for_activity_task(namespace:, task_list:)
+      def poll_for_activity_task(namespace:, task_queue:)
         request = Temporal::Api::WorkflowService::V1::PollForActivityTaskRequest.new(
           identity: identity,
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           )
         )
         client.poll_for_activity_task(request)
@@ -299,7 +299,7 @@ module Temporal
         raise NotImplementedError
       end
 
-      def reset_sticky_task_list
+      def reset_sticky_task_queue
         raise NotImplementedError
       end
 
@@ -318,16 +318,16 @@ module Temporal
         client.describe_workflow_execution(request)
       end
 
-      def describe_task_list(namespace:, task_list:)
-        request = Temporal::Api::WorkflowService::V1::DescribeTaskListRequest.new(
+      def describe_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest.new(
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           ),
-          task_list_type: Temporal::Api::Enums::V1::TaskListType::Workflow,
-          include_task_list_status: true
+          task_queue_type: Temporal::Api::Enums::V1::TaskQueueType::Workflow,
+          include_task_queue_status: true
         )
-        client.describe_task_list(request)
+        client.describe_task_queue(request)
       end
 
       private

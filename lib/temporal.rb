@@ -22,7 +22,7 @@ module Temporal
         namespace: execution_options.namespace,
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
-        task_list: execution_options.task_list,
+        task_queue: execution_options.task_queue,
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
         task_timeout: execution_options.timeouts[:task],

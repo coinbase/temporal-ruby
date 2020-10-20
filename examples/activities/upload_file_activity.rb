@@ -4,7 +4,7 @@ require 'fileutils'
 class UploadFileActivity < Temporal::Activity
   include Temporal::Concerns::Typed
 
-  task_list 'file-processing'
+  task_queue 'file-processing'
 
   input do
     attribute :local_path, Temporal::Types::String
