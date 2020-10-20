@@ -1,6 +1,6 @@
 require 'oj'
-require 'gen/temporal/api/common/v1/message_pb'
-require 'gen/temporal/api/decision/v1/message_pb'
+require 'temporal/api/common/v1/message_pb'
+require 'temporal/api/command/v1/message_pb'
 
 module Temporal
   class Workflow
