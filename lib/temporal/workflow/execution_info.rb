@@ -26,8 +26,8 @@ module Temporal
           workflow: response.type.name,
           workflow_id: response.execution.workflowId,
           run_id: response.execution.run_id,
-          start_time: Utils.time_from_nanos(response.startTime),
-          close_time: Utils.time_from_nanos(response.closeTime),
+          start_time: response.start_time.to_time,
+          close_time: response.close_time.to_time,
           status: response.closeStatus || RUNNING_STATUS,
           history_length: response.historyLength,
         ).freeze

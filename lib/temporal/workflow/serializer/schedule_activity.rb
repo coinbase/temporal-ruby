@@ -21,10 +21,10 @@ module Temporal
                 ),
                 namespace: object.domain,
                 task_list: Temporal::Api::TaskList::V1::TaskList.new(name: object.task_list),
-                schedule_to_close_timeout_seconds: object.timeouts[:schedule_to_close],
-                schedule_to_start_timeout_seconds: object.timeouts[:schedule_to_start],
-                start_to_close_timeout_seconds: object.timeouts[:start_to_close],
-                heartbeat_timeout_seconds: object.timeouts[:heartbeat],
+                schedule_to_close_timeout: object.timeouts[:schedule_to_close],
+                schedule_to_start_timeout: object.timeouts[:schedule_to_start],
+                start_to_close_timeout: object.timeouts[:start_to_close],
+                heartbeat_timeout: object.timeouts[:heartbeat],
                 retry_policy: serialize_retry_policy(object.retry_policy),
                 header: serialize_headers(object.headers)
               )
@@ -38,12 +38,11 @@ module Temporal
 
           non_retriable_errors = Array(retry_policy.non_retriable_errors).map(&:name)
           options = {
-            initial_interval_in_seconds: retry_policy.interval,
+            initial_interval: retry_policy.interval,
             backoff_coefficient: retry_policy.backoff,
-            maximum_interval_in_seconds: retry_policy.max_interval,
+            maximum_interval: retry_policy.max_interval,
             maximum_attempts: retry_policy.max_attempts,
             non_retriable_error_reasons: non_retriable_errors,
-            expiration_interval_in_seconds: retry_policy.expiration_interval
           }.compact
 
           Temporal::Api::Common::V1::RetryPolicy.new(options)

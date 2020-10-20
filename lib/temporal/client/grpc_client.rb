@@ -81,9 +81,9 @@ module Temporal
           input: Temporal::Api::Common::V1::Payloads.new(
             payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
           ),
-          workflow_execution_timeout_seconds: execution_timeout,
-          workflow_run_timeout_seconds: execution_timeout,
-          workflow_task_timeout_seconds: task_timeout,
+          workflow_execution_timeout: execution_timeout,
+          workflow_run_timeout: execution_timeout,
+          workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
             fields: headers
