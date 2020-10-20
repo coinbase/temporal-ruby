@@ -6,13 +6,13 @@ module Temporal
     module Serializer
       class CompleteWorkflow < Base
         def to_proto
-          Temporal::Api::Decision.new(
-            decisionType: Temporal::Api::DecisionType::CompleteWorkflowExecution,
-            completeWorkflowExecutionDecisionAttributes:
-              Temporal::Api::CompleteWorkflowExecutionDecisionAttributes.new(
-                result: Temporal::Api::Payloads.new(
+          Temporal::Api::Decision::V1::Command.new(
+            command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_COMPLETE_WORKFLOW_EXECUTION,
+            complete_workflow_execution_command_attributes:
+              Temporal::Api::Decision::V1::CompleteWorkflowExecutionCommandAttributes.new(
+                result: Temporal::Api::Common::V1::Payloads.new(
                   payloads: [
-                    Temporal::Api::Payload.new(
+                    Temporal::Api::Common::V1::Payload.new(
                       data: JSON.serialize(object.result)
                     )
                   ]

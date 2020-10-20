@@ -5,9 +5,11 @@ _yardoc/
 
 /coverage/
 /doc/
+/examples/vendor/
 /pkg/
 /spec/reports/
 /tmp/
+/vendor/
 
 # rspec failure tracking
 .rspec_status
