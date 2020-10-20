@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.license       = 'Apache-2.0'
 
   spec.require_paths = ['lib']
-  spec.files         = Dir["{lib,rbi}/**/*.*"] + %w(temporal.gemspec Gemfile LICENSE README.md)
+  spec.files         = Dir["{lib}/**/*.*"] + %w(temporal.gemspec Gemfile LICENSE README.md)
 
   spec.add_dependency 'grpc'
   spec.add_dependency 'oj'
