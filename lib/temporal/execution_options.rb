@@ -6,7 +6,7 @@ module Temporal
 
     def initialize(object, options = {})
       @name = options[:name] || object.to_s
-      @domain = options[:domain]
+      @namespace = options[:namespace]
       @task_queue = options[:task_queue] || options[:task_list]
       @retry_policy = options[:retry_policy]
       @timeouts = options[:timeouts] || {}
