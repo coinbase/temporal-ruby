@@ -1,5 +1,5 @@
 require 'temporal/workflow/serializer/base'
-require 'temporal/json'
+require 'temporal/workflow/serializer/payload'
 
 module Temporal
   class Workflow
@@ -14,13 +14,7 @@ module Temporal
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::WorkflowType.new(name: object.workflow_type),
                 task_queue: Temporal::Api::TaskQueue.new(name: object.task_queue),
-                input: Temporal::Api::Common::V1::Payloads.new(
-                  payloads: [
-                    Temporal::Api::Common::V1::Payload.new(
-                      data: JSON.serialize(object.input)
-                    )
-                  ]
-                ),
+                input: Payload.new(object.input).to_proto,
                 execution_start_to_close_timeout: object.timeouts[:execution],
                 task_start_to_close_timeout: object.timeouts[:task],
                 retry_policy: serialize_retry_policy(object.retry_policy),

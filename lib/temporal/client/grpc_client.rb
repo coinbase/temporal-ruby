@@ -3,9 +3,7 @@ require 'google/protobuf/well_known_types'
 require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
-
-# Protoc wants all of its generated files on the LOAD_PATH
-$LOAD_PATH << File.expand_path('../../gen', __dir__)
+require 'temporal/workflow/serializer/payload'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 
 module Temporal
@@ -79,9 +77,7 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: Temporal::Api::Common::V1::Payloads.new(
-            payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
-          ),
+          input: Temporal::Serializer::Payload.new(input).to_proto,
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: execution_timeout,
           workflow_task_timeout: task_timeout,
@@ -171,11 +167,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal::Api::Common::V1::Payloads.new(
-            payloads: [
-              Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(result))
-            ]
-          ),
+          result: Temporal::Serializer::Payload.new(result).to_proto,
         )
         client.respond_activity_task_completed(request)
       end
