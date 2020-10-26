@@ -10,12 +10,12 @@ module Temporal
     WORKFLOW_TYPE = :workflow
 
     class << self
-      def generate(type, data, domain = nil)
+      def generate(type, data, namespace = nil)
         case type
         when ACTIVITY_TYPE
-          activity_metadata_from(data, domain)
+          activity_metadata_from(data, namespace)
         when DECISION_TYPE
-          decision_metadata_from(data, domain)
+          decision_metadata_from(data, namespace)
         when WORKFLOW_TYPE
           workflow_metadata_from(data)
         else
@@ -25,9 +25,9 @@ module Temporal
 
       private
 
-      def activity_metadata_from(task, domain)
+      def activity_metadata_from(task, namespace)
         Metadata::Activity.new(
-          domain: domain,
+          namespace: namespace,
           id: task.activity_id,
           name: task.activity_type.name,
           task_token: task.task_token,
@@ -39,9 +39,9 @@ module Temporal
         )
       end
 
-      def decision_metadata_from(task, domain)
+      def decision_metadata_from(task, namespace)
         Metadata::Decision.new(
-          domain: domain,
+          namespace: namespace,
           id: task.started_event_id,
           task_token: task.task_token,
           attempt: task.attempt,

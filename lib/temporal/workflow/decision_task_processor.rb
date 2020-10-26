@@ -6,9 +6,9 @@ require 'temporal/metadata'
 module Temporal
   class Workflow
     class DecisionTaskProcessor
-      def initialize(task, domain, workflow_lookup, client, middleware_chain)
+      def initialize(task, namespace, workflow_lookup, client, middleware_chain)
         @task = task
-        @domain = domain
+        @namespace = namespace
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)
@@ -30,7 +30,7 @@ module Temporal
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        metadata = Metadata.generate(Metadata::DECISION_TYPE, task, domain)
+        metadata = Metadata.generate(Metadata::DECISION_TYPE, task, namespace)
 
         decisions = middleware_chain.invoke(metadata) do
           executor.run
@@ -48,7 +48,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :domain, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
 
       def queue_time_ms
         scheduled = task.current_attempt_scheduled_time.to_f

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../init'
 
-domain, workflow_id, run_id = ARGV
+namespace, workflow_id, run_id = ARGV
 
-run_id = Temporal.reset_workflow(domain, workflow_id, run_id)
+run_id = Temporal.reset_workflow(namespace, workflow_id, run_id)
 Temporal.logger.info "Reset workflow: #{run_id}"

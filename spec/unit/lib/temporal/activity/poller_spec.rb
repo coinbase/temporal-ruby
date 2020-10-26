@@ -3,14 +3,14 @@ require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
   let(:client) { instance_double('Temporal::Client::ThriftClient') }
-  let(:domain) { 'test-domain' }
+  let(:namespace) { 'test-namespace' }
   let(:task_list) { 'test-task-list' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
   let(:thread_pool) { instance_double(Temporal::ThreadPool, wait_for_available_threads: nil) }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
-  subject { described_class.new(domain, task_list, lookup, middleware) }
+  subject { described_class.new(namespace, task_list, lookup, middleware) }
 
   before do
     allow(Temporal::Client).to receive(:generate).and_return(client)
@@ -30,7 +30,7 @@ describe Temporal::Activity::Poller do
 
       expect(client)
         .to have_received(:poll_for_activity_task)
-        .with(domain: domain, task_list: task_list)
+        .with(namespace: namespace, task_list: task_list)
         .twice
     end
 
@@ -62,7 +62,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
-          .with(task, domain, lookup, client, middleware_chain)
+          .with(task, namespace, lookup, client, middleware_chain)
         expect(task_processor).to have_received(:process)
       end
 
@@ -85,7 +85,7 @@ describe Temporal::Activity::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)
             .to have_received(:new)
-            .with(task, domain, lookup, client, middleware_chain)
+            .with(task, namespace, lookup, client, middleware_chain)
         end
       end
     end

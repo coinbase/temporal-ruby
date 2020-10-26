@@ -19,7 +19,7 @@ module Temporal
       workflow_id = options[:workflow_id] || SecureRandom.uuid
 
       response = client.start_workflow_execution(
-        domain: execution_options.domain,
+        namespace: execution_options.namespace,
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
         task_list: execution_options.task_list,
@@ -33,13 +33,13 @@ module Temporal
       response.run_id
     end
 
-    def register_domain(name, description = nil)
-      client.register_domain(name: name, description: description)
+    def register_namespace(name, description = nil)
+      client.register_namespace(name: name, description: description)
     end
 
     def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
       client.signal_workflow_execution(
-        domain: workflow.domain, # TODO: allow passing domain instead
+        namespace: workflow.namespace, # TODO: allow passing namespace instead
         workflow_id: workflow_id,
         run_id: run_id,
         signal: signal,
@@ -47,12 +47,12 @@ module Temporal
       )
     end
 
-    def reset_workflow(domain, workflow_id, run_id, decision_task_id: nil, reason: 'manual reset')
-      decision_task_id ||= get_last_completed_decision_task(domain, workflow_id, run_id)
+    def reset_workflow(namespace, workflow_id, run_id, decision_task_id: nil, reason: 'manual reset')
+      decision_task_id ||= get_last_completed_decision_task(namespace, workflow_id, run_id)
       raise Error, 'Could not find a completed decision task event' unless decision_task_id
 
       response = client.reset_workflow_execution(
-        domain: domain,
+        namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
@@ -62,9 +62,9 @@ module Temporal
       response.run_id
     end
 
-    def fetch_workflow_execution_info(domain, workflow_id, run_id)
+    def fetch_workflow_execution_info(namespace, workflow_id, run_id)
       response = client.describe_workflow_execution(
-        domain: domain,
+        namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )
@@ -76,7 +76,7 @@ module Temporal
       details = Activity::AsyncToken.decode(async_token)
 
       client.respond_activity_task_completed_by_id(
-        domain: details.domain,
+        namespace: details.namespace,
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
         run_id: details.run_id,
@@ -88,7 +88,7 @@ module Temporal
       details = Activity::AsyncToken.decode(async_token)
 
       client.respond_activity_task_failed_by_id(
-        domain: details.domain,
+        namespace: details.namespace,
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
         run_id: details.run_id,
@@ -119,9 +119,9 @@ module Temporal
       @client ||= Temporal::Client.generate
     end
 
-    def get_last_completed_decision_task(domain, workflow_id, run_id)
+    def get_last_completed_decision_task(namespace, workflow_id, run_id)
       history_response = client.get_workflow_execution_history(
-        domain: domain,
+        namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )

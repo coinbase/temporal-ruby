@@ -23,7 +23,7 @@ module Temporal
 
       def async_token
         AsyncToken.encode(
-          metadata.domain,
+          metadata.namespace,
           metadata.id,
           metadata.workflow_id,
           metadata.workflow_run_id

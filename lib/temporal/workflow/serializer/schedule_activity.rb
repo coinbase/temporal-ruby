@@ -19,7 +19,7 @@ module Temporal
                     )
                   ]
                 ),
-                namespace: object.domain,
+                namespace: object.namespace,
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_list),
                 schedule_to_close_timeout: object.timeouts[:schedule_to_close],
                 schedule_to_start_timeout: object.timeouts[:schedule_to_start],

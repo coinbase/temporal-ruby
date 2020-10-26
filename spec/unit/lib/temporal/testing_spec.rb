@@ -3,7 +3,7 @@ require 'temporal/workflow'
 
 describe Temporal::Testing::TemporalOverride do
   class TestTemporalOverrideWorkflow < Temporal::Workflow
-    domain 'default-domain'
+    namespace 'default-namespace'
     task_list 'default-task-list'
 
     def execute; end

@@ -40,7 +40,7 @@ module Temporal
 
         execution_options = ExecutionOptions.new(activity_class, options)
         metadata = Metadata::Activity.new(
-          domain: execution_options.domain,
+          namespace: execution_options.namespace,
           id: activity_id,
           name: execution_options.name,
           task_token: nil,
@@ -86,7 +86,7 @@ module Temporal
         execution_options = ExecutionOptions.new(activity_class, options)
         activity_id = options[:activity_id] || SecureRandom.uuid
         metadata = Metadata::Activity.new(
-          domain: execution_options.domain,
+          namespace: execution_options.namespace,
           id: activity_id,
           name: execution_options.name,
           task_token: nil,

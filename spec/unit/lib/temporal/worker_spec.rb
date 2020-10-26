@@ -4,12 +4,12 @@ require 'temporal/activity'
 
 describe Temporal::Worker do
   class TestWorkerWorkflow < Temporal::Workflow
-    domain 'default-domain'
+    namespace 'default-namespace'
     task_list 'default-task-list'
   end
 
   class TestWorkerActivity < Temporal::Activity
-    domain 'default-domain'
+    namespace 'default-namespace'
     task_list 'default-task-list'
   end
 
@@ -22,7 +22,7 @@ describe Temporal::Worker do
   end
 
   class TestWorkerActivity < Temporal::Activity
-    domain 'default-domain'
+    namespace 'default-namespace'
     task_list 'default-task-list'
   end
 
@@ -43,19 +43,19 @@ describe Temporal::Worker do
       subject.register_workflow(TestWorkerWorkflow)
 
       expect(lookup).to have_received(:add).with('TestWorkerWorkflow', TestWorkerWorkflow)
-      expect(workflow_keys).to include(['default-domain', 'default-task-list'])
+      expect(workflow_keys).to include(['default-namespace', 'default-task-list'])
     end
 
     it 'registers a workflow with provided config options' do
       subject.register_workflow(
         TestWorkerWorkflow,
         name: 'test-workflow',
-        domain: 'test-domain',
+        namespace: 'test-namespace',
         task_list: 'test-task-list'
       )
 
       expect(lookup).to have_received(:add).with('test-workflow', TestWorkerWorkflow)
-      expect(workflow_keys).to include(['test-domain', 'test-task-list'])
+      expect(workflow_keys).to include(['test-namespace', 'test-task-list'])
     end
   end
 
@@ -69,19 +69,19 @@ describe Temporal::Worker do
       subject.register_activity(TestWorkerActivity)
 
       expect(lookup).to have_received(:add).with('TestWorkerActivity', TestWorkerActivity)
-      expect(activity_keys).to include(['default-domain', 'default-task-list'])
+      expect(activity_keys).to include(['default-namespace', 'default-task-list'])
     end
 
     it 'registers an activity with provided config options' do
       subject.register_activity(
         TestWorkerActivity,
         name: 'test-activity',
-        domain: 'test-domain',
+        namespace: 'test-namespace',
         task_list: 'test-task-list'
       )
 
       expect(lookup).to have_received(:add).with('test-activity', TestWorkerActivity)
-      expect(activity_keys).to include(['test-domain', 'test-task-list'])
+      expect(activity_keys).to include(['test-namespace', 'test-task-list'])
     end
   end
 
@@ -129,31 +129,31 @@ describe Temporal::Worker do
     let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil) }
     let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil) }
 
-    it 'starts a poller for each domain/task list combination' do
+    it 'starts a poller for each namespace/task list combination' do
       allow(subject).to receive(:shutting_down?).and_return(true)
 
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
-        .with('default-domain', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_1)
 
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
-        .with('other-domain', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('other-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_2)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-domain', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_1)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-domain', 'other-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'other-task-list', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
-      subject.register_workflow(TestWorkerWorkflow, domain: 'other-domain')
+      subject.register_workflow(TestWorkerWorkflow, namespace: 'other-namespace')
       subject.register_activity(TestWorkerActivity)
       subject.register_activity(TestWorkerActivity, task_list: 'other-task-list')
 
@@ -189,12 +189,12 @@ describe Temporal::Worker do
 
         allow(Temporal::Workflow::Poller)
           .to receive(:new)
-          .with('default-domain', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_1])
+          .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_1])
           .and_return(workflow_poller_1)
 
         allow(Temporal::Activity::Poller)
           .to receive(:new)
-          .with('default-domain', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_2])
+          .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_2])
           .and_return(activity_poller_1)
 
         subject.register_workflow(TestWorkerWorkflow)

@@ -3,10 +3,10 @@ require 'temporal/metadata/base'
 module Temporal
   module Metadata
     class Activity < Base
-      attr_reader :domain, :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
+      attr_reader :namespace, :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name, :headers
 
-      def initialize(domain:, id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:, headers: {})
-        @domain = domain
+      def initialize(namespace:, id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:, headers: {})
+        @namespace = namespace
         @id = id
         @name = name
         @task_token = task_token

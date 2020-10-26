@@ -53,15 +53,15 @@ Configure your Temporal connection:
 Temporal.configure do |config|
   config.host = 'localhost'
   config.port = 7233
-  config.domain = 'ruby-samples'
+  config.namespace = 'ruby-samples'
   config.task_list = 'hello-world'
 end
 ```
 
-Register domain with the Temporal service:
+Register namespace with the Temporal service:
 
 ```ruby
-Temporal.register_domain('ruby-samples', 'A safe space for playing with Temporal Ruby')
+Temporal.register_namespace('ruby-samples', 'A safe space for playing with Temporal Ruby')
 ```
 
 Configure and start your worker process:
@@ -86,7 +86,7 @@ Temporal.start_workflow(HelloWorldWorkflow)
 Congratulation you've just created and executed a distributed workflow!
 
 To view more details about your execution, point your browser to
-<http://localhost:8088/domain/ruby-samples/workflows?range=last-3-hours&status=CLOSED>.
+<http://localhost:8088/namespace/ruby-samples/workflows?range=last-3-hours&status=CLOSED>.
 
 There are plenty of [runnable examples](examples/) demonstrating various features of this library
 available, make sure to check them out.
@@ -159,7 +159,7 @@ future = workflow.execute_activity(MyActivity, arg1, arg2)
 # In case your workflow code does not have access to activity classes (separate
 # process, activities implemented in a different language, etc), you can
 # simply reference them by their names
-workflow.execute_activity('MyActivity', arg1, arg2, options: { domain: 'my-domain', task_list: 'my-task-list' })
+workflow.execute_activity('MyActivity', arg1, arg2, options: { namespace: 'my-namespace', task_list: 'my-task-list' })
 ```
 
 Besides calling activities workflows can:
@@ -274,8 +274,8 @@ worker you can split processing across as many workers as you need.
 
 ## Starting a workflow
 
-All communication is handled via Temporal service, so in order to start a workflow you need to send a
-message to Temporal:
+All communication is handled via Temporal service, so in order to start a workflow you need to send
+a message to Temporal:
 
 ```ruby
 Temporal.start_workflow(HelloWorldWorkflow)
@@ -300,11 +300,11 @@ workflows by supplying the `workflow_id_reuse_policy:` argument with one of thes
 ## Execution Options
 
 There are lots of ways in which you can configure your Workflows and Activities. The common ones
-(domain, task_list, timeouts and retry policy) can be defined in one of these places (in the order
+(namespace, task_list, timeouts and retry policy) can be defined in one of these places (in the order
 of precedence):
 
 1. Inline when starting or registering a workflow/activity (use `options:` argument)
-2. In your workflow/activity class definitions by calling a class method (e.g. `domain 'my-domain'`)
+2. In your workflow/activity class definitions by calling a class method (e.g. `namespace 'my-namespace'`)
 3. Globally, when configuring your Temporal library via `Temporal.configure`
 
 

@@ -11,10 +11,10 @@ describe Temporal::Saga::Saga do
     let(:compensations) { subject.send(:compensations) }
 
     it 'adds activity by name' do
-      subject.add_compensation('SomeActivity', 42, options: { domain: 'test', task_list: 'test' })
+      subject.add_compensation('SomeActivity', 42, options: { namespace: 'test', task_list: 'test' })
 
       expect(compensations)
-        .to eq([['SomeActivity', [42, options: { domain: 'test', task_list: 'test' }]]])
+        .to eq([['SomeActivity', [42, options: { namespace: 'test', task_list: 'test' }]]])
     end
 
     it 'adds activity by class' do
@@ -38,7 +38,7 @@ describe Temporal::Saga::Saga do
     context 'when there are added compensations' do
       before do
         subject.add_compensation(TestSagaActivity, 42)
-        subject.add_compensation('SomeActivity', 42, options: { domain: 'test', task_list: 'test' })
+        subject.add_compensation('SomeActivity', 42, options: { namespace: 'test', task_list: 'test' })
       end
 
       it 'performs compensating activities in reverse order' do
@@ -46,7 +46,7 @@ describe Temporal::Saga::Saga do
 
         expect(context)
           .to have_received(:execute_activity!)
-          .with('SomeActivity', 42, options: { domain: 'test', task_list: 'test' })
+          .with('SomeActivity', 42, options: { namespace: 'test', task_list: 'test' })
           .ordered
 
         expect(context)
