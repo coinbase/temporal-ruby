@@ -43,6 +43,7 @@ module Temporal
             maximum_interval: retry_policy.max_interval,
             maximum_attempts: retry_policy.max_attempts,
             non_retriable_error_reasons: non_retriable_errors,
+            expiration_interval: retry_policy.expiration_interval
           }.compact
 
           Temporal::Api::Common::V1::RetryPolicy.new(options)
