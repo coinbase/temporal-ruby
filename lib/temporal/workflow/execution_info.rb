@@ -1,5 +1,3 @@
-require 'temporal/utils'
-
 module Temporal
   class Workflow
     class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, keyword_init: true)
@@ -26,8 +24,8 @@ module Temporal
           workflow: response.type.name,
           workflow_id: response.execution.workflowId,
           run_id: response.execution.run_id,
-          start_time: Utils.time_from_nanos(response.startTime),
-          close_time: Utils.time_from_nanos(response.closeTime),
+          start_time: response.start_time.to_time,
+          close_time: response.close_time.to_time,
           status: response.closeStatus || RUNNING_STATUS,
           history_length: response.historyLength,
         ).freeze

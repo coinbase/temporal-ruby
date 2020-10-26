@@ -1,11 +1,12 @@
 require 'grpc'
+require 'google/protobuf/well_known_types'
 require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
 
 # Protoc wants all of its generated files on the LOAD_PATH
 $LOAD_PATH << File.expand_path('../../gen', __dir__)
-require 'gen/api/temporal/workflowservice/v1/service_services_pb'
+require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 
 module Temporal
   module Client
@@ -81,9 +82,9 @@ module Temporal
           input: Temporal::Api::Common::V1::Payloads.new(
             payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
           ),
-          workflow_execution_timeout_seconds: execution_timeout,
-          workflow_run_timeout_seconds: execution_timeout,
-          workflow_task_timeout_seconds: task_timeout,
+          workflow_execution_timeout: execution_timeout,
+          workflow_run_timeout: execution_timeout,
+          workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
             fields: headers
