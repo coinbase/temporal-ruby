@@ -1,5 +1,3 @@
-require 'temporal/utils'
-
 module Temporal
   class Workflow
     class History

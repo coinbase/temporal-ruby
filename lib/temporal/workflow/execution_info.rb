@@ -1,5 +1,3 @@
-require 'temporal/utils'
-
 module Temporal
   class Workflow
     class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, keyword_init: true)
