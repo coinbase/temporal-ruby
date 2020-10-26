@@ -18,7 +18,7 @@ describe Temporal do
       context 'using a workflow class' do
         class TestStartWorkflow < Temporal::Workflow
           namespace 'default-test-namespace'
-          task_list 'default-test-task-list'
+          task_queue 'default-test-task-queue'
         end
 
         it 'returns run_id' do
@@ -36,7 +36,7 @@ describe Temporal do
               namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'TestStartWorkflow',
-              task_list: 'default-test-task-list',
+              task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
@@ -52,7 +52,7 @@ describe Temporal do
             options: {
               name: 'test-workflow',
               namespace: 'test-namespace',
-              task_list: 'test-task-list',
+              task_queue: 'test-task-queue',
               headers: { 'Foo' => 'Bar' }
             }
           )
@@ -63,7 +63,7 @@ describe Temporal do
               namespace: 'test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
-              task_list: 'test-task-list',
+              task_queue: 'test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
@@ -87,7 +87,7 @@ describe Temporal do
               namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
-              task_list: 'default-test-task-list',
+              task_queue: 'default-test-task-queue',
               input: [42, { arg_1: 1, arg_2: 2 }],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
@@ -105,7 +105,7 @@ describe Temporal do
               namespace: 'default-test-namespace',
               workflow_id: '123',
               workflow_name: 'TestStartWorkflow',
-              task_list: 'default-test-task-list',
+              task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
@@ -125,7 +125,7 @@ describe Temporal do
               namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'TestStartWorkflow',
-              task_list: 'default-test-task-list',
+              task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
@@ -140,7 +140,7 @@ describe Temporal do
           described_class.start_workflow(
             'test-workflow',
             42,
-            options: { namespace: 'test-namespace', task_list: 'test-task-list' }
+            options: { namespace: 'test-namespace', task_queue: 'test-task-queue' }
           )
 
           expect(client)
@@ -149,7 +149,7 @@ describe Temporal do
               namespace: 'test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
-              task_list: 'test-task-list',
+              task_queue: 'test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
               execution_timeout: Temporal.configuration.timeouts[:execution],
