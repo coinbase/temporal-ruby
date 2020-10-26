@@ -3,29 +3,29 @@ module Temporal
     class History
       class Event
         EVENT_TYPES = %w[
-          ActivityTaskStarted
-          ActivityTaskCompleted
-          ActivityTaskFailed
-          ActivityTaskTimedOut
-          ActivityTaskCanceled
-          TimerFired
-          RequestCancelExternalWorkflowExecutionFailed
-          WorkflowExecutionSignaled
-          WorkflowExecutionTerminated
-          SignalExternalWorkflowExecutionFailed
-          ExternalWorkflowExecutionCancelRequested
-          ExternalWorkflowExecutionSignaled
-          UpsertWorkflowSearchAttributes
+          ACTIVITY_TASK_STARTED
+          ACTIVITY_TASK_COMPLETED
+          ACTIVITY_TASK_FAILED
+          ACTIVITY_TASK_TIMED_OUT
+          ACTIVITY_TASK_CANCELED
+          TIMER_FIRED
+          REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
+          WORKFLOW_EXECUTION_SIGNALED
+          WORKFLOW_EXECUTION_TERMINATED
+          SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
+          EXTERNAL_WORKFLOW_EXECUTION_CANCEL_REQUESTED
+          EXTERNAL_WORKFLOW_EXECUTION_SIGNALED
+          UPSERT_WORKFLOW_SEARCH_ATTRIBUTES
         ].freeze
 
         CHILD_WORKFLOW_EVENTS = %w[
-          StartChildWorkflowExecutionFailed
-          ChildWorkflowExecutionStarted
-          ChildWorkflowExecutionCompleted
-          ChildWorkflowExecutionFailed
-          ChildWorkflowExecutionCanceled
-          ChildWorkflowExecutionTimedOut
-          ChildWorkflowExecutionTerminated
+          START_CHILD_WORKFLOW_EXECUTION_FAILED
+          CHILD_WORKFLOW_EXECUTION_STARTED
+          CHILD_WORKFLOW_EXECUTION_COMPLETED
+          CHILD_WORKFLOW_EXECUTION_FAILED
+          CHILD_WORKFLOW_EXECUTION_CANCELED
+          CHILD_WORKFLOW_EXECUTION_TIMED_OUT
+          CHILD_WORKFLOW_EXECUTION_TERMINATED
         ].freeze
 
         PREFIX = 'EVENT_TYPE_'.freeze
@@ -45,9 +45,9 @@ module Temporal
         # referred to as a "decision" event. Not related to DecisionTask.
         def decision_id
           case type
-          when 'TimerFired'
+          when 'TIMER_FIRED'
             attributes.started_event_id
-          when 'WorkflowExecutionSignaled'
+          when 'WORKFLOW_EXECUTION_SIGNALED'
             1 # fixed id for everything related to current workflow
           when *EVENT_TYPES
             attributes.scheduled_event_id

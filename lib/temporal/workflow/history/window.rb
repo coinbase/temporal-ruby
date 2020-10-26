@@ -17,18 +17,18 @@ module Temporal
         end
 
         def add(event)
-          case event.type.to_s
+          case event.type
           when 'MARKER_RECORDED'
             markers << event
-          when 'DECISION_TASK_STARTED'
+          when 'WORKFLOW_TASK_STARTED'
             @last_event_id = event.id + 1 # one for completed
             @local_time = event.timestamp
-          when 'DECISION_TASK_FAILED', 'DECISION_TASK_TIMED_OUT'
-            @next_event_id = nil
+          when 'WORKFLOW_TASK_FAILED', 'WORKFLOW_TASK_TIMED_OUT'
+            @last_event_id = nil
             @local_time = nil
-          when 'DECISION_TASK_COMPLETED'
+          when 'WORKFLOW_TASK_COMPLETED'
             @replay = true
-          when 'DECISION_TASK_SCHEDULED', 'DECISION_TASK_FAILED'
+          when 'WORKFLOW_TASK_SCHEDULED', 'WORKFLOW_TASK_FAILED'
             # no-op
           else
             events << event
