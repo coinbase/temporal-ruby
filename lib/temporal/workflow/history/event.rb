@@ -34,7 +34,7 @@ module Temporal
 
         def initialize(raw_event)
           @id = raw_event.event_id
-          @timestamp = raw_event.timestamp.to_time
+          @timestamp = raw_event.event_time.to_time
           @type = raw_event.event_type.to_s.gsub(PREFIX, '')
           @attributes = extract_attributes(raw_event)
 
