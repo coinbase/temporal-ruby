@@ -12,6 +12,6 @@ Temporal.configure do |config|
   config.host = 'localhost'
   config.port = 7233
   config.namespace = 'ruby-samples'
-  config.task_list = 'general'
+  config.task_queue = 'general'
   config.metrics_adapter = Temporal::MetricsAdapters::Log.new(metrics_logger)
 end

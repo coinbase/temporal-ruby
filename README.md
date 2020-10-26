@@ -54,7 +54,7 @@ Temporal.configure do |config|
   config.host = 'localhost'
   config.port = 7233
   config.namespace = 'ruby-samples'
-  config.task_list = 'hello-world'
+  config.task_queue = 'hello-world'
 end
 ```
 
@@ -159,7 +159,7 @@ future = workflow.execute_activity(MyActivity, arg1, arg2)
 # In case your workflow code does not have access to activity classes (separate
 # process, activities implemented in a different language, etc), you can
 # simply reference them by their names
-workflow.execute_activity('MyActivity', arg1, arg2, options: { namespace: 'my-namespace', task_list: 'my-task-list' })
+workflow.execute_activity('MyActivity', arg1, arg2, options: { namespace: 'my-namespace', task_queue: 'my-task-queue' })
 ```
 
 Besides calling activities workflows can:
@@ -300,7 +300,7 @@ workflows by supplying the `workflow_id_reuse_policy:` argument with one of thes
 ## Execution Options
 
 There are lots of ways in which you can configure your Workflows and Activities. The common ones
-(namespace, task_list, timeouts and retry policy) can be defined in one of these places (in the order
+(namespace, task_queue, timeouts and retry policy) can be defined in one of these places (in the order
 of precedence):
 
 1. Inline when starting or registering a workflow/activity (use `options:` argument)

@@ -13,7 +13,7 @@ module Temporal
                 namespace: object.namespace,
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::WorkflowType.new(name: object.workflow_type),
-                task_queue: Temporal::Api::TaskQueue.new(name: object.task_list),
+                task_queue: Temporal::Api::TaskQueue.new(name: object.task_queue),
                 input: Temporal::Api::Common::V1::Payloads.new(
                   payloads: [
                     Temporal::Api::Common::V1::Payload.new(

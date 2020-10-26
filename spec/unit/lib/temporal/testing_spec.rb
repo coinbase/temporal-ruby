@@ -4,7 +4,7 @@ require 'temporal/workflow'
 describe Temporal::Testing::TemporalOverride do
   class TestTemporalOverrideWorkflow < Temporal::Workflow
     namespace 'default-namespace'
-    task_list 'default-task-list'
+    task_queue 'default-task-queue'
 
     def execute; end
   end

@@ -46,7 +46,7 @@ module Temporal
           activity_type: execution_options.name,
           input: input,
           namespace: execution_options.namespace,
-          task_list: execution_options.task_list,
+          task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
           timeouts: execution_options.timeouts,
           headers: execution_options.headers
@@ -104,7 +104,7 @@ module Temporal
           workflow_type: execution_options.name,
           input: input,
           namespace: execution_options.namespace,
-          task_list: execution_options.task_list,
+          task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
           timeouts: execution_options.timeouts,
           headers: execution_options.headers
