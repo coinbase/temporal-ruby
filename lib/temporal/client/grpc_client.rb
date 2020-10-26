@@ -78,7 +78,7 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: Temporal::Serializer::Payload.new(input).to_proto,
+          input: Temporal::Workflow::Serializer::Payload.new(input).to_proto,
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: execution_timeout,
           workflow_task_timeout: task_timeout,
@@ -168,7 +168,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal::Serializer::Payload.new(result).to_proto,
+          result: Temporal::Workflow::Serializer::Payload.new(result).to_proto,
         )
         client.respond_activity_task_completed(request)
       end
