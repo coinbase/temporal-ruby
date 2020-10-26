@@ -110,15 +110,15 @@ module Temporal
         client.get_workflow_execution_history(request)
       end
 
-      def poll_for_workflow_task(namespace:, task_queue:)
-        request = Temporal::Api::WorkflowService::V1::PollForWorkflowTaskRequest.new(
+      def poll_workflow_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           )
         )
-        client.poll_for_workflow_task(request)
+        client.poll_workflow_task_queue(request)
       end
 
       def respond_workflow_task_completed(task_token:, commands:)
@@ -140,15 +140,15 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_for_activity_task(namespace:, task_queue:)
-        request = Temporal::Api::WorkflowService::V1::PollForActivityTaskRequest.new(
+      def poll_activity_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           )
         )
-        client.poll_for_activity_task(request)
+        client.poll_activity_task_queue(request)
       end
 
       def record_activity_task_heartbeat(task_token:, details: nil)

@@ -45,17 +45,17 @@ module Temporal
 
       def poll_loop
         while !shutting_down? do
-          Temporal.logger.debug("Polling for decision tasks (#{namespace} / #{task_queue})")
+          Temporal.logger.debug("Polling worklow task queue (#{namespace} / #{task_queue})")
 
           task = poll_for_task
-          process(task) if task.workflow_type
+          process(task) if task&.workflow_type
         end
       end
 
       def poll_for_task
-        client.poll_for_decision_task(namespace: namespace, task_queue: task_queue)
+        client.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
-        Temporal.logger.error("Unable to poll for a decision task: #{error.inspect}")
+        Temporal.logger.error("Unable to poll workflow task queue: #{error.inspect}")
         nil
       end
 
