@@ -3,9 +3,9 @@ require 'temporal/retry_policy'
 module Temporal
   module Concerns
     module Executable
-      def domain(*args)
-        return @domain if args.empty?
-        @domain = args.first
+      def namespace(*args)
+        return @namespace if args.empty?
+        @namespace = args.first
       end
 
       def task_list(*args)

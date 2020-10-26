@@ -15,7 +15,7 @@ module Temporal
         end
       end
 
-      def fetch_workflow_execution_info(_domain, workflow_id, run_id)
+      def fetch_workflow_execution_info(_namespace, workflow_id, run_id)
         return super if Temporal::Testing.disabled?
 
         execution = executions[[workflow_id, run_id]]

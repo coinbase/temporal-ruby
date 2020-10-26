@@ -18,14 +18,14 @@ module Temporal
 
     def register_workflow(workflow_class, options = {})
       execution_options = ExecutionOptions.new(workflow_class, options)
-      key = [execution_options.domain, execution_options.task_list]
+      key = [execution_options.namespace, execution_options.task_list]
 
       @workflows[key].add(execution_options.name, workflow_class)
     end
 
     def register_activity(activity_class, options = {})
       execution_options = ExecutionOptions.new(activity_class, options)
-      key = [execution_options.domain, execution_options.task_list]
+      key = [execution_options.namespace, execution_options.task_list]
 
       @activities[key].add(execution_options.name, activity_class)
     end
@@ -39,12 +39,12 @@ module Temporal
     end
 
     def start
-      workflows.each_pair do |(domain, task_list), lookup|
-        pollers << workflow_poller_for(domain, task_list, lookup)
+      workflows.each_pair do |(namespace, task_list), lookup|
+        pollers << workflow_poller_for(namespace, task_list, lookup)
       end
 
-      activities.each_pair do |(domain, task_list), lookup|
-        pollers << activity_poller_for(domain, task_list, lookup)
+      activities.each_pair do |(namespace, task_list), lookup|
+        pollers << activity_poller_for(namespace, task_list, lookup)
       end
 
       trap_signals
@@ -71,12 +71,12 @@ module Temporal
       @shutting_down
     end
 
-    def workflow_poller_for(domain, task_list, lookup)
-      Workflow::Poller.new(domain, task_list, lookup.freeze, decision_middleware)
+    def workflow_poller_for(namespace, task_list, lookup)
+      Workflow::Poller.new(namespace, task_list, lookup.freeze, decision_middleware)
     end
 
-    def activity_poller_for(domain, task_list, lookup)
-      Activity::Poller.new(domain, task_list, lookup.freeze, activity_middleware)
+    def activity_poller_for(namespace, task_list, lookup)
+      Activity::Poller.new(namespace, task_list, lookup.freeze, activity_middleware)
     end
 
     def trap_signals
