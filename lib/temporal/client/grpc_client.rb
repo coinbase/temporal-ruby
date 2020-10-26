@@ -22,7 +22,7 @@ module Temporal
         @identity = identity
       end
 
-      def register_domain(name:, description: nil, global: false, metrics: false, retention_period: 10)
+      def register_namespace(name:, description: nil, global: false, metrics: false, retention_period: 10)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           name: name,
           description: description,
@@ -33,17 +33,17 @@ module Temporal
         client.register_namespace(request)
       end
 
-      def describe_domain(name:)
+      def describe_namespace(name:)
         request = Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest.new(name: name)
         client.describe_namespace(request)
       end
 
-      def list_domains(page_size:)
-        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(page_size: page_size)
+      def list_namespaces(page_size:)
+        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(pageSize: page_size)
         client.list_namespaces(request)
       end
 
-      def update_domain(name:, description:)
+      def update_namespace(name:, description:)
         request = Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest.new(
           name: name,
           update_info: Temporal::Api::WorkflowService::V1::UpdateNamespaceInfo.new(
@@ -53,13 +53,13 @@ module Temporal
         client.update_namespace(request)
       end
 
-      def deprecate_domain(name:)
+      def deprecate_namespace(name:)
         request = Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(name: name)
         client.deprecate_namespace(request)
       end
 
       def start_workflow_execution(
-        domain:,
+        namespace:,
         workflow_id:,
         workflow_name:,
         task_list:,
@@ -71,7 +71,7 @@ module Temporal
       )
         request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
-          namespace: domain,
+          namespace: namespace,
           workflow_type: Temporal::Api::Common::V1::WorkflowType.new(
             name: workflow_name
           ),
@@ -101,9 +101,9 @@ module Temporal
         client.start_workflow_execution(request)
       end
 
-      def get_workflow_execution_history(domain:, workflow_id:, run_id:)
+      def get_workflow_execution_history(namespace:, workflow_id:, run_id:)
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
-          namespace: domain,
+          namespace: namespace,
           execution: Temporal::Api::Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
@@ -113,10 +113,10 @@ module Temporal
         client.get_workflow_execution_history(request)
       end
 
-      def poll_for_workflow_task(domain:, task_list:)
+      def poll_for_workflow_task(namespace:, task_list:)
         request = Temporal::Api::WorkflowService::V1::PollForWorkflowTaskRequest.new(
           identity: identity,
-          namespace: domain,
+          namespace: namespace,
           task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           )
@@ -143,10 +143,10 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_for_activity_task(domain:, task_list:)
+      def poll_for_activity_task(namespace:, task_list:)
         request = Temporal::Api::WorkflowService::V1::PollForActivityTaskRequest.new(
           identity: identity,
-          namespace: domain,
+          namespace: namespace,
           task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           )
@@ -180,10 +180,10 @@ module Temporal
         client.respond_activity_task_completed(request)
       end
 
-      def respond_activity_task_completed_by_id(domain:, activity_id:, workflow_id:, run_id:, result:)
+      def respond_activity_task_completed_by_id(namespace:, activity_id:, workflow_id:, run_id:, result:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest.new(
           identity: identity,
-          namespace: domain,
+          namespace: namespace,
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
@@ -202,10 +202,10 @@ module Temporal
         client.respond_activity_task_failed(request)
       end
 
-      def respond_activity_task_failed_by_id(domain:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
+      def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
           identity: identity,
-          namespace: domain,
+          namespace: namespace,
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
@@ -232,9 +232,9 @@ module Temporal
         raise NotImplementedError
       end
 
-      def signal_workflow_execution(domain:, workflow_id:, run_id:, signal:, input: nil)
+      def signal_workflow_execution(namespace:, workflow_id:, run_id:, signal:, input: nil)
         request = Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionRequest.new(
-          namespace: domain,
+          namespace: namespace,
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
@@ -250,9 +250,9 @@ module Temporal
         raise NotImplementedError
       end
 
-      def reset_workflow_execution(domain:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
+      def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
         request = Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
-          namespace: domain,
+          namespace: namespace,
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
@@ -307,9 +307,9 @@ module Temporal
         raise NotImplementedError
       end
 
-      def describe_workflow_execution(domain:, workflow_id:, run_id:)
+      def describe_workflow_execution(namespace:, workflow_id:, run_id:)
         request = Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest.new(
-          namespace: domain,
+          namespace: namespace,
           execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
@@ -318,9 +318,9 @@ module Temporal
         client.describe_workflow_execution(request)
       end
 
-      def describe_task_list(domain:, task_list:)
+      def describe_task_list(namespace:, task_list:)
         request = Temporal::Api::WorkflowService::V1::DescribeTaskListRequest.new(
-          namespace: domain,
+          namespace: namespace,
           task_list: Temporal::Api::TaskList::V1::TaskList.new(
             name: task_list
           ),

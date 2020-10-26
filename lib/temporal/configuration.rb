@@ -4,7 +4,7 @@ require 'temporal/metrics_adapters/null'
 module Temporal
   class Configuration
     attr_reader :timeouts
-    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :domain, :task_list, :headers
+    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_list, :headers
 
     DEFAULT_TIMEOUTS = {
       execution: 60,          # End-to-end workflow time
@@ -16,7 +16,7 @@ module Temporal
     }.freeze
 
     DEFAULT_HEADERS = {}.freeze
-    DEFAULT_DOMAIN = 'default-domain'.freeze
+    DEFAULT_NAMESPACE = 'default-namespace'.freeze
     DEFAULT_TASK_LIST = 'default-task-list'.freeze
 
     def initialize
@@ -24,7 +24,7 @@ module Temporal
       @logger = Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
-      @domain = DEFAULT_DOMAIN
+      @namespace = DEFAULT_NAMESPACE
       @task_list = DEFAULT_TASK_LIST
       @headers = DEFAULT_HEADERS
     end

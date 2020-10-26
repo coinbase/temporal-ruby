@@ -5,9 +5,9 @@ require 'temporal/json'
 module Temporal
   class Activity
     class TaskProcessor
-      def initialize(task, domain, activity_lookup, client, middleware_chain)
+      def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
-        @domain = domain
+        @namespace = namespace
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
@@ -26,7 +26,7 @@ module Temporal
           return
         end
 
-        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, domain)
+        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
@@ -45,7 +45,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :domain, :task_token, :activity_name, :activity_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain
 
       def queue_time_ms
         scheduled = task.current_attempt_scheduled_time.to_f

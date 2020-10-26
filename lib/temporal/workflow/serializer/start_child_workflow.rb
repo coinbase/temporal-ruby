@@ -10,7 +10,7 @@ module Temporal
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
             start_child_workflow_execution_command_attributes:
               Temporal::Api::StartChildWorkflowExecutionCommandAttributes.new(
-                namespace: object.domain,
+                namespace: object.namespace,
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::WorkflowType.new(name: object.workflow_type),
                 task_queue: Temporal::Api::TaskQueue.new(name: object.task_list),
