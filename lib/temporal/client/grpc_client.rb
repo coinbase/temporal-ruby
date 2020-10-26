@@ -20,13 +20,14 @@ module Temporal
         @identity = identity
       end
 
-      def register_namespace(name:, description: nil, global: false, metrics: false, retention_period: 10)
+      def register_namespace(name:, description: nil, global: false, retention_period: 10)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           name: name,
           description: description,
-          emit_metric: metrics,
           is_global_namespace: global,
-          workflow_execution_retention_period_in_days: retention_period
+          workflow_execution_retention_period: Google::Protobuf::Duration.new(
+            seconds: retention_period * 24 * 60 * 60
+          )
         )
         client.register_namespace(request)
       end
