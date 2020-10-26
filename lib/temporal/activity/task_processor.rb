@@ -48,7 +48,9 @@ module Temporal
       attr_reader :task, :domain, :task_token, :activity_name, :activity_class, :client, :middleware_chain
 
       def queue_time_ms
-        ((task.started_timestamp - task.scheduled_timestamp_of_this_attempt) / 1_000_000).round
+        scheduled = task.current_attempt_scheduled_time.to_f
+        started = task.started_timestamp.to_f
+        ((started - scheduled) * 1_000).round
       end
 
       def respond_completed(result)
