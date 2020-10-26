@@ -2,15 +2,15 @@ require 'temporal/metadata'
 
 describe Temporal::Metadata do
   describe '.generate' do
-    subject { described_class.generate(type, data, domain) }
+    subject { described_class.generate(type, data, namespace) }
 
     context 'with activity type' do
       let(:type) { described_class::ACTIVITY_TYPE }
       let(:data) { Fabricate(:activity_task_thrift) }
-      let(:domain) { 'test-domain' }
+      let(:namespace) { 'test-namespace' }
 
       it 'generates metadata' do
-        expect(subject.domain).to eq(domain)
+        expect(subject.namespace).to eq(namespace)
         expect(subject.id).to eq(data.activityId)
         expect(subject.name).to eq(data.activityType.name)
         expect(subject.task_token).to eq(data.taskToken)
@@ -33,10 +33,10 @@ describe Temporal::Metadata do
     context 'with decision type' do
       let(:type) { described_class::DECISION_TYPE }
       let(:data) { Fabricate(:decision_task_thrift) }
-      let(:domain) { 'test-domain' }
+      let(:namespace) { 'test-namespace' }
 
       it 'generates metadata' do
-        expect(subject.domain).to eq(domain)
+        expect(subject.namespace).to eq(namespace)
         expect(subject.id).to eq(data.startedEventId)
         expect(subject.task_token).to eq(data.taskToken)
         expect(subject.attempt).to eq(data.attempt)
@@ -49,7 +49,7 @@ describe Temporal::Metadata do
     context 'with workflow type' do
       let(:type) { described_class::WORKFLOW_TYPE }
       let(:data) { Fabricate(:worklfow_execution_started_event_attributes_thrift) }
-      let(:domain) { nil }
+      let(:namespace) { nil }
 
       it 'generates metadata' do
         expect(subject.run_id).to eq(data.originalExecutionRunId)
@@ -71,7 +71,7 @@ describe Temporal::Metadata do
     context 'with unknown type' do
       let(:type) { :unknown }
       let(:data) { nil }
-      let(:domain) { nil }
+      let(:namespace) { nil }
 
       it 'raises' do
         expect { subject }.to raise_error(Temporal::InternalError, 'Unsupported metadata type')

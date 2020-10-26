@@ -17,7 +17,7 @@ describe Temporal do
 
       context 'using a workflow class' do
         class TestStartWorkflow < Temporal::Workflow
-          domain 'default-test-domain'
+          namespace 'default-test-namespace'
           task_list 'default-test-task-list'
         end
 
@@ -33,7 +33,7 @@ describe Temporal do
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'default-test-domain',
+              namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'TestStartWorkflow',
               task_list: 'default-test-task-list',
@@ -51,7 +51,7 @@ describe Temporal do
             42,
             options: {
               name: 'test-workflow',
-              domain: 'test-domain',
+              namespace: 'test-namespace',
               task_list: 'test-task-list',
               headers: { 'Foo' => 'Bar' }
             }
@@ -60,7 +60,7 @@ describe Temporal do
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'test-domain',
+              namespace: 'test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
               task_list: 'test-task-list',
@@ -84,7 +84,7 @@ describe Temporal do
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'default-test-domain',
+              namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
               task_list: 'default-test-task-list',
@@ -102,7 +102,7 @@ describe Temporal do
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'default-test-domain',
+              namespace: 'default-test-namespace',
               workflow_id: '123',
               workflow_name: 'TestStartWorkflow',
               task_list: 'default-test-task-list',
@@ -122,7 +122,7 @@ describe Temporal do
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'default-test-domain',
+              namespace: 'default-test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'TestStartWorkflow',
               task_list: 'default-test-task-list',
@@ -140,13 +140,13 @@ describe Temporal do
           described_class.start_workflow(
             'test-workflow',
             42,
-            options: { domain: 'test-domain', task_list: 'test-task-list' }
+            options: { namespace: 'test-namespace', task_list: 'test-task-list' }
           )
 
           expect(client)
             .to have_received(:start_workflow_execution)
             .with(
-              domain: 'test-domain',
+              namespace: 'test-namespace',
               workflow_id: an_instance_of(String),
               workflow_name: 'test-workflow',
               task_list: 'test-task-list',
@@ -160,23 +160,23 @@ describe Temporal do
       end
     end
 
-    describe '.register_domain' do
-      before { allow(client).to receive(:register_domain).and_return(nil) }
+    describe '.register_namespace' do
+      before { allow(client).to receive(:register_namespace).and_return(nil) }
 
-      it 'registers domain with the specified name' do
-        described_class.register_domain('new-domain')
+      it 'registers namespace with the specified name' do
+        described_class.register_namespace('new-namespace')
 
         expect(client)
-          .to have_received(:register_domain)
-          .with(name: 'new-domain', description: nil)
+          .to have_received(:register_namespace)
+          .with(name: 'new-namespace', description: nil)
       end
 
-      it 'registers domain with the specified name and description' do
-        described_class.register_domain('new-domain', 'domain description')
+      it 'registers namespace with the specified name and description' do
+        described_class.register_namespace('new-namespace', 'namespace description')
 
         expect(client)
-          .to have_received(:register_domain)
-          .with(name: 'new-domain', description: 'domain description')
+          .to have_received(:register_namespace)
+          .with(name: 'new-namespace', description: 'namespace description')
       end
     end
 
@@ -192,27 +192,27 @@ describe Temporal do
       before { allow(client).to receive(:describe_workflow_execution).and_return(response) }
 
       it 'requests execution info from Temporal' do
-        described_class.fetch_workflow_execution_info('domain', '111', '222')
+        described_class.fetch_workflow_execution_info('namespace', '111', '222')
 
         expect(client)
           .to have_received(:describe_workflow_execution)
-          .with(domain: 'domain', workflow_id: '111', run_id: '222')
+          .with(namespace: 'namespace', workflow_id: '111', run_id: '222')
       end
 
       it 'returns Workflow::ExecutionInfo' do
-        info = described_class.fetch_workflow_execution_info('domain', '111', '222')
+        info = described_class.fetch_workflow_execution_info('namespace', '111', '222')
 
         expect(info).to be_a(Temporal::Workflow::ExecutionInfo)
       end
     end
 
     context 'activity operations' do
-      let(:domain) { 'test-domain' }
+      let(:namespace) { 'test-namespace' }
       let(:activity_id) { rand(100).to_s }
       let(:workflow_id) { SecureRandom.uuid }
       let(:run_id) { SecureRandom.uuid }
       let(:async_token) do
-        Temporal::Activity::AsyncToken.encode(domain, activity_id, workflow_id, run_id)
+        Temporal::Activity::AsyncToken.encode(namespace, activity_id, workflow_id, run_id)
       end
 
       describe '.complete_activity' do
@@ -224,7 +224,7 @@ describe Temporal do
           expect(client)
             .to have_received(:respond_activity_task_completed_by_id)
             .with(
-              domain: domain,
+              namespace: namespace,
               activity_id: activity_id,
               workflow_id: workflow_id,
               run_id: run_id,
@@ -238,7 +238,7 @@ describe Temporal do
           expect(client)
             .to have_received(:respond_activity_task_completed_by_id)
             .with(
-              domain: domain,
+              namespace: namespace,
               activity_id: activity_id,
               workflow_id: workflow_id,
               run_id: run_id,
@@ -256,7 +256,7 @@ describe Temporal do
           expect(client)
             .to have_received(:respond_activity_task_failed_by_id)
             .with(
-              domain: domain,
+              namespace: namespace,
               activity_id: activity_id,
               workflow_id: workflow_id,
               run_id: run_id,

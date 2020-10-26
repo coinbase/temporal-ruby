@@ -55,7 +55,7 @@ describe Temporal::Activity::Context do
       expect(subject.async_token)
         .to eq(
           Temporal::Activity::AsyncToken.encode(
-            metadata.domain,
+            metadata.namespace,
             metadata.id,
             metadata.workflow_id,
             metadata.workflow_run_id

@@ -1,17 +1,17 @@
 shared_examples 'an executable' do
-  describe '.domain' do
-    after { described_class.remove_instance_variable(:@domain) }
+  describe '.namespace' do
+    after { described_class.remove_instance_variable(:@namespace) }
 
-    it 'gets current domain' do
-      described_class.instance_variable_set(:@domain, :test)
+    it 'gets current namespace' do
+      described_class.instance_variable_set(:@namespace, :test)
 
-      expect(described_class.domain).to eq(:test)
+      expect(described_class.namespace).to eq(:test)
     end
 
-    it 'sets new domain' do
-      described_class.domain(:test)
+    it 'sets new namespace' do
+      described_class.namespace(:test)
 
-      expect(described_class.instance_variable_get(:@domain)).to eq(:test)
+      expect(described_class.instance_variable_get(:@namespace)).to eq(:test)
     end
   end
 

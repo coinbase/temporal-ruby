@@ -2,9 +2,9 @@ require 'temporal/activity/task_processor'
 require 'temporal/middleware/chain'
 
 describe Temporal::Activity::TaskProcessor do
-  subject { described_class.new(task, domain, lookup, client, middleware_chain) }
+  subject { described_class.new(task, namespace, lookup, client, middleware_chain) }
 
-  let(:domain) { 'test-domain' }
+  let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
   let(:task) do
     Fabricate(:activity_task_thrift, activity_name: activity_name, input: Temporal::JSON.serialize(input))
@@ -21,7 +21,7 @@ describe Temporal::Activity::TaskProcessor do
     before do
       allow(Temporal::Metadata)
         .to receive(:generate)
-        .with(Temporal::Metadata::ACTIVITY_TYPE, task, domain)
+        .with(Temporal::Metadata::ACTIVITY_TYPE, task, namespace)
         .and_return(metadata)
       allow(Temporal::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 

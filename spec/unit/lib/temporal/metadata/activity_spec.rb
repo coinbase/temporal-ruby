@@ -6,7 +6,7 @@ describe Temporal::Metadata::Activity do
     let(:args) { Fabricate(:activity_metadata) }
 
     it 'sets the attributes' do
-      expect(subject.domain).to eq(args.domain)
+      expect(subject.namespace).to eq(args.namespace)
       expect(subject.id).to eq(args.id)
       expect(subject.name).to eq(args.name)
       expect(subject.task_token).to eq(args.task_token)
