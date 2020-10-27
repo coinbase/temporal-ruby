@@ -6,7 +6,7 @@ describe Temporal do
     let(:client) { instance_double(Temporal::Client::GRPCClient) }
 
     before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-    after { described_class.remove_instance_variable(:@client) }
+    after { described_class.remove_instance_variable(:@client) rescue NameError }
 
     describe '.start_workflow' do
       let(:temporal_response) do
