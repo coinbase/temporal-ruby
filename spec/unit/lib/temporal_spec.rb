@@ -1,5 +1,6 @@
 require 'temporal'
 require 'temporal/workflow'
+require 'pry'
 
 describe Temporal do
   describe 'client operations' do
@@ -182,8 +183,7 @@ describe Temporal do
 
     describe '.fetch_workflow_execution_info' do
       let(:response) do
-        instance_double(
-          Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse,
+        Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
           workflow_execution_info: api_info
         )
       end
