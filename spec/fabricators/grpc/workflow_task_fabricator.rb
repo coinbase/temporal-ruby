@@ -7,6 +7,6 @@ Fabricator(:api_workflow_task, from: Temporal::Api::WorkflowService::V1::PollWor
   task_token { |attrs| attrs[:task_token] || SecureRandom.uuid }
   workflow_type { Fabricate(:api_workflow_type) }
   workflow_execution { Fabricate(:api_workflow_execution) }
-  scheduled_timestamp { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
-  started_timestamp { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
+  scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
+  started_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
 end
