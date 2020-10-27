@@ -12,18 +12,18 @@ module Temporal
       end
 
       def last_completed_decision_task
-        events.select { |event| event.type == 'DecisionTaskCompleted' }.last
+        events.select { |event| event.type == 'WORKFLOW_TASK_COMPLETED' }.last
       end
 
       # It is very important to replay the History window by window in order to
       # simulate the exact same state the workflow was in when it processed the
-      # decision task for the first time.
+      # workflow task for the first time.
       #
       # A history window consists of 3 parts:
       #
       # 1. Events that happened since the last window (timer fired, activity completed, etc)
-      # 2. A decision task related events (decision task started, completed, failed, etc)
-      # 3. Commands issued by the last decision task (^) (schedule activity, start timer, etc)
+      # 2. A workflow task related events (workflow task started, completed, failed, etc)
+      # 3. Commands issued by the last workflow task (^) (schedule activity, start timer, etc)
       #
       def next_window
         return unless peek_event
@@ -33,7 +33,7 @@ module Temporal
         while event = next_event
           window.add(event)
 
-          break if event.type == 'DecisionTaskCompleted'
+          break if event.type == 'WORKFLOW_TASK_COMPLETED'
         end
 
         # Find the end of the window by exhausting all the commands
@@ -45,17 +45,17 @@ module Temporal
       private
 
       COMMAND_EVENT_TYPES = %w[
-        ActivityTaskScheduled
-        ActivityTaskCancelRequested
-        TimerStarted
-        CancelTimerFailed
-        TimerCanceled
-        WorkflowExecutionCancelRequested
-        StartChildWorkflowExecutionInitiated
-        SignalExternalWorkflowExecutionInitiated
-        RequestCancelActivityTaskFailed
-        RequestCancelExternalWorkflowExecutionInitiated
-        MarkerRecorded
+        ACTIVITY_TASK_SCHEDULED
+        ACTIVITY_TASK_CANCEL_REQUESTED
+        TIMER_STARTED
+        CANCEL_TIMER_FAILED
+        TIMER_CANCELED
+        WORKFLOW_EXECUTION_CANCEL_REQUESTED
+        START_CHILD_WORKFLOW_EXECUTION_INITIATED
+        SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED
+        REQUEST_CANCEL_ACTIVITY_TASK_FAILED
+        REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED
+        MARKER_RECORDED
       ].freeze
 
       attr_reader :iterator

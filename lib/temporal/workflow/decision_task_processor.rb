@@ -19,7 +19,7 @@ module Temporal
       def process
         start_time = Time.now
 
-        Temporal.logger.info("Processing a decision task for #{workflow_name}")
+        Temporal.logger.info("Processing a workflow task for #{workflow_name}")
         Temporal.metrics.timing('decision_task.queue_time', queue_time_ms, workflow: workflow_name)
 
         unless workflow_class
@@ -32,18 +32,18 @@ module Temporal
         executor = Workflow::Executor.new(workflow_class, history)
         metadata = Metadata.generate(Metadata::DECISION_TYPE, task, namespace)
 
-        decisions = middleware_chain.invoke(metadata) do
+        commands = middleware_chain.invoke(metadata) do
           executor.run
         end
 
-        complete_task(decisions)
+        complete_task(commands)
       rescue StandardError => error
-        Temporal.logger.error("Decison task for #{workflow_name} failed with: #{error.inspect}")
+        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('decision_task.latency', time_diff_ms, workflow: workflow_name)
-        Temporal.logger.debug("Decision task processed in #{time_diff_ms}ms")
+        Temporal.logger.debug("Workflow task processed in #{time_diff_ms}ms")
       end
 
       private
@@ -51,30 +51,30 @@ module Temporal
       attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
 
       def queue_time_ms
-        scheduled = task.current_attempt_scheduled_time.to_f
-        started = task.started_timestamp.to_f
+        scheduled = task.scheduled_time.to_f
+        started = task.started_time.to_f
         ((started - scheduled) * 1_000).round
       end
 
-      def serialize_decisions(decisions)
-        decisions.map { |(_, decision)| Workflow::Serializer.serialize(decision) }
+      def serialize_commands(commands)
+        commands.map { |(_, command)| Workflow::Serializer.serialize(command) }
       end
 
-      def complete_task(decisions)
-        Temporal.logger.info("Decision task for #{workflow_name} completed")
+      def complete_task(commands)
+        Temporal.logger.info("Workflow task for #{workflow_name} completed")
 
-        client.respond_decision_task_completed(
+        client.respond_workflow_task_completed(
           task_token: task_token,
-          decisions: serialize_decisions(decisions)
+          commands: serialize_commands(commands)
         )
       end
 
       def fail_task(message)
-        Temporal.logger.error("Decision task for #{workflow_name} failed with: #{message}")
+        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{message}")
 
-        client.respond_decision_task_failed(
+        client.respond_workflow_task_failed(
           task_token: task_token,
-          cause: TemporalThrift::DecisionTaskFailedCause::UNHANDLED_DECISION,
+          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
           details: { message: message }
         )
       end

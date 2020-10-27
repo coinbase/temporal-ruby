@@ -3,9 +3,7 @@ require 'google/protobuf/well_known_types'
 require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
-
-# Protoc wants all of its generated files on the LOAD_PATH
-$LOAD_PATH << File.expand_path('../../gen', __dir__)
+require 'temporal/workflow/serializer/payload'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 
 module Temporal
@@ -22,13 +20,14 @@ module Temporal
         @identity = identity
       end
 
-      def register_namespace(name:, description: nil, global: false, metrics: false, retention_period: 10)
+      def register_namespace(name:, description: nil, global: false, retention_period: 10)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           name: name,
           description: description,
-          emit_metric: metrics,
           is_global_namespace: global,
-          workflow_execution_retention_period_in_days: retention_period
+          workflow_execution_retention_period: Google::Protobuf::Duration.new(
+            seconds: retention_period * 24 * 60 * 60
+          )
         )
         client.register_namespace(request)
       end
@@ -62,7 +61,7 @@ module Temporal
         namespace:,
         workflow_id:,
         workflow_name:,
-        task_list:,
+        task_queue:,
         input: nil,
         execution_timeout:,
         task_timeout:,
@@ -76,12 +75,10 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           ),
-          input: Temporal::Api::Common::V1::Payloads.new(
-            payloads: [Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(input))]
-          ),
+          input: Temporal::Workflow::Serializer::Payload.new(input).to_proto,
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: execution_timeout,
           workflow_task_timeout: task_timeout,
@@ -113,15 +110,15 @@ module Temporal
         client.get_workflow_execution_history(request)
       end
 
-      def poll_for_workflow_task(namespace:, task_list:)
-        request = Temporal::Api::WorkflowService::V1::PollForWorkflowTaskRequest.new(
+      def poll_workflow_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           )
         )
-        client.poll_for_workflow_task(request)
+        client.poll_workflow_task_queue(request)
       end
 
       def respond_workflow_task_completed(task_token:, commands:)
@@ -143,15 +140,15 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_for_activity_task(namespace:, task_list:)
-        request = Temporal::Api::WorkflowService::V1::PollForActivityTaskRequest.new(
+      def poll_activity_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           )
         )
-        client.poll_for_activity_task(request)
+        client.poll_activity_task_queue(request)
       end
 
       def record_activity_task_heartbeat(task_token:, details: nil)
@@ -171,11 +168,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal::Api::Common::V1::Payloads.new(
-            payloads: [
-              Temporal::Api::Common::V1::Payload.new(data: JSON.serialize(result))
-            ]
-          ),
+          result: Temporal::Workflow::Serializer::Payload.new(result).to_proto,
         )
         client.respond_activity_task_completed(request)
       end
@@ -299,7 +292,7 @@ module Temporal
         raise NotImplementedError
       end
 
-      def reset_sticky_task_list
+      def reset_sticky_task_queue
         raise NotImplementedError
       end
 
@@ -318,16 +311,16 @@ module Temporal
         client.describe_workflow_execution(request)
       end
 
-      def describe_task_list(namespace:, task_list:)
-        request = Temporal::Api::WorkflowService::V1::DescribeTaskListRequest.new(
+      def describe_task_queue(namespace:, task_queue:)
+        request = Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest.new(
           namespace: namespace,
-          task_list: Temporal::Api::TaskList::V1::TaskList.new(
-            name: task_list
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
           ),
-          task_list_type: Temporal::Api::Enums::V1::TaskListType::Workflow,
-          include_task_list_status: true
+          task_queue_type: Temporal::Api::Enums::V1::TaskQueueType::Workflow,
+          include_task_queue_status: true
         )
-        client.describe_task_list(request)
+        client.describe_task_queue(request)
       end
 
       private

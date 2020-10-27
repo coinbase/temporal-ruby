@@ -8,9 +8,9 @@ module Temporal
     class Poller
       THREAD_POOL_SIZE = 20
 
-      def initialize(namespace, task_list, activity_lookup, middleware = [])
+      def initialize(namespace, task_queue, activity_lookup, middleware = [])
         @namespace = namespace
-        @task_list = task_list
+        @task_queue = task_queue
         @activity_lookup = activity_lookup
         @middleware = middleware
         @shutting_down = false
@@ -32,7 +32,7 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_list, :activity_lookup, :middleware, :thread
+      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :thread
 
       def client
         @client ||= Temporal::Client.generate
@@ -48,19 +48,19 @@ module Temporal
 
           return if shutting_down?
 
-          Temporal.logger.debug("Polling for activity tasks (#{namespace} / #{task_list})")
+          Temporal.logger.debug("Polling activity task queue (#{namespace} / #{task_queue})")
 
           task = poll_for_task
-          next if task.activity_id.empty?
+          next unless task&.activity_type
 
           thread_pool.schedule { process(task) }
         end
       end
 
       def poll_for_task
-        client.poll_for_activity_task(namespace: namespace, task_list: task_list)
+        client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
-        Temporal.logger.error("Unable to poll for an activity task: #{error.inspect}")
+        Temporal.logger.error("Unable to poll activity task queue: #{error.inspect}")
         nil
       end
 

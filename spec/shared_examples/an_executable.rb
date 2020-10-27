@@ -15,19 +15,19 @@ shared_examples 'an executable' do
     end
   end
 
-  describe '.task_list' do
-    after { described_class.remove_instance_variable(:@task_list) }
+  describe '.task_queue' do
+    after { described_class.remove_instance_variable(:@task_queue) }
 
     it 'gets current task list' do
-      described_class.instance_variable_set(:@task_list, :test)
+      described_class.instance_variable_set(:@task_queue, :test)
 
-      expect(described_class.task_list).to eq(:test)
+      expect(described_class.task_queue).to eq(:test)
     end
 
     it 'sets new task list' do
-      described_class.task_list(:test)
+      described_class.task_queue(:test)
 
-      expect(described_class.instance_variable_get(:@task_list)).to eq(:test)
+      expect(described_class.instance_variable_get(:@task_queue)).to eq(:test)
     end
   end
 

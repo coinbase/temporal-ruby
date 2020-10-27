@@ -1,3 +1,6 @@
+# Protoc wants all of its generated files on the LOAD_PATH
+$LOAD_PATH << File.expand_path('./gen', __dir__)
+
 require 'securerandom'
 require 'temporal/configuration'
 require 'temporal/execution_options'
@@ -22,7 +25,7 @@ module Temporal
         namespace: execution_options.namespace,
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
-        task_list: execution_options.task_list,
+        task_queue: execution_options.task_queue,
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
         task_timeout: execution_options.timeouts[:task],

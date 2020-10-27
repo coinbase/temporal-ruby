@@ -1,5 +1,5 @@
 require 'temporal/workflow/serializer/base'
-require 'temporal/json'
+require 'temporal/workflow/serializer/payload'
 
 module Temporal
   class Workflow
@@ -11,13 +11,7 @@ module Temporal
             record_marker_command_attributes:
               Temporal::Api::Decision::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
-                details: Temporal::Api::Common::V1::Payloads.new(
-                  payloads: [
-                    Temporal::Api::Common::V1::Payload.new(
-                      data: JSON.serialize(object.details)
-                    )
-                  ]
-                )
+                details: Payload.new(object.details).to_proto
               )
           )
         end

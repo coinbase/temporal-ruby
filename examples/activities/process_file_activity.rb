@@ -3,7 +3,7 @@ require 'temporal/concerns/typed'
 class ProcessFileActivity < Temporal::Activity
   include Temporal::Concerns::Typed
 
-  task_list 'file-processing'
+  task_queue 'file-processing'
 
   input Temporal::Types::String
 

@@ -114,19 +114,19 @@ module Temporal
         when 'WORKFLOW_EXECUTION_TIMED_OUT'
           # todo
 
-        when 'DECISION_TASK_SCHEDULED'
+        when 'WORKFLOW_TASK_SCHEDULED'
           # todo
 
-        when 'DECISION_TASK_STARTED'
+        when 'WORKFLOW_TASK_STARTED'
           # todo
 
-        when 'DECISION_TASK_COMPLETED'
+        when 'WORKFLOW_TASK_COMPLETED'
           # todo
 
-        when 'DECISION_TASK_TIMED_OUT'
+        when 'WORKFLOW_TASK_TIMED_OUT'
           # todo
 
-        when 'DECISION_TASK_FAILED'
+        when 'WORKFLOW_TASK_FAILED'
           # todo
 
         when 'ACTIVITY_TASK_SCHEDULED'

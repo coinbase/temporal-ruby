@@ -5,12 +5,12 @@ require 'temporal/activity'
 describe Temporal::Worker do
   class TestWorkerWorkflow < Temporal::Workflow
     namespace 'default-namespace'
-    task_list 'default-task-list'
+    task_queue 'default-task-queue'
   end
 
   class TestWorkerActivity < Temporal::Activity
     namespace 'default-namespace'
-    task_list 'default-task-list'
+    task_queue 'default-task-queue'
   end
 
   class TestWorkerDecisionMiddleware
@@ -23,7 +23,7 @@ describe Temporal::Worker do
 
   class TestWorkerActivity < Temporal::Activity
     namespace 'default-namespace'
-    task_list 'default-task-list'
+    task_queue 'default-task-queue'
   end
 
   THREAD_SYNC_DELAY = 0.01
@@ -43,7 +43,7 @@ describe Temporal::Worker do
       subject.register_workflow(TestWorkerWorkflow)
 
       expect(lookup).to have_received(:add).with('TestWorkerWorkflow', TestWorkerWorkflow)
-      expect(workflow_keys).to include(['default-namespace', 'default-task-list'])
+      expect(workflow_keys).to include(['default-namespace', 'default-task-queue'])
     end
 
     it 'registers a workflow with provided config options' do
@@ -51,11 +51,11 @@ describe Temporal::Worker do
         TestWorkerWorkflow,
         name: 'test-workflow',
         namespace: 'test-namespace',
-        task_list: 'test-task-list'
+        task_queue: 'test-task-queue'
       )
 
       expect(lookup).to have_received(:add).with('test-workflow', TestWorkerWorkflow)
-      expect(workflow_keys).to include(['test-namespace', 'test-task-list'])
+      expect(workflow_keys).to include(['test-namespace', 'test-task-queue'])
     end
   end
 
@@ -69,7 +69,7 @@ describe Temporal::Worker do
       subject.register_activity(TestWorkerActivity)
 
       expect(lookup).to have_received(:add).with('TestWorkerActivity', TestWorkerActivity)
-      expect(activity_keys).to include(['default-namespace', 'default-task-list'])
+      expect(activity_keys).to include(['default-namespace', 'default-task-queue'])
     end
 
     it 'registers an activity with provided config options' do
@@ -77,11 +77,11 @@ describe Temporal::Worker do
         TestWorkerActivity,
         name: 'test-activity',
         namespace: 'test-namespace',
-        task_list: 'test-task-list'
+        task_queue: 'test-task-queue'
       )
 
       expect(lookup).to have_received(:add).with('test-activity', TestWorkerActivity)
-      expect(activity_keys).to include(['test-namespace', 'test-task-list'])
+      expect(activity_keys).to include(['test-namespace', 'test-task-queue'])
     end
   end
 
@@ -134,28 +134,28 @@ describe Temporal::Worker do
 
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_1)
 
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
-        .with('other-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('other-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_2)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_1)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'other-task-list', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
       subject.register_workflow(TestWorkerWorkflow, namespace: 'other-namespace')
       subject.register_activity(TestWorkerActivity)
-      subject.register_activity(TestWorkerActivity, task_list: 'other-task-list')
+      subject.register_activity(TestWorkerActivity, task_queue: 'other-task-queue')
 
       subject.start
 
@@ -189,12 +189,12 @@ describe Temporal::Worker do
 
         allow(Temporal::Workflow::Poller)
           .to receive(:new)
-          .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_1])
+          .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [entry_1])
           .and_return(workflow_poller_1)
 
         allow(Temporal::Activity::Poller)
           .to receive(:new)
-          .with('default-namespace', 'default-task-list', an_instance_of(Temporal::ExecutableLookup), [entry_2])
+          .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [entry_2])
           .and_return(activity_poller_1)
 
         subject.register_workflow(TestWorkerWorkflow)
