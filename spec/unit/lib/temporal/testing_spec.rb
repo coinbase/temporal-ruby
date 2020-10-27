@@ -11,8 +11,8 @@ describe Temporal::Testing::TemporalOverride do
 
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
-      let(:client) { instance_double('Temporal::Client::ThriftClient') }
-      let(:response) { TemporalThrift::StartWorkflowExecutionResponse.new(runId: 'xxx') }
+      let(:client) { instance_double('Temporal::Client::GRPCClient') }
+      let(:response) { Temporal::Api::WorkflowService::StartWorkflowExecutionResponse.new(run_id: 'xxx') }
 
       before { allow(Temporal::Client).to receive(:generate).and_return(client) }
       after { Temporal.remove_instance_variable(:@client) }
@@ -61,7 +61,7 @@ describe Temporal::Testing::TemporalOverride do
         let(:execution) { instance_double(Temporal::Testing::WorkflowExecution, status: status) }
         let(:workflow_id) { SecureRandom.uuid }
         let(:run_id) { SecureRandom.uuid }
-        let(:error_class) { TemporalThrift::WorkflowExecutionAlreadyStartedError }
+        let(:error_class) { Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedError }
 
         # Simulate exiwting execution
         before do

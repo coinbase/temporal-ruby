@@ -22,12 +22,12 @@ module Temporal
       def self.generate_from(response)
         new(
           workflow: response.type.name,
-          workflow_id: response.execution.workflowId,
+          workflow_id: response.execution.workflow_id,
           run_id: response.execution.run_id,
           start_time: response.start_time.to_time,
           close_time: response.close_time.to_time,
-          status: response.closeStatus || RUNNING_STATUS,
-          history_length: response.historyLength,
+          status: response.status.to_s.delete_prefix('WORKFLOW_EXECUTION_STATUS_').to_sym,
+          history_length: response.history_length,
         ).freeze
       end
 

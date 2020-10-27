@@ -1,19 +1,20 @@
 require 'temporal/workflow/execution_info'
+require 'pry'
 
 describe Temporal::Workflow::ExecutionInfo do
-  subject { described_class.generate_from(thrift) }
-  let(:thrift) { Fabricate(:workflow_execution_info_thrift) }
+  subject { described_class.generate_from(api_info) }
+  let(:api_info) { Fabricate(:api_workflow_execution_info) }
 
   describe '.generate_for' do
 
-    it 'generates info from thrift' do
-      expect(subject.workflow).to eq(thrift.type.name)
-      expect(subject.workflow_id).to eq(thrift.execution.workflowId)
-      expect(subject.run_id).to eq(thrift.execution.runId)
+    it 'generates info from api' do
+      expect(subject.workflow).to eq(api_info.type.name)
+      expect(subject.workflow_id).to eq(api_info.execution.workflow_id)
+      expect(subject.run_id).to eq(api_info.execution.run_id)
       expect(subject.start_time).to be_a(Time)
       expect(subject.close_time).to be_a(Time)
       expect(subject.status).to eq(:COMPLETED)
-      expect(subject.history_length).to eq(thrift.historyLength)
+      expect(subject.history_length).to eq(api_info.history_length)
     end
 
     it 'freezes the info' do
@@ -22,10 +23,10 @@ describe Temporal::Workflow::ExecutionInfo do
   end
 
   describe 'statuses' do
-    let(:thrift) do
+    let(:api_info) do
       Fabricate(
-        :workflow_execution_info_thrift,
-        closeStatus: TemporalThrift::WorkflowExecutionCloseStatus::TERMINATED
+        :api_workflow_execution_info,
+        status: Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_TERMINATED
       )
     end
 
