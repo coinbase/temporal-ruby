@@ -1,5 +1,4 @@
 require 'temporal/workflow/execution_info'
-require 'pry'
 
 describe Temporal::Workflow::ExecutionInfo do
   subject { described_class.generate_from(api_info) }

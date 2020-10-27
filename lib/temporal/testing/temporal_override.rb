@@ -64,7 +64,7 @@ module Temporal
         run_id = SecureRandom.uuid
 
         if !allowed?(workflow_id, reuse_policy)
-          raise TemporalThrift::WorkflowExecutionAlreadyStartedError,
+          raise Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure,
             "Workflow execution already started for id #{workflow_id}, reuse policy #{reuse_policy}"
         end
 
