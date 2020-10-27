@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'grpc'
   spec.add_dependency 'oj'
-  spec.add_dependency 'dry-types', '~> 1.2.0'
+  spec.add_dependency 'dry-types', '>= 1.2.0'
   spec.add_dependency 'dry-struct', '~> 1.1.1'
 
   spec.add_development_dependency 'pry'
