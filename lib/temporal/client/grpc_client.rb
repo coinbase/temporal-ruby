@@ -92,7 +92,7 @@ module Temporal
           policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
           raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
 
-          request.workflowIdReusePolicy = policy
+          request.workflow_id_reuse_policy = policy
         end
 
         client.start_workflow_execution(request)

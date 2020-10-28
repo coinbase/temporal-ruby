@@ -146,7 +146,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
-          type = event.attributes.timeoutType.to_s
+          type = event.attributes.timeout_type.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
@@ -194,10 +194,10 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.markerName, safe_parse(event.attributes.details.payloads))
+          handle_marker(event.id, event.attributes.marker_name, safe_parse(event.attributes.details.payloads))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signalName, safe_parse(event.attributes.input.payloads))
+          dispatch(target, 'signaled', event.attributes.signal_name, safe_parse(event.attributes.input.payloads))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -230,7 +230,7 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          type = event.attributes.timeoutType.to_s
+          type = event.attributes.timeout_type.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
