@@ -9,14 +9,14 @@ module Temporal
           Temporal::Api::Decision::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
             start_child_workflow_execution_command_attributes:
-              Temporal::Api::StartChildWorkflowExecutionCommandAttributes.new(
+              Temporal::Api::Decision::V1::StartChildWorkflowExecutionCommandAttributes.new(
                 namespace: object.namespace,
                 workflow_id: object.workflow_id.to_s,
-                workflow_type: Temporal::Api::WorkflowType.new(name: object.workflow_type),
-                task_queue: Temporal::Api::TaskQueue.new(name: object.task_queue),
+                workflow_type: Temporal::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
+                task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 input: Payload.new(object.input).to_proto,
-                execution_start_to_close_timeout: object.timeouts[:execution],
-                task_start_to_close_timeout: object.timeouts[:task],
+                workflow_execution_timeout: object.timeouts[:execution],
+                workflow_task_timeout: object.timeouts[:task],
                 retry_policy: serialize_retry_policy(object.retry_policy),
                 header: serialize_headers(object.headers)
               )
