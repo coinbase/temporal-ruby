@@ -25,6 +25,10 @@ module Temporal
 
       private
 
+      def headers(fields)
+        fields.transform_values { |v| v[:data] }
+      end
+
       def activity_metadata_from(task, namespace)
         Metadata::Activity.new(
           namespace: namespace,
@@ -35,7 +39,7 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
-          headers: task.header&.fields || {}
+          headers: headers(task.header&.fields.to_h)
         )
       end
 
@@ -56,7 +60,7 @@ module Temporal
           name: event.workflow_type.name,
           run_id: event.original_execution_run_id,
           attempt: event.attempt,
-          headers: event.header&.fields || {}
+          headers: headers(event.header&.fields.to_h)
         )
       end
     end

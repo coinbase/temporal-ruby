@@ -9,5 +9,10 @@ Fabricator(
   workflow_type { Fabricate(:api_workflow_type) }
   original_execution_run_id { SecureRandom.uuid }
   attempt 1
-  header { |attrs| Fabricate(:api_header, fields: attrs[:headers]) if attrs[:headers] }
+  header do |attrs|
+    fields = (attrs[:headers] || {}).each_with_object({}) do |(field, payload), h|
+      h[field] = Fabricate(:api_payload, data: payload)
+    end
+    Temporal::Api::Common::V1::Header.new(fields: fields)
+  end
 end
