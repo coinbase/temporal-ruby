@@ -12,6 +12,17 @@ module Temporal
   class TimeoutError < ClientError; end
 
   # A superclass for activity exceptions raised explicitly
-  # with the itent to propagate to a workflow
+  # with the intent to propagate to a workflow
   class ActivityException < ClientError; end
+
+  class ApiError < Error; end
+
+  class NotFoundFailure < ApiError; end
+  class WorkflowExecutionAlreadyStartedFailure < ApiError; end
+  class NamespaceNotActiveFailure < ApiError; end
+  class ClientVersionNotSupportedFailure < ApiError; end
+  class FeatureVersionNotSupportedFailure < ApiError; end
+  class NamespaceAlreadyExistsFailure < ApiError; end
+  class CancellationAlreadyRequestedFailure < ApiError; end
+  class QueryFailedFailure < ApiError; end
 end

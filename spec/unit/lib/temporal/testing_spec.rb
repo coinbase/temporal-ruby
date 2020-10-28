@@ -62,7 +62,7 @@ describe Temporal::Testing::TemporalOverride do
         let(:execution) { instance_double(Temporal::Testing::WorkflowExecution, status: status) }
         let(:workflow_id) { SecureRandom.uuid }
         let(:run_id) { SecureRandom.uuid }
-        let(:error_class) { Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure }
+        let(:error_class) { Temporal::WorkflowExecutionAlreadyStartedFailure }
 
         # Simulate exiwting execution
         before do
