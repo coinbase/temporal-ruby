@@ -16,6 +16,7 @@
 
 require 'temporal'
 require 'google/protobuf/well_known_types'
+require 'pry'
 
 Dir[File.expand_path('config/*.rb', __dir__)].sort.each { |f| require f }
 

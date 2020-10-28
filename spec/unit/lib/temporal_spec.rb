@@ -1,6 +1,5 @@
 require 'temporal'
 require 'temporal/workflow'
-require 'pry'
 
 describe Temporal do
   describe 'client operations' do
