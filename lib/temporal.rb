@@ -72,7 +72,7 @@ module Temporal
         run_id: run_id
       )
 
-      Workflow::ExecutionInfo.generate_from(response.workflowExecutionInfo)
+      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info)
     end
 
     def complete_activity(async_token, result = nil)

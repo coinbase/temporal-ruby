@@ -6,11 +6,11 @@ describe Temporal do
     let(:client) { instance_double(Temporal::Client::GRPCClient) }
 
     before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-    after { described_class.remove_instance_variable(:@client) }
+    after { described_class.remove_instance_variable(:@client) rescue NameError }
 
     describe '.start_workflow' do
       let(:temporal_response) do
-        TemporalThrift::StartWorkflowExecutionResponse.new(runId: 'xxx')
+        Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
       end
 
       before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
@@ -24,7 +24,7 @@ describe Temporal do
         it 'returns run_id' do
           result = described_class.start_workflow(TestStartWorkflow, 42)
 
-          expect(result).to eq(temporal_response.runId)
+          expect(result).to eq(temporal_response.run_id)
         end
 
         it 'starts a workflow using the default options' do
@@ -182,12 +182,11 @@ describe Temporal do
 
     describe '.fetch_workflow_execution_info' do
       let(:response) do
-        instance_double(
-          TemporalThrift::DescribeWorkflowExecutionResponse,
-          workflowExecutionInfo: info_thrift
+        Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
+          workflow_execution_info: api_info
         )
       end
-      let(:info_thrift) { Fabricate(:workflow_execution_info_thrift) }
+      let(:api_info) { Fabricate(:api_workflow_execution_info) }
 
       before { allow(client).to receive(:describe_workflow_execution).and_return(response) }
 

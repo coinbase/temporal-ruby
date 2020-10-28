@@ -2,7 +2,7 @@ require 'temporal/activity/poller'
 require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
-  let(:client) { instance_double('Temporal::Client::ThriftClient') }
+  let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
@@ -21,7 +21,7 @@ describe Temporal::Activity::Poller do
   describe '#start' do
     it 'polls for activity tasks' do
       allow(subject).to receive(:shutting_down?).and_return(false, false, true)
-      allow(client).to receive(:poll_for_activity_task).and_return(nil)
+      allow(client).to receive(:poll_activity_task_queue).and_return(nil)
 
       subject.start
 
@@ -29,18 +29,18 @@ describe Temporal::Activity::Poller do
       subject.stop; subject.wait
 
       expect(client)
-        .to have_received(:poll_for_activity_task)
+        .to have_received(:poll_activity_task_queue)
         .with(namespace: namespace, task_queue: task_queue)
         .twice
     end
 
     context 'when an activity task is received' do
       let(:task_processor) { instance_double(Temporal::Activity::TaskProcessor, process: nil) }
-      let(:task) { Fabricate(:activity_task_thrift) }
+      let(:task) { Fabricate(:api_activity_task) }
 
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_for_activity_task).and_return(task)
+        allow(client).to receive(:poll_activity_task_queue).and_return(task)
         allow(Temporal::Activity::TaskProcessor).to receive(:new).and_return(task_processor)
         allow(thread_pool).to receive(:schedule).and_yield
       end
@@ -93,7 +93,7 @@ describe Temporal::Activity::Poller do
     context 'when client is unable to poll' do
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_for_activity_task).and_raise(StandardError)
+        allow(client).to receive(:poll_activity_task_queue).and_raise(StandardError)
       end
 
       it 'logs' do
@@ -106,7 +106,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal.logger)
           .to have_received(:error)
-          .with('Unable to poll for an activity task: #<StandardError: StandardError>')
+          .with('Unable to poll activity task queue: #<StandardError: StandardError>')
       end
     end
   end

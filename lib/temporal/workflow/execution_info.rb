@@ -9,6 +9,16 @@ module Temporal
       CONTINUED_AS_NEW_STATUS = :CONTINUED_AS_NEW
       TIMED_OUT_STATUS = :TIMED_OUT
 
+      API_STATUS_MAP = {
+        WORKFLOW_EXECUTION_STATUS_RUNNING: RUNNING_STATUS,
+        WORKFLOW_EXECUTION_STATUS_COMPLETED: COMPLETED_STATUS,
+        WORKFLOW_EXECUTION_STATUS_FAILED: FAILED_STATUS,
+        WORKFLOW_EXECUTION_STATUS_CANCELED: CANCELED_STATUS,
+        WORKFLOW_EXECUTION_STATUS_TERMINATED: TERMINATED_STATUS,
+        WORKFLOW_EXECUTION_STATUS_CONTINUED_AS_NEW: CONTINUED_AS_NEW_STATUS,
+        WORKFLOW_EXECUTION_STATUS_TIMED_OUT: TIMED_OUT_STATUS
+      }.freeze
+
       VALID_STATUSES = [
         RUNNING_STATUS,
         COMPLETED_STATUS,
@@ -22,12 +32,12 @@ module Temporal
       def self.generate_from(response)
         new(
           workflow: response.type.name,
-          workflow_id: response.execution.workflowId,
+          workflow_id: response.execution.workflow_id,
           run_id: response.execution.run_id,
           start_time: response.start_time.to_time,
           close_time: response.close_time.to_time,
-          status: response.closeStatus || RUNNING_STATUS,
-          history_length: response.historyLength,
+          status: API_STATUS_MAP.fetch(response.status),
+          history_length: response.history_length,
         ).freeze
       end
 

@@ -1,5 +1,6 @@
 require 'temporal/testing'
 require 'temporal/workflow'
+require 'temporal/api/errordetails/v1/message_pb'
 
 describe Temporal::Testing::TemporalOverride do
   class TestTemporalOverrideWorkflow < Temporal::Workflow
@@ -11,11 +12,11 @@ describe Temporal::Testing::TemporalOverride do
 
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
-      let(:client) { instance_double('Temporal::Client::ThriftClient') }
-      let(:response) { TemporalThrift::StartWorkflowExecutionResponse.new(runId: 'xxx') }
+      let(:client) { instance_double('Temporal::Client::GRPCClient') }
+      let(:response) { Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx') }
 
       before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-      after { Temporal.remove_instance_variable(:@client) }
+      after { Temporal.remove_instance_variable(:@client) rescue NameError }
 
       it 'invokes original implementation' do
         allow(client).to receive(:start_workflow_execution).and_return(response)
@@ -61,7 +62,7 @@ describe Temporal::Testing::TemporalOverride do
         let(:execution) { instance_double(Temporal::Testing::WorkflowExecution, status: status) }
         let(:workflow_id) { SecureRandom.uuid }
         let(:run_id) { SecureRandom.uuid }
-        let(:error_class) { TemporalThrift::WorkflowExecutionAlreadyStartedError }
+        let(:error_class) { Temporal::WorkflowExecutionAlreadyStartedFailure }
 
         # Simulate exiwting execution
         before do
