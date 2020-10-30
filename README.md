@@ -28,7 +28,7 @@ class HelloActivity < Temporal::Activity
   def execute(name)
     puts "Hello #{name}!"
 
-    return
+    return nil
   end
 end
 ```
@@ -42,7 +42,7 @@ class HelloWorldWorkflow < Temporal::Workflow
   def execute
     HelloActivity.execute!('World')
 
-    return
+    return nil
   end
 end
 ```
@@ -189,7 +189,7 @@ class CloseUserAccountActivity < Temporal::Activity
 
     AccountClosureEmail.deliver(user)
 
-    return
+    return nil
   end
 end
 ```
@@ -333,7 +333,7 @@ class MyWorkflow < Temporal::Workflow
 
     ActivityOld2.execute!
 
-    return
+    return nil
   end
 end
 ```
@@ -361,7 +361,7 @@ class MyWorkflow < Temporal::Workflow
       ActivityNew3.execute!
     end
 
-    return
+    return nil
   end
 end
 ```
