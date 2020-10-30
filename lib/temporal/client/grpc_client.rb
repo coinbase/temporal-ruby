@@ -180,7 +180,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: JSON.serialize(result)
+          result: Temporal::Workflow::Serializer::Payload.new(result).to_proto
         )
         client.respond_activity_task_completed_by_id(request)
       end

@@ -101,7 +101,7 @@ module Temporal
           dispatch(
             History::EventTarget.workflow,
             'started',
-            safe_parse(event.attributes.input.payloads),
+            safe_parse(event.attributes.input),
             Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
           )
 
@@ -138,11 +138,11 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
+          dispatch(target, 'completed', safe_parse(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
@@ -159,7 +159,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -194,10 +194,10 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.marker_name, safe_parse(event.attributes.details.payloads))
+          handle_marker(event.id, event.attributes.marker_name, safe_parse(event.attributes.details[:data]))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signal_name, safe_parse(event.attributes.input.payloads))
+          dispatch(target, 'signaled', event.attributes.signal_name, safe_parse(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -211,22 +211,22 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause.payloads))
+          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
+          dispatch(target, 'completed', safe_parse(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details))
 
         when 'CHILD_WORKFLOW_EXECUTION_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details))
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
@@ -306,8 +306,8 @@ module Temporal
         end
       end
 
-      def safe_parse(payloads)
-        binary = payloads.first.data
+      def safe_parse(payload)
+        binary = payload.payloads.first.data
         JSON.deserialize(binary)
       end
     end

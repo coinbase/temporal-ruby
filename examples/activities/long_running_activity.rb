@@ -5,7 +5,7 @@ class LongRunningActivity < Temporal::Activity
     cycles.times do
       response = activity.heartbeat
 
-      if response.cancelRequested
+      if response.cancel_requested
         raise Canceled, 'cancel activity request received'
       end
 
