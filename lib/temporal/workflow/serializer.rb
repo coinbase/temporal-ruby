@@ -1,4 +1,4 @@
-require 'temporal/workflow/decision'
+require 'temporal/workflow/workflow_task'
 require 'temporal/workflow/serializer/schedule_activity'
 require 'temporal/workflow/serializer/start_child_workflow'
 require 'temporal/workflow/serializer/request_activity_cancellation'
@@ -12,14 +12,14 @@ module Temporal
   class Workflow
     module Serializer
       SERIALIZERS_MAP = {
-        Workflow::Decision::ScheduleActivity => Serializer::ScheduleActivity,
-        Workflow::Decision::StartChildWorkflow => Serializer::StartChildWorkflow,
-        Workflow::Decision::RequestActivityCancellation => Serializer::RequestActivityCancellation,
-        Workflow::Decision::RecordMarker => Serializer::RecordMarker,
-        Workflow::Decision::StartTimer => Serializer::StartTimer,
-        Workflow::Decision::CancelTimer => Serializer::CancelTimer,
-        Workflow::Decision::CompleteWorkflow => Serializer::CompleteWorkflow,
-        Workflow::Decision::FailWorkflow => Serializer::FailWorkflow
+        Workflow::WorkflowTask::ScheduleActivity => Serializer::ScheduleActivity,
+        Workflow::WorkflowTask::StartChildWorkflow => Serializer::StartChildWorkflow,
+        Workflow::WorkflowTask::RequestActivityCancellation => Serializer::RequestActivityCancellation,
+        Workflow::WorkflowTask::RecordMarker => Serializer::RecordMarker,
+        Workflow::WorkflowTask::StartTimer => Serializer::StartTimer,
+        Workflow::WorkflowTask::CancelTimer => Serializer::CancelTimer,
+        Workflow::WorkflowTask::CompleteWorkflow => Serializer::CompleteWorkflow,
+        Workflow::WorkflowTask::FailWorkflow => Serializer::FailWorkflow
       }.freeze
 
       def self.serialize(object)

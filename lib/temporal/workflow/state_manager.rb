@@ -1,7 +1,7 @@
 require 'temporal/json'
 require 'temporal/errors'
-require 'temporal/workflow/decision'
-require 'temporal/workflow/decision_state_machine'
+require 'temporal/workflow/workflow_task'
+require 'temporal/workflow/workflow_task_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/metadata'
 
@@ -14,15 +14,15 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :decisions, :local_time
+      attr_reader :workflow_tasks, :local_time
 
       def initialize(dispatcher)
         @dispatcher = dispatcher
-        @decisions = []
+        @workflow_tasks = []
         @marker_ids = Set.new
         @releases = {}
         @side_effects = []
-        @decision_tracker = Hash.new { |hash, key| hash[key] = DecisionStateMachine.new }
+        @workflow_task_tracker = Hash.new { |hash, key| hash[key] = WorkflowTaskStateMachine.new }
         @last_event_id = 0
         @local_time = nil
         @replay = false
@@ -32,30 +32,30 @@ module Temporal
         @replay
       end
 
-      def schedule(decision)
+      def schedule(workflow_task)
         # Fast-forward event IDs to skip all the markers (version markers can
         # be removed, so we can't rely on them being scheduled during a replay)
-        decision_id = next_event_id
-        while marker_ids.include?(decision_id) do
-          decision_id = next_event_id
+        workflow_task_id = next_event_id
+        while marker_ids.include?(workflow_task_id) do
+          workflow_task_id = next_event_id
         end
 
         cancelation_id =
-          case decision
-          when Decision::ScheduleActivity
-            decision.activity_id ||= decision_id
-          when Decision::StartChildWorkflow
-            decision.workflow_id ||= decision_id
-          when Decision::StartTimer
-            decision.timer_id ||= decision_id
+          case workflow_task
+          when WorkflowTask::ScheduleActivity
+            workflow_task.activity_id ||= workflow_task_id
+          when WorkflowTask::StartChildWorkflow
+            workflow_task.workflow_id ||= workflow_task_id
+          when WorkflowTask::StartTimer
+            workflow_task.timer_id ||= workflow_task_id
           end
 
-        state_machine = decision_tracker[decision_id]
-        state_machine.requested if state_machine.state == DecisionStateMachine::NEW_STATE
+        state_machine = workflow_task_tracker[workflow_task_id]
+        state_machine.requested if state_machine.state == WorkflowTaskStateMachine::NEW_STATE
 
-        decisions << [decision_id, decision]
+        workflow_tasks << [workflow_task_id, workflow_task]
 
-        return [event_target_from(decision_id, decision), cancelation_id]
+        return [event_target_from(workflow_task_id, workflow_task), cancelation_id]
       end
 
       def release?(release_name)
@@ -85,14 +85,14 @@ module Temporal
 
       private
 
-      attr_reader :dispatcher, :decision_tracker, :marker_ids, :side_effects, :releases
+      attr_reader :dispatcher, :workflow_task_tracker, :marker_ids, :side_effects, :releases
 
       def next_event_id
         @last_event_id += 1
       end
 
       def apply_event(event)
-        state_machine = decision_tracker[event.decision_id]
+        state_machine = workflow_task_tracker[event.workflow_task_id]
         target = History::EventTarget.from_event(event)
 
         case event.type
@@ -131,7 +131,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_SCHEDULED'
           state_machine.schedule
-          discard_decision(event.decision_id)
+          discard_workflow_task(event.workflow_task_id)
 
         when 'ACTIVITY_TASK_STARTED'
           state_machine.start
@@ -151,7 +151,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
-          discard_decision(event.decision_id)
+          discard_workflow_task(event.workflow_task_id)
 
         when 'REQUEST_CANCEL_ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -163,7 +163,7 @@ module Temporal
 
         when 'TIMER_STARTED'
           state_machine.start
-          discard_decision(event.decision_id)
+          discard_workflow_task(event.workflow_task_id)
 
         when 'TIMER_FIRED'
           state_machine.complete
@@ -207,7 +207,7 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_INITIATED'
           state_machine.schedule
-          discard_decision(event.decision_id)
+          discard_workflow_task(event.workflow_task_id)
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
@@ -253,34 +253,34 @@ module Temporal
         end
       end
 
-      def event_target_from(decision_id, decision)
+      def event_target_from(workflow_task_id, workflow_task)
         target_type =
-          case decision
-          when Decision::ScheduleActivity
+          case workflow_task
+          when WorkflowTask::ScheduleActivity
             History::EventTarget::ACTIVITY_TYPE
-          when Decision::RequestActivityCancellation
+          when WorkflowTask::RequestActivityCancellation
             History::EventTarget::CANCEL_ACTIVITY_REQUEST_TYPE
-          when Decision::RecordMarker
+          when WorkflowTask::RecordMarker
             History::EventTarget::MARKER_TYPE
-          when Decision::StartTimer
+          when WorkflowTask::StartTimer
             History::EventTarget::TIMER_TYPE
-          when Decision::CancelTimer
+          when WorkflowTask::CancelTimer
             History::EventTarget::CANCEL_TIMER_REQUEST_TYPE
-          when Decision::CompleteWorkflow, Decision::FailWorkflow
+          when WorkflowTask::CompleteWorkflow, WorkflowTask::FailWorkflow
             History::EventTarget::WORKFLOW_TYPE
-          when Decision::StartChildWorkflow
+          when WorkflowTask::StartChildWorkflow
             History::EventTarget::CHILD_WORKFLOW_TYPE
           end
 
-        History::EventTarget.new(decision_id, target_type)
+        History::EventTarget.new(workflow_task_id, target_type)
       end
 
       def dispatch(target, name, *attributes)
         dispatcher.dispatch(target, name, attributes)
       end
 
-      def discard_decision(decision_id)
-        decisions.delete_if { |(id, _)| id == decision_id }
+      def discard_workflow_task(workflow_task_id)
+        workflow_tasks.delete_if { |(id, _)| id == workflow_task_id }
       end
 
       def handle_marker(id, type, details)
@@ -302,7 +302,7 @@ module Temporal
           releases[release_name] = false
         else
           releases[release_name] = true
-          schedule(Decision::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
+          schedule(WorkflowTask::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
         end
       end
 

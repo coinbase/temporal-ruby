@@ -48,7 +48,7 @@ module Temporal
             raise UnexpectedEventType, "Unexpected event #{event.type}"
           end
 
-          new(event.decision_id, target_type)
+          new(event.workflow_task_id, target_type)
         end
 
         def initialize(id, type)

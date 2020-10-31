@@ -8,7 +8,7 @@ module Temporal
   module Metadata
     class Activity; end
     class Base; end
-    class Decision; end
+    class WorkflowTask; end
     class Workflow; end
   end
   module Saga

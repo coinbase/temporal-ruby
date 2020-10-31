@@ -1,7 +1,7 @@
 module Temporal
   class Workflow
-    module Decision
-      # TODO: Move these classes into their own directories under workflow/decision/*
+    module WorkflowTask
+      # TODO: Move these classes into their own directories under workflow/workflow_task/*
       ScheduleActivity = Struct.new(:activity_type, :activity_id, :input, :namespace, :task_queue, :retry_policy, :timeouts, :headers, keyword_init: true)
       StartChildWorkflow = Struct.new(:workflow_type, :workflow_id, :input, :namespace, :task_queue, :retry_policy, :timeouts, :headers, keyword_init: true)
       RequestActivityCancellation = Struct.new(:activity_id, keyword_init: true)
@@ -11,7 +11,7 @@ module Temporal
       CompleteWorkflow = Struct.new(:result, keyword_init: true)
       FailWorkflow = Struct.new(:reason, :details, keyword_init: true)
 
-      # only these decisions are supported right now
+      # only these workflow_tasks are supported right now
       SCHEDULE_ACTIVITY_TYPE = :schedule_activity
       START_CHILD_WORKFLOW_TYPE = :start_child_workflow
       RECORD_MARKER_TYPE = :record_marker
@@ -20,7 +20,7 @@ module Temporal
       COMPLETE_WORKFLOW_TYPE = :complete_workflow
       FAIL_WORKFLOW_TYPE = :fail_workflow
 
-      DECISION_CLASS_MAP = {
+      WORKFLOW_TASK_CLASS_MAP = {
         SCHEDULE_ACTIVITY_TYPE => ScheduleActivity,
         START_CHILD_WORKFLOW_TYPE => StartChildWorkflow,
         RECORD_MARKER_TYPE => RecordMarker,
@@ -31,8 +31,8 @@ module Temporal
       }.freeze
 
       def self.generate(type, **args)
-        decision_class = DECISION_CLASS_MAP[type]
-        decision_class.new(**args)
+        workflow_task_class = WORKFLOW_TASK_CLASS_MAP[type]
+        workflow_task_class.new(**args)
       end
     end
   end

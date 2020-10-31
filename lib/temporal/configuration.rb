@@ -8,7 +8,7 @@ module Temporal
 
     DEFAULT_TIMEOUTS = {
       execution: 60,          # End-to-end workflow time
-      task: 10,               # Decision task processing time
+      task: 10,               # WorkflowTask processing time
       schedule_to_close: nil, # End-to-end activity time (default: schedule_to_start + start_to_close)
       schedule_to_start: 10,  # Queue time for an activity
       start_to_close: 30,     # Time spent processing an activity

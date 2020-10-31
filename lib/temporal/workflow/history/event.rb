@@ -42,8 +42,8 @@ module Temporal
         end
 
         # Returns the ID of the first event associated with the current event,
-        # referred to as a "decision" event. Not related to DecisionTask.
-        def decision_id
+        # referred to as a "workflow_task" event. Not related to WorkflowTaskTask.
+        def workflow_task_id
           case type
           when 'TIMER_FIRED'
             attributes.started_event_id

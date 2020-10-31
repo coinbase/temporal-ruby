@@ -1,6 +1,6 @@
 require 'temporal/client'
 require 'temporal/middleware/chain'
-require 'temporal/workflow/decision_task_processor'
+require 'temporal/workflow/workflow_task_processor'
 
 module Temporal
   class Workflow
@@ -60,7 +60,7 @@ module Temporal
       end
 
       def process(task)
-        DecisionTaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
+        WorkflowTaskTaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
       end
     end
   end

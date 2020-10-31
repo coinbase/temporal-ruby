@@ -11,7 +11,7 @@ module Temporal
         @iterator = @events.each
       end
 
-      def last_completed_decision_task
+      def last_completed_workflow_task
         events.select { |event| event.type == 'WORKFLOW_TASK_COMPLETED' }.last
       end
 

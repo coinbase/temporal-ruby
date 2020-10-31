@@ -5,7 +5,7 @@ require 'temporal/metadata'
 
 module Temporal
   class Workflow
-    class DecisionTaskProcessor
+    class WorkflowTaskProcessor
       def initialize(task, namespace, workflow_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
@@ -20,7 +20,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.info("Processing a workflow task for #{workflow_name}")
-        Temporal.metrics.timing('decision_task.queue_time', queue_time_ms, workflow: workflow_name)
+        Temporal.metrics.timing('workflow_task.queue_time', queue_time_ms, workflow: workflow_name)
 
         unless workflow_class
           fail_task('Workflow does not exist')
@@ -30,7 +30,7 @@ module Temporal
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        metadata = Metadata.generate(Metadata::DECISION_TYPE, task, namespace)
+        metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
@@ -42,7 +42,7 @@ module Temporal
         Temporal.logger.debug(error.backtrace.join("\n"))
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing('decision_task.latency', time_diff_ms, workflow: workflow_name)
+        Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name)
         Temporal.logger.debug("Workflow task processed in #{time_diff_ms}ms")
       end
 

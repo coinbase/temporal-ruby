@@ -23,7 +23,7 @@ class LoggingMiddleware
   def name_from(metadata)
     if metadata.activity?
       metadata.name
-    elsif metadata.decision?
+    elsif metadata.workflow_task?
       metadata.workflow_name
     end
   end

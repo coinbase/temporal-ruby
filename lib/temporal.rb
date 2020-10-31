@@ -50,16 +50,16 @@ module Temporal
       )
     end
 
-    def reset_workflow(namespace, workflow_id, run_id, decision_task_id: nil, reason: 'manual reset')
-      decision_task_id ||= get_last_completed_decision_task(namespace, workflow_id, run_id)
-      raise Error, 'Could not find a completed decision task event' unless decision_task_id
+    def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
+      workflow_task_id ||= get_last_completed_workflow_task(namespace, workflow_id, run_id)
+      raise Error, 'Could not find a completed workflow_task task event' unless workflow_task_id
 
       response = client.reset_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
-        decision_task_event_id: decision_task_id
+        workflow_task_event_id: workflow_task_id
       )
 
       response.run_id
@@ -122,16 +122,16 @@ module Temporal
       @client ||= Temporal::Client.generate
     end
 
-    def get_last_completed_decision_task(namespace, workflow_id, run_id)
+    def get_last_completed_workflow_task(namespace, workflow_id, run_id)
       history_response = client.get_workflow_execution_history(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )
       history = Workflow::History.new(history_response.history.events)
-      decision_task_event = history.last_completed_decision_task
+      workflow_task_event = history.last_completed_workflow_task
 
-      decision_task_event&.id
+      workflow_task_event&.id
     end
   end
 end

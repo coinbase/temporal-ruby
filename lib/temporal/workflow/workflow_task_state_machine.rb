@@ -1,6 +1,6 @@
 module Temporal
   class Workflow
-    class DecisionStateMachine
+    class WorkflowTaskStateMachine
       NEW_STATE = :new
       REQUESTED_STATE = :requested
       SCHEDULED_STATE = :scheduled

@@ -26,7 +26,7 @@ module Temporal
           state_manager.apply(window)
         end
 
-        return state_manager.decisions
+        return state_manager.workflow_tasks
       end
 
       private

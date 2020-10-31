@@ -2,7 +2,7 @@ require 'temporal/metadata/base'
 
 module Temporal
   module Metadata
-    class Decision < Base
+    class WorkflowTask < Base
       attr_reader :namespace, :id, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name
 
       def initialize(namespace:, id:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:)
@@ -17,7 +17,7 @@ module Temporal
         freeze
       end
 
-      def decision?
+      def workflow_task?
         true
       end
     end
