@@ -95,8 +95,8 @@ module Temporal
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
         run_id: details.run_id,
-        reason: error.class.name,
-        details: error.message
+        message: "#{error.class.name}: #{error.message}",
+        backtrace: error.backtrace.to_a.join("\n")
       )
     end
 

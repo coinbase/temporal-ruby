@@ -44,6 +44,24 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
+  config.before do
+    # Stub out the raw GRPC client but allow our own own client code to run.
+    # This helps to flush out bugs with our creation of protobuf objects.
+    Temporal.send(:client).instance_variable_set(
+      :@client,
+      object_double(
+        Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
+          'localhost:7233',
+          :this_channel_is_insecure
+        )
+      ).as_null_object
+    )
+  end
+
+  config.after do
+    Temporal.remove_instance_variable(:@client) rescue NameError
+  end
+
   # This option will default to `:apply_to_host_groups` in RSpec 4 (and will
   # have no way to turn it off -- the option exists only for backwards
   # compatibility in RSpec 3). It causes shared context metadata to be

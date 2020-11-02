@@ -11,6 +11,8 @@ module Temporal
   # Represents any timeout
   class TimeoutError < ClientError; end
 
+  class ActivityNotRegisteredError < ClientError; end
+
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
   class ActivityException < ClientError; end

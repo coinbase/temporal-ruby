@@ -15,7 +15,7 @@ describe Temporal::Activity::TaskProcessor do
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
   let(:activity_name) { 'TestActivity' }
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:client) { Temporal.send(:client) }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { ['arg1', 'arg2'] }
 
@@ -29,9 +29,8 @@ describe Temporal::Activity::TaskProcessor do
         .and_return(metadata)
       allow(Temporal::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 
-      allow(client).to receive(:respond_activity_task_completed)
-      allow(client).to receive(:respond_activity_task_failed)
-
+      allow(client).to receive(:respond_activity_task_completed).and_call_original
+      allow(client).to receive(:respond_activity_task_failed).and_call_original
       allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Temporal.metrics).to receive(:timing)
@@ -45,8 +44,8 @@ describe Temporal::Activity::TaskProcessor do
           .to have_received(:respond_activity_task_failed)
           .with(
             task_token: task.task_token,
-            reason: 'ActivityNotRegistered',
-            details: 'Activity is not registered with this worker'
+            message: 'Temporal::ActivityNotRegisteredError: Activity is not registered with this worker',
+            backtrace: kind_of(String)
           )
       end
 
@@ -148,8 +147,8 @@ describe Temporal::Activity::TaskProcessor do
             .to have_received(:respond_activity_task_failed)
             .with(
               task_token: task.task_token,
-              reason: exception.class.name,
-              details: exception.message
+              message: 'StandardError: activity failed',
+              backtrace: kind_of(String)
             )
         end
 
@@ -187,8 +186,8 @@ describe Temporal::Activity::TaskProcessor do
               .to have_received(:respond_activity_task_failed)
               .with(
                 task_token: task.task_token,
-                reason: exception.class.name,
-                details: exception.message
+                message: 'NotImplementedError: this was not supposed to be called',
+                backtrace: kind_of(String)
               )
           end
         end
@@ -211,7 +210,11 @@ describe Temporal::Activity::TaskProcessor do
 
             expect(client)
               .to have_received(:respond_activity_task_failed)
-              .with(task_token: task.task_token, reason: 'StandardError', details: 'activity failed')
+              .with(
+                task_token: task.task_token,
+                message: 'StandardError: activity failed',
+                backtrace: kind_of(String)
+              )
           end
         end
       end

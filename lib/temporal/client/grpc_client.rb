@@ -92,7 +92,7 @@ module Temporal
           policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
           raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
 
-          request.workflowIdReusePolicy = policy
+          request.workflow_id_reuse_policy = policy
         end
 
         client.start_workflow_execution(request)
@@ -185,25 +185,35 @@ module Temporal
         client.respond_activity_task_completed_by_id(request)
       end
 
-      def respond_activity_task_failed(task_token:, reason:, details: nil)
+      def respond_activity_task_failed(task_token:, message:, backtrace:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
-          reason: reason,
-          details: JSON.serialize(details)
+          failure: Temporal::Api::Failure::V1::Failure.new(
+            message: message,
+            stack_trace: backtrace,
+            activity_failure_info: Temporal::Api::Failure::V1::ActivityFailureInfo.new(
+              identity: identity
+            )
+          )
         )
         client.respond_activity_task_failed(request)
       end
 
-      def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
+      def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, message:, backtrace:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
           identity: identity,
           namespace: namespace,
           workflow_id: workflow_id,
           run_id: run_id,
-          activity_id: activity_id,
-          reason: reason,
-          details: JSON.serialize(details)
+          failure: Temporal::Api::Failure::V1::Failure.new(
+            message: message,
+            stack_trace: backtrace,
+            activity_failure_info: Temporal::Api::Failure::V1::ActivityFailureInfo.new(
+              activity_id: activity_id,
+              identity: identity
+            )
+          )
         )
         client.respond_activity_task_failed_by_id(request)
       end

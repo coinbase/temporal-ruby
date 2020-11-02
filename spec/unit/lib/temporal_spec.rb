@@ -3,17 +3,18 @@ require 'temporal/workflow'
 
 describe Temporal do
   describe 'client operations' do
-    let(:client) { instance_double(Temporal::Client::GRPCClient) }
-
-    before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-    after { described_class.remove_instance_variable(:@client) rescue NameError }
+    let(:client) { Temporal.send(:client) }
+    let(:grpc_stub) { client.send(:client) }
 
     describe '.start_workflow' do
       let(:temporal_response) do
         Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
       end
 
-      before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
+      before do
+        allow(grpc_stub).to receive(:start_workflow_execution).and_return(temporal_response)
+        allow(client).to receive(:start_workflow_execution).and_return(temporal_response)
+      end
 
       context 'using a workflow class' do
         class TestStartWorkflow < Temporal::Workflow
@@ -259,8 +260,8 @@ describe Temporal do
               activity_id: activity_id,
               workflow_id: workflow_id,
               run_id: run_id,
-              reason: 'StandardError',
-              details: 'something went wrong'
+              message: 'StandardError: something went wrong',
+              backtrace: kind_of(String)
             )
         end
       end

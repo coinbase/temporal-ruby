@@ -22,7 +22,7 @@ module Temporal
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
         if !activity_class
-          respond_failed('ActivityNotRegistered', 'Activity is not registered with this worker')
+          respond_failed(Temporal::ActivityNotRegisteredError.new('Activity is not registered with this worker'))
           return
         end
 
@@ -35,8 +35,8 @@ module Temporal
 
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
-      rescue StandardError, ScriptError => error
-        respond_failed(error.class.name, error.message)
+      rescue StandardError, ScriptError => e
+        respond_failed(e)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
@@ -56,15 +56,17 @@ module Temporal
       def respond_completed(result)
         Temporal.logger.info("Activity #{activity_name} completed")
         client.respond_activity_task_completed(task_token: task_token, result: result)
-      rescue StandardError => error
-        Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
+      rescue StandardError => e
+        Temporal.logger.error("Unable to complete Activity #{activity_name}: #{e.inspect}")
       end
 
-      def respond_failed(reason, details)
-        Temporal.logger.error("Activity #{activity_name} failed with: #{reason}")
-        client.respond_activity_task_failed(task_token: task_token, reason: reason, details: details)
-      rescue StandardError => error
-        Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+      def respond_failed(error)
+        Temporal.logger.error("Activity #{activity_name} failed with: #{error.inspect}")
+        message = "#{error.class.name}: #{error.message}"
+        backtrace = error.backtrace.to_a.join("\n")
+        client.respond_activity_task_failed(task_token: task_token, message: message, backtrace: backtrace)
+      rescue StandardError => e
+        Temporal.logger.error("Unable to fail Activity #{activity_name}: #{e.inspect}")
       end
     end
   end

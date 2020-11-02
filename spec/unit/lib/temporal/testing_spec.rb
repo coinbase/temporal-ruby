@@ -12,11 +12,8 @@ describe Temporal::Testing::TemporalOverride do
 
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
-      let(:client) { instance_double('Temporal::Client::GRPCClient') }
+      let(:client) { Temporal.send(:client) }
       let(:response) { Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx') }
-
-      before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-      after { Temporal.remove_instance_variable(:@client) rescue NameError }
 
       it 'invokes original implementation' do
         allow(client).to receive(:start_workflow_execution).and_return(response)
