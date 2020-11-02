@@ -1,4 +1,5 @@
 require 'temporal/metadata'
+require 'temporal/errors'
 require 'temporal/activity/context'
 require 'temporal/json'
 
@@ -22,8 +23,7 @@ module Temporal
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
         if !activity_class
-          respond_failed('ActivityNotRegistered', 'Activity is not registered with this worker')
-          return
+          raise ActivityNotRegistered, 'Activity is not registered with this worker'
         end
 
         metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
@@ -36,7 +36,7 @@ module Temporal
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
       rescue StandardError, ScriptError => error
-        respond_failed(error.class.name, error.message)
+        respond_failed(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
@@ -60,9 +60,9 @@ module Temporal
         Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
       end
 
-      def respond_failed(reason, details)
-        Temporal.logger.error("Activity #{activity_name} failed with: #{reason}")
-        client.respond_activity_task_failed(task_token: task_token, reason: reason, details: details)
+      def respond_failed(error)
+        Temporal.logger.error("Activity #{activity_name} failed with: #{error.inspect}")
+        client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
       end

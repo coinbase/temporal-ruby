@@ -10,9 +10,7 @@ module Temporal
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_FAIL_WORKFLOW_EXECUTION,
             fail_workflow_execution_command_attributes:
               Temporal::Api::Decision::V1::FailWorkflowExecutionCommandAttributes.new(
-                failure: Temporal::Api::Failure::V1::Failure.new(message: object.reason)
-                # reason: object.reason,
-                # details: JSON.serialize(object.details)
+                failure: Failure.new(object.exception).to_proto
               )
           )
         end

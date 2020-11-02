@@ -40,13 +40,13 @@ module Temporal
         execution.complete_activity(async_token, result)
       end
 
-      def fail_activity(async_token, error)
+      def fail_activity(async_token, exception)
         return super if Temporal::Testing.disabled?
 
         details = Activity::AsyncToken.decode(async_token)
         execution = executions[[details.workflow_id, details.run_id]]
 
-        execution.fail_activity(async_token, error)
+        execution.fail_activity(async_token, exception)
       end
 
       private
@@ -64,7 +64,7 @@ module Temporal
         run_id = SecureRandom.uuid
 
         if !allowed?(workflow_id, reuse_policy)
-          raise TemporalThrift::WorkflowExecutionAlreadyStartedError,
+          raise Temporal::WorkflowExecutionAlreadyStartedFailure,
             "Workflow execution already started for id #{workflow_id}, reuse policy #{reuse_policy}"
         end
 

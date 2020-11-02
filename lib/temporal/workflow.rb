@@ -18,7 +18,7 @@ module Temporal
       Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
       Temporal.logger.debug(error.backtrace.join("\n"))
 
-      context.fail(error.class.name, error.message)
+      context.fail(error)
     end
 
     def initialize(context)

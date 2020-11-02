@@ -60,8 +60,8 @@ module Temporal
           future.callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
-        dispatcher.register_handler(target, 'failed') do |reason, details|
-          future.fail(reason, details)
+        dispatcher.register_handler(target, 'failed') do |exception|
+          future.fail(exception)
         end
 
         future
@@ -71,13 +71,7 @@ module Temporal
         future = execute_activity(activity_class, *input, **args)
         result = future.get
 
-        if future.failed?
-          reason, details = result
-
-          error_class = safe_constantize(reason) || Temporal::ActivityException
-
-          raise error_class, details
-        end
+        raise result if future.failed?
 
         result
       end
@@ -118,8 +112,8 @@ module Temporal
           future.callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
-        dispatcher.register_handler(target, 'failed') do |reason, details|
-          future.fail(reason, details)
+        dispatcher.register_handler(target, 'failed') do |exception|
+          future.fail(exception)
         end
 
         future
@@ -129,13 +123,7 @@ module Temporal
         future = execute_workflow(workflow_class, *input, **args)
         result = future.get
 
-        if future.failed?
-          reason, details = result
-
-          error_class = safe_constantize(reason) || StandardError.new(details)
-
-          raise error_class, details
-        end
+        raise result if future.failed?
 
         result
       end
@@ -165,8 +153,8 @@ module Temporal
           future.callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
-        dispatcher.register_handler(target, 'canceled') do |reason, details|
-          future.fail(reason, details)
+        dispatcher.register_handler(target, 'canceled') do |exception|
+          future.fail(exception)
         end
 
         future
@@ -184,8 +172,8 @@ module Temporal
       end
 
       # TODO: check if workflow can be failed
-      def fail(reason, details = nil)
-        decision = Decision::FailWorkflow.new(reason: reason, details: details)
+      def fail(exception)
+        decision = Decision::FailWorkflow.new(exception: exception)
         schedule_decision(decision)
       end
 
@@ -249,12 +237,6 @@ module Temporal
           Temporal::ThreadLocalContext.set(self)
           block.call(*args)
         end.resume
-      end
-
-      def safe_constantize(const)
-        Object.const_get(const) if Object.const_defined?(const)
-      rescue NameError
-        nil
       end
     end
   end

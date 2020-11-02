@@ -101,7 +101,7 @@ module Temporal
           dispatch(
             History::EventTarget.workflow,
             'started',
-            safe_parse(event.attributes.input.payloads),
+            parse_payload(event.attributes.input),
             Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
           )
 
@@ -138,16 +138,15 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
+          dispatch(target, 'completed', parse_payload(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', parse_failure(event.attributes.failure, ActivityException))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
-          type = event.attributes.timeoutType.to_s
-          dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
+          dispatch(target, 'failed', parse_failure(event.attributes.failure))
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
@@ -159,7 +158,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', parse_failure(event.attributes.failure))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -194,10 +193,10 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.markerName, safe_parse(event.attributes.details.payloads))
+          handle_marker(event.id, event.attributes.marker_name, parse_payload(event.attributes.details[:data]))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signalName, safe_parse(event.attributes.input.payloads))
+          dispatch(target, 'signaled', event.attributes.signal_name, parse_payload(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -211,27 +210,26 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', safe_parse(event.attributes.cause.payloads))
+          dispatch(target, 'failed', 'StandardError', parse_payload(event.attributes.cause))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', safe_parse(event.attributes.result.payloads))
+          dispatch(target, 'completed', parse_payload(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', event.attributes.reason, safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', parse_failure(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', 'CANCELLED', safe_parse(event.attributes.details.payloads))
+          dispatch(target, 'failed', parse_failure(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          type = event.attributes.timeoutType.to_s
-          dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
+          dispatch(target, 'failed', parse_failure(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -306,9 +304,36 @@ module Temporal
         end
       end
 
-      def safe_parse(payloads)
-        binary = payloads.first.data
+      def parse_payload(payload)
+        binary = payload.payloads.first.data
         JSON.deserialize(binary)
+      end
+
+      def parse_failure(failure, default_exception_class = StandardError)
+        case failure.failure_info
+        when :application_failure_info
+          exception_class = safe_constantize(failure.application_failure_info.type)
+          exception_class ||= default_exception_class
+          details = parse_payload(failure.application_failure_info.details)
+          backtrace = failure.stack_trace.split("\n")
+
+          exception_class.new(details).tap do |exception|
+            exception.set_backtrace(backtrace) if !backtrace.empty?
+          end
+        when :timeout_failure_info
+          TimeoutError.new("Timeout type: #{failure.timeout_failure_info.timeout_type.to_s}")
+        when :canceled_failure_info
+          # TODO: Distinguish between different entity cancellations
+          StandardError.new(parse_payload(failure.canceled_failure_info.details))
+        else
+          StandardError.new(failure.message)
+        end
+      end
+
+      def safe_constantize(const)
+        Object.const_get(const) if Object.const_defined?(const)
+      rescue NameError
+        nil
       end
     end
   end

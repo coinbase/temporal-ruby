@@ -72,7 +72,7 @@ module Temporal
         run_id: run_id
       )
 
-      Workflow::ExecutionInfo.generate_from(response.workflowExecutionInfo)
+      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info)
     end
 
     def complete_activity(async_token, result = nil)
@@ -87,7 +87,7 @@ module Temporal
       )
     end
 
-    def fail_activity(async_token, error)
+    def fail_activity(async_token, exception)
       details = Activity::AsyncToken.decode(async_token)
 
       client.respond_activity_task_failed_by_id(
@@ -95,8 +95,7 @@ module Temporal
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
         run_id: details.run_id,
-        reason: error.class.name,
-        details: error.message
+        exception: exception
       )
     end
 

@@ -11,7 +11,9 @@ module Temporal
             record_marker_command_attributes:
               Temporal::Api::Decision::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
-                details: Payload.new(object.details).to_proto
+                details: {
+                  data: Payload.new(object.details).to_proto
+                }
               )
           )
         end

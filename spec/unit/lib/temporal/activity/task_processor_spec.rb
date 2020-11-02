@@ -7,11 +7,15 @@ describe Temporal::Activity::TaskProcessor do
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
   let(:task) do
-    Fabricate(:activity_task_thrift, activity_name: activity_name, input: Temporal::JSON.serialize(input))
+    Fabricate(
+      :api_activity_task,
+      activity_name: activity_name,
+      input: Temporal::Workflow::Serializer::Payload.new(input).to_proto
+    )
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
   let(:activity_name) { 'TestActivity' }
-  let(:client) { instance_double('Temporal::Client::ThriftClient') }
+  let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { ['arg1', 'arg2'] }
 
@@ -40,9 +44,8 @@ describe Temporal::Activity::TaskProcessor do
         expect(client)
           .to have_received(:respond_activity_task_failed)
           .with(
-            task_token: task.taskToken,
-            reason: 'ActivityNotRegistered',
-            details: 'Activity is not registered with this worker'
+            task_token: task.task_token,
+            exception: an_instance_of(Temporal::ActivityNotRegistered)
           )
       end
 
@@ -82,7 +85,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(client)
             .to have_received(:respond_activity_task_completed)
-            .with(task_token: task.taskToken, result: 'result')
+            .with(task_token: task.task_token, result: 'result')
         end
 
         it 'ignores client exception' do
@@ -143,9 +146,8 @@ describe Temporal::Activity::TaskProcessor do
           expect(client)
             .to have_received(:respond_activity_task_failed)
             .with(
-              task_token: task.taskToken,
-              reason: exception.class.name,
-              details: exception.message
+              task_token: task.task_token,
+              exception: exception
             )
         end
 
@@ -182,9 +184,8 @@ describe Temporal::Activity::TaskProcessor do
             expect(client)
               .to have_received(:respond_activity_task_failed)
               .with(
-                task_token: task.taskToken,
-                reason: exception.class.name,
-                details: exception.message
+                task_token: task.task_token,
+                exception: exception
               )
           end
         end
@@ -207,7 +208,7 @@ describe Temporal::Activity::TaskProcessor do
 
             expect(client)
               .to have_received(:respond_activity_task_failed)
-              .with(task_token: task.taskToken, reason: 'StandardError', details: 'activity failed')
+              .with(task_token: task.task_token, exception: exception)
           end
         end
       end
