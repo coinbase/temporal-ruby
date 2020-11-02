@@ -45,8 +45,7 @@ describe Temporal::Activity::TaskProcessor do
           .to have_received(:respond_activity_task_failed)
           .with(
             task_token: task.task_token,
-            reason: 'ActivityNotRegistered',
-            details: 'Activity is not registered with this worker'
+            exception: an_instance_of(Temporal::ActivityNotRegistered)
           )
       end
 
@@ -148,8 +147,7 @@ describe Temporal::Activity::TaskProcessor do
             .to have_received(:respond_activity_task_failed)
             .with(
               task_token: task.task_token,
-              reason: exception.class.name,
-              details: exception.message
+              exception: exception
             )
         end
 
@@ -187,8 +185,7 @@ describe Temporal::Activity::TaskProcessor do
               .to have_received(:respond_activity_task_failed)
               .with(
                 task_token: task.task_token,
-                reason: exception.class.name,
-                details: exception.message
+                exception: exception
               )
           end
         end
@@ -211,7 +208,7 @@ describe Temporal::Activity::TaskProcessor do
 
             expect(client)
               .to have_received(:respond_activity_task_failed)
-              .with(task_token: task.task_token, reason: 'StandardError', details: 'activity failed')
+              .with(task_token: task.task_token, exception: exception)
           end
         end
       end

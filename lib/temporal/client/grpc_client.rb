@@ -4,6 +4,7 @@ require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
 require 'temporal/workflow/serializer/payload'
+require 'temporal/workflow/serializer/failure'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 
 module Temporal
@@ -185,25 +186,23 @@ module Temporal
         client.respond_activity_task_completed_by_id(request)
       end
 
-      def respond_activity_task_failed(task_token:, reason:, details: nil)
+      def respond_activity_task_failed(task_token:, exception:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
-          reason: reason,
-          details: JSON.serialize(details)
+          failure: Temporal::Workflow::Serializer::Failure.new(exception).to_proto
         )
         client.respond_activity_task_failed(request)
       end
 
-      def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, reason:, details: nil)
+      def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, exception:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
           identity: identity,
           namespace: namespace,
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          reason: reason,
-          details: JSON.serialize(details)
+          failure: Temporal::Workflow::Serializer::Failure.new(exception).to_proto
         )
         client.respond_activity_task_failed_by_id(request)
       end

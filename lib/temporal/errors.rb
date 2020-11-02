@@ -15,6 +15,8 @@ module Temporal
   # with the intent to propagate to a workflow
   class ActivityException < ClientError; end
 
+  class ActivityNotRegistered < ClientError; end
+
   class ApiError < Error; end
 
   class NotFoundFailure < ApiError; end

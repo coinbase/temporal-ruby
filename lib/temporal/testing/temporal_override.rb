@@ -40,13 +40,13 @@ module Temporal
         execution.complete_activity(async_token, result)
       end
 
-      def fail_activity(async_token, error)
+      def fail_activity(async_token, exception)
         return super if Temporal::Testing.disabled?
 
         details = Activity::AsyncToken.decode(async_token)
         execution = executions[[details.workflow_id, details.run_id]]
 
-        execution.fail_activity(async_token, error)
+        execution.fail_activity(async_token, exception)
       end
 
       private

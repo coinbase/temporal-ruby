@@ -11,8 +11,9 @@ module Temporal
         @cancelation_id = cancelation_id
         @callbacks = []
         @ready = false
+        @failed = false
         @result = nil
-        @failure = nil
+        @exception = nil
       end
 
       def finished?
@@ -24,7 +25,7 @@ module Temporal
       end
 
       def failed?
-        !!@failure
+        @failed
       end
 
       def wait
@@ -34,7 +35,7 @@ module Temporal
 
       def get
         wait
-        failure || result
+        exception || result
       end
 
       def set(result)
@@ -44,10 +45,11 @@ module Temporal
         @ready = true
       end
 
-      def fail(reason, details)
+      def fail(exception)
         raise 'can not fail a fulfilled future' if ready?
 
-        @failure = [reason, details]
+        @exception = exception
+        @failed = true
       end
 
       def done(&block)
@@ -69,7 +71,7 @@ module Temporal
 
       private
 
-      attr_reader :context, :cancelation_id, :result, :failure
+      attr_reader :context, :cancelation_id, :result, :exception
     end
   end
 end

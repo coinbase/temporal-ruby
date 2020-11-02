@@ -31,8 +31,8 @@ module Temporal
         resume
       end
 
-      def fail_activity(token, error)
-        futures.fail(token, error)
+      def fail_activity(token, exception)
+        futures.fail(token, exception)
         resume
       end
 

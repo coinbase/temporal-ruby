@@ -68,13 +68,7 @@ module Temporal
         future = execute_activity(activity_class, *input, **args)
         result = future.get
 
-        if future.failed?
-          reason, details = result
-
-          error_class = safe_constantize(reason) || Temporal::ActivityException
-
-          raise error_class, details
-        end
+        raise future.exception if future.failed?
 
         result
       end
@@ -140,10 +134,8 @@ module Temporal
         result
       end
 
-      def fail(reason, details = nil)
-        error_class = safe_constantize(reason) || StandardError
-
-        raise error_class, details
+      def fail(exception)
+        raise exception
       end
 
       def wait_for_all(*futures)
@@ -180,12 +172,6 @@ module Temporal
       def next_event_id
         @last_event_id += 1
         @last_event_id
-      end
-
-      def safe_constantize(const)
-        Object.const_get(const) if Object.const_defined?(const)
-      rescue NameError
-        nil
       end
     end
   end

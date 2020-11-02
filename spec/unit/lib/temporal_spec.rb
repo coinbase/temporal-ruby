@@ -250,7 +250,8 @@ describe Temporal do
         before { allow(client).to receive(:respond_activity_task_failed_by_id).and_return(nil) }
 
         it 'fails activity with a provided error' do
-          described_class.fail_activity(async_token, StandardError.new('something went wrong'))
+          exception = StandardError.new('something went wrong')
+          described_class.fail_activity(async_token, exception)
 
           expect(client)
             .to have_received(:respond_activity_task_failed_by_id)
@@ -259,8 +260,7 @@ describe Temporal do
               activity_id: activity_id,
               workflow_id: workflow_id,
               run_id: run_id,
-              reason: 'StandardError',
-              details: 'something went wrong'
+              exception: exception
             )
         end
       end

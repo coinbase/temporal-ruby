@@ -9,7 +9,7 @@ module Temporal
       StartTimer = Struct.new(:timeout, :timer_id, keyword_init: true)
       CancelTimer = Struct.new(:timer_id, keyword_init: true)
       CompleteWorkflow = Struct.new(:result, keyword_init: true)
-      FailWorkflow = Struct.new(:reason, :details, keyword_init: true)
+      FailWorkflow = Struct.new(:exception, keyword_init: true)
 
       # only these decisions are supported right now
       SCHEDULE_ACTIVITY_TYPE = :schedule_activity
