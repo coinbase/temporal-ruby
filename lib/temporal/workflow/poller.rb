@@ -60,7 +60,7 @@ module Temporal
       end
 
       def process(task)
-        WorkflowTaskTaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
+        WorkflowTaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
       end
     end
   end
