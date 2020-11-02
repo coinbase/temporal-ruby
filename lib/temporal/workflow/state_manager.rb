@@ -230,7 +230,7 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          type = event.attributes.timeoutType.to_s
+          type = event.attributes.timeout_type.to_s
           dispatch(target, 'failed', 'Temporal::TimeoutError', "Timeout type: #{type}")
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
