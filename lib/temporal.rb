@@ -52,7 +52,7 @@ module Temporal
 
     def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
       workflow_task_id ||= get_last_completed_workflow_task(namespace, workflow_id, run_id)
-      raise Error, 'Could not find a completed workflow_task task event' unless workflow_task_id
+      raise Error, 'Could not find a completed workflow_task event' unless workflow_task_id
 
       response = client.reset_workflow_execution(
         namespace: namespace,
