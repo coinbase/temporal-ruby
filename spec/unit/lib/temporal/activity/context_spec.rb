@@ -4,7 +4,7 @@ require 'temporal/metadata/activity'
 describe Temporal::Activity::Context do
   let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:metadata_hash) { Fabricate(:activity_metadata).to_h }
-  let(:metadata) { Temporal::Metadata::Activity.new(metadata_hash) }
+  let(:metadata) { Temporal::Metadata::Activity.new(**metadata_hash) }
   let(:task_token) { SecureRandom.uuid }
 
   subject { described_class.new(client, metadata) }
