@@ -1,8 +1,8 @@
-require 'temporal/workflow/serializer/base'
+require 'temporal/client/serializer/base'
 require 'temporal/json'
 
 module Temporal
-  class Workflow
+  module Client
     module Serializer
       class Payload < Base
         JSON_ENCODING = 'json/plain'.freeze

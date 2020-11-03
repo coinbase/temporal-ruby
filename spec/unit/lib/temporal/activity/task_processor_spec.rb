@@ -10,7 +10,7 @@ describe Temporal::Activity::TaskProcessor do
     Fabricate(
       :api_activity_task,
       activity_name: activity_name,
-      input: Temporal::Workflow::Serializer::Payload.new(input).to_proto
+      input: Temporal::Client::Serializer::Payload.new(input).to_proto
     )
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }

@@ -1,7 +1,7 @@
-require 'temporal/workflow/serializer/base'
+require 'temporal/client/serializer/base'
 
 module Temporal
-  class Workflow
+  module Client
     module Serializer
       class RequestActivityCancellation < Base
         def to_proto

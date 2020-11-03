@@ -1,6 +1,5 @@
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
-require 'temporal/workflow/serializer'
 require 'temporal/metadata'
 require 'temporal/errors'
 
@@ -58,17 +57,10 @@ module Temporal
         ((started - scheduled) * 1_000).round
       end
 
-      def serialize_commands(commands)
-        commands.map { |(_, command)| Workflow::Serializer.serialize(command) }
-      end
-
       def complete_task(commands)
         Temporal.logger.info("Workflow task for #{workflow_name} completed")
 
-        client.respond_workflow_task_completed(
-          task_token: task_token,
-          commands: serialize_commands(commands)
-        )
+        client.respond_workflow_task_completed(task_token: task_token, commands: commands)
       end
 
       def fail_task(error)
