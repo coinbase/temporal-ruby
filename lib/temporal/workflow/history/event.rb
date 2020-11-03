@@ -61,9 +61,8 @@ module Temporal
         private
 
         def extract_attributes(raw_event)
-          attributes_argument = "#{type.downcase}_event_attributes"
-          attributes_argument[0] = attributes_argument[0].downcase
-          raw_event.public_send(attributes_argument)
+          attributes_name = raw_event.attributes
+          raw_event.public_send(attributes_name)
         end
       end
     end

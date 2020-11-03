@@ -8,6 +8,8 @@ module Temporal
         JSON_ENCODING = 'json/plain'.freeze
 
         def to_proto
+          return Temporal::Api::Common::V1::Payloads.new if object.nil?
+
           Temporal::Api::Common::V1::Payloads.new(
             payloads: [
               Temporal::Api::Common::V1::Payload.new(
