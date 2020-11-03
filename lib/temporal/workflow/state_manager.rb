@@ -193,7 +193,7 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.marker_name, parse_payload(event.attributes.details[:data]))
+          handle_marker(event.id, event.attributes.marker_name, parse_payload(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
           dispatch(target, 'signaled', event.attributes.signal_name, parse_payload(event.attributes.input))
