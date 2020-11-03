@@ -155,7 +155,7 @@ module Temporal
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
-          details: JSON.serialize(details),
+          details: Temporal::Workflow::Serializer::Payload.new(details).to_proto,
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -232,7 +232,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: JSON.serialize(input),
+          input: Temporal::Workflow::Serializer::Payload.new(input).to_proto,
           identity: identity
         )
         client.signal_workflow_execution(request)
