@@ -2,6 +2,7 @@ require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow/serializer'
 require 'temporal/metadata'
+require 'temporal/errors'
 
 module Temporal
   class Workflow
@@ -22,9 +23,8 @@ module Temporal
         Temporal.logger.info("Processing a workflow task for #{workflow_name}")
         Temporal.metrics.timing('decision_task.queue_time', queue_time_ms, workflow: workflow_name)
 
-        unless workflow_class
-          fail_task('Workflow does not exist')
-          return
+        if !workflow_class
+          raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
         end
 
         history = Workflow::History.new(task.history.events)
@@ -37,6 +37,8 @@ module Temporal
         end
 
         complete_task(commands)
+      rescue Temporal::ClientError => error
+        fail_task(error)
       rescue StandardError => error
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
@@ -69,13 +71,14 @@ module Temporal
         )
       end
 
-      def fail_task(message)
-        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{message}")
+      def fail_task(error)
+        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
+        Temporal.logger.debug(error.backtrace.join("\n"))
 
         client.respond_workflow_task_failed(
           task_token: task_token,
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
-          details: { message: message }
+          exception: error
         )
       end
     end

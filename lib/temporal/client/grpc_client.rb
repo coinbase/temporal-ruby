@@ -131,12 +131,12 @@ module Temporal
         client.respond_workflow_task_completed(request)
       end
 
-      def respond_workflow_task_failed(task_token:, cause:, details: nil)
+      def respond_workflow_task_failed(task_token:, cause:, exception: nil)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
           cause: cause,
-          details: JSON.serialize(details)
+          failure: Temporal::Workflow::Serializer::Failure.new(exception).to_proto
         )
         client.respond_workflow_task_failed(request)
       end
@@ -210,7 +210,7 @@ module Temporal
       def respond_activity_task_canceled(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           task_token: task_token,
-          details: JSON.serialize(details),
+          details: Temporal::Workflow::Serializer::Payload.new(details).to_proto,
           identity: identity
         )
         client.respond_activity_task_canceled(request)
