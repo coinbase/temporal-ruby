@@ -6,12 +6,11 @@ describe Temporal::RetryPolicy do
 
     let(:valid_attributes) do
       {
-        interval: 1,
-        backoff: 1.5,
-        max_interval: 5,
-        max_attempts: 3,
-        expiration_interval: nil,
-        non_retriable_errors: nil
+        initial_interval: 1,
+        backoff_coefficient: 1.5,
+        maximum_interval: 5,
+        maximum_attempts: 3,
+        non_retryable_error_types: nil
       }
     end
 
@@ -31,29 +30,12 @@ describe Temporal::RetryPolicy do
 
     context 'with invalid attributes' do
       context 'with missing :interval' do
-        let(:attributes) { valid_attributes.tap { |h| h.delete(:interval) } }
+        let(:attributes) { valid_attributes.tap { |h| h.delete(:initial_interval) } }
 
-        include_examples 'error', 'interval and backoff must be set'
+        include_examples 'error', 'initial_interval must be set'
       end
 
-      context 'with missing :backoff' do
-        let(:attributes) { valid_attributes.tap { |h| h.delete(:backoff) } }
-
-        include_examples 'error', 'interval and backoff must be set'
-      end
-
-      context 'with :max_attempts and :expiration_interval missing' do
-        let(:attributes) do
-          valid_attributes.tap do |h|
-            h.delete(:max_attempts)
-            h.delete(:expiration_interval)
-          end
-        end
-
-        include_examples 'error', 'max_attempts or expiration_interval must be set'
-      end
-
-      %i[interval max_interval expiration_interval].each do |attr|
+      %i[initial_interval maximum_interval].each do |attr|
         context "with #{attr} set to a float" do
           let(:attributes) { valid_attributes.tap { |h| h[attr] = 1.5 } }
 
@@ -71,6 +53,12 @@ describe Temporal::RetryPolicy do
 
           include_examples 'error', 'All intervals must be greater than 0'
         end
+      end
+
+      context "with maximum_attempts set to negative value" do
+        let(:attributes) { valid_attributes.tap { |h| h[:maximum_attempts] = -2 } }
+
+        include_examples 'error', 'maximum_attempts must be greater than or equal to 0'
       end
     end
   end

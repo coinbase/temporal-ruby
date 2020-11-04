@@ -1,26 +1,26 @@
 require 'temporal/errors'
 
 module Temporal
-  class RetryPolicy < Struct.new(:interval, :backoff, :max_interval, :max_attempts,
-    :expiration_interval, :non_retriable_errors, keyword_init: true)
+  class RetryPolicy < Struct.new(:initial_interval, :backoff_coefficient, :maximum_interval, :maximum_attempts,
+    :non_retryable_error_types, keyword_init: true)
 
     class InvalidRetryPolicy < ClientError; end
 
     def validate!
-      unless interval && backoff
-        raise InvalidRetryPolicy, 'interval and backoff must be set'
+      unless initial_interval
+        raise InvalidRetryPolicy, 'initial_interval must be set'
       end
 
-      unless max_attempts || expiration_interval
-        raise InvalidRetryPolicy, 'max_attempts or expiration_interval must be set'
-      end
-
-      unless [interval, max_interval, expiration_interval].compact.all? { |arg| arg.is_a?(Integer) }
+      unless [initial_interval, maximum_interval].compact.all? { |arg| arg.is_a?(Integer) }
         raise InvalidRetryPolicy, 'All intervals must be specified in whole seconds'
       end
 
-      unless [interval, max_interval, expiration_interval].compact.all? { |arg| arg > 0 }
+      unless [initial_interval, maximum_interval].compact.all? { |arg| arg > 0 }
         raise InvalidRetryPolicy, 'All intervals must be greater than 0'
+      end
+
+      unless maximum_attempts.to_i >= 0
+        raise InvalidRetryPolicy, 'maximum_attempts must be greater than or equal to 0'
       end
     end
   end

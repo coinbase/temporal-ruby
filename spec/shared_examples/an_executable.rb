@@ -42,7 +42,7 @@ shared_examples 'an executable' do
     end
 
     it 'sets new valid retry policy' do
-      policy = { interval: 1, backoff: 1, max_attempts: 3 }
+      policy = { initial_interval: 1, backoff_coefficient: 1, maximum_attempts: 3 }
       described_class.retry_policy(policy)
 
       expect(described_class.instance_variable_get(:@retry_policy))
@@ -51,7 +51,7 @@ shared_examples 'an executable' do
 
     it 'raises when setting invalid retry policy' do
       expect do
-        described_class.retry_policy(interval: 0.1)
+        described_class.retry_policy(initial_interval: 0.1)
       end.to raise_error(Temporal::RetryPolicy::InvalidRetryPolicy)
     end
   end

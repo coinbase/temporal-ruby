@@ -28,13 +28,13 @@ module Temporal
         def serialize_retry_policy(retry_policy)
           return unless retry_policy
 
-          non_retriable_errors = Array(retry_policy.non_retriable_errors).map(&:name)
+          non_retryable_errors = Array(retry_policy.non_retryable_errors).map(&:name)
           options = {
-            initial_interval: retry_policy.interval,
-            backoff_coefficient: retry_policy.backoff,
-            maximum_interval: retry_policy.max_interval,
-            maximum_attempts: retry_policy.max_attempts,
-            non_retriable_error_reasons: non_retriable_errors,
+            initial_interval: retry_policy.initial_interval,
+            backoff_coefficient: retry_policy.backoff_coefficient,
+            maximum_interval: retry_policy.maximum_interval,
+            maximum_attempts: retry_policy.maximum_attempts,
+            non_retryable_error_types: non_retryable_errors,
           }.compact
 
           Temporal::Api::Common::V1::RetryPolicy.new(options)
