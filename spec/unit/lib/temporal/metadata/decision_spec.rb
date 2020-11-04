@@ -2,7 +2,7 @@ require 'temporal/metadata/decision'
 
 describe Temporal::Metadata::Decision do
   describe '#initialize' do
-    subject { described_class.new(args.to_h) }
+    subject { described_class.new(**args.to_h) }
     let(:args) { Fabricate(:decision_metadata) }
 
     it 'sets the attributes' do

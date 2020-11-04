@@ -2,7 +2,7 @@ require 'temporal/metadata/workflow'
 
 describe Temporal::Metadata::Workflow do
   describe '#initialize' do
-    subject { described_class.new(args.to_h) }
+    subject { described_class.new(**args.to_h) }
     let(:args) { Fabricate(:workflow_metadata) }
 
     it 'sets the attributes' do
