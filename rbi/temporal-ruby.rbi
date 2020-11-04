@@ -21,19 +21,23 @@ module Temporal
     class ExecutionInfo; end
   end
   class Worker; end
-end
-module TemporalThrift
-  class BadRequestError; end
-  class InternalServiceError; end
-  class DomainAlreadyExistsError; end
-  class WorkflowExecutionAlreadyStartedError; end
-  class EntityNotExistsError; end
-  class ServiceBusyError; end
-  class CancellationAlreadyRequestedError; end
-  class QueryFailedError; end
-  class DomainNotActiveError; end
-  class LimitExceededError; end
-  class AccessDeniedError; end
-  class RetryTaskError; end
-  class ClientVersionNotSupportedError; end
+
+  class Error; end
+  class InternalError; end
+  class ClientError; end
+  class TimeoutError; end
+  class ActivityException; end
+
+  class ActivityNotRegistered; end
+
+  class ApiError; end
+
+  class NotFoundFailure; end
+  class WorkflowExecutionAlreadyStartedFailure; end
+  class NamespaceNotActiveFailure; end
+  class ClientVersionNotSupportedFailure; end
+  class FeatureVersionNotSupportedFailure; end
+  class NamespaceAlreadyExistsFailure; end
+  class CancellationAlreadyRequestedFailure; end
+  class QueryFailedFailure; end
 end
