@@ -84,7 +84,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
 
@@ -92,7 +92,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
 
@@ -116,7 +116,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
 
@@ -146,7 +146,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
 
@@ -154,7 +154,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
 
@@ -162,7 +162,7 @@ describe Temporal::Testing::TemporalOverride do
             let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
 
             it 'raises error' do
-              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql run_id }
+              expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
         end

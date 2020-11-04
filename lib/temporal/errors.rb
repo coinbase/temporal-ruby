@@ -21,7 +21,7 @@ module Temporal
 
   class NotFoundFailure < ApiError; end
   class WorkflowExecutionAlreadyStartedFailure < ApiError
-    attr_accessor :run_id
+    attr_reader :run_id
 
     def initialize(message, run_id)
       super(message)
