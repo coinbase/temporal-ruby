@@ -16,6 +16,7 @@ module Temporal
   class ActivityException < ClientError; end
 
   class ActivityNotRegistered < ClientError; end
+  class WorkflowNotRegistered < ClientError; end
 
   class ApiError < Error; end
 

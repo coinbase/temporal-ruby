@@ -3,7 +3,7 @@ require 'gen/temporal/api/common/v1/message_pb'
 require 'gen/temporal/api/command/v1/message_pb'
 
 module Temporal
-  class Workflow
+  module Client
     module Serializer
       class Base
         def initialize(object)

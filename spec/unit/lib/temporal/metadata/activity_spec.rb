@@ -2,7 +2,7 @@ require 'temporal/metadata/activity'
 
 describe Temporal::Metadata::Activity do
   describe '#initialize' do
-    subject { described_class.new(args.to_h) }
+    subject { described_class.new(**args.to_h) }
     let(:args) { Fabricate(:activity_metadata) }
 
     it 'sets the attributes' do

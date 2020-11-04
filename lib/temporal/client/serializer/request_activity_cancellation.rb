@@ -1,7 +1,7 @@
-require 'temporal/workflow/serializer/base'
+require 'temporal/client/serializer/base'
 
 module Temporal
-  class Workflow
+  module Client
     module Serializer
       class RequestActivityCancellation < Base
         def to_proto
@@ -9,7 +9,7 @@ module Temporal
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_REQUEST_CANCEL_ACTIVITY_TASK,
             request_cancel_activity_task_command_attributes:
               Temporal::Api::Decision::V1::RequestCancelActivityTaskCommandAttributes.new(
-                activity_id: object.activity_id.to_s
+                scheduled_event_id: object.activity_id.to_i
               )
           )
         end

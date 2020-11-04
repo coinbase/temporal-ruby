@@ -41,8 +41,10 @@ module Temporal
     end
 
     def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
+      execution_options = ExecutionOptions.new(workflow)
+
       client.signal_workflow_execution(
-        namespace: workflow.namespace, # TODO: allow passing namespace instead
+        namespace: execution_options.namespace, # TODO: allow passing namespace instead
         workflow_id: workflow_id,
         run_id: run_id,
         signal: signal,

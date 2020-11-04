@@ -1,8 +1,8 @@
-require 'temporal/workflow/serializer/base'
-require 'temporal/workflow/serializer/payload'
+require 'temporal/client/serializer/base'
+require 'temporal/client/serializer/payload'
 
 module Temporal
-  class Workflow
+  module Client
     module Serializer
       class RecordMarker < Base
         def to_proto
