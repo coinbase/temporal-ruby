@@ -12,7 +12,7 @@ module Temporal
               Temporal::Api::Decision::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
                 details: {
-                  data: Payload.new(object.details).to_proto
+                  'data' => Payload.new(object.details).to_proto
                 }
               )
           )
