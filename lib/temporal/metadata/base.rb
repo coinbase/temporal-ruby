@@ -5,7 +5,7 @@ module Temporal
         false
       end
 
-      def decision?
+      def workflow_task?
         false
       end
 

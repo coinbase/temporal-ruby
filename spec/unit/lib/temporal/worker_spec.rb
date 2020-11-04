@@ -13,7 +13,7 @@ describe Temporal::Worker do
     task_queue 'default-task-queue'
   end
 
-  class TestWorkerDecisionMiddleware
+  class TestWorkerWorkflowTaskMiddleware
     def call(_); end
   end
 
@@ -85,21 +85,21 @@ describe Temporal::Worker do
     end
   end
 
-  describe '#add_decision_middleware' do
-    let(:middleware) { subject.send(:decision_middleware) }
+  describe '#add_workflow_task_middleware' do
+    let(:middleware) { subject.send(:workflow_task_middleware) }
 
     it 'adds middleware entry to the list of middlewares' do
-      subject.add_decision_middleware(TestWorkerDecisionMiddleware)
-      subject.add_decision_middleware(TestWorkerDecisionMiddleware, 'arg1', 'arg2')
+      subject.add_workflow_task_middleware(TestWorkerWorkflowTaskMiddleware)
+      subject.add_workflow_task_middleware(TestWorkerWorkflowTaskMiddleware, 'arg1', 'arg2')
 
       expect(middleware.size).to eq(2)
 
       expect(middleware[0]).to be_an_instance_of(Temporal::Middleware::Entry)
-      expect(middleware[0].klass).to eq(TestWorkerDecisionMiddleware)
+      expect(middleware[0].klass).to eq(TestWorkerWorkflowTaskMiddleware)
       expect(middleware[0].args).to eq([])
 
       expect(middleware[1]).to be_an_instance_of(Temporal::Middleware::Entry)
-      expect(middleware[1].klass).to eq(TestWorkerDecisionMiddleware)
+      expect(middleware[1].klass).to eq(TestWorkerWorkflowTaskMiddleware)
       expect(middleware[1].args).to eq(['arg1', 'arg2'])
     end
   end
@@ -172,7 +172,7 @@ describe Temporal::Worker do
       before do
         allow(Temporal::Middleware::Entry)
           .to receive(:new)
-          .with(TestWorkerDecisionMiddleware, [])
+          .with(TestWorkerWorkflowTaskMiddleware, [])
           .and_return(entry_1)
 
         allow(Temporal::Middleware::Entry)
@@ -180,7 +180,7 @@ describe Temporal::Worker do
           .with(TestWorkerActivityMiddleware, [])
           .and_return(entry_2)
 
-        subject.add_decision_middleware(TestWorkerDecisionMiddleware)
+        subject.add_workflow_task_middleware(TestWorkerWorkflowTaskMiddleware)
         subject.add_activity_middleware(TestWorkerActivityMiddleware)
       end
 
