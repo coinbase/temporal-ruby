@@ -68,10 +68,7 @@ module Temporal
       end
 
       def parse_payload(payload)
-        return if payload.payloads.empty?
-
-        binary = payload.payloads.first.data
-        JSON.deserialize(binary)
+        Temporal::Client::Serializer::Payload.from_proto(payload)
       end
     end
   end

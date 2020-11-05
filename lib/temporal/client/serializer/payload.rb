@@ -7,6 +7,13 @@ module Temporal
       class Payload < Base
         JSON_ENCODING = 'json/plain'.freeze
 
+        def self.from_proto(proto)
+          binary = proto&.payloads&.first&.data
+          return unless binary
+
+          JSON.deserialize(binary)
+        end
+
         def to_proto
           return Temporal::Api::Common::V1::Payloads.new if object.nil?
 
