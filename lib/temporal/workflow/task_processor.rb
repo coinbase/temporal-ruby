@@ -29,7 +29,7 @@ module Temporal
         history = Workflow::History.new(task.history.events)
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        metadata = Metadata.generate(Metadata::DECISION_TYPE, task, namespace)
+        metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
