@@ -32,6 +32,8 @@ module Temporal
           )
         )
         client.register_namespace(request)
+      rescue GRPC::AlreadyExists => e
+        raise Temporal::NamespaceAlreadyExistsFailure, e.details
       end
 
       def describe_namespace(name:)
@@ -98,6 +100,10 @@ module Temporal
         end
 
         client.start_workflow_execution(request)
+      rescue GRPC::AlreadyExists => e
+        # Feel like there should be cleaner way to do this...
+        run_id = e.details[/RunId: (.*)\.$/, 1]
+        raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
       def get_workflow_execution_history(namespace:, workflow_id:, run_id:)
