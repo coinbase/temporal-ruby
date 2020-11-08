@@ -68,7 +68,7 @@ module Temporal
       end
 
       def parse_payload(payload)
-        return if payload.payloads.empty?
+        return if payload.nil? || payload.payloads.empty?
 
         binary = payload.payloads.first.data
         JSON.deserialize(binary)
