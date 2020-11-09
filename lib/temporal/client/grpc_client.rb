@@ -109,7 +109,7 @@ module Temporal
       def get_workflow_execution_history(namespace:, workflow_id:, run_id:)
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
-          execution: Temporal::Api::Temporal::Api::Common::V1::WorkflowExecution.new(
+          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           )
