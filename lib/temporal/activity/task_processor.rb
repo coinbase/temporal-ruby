@@ -30,7 +30,7 @@ module Temporal
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, JSON.deserialize(task.input.payloads.first.data))
+          activity_class.execute_in_context(context, parse_payload(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
@@ -65,6 +65,13 @@ module Temporal
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+      end
+
+      def parse_payload(payload)
+        return if payload.nil? || payload.payloads.empty?
+
+        binary = payload.payloads.first.data
+        JSON.deserialize(binary)
       end
     end
   end

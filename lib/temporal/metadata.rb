@@ -1,12 +1,12 @@
 require 'temporal/errors'
 require 'temporal/metadata/activity'
-require 'temporal/metadata/decision'
 require 'temporal/metadata/workflow'
+require 'temporal/metadata/workflow_task'
 
 module Temporal
   module Metadata
     ACTIVITY_TYPE = :activity
-    DECISION_TYPE = :decision
+    WORKFLOW_TASK_TYPE = :workflow_task
     WORKFLOW_TYPE = :workflow
 
     class << self
@@ -14,8 +14,8 @@ module Temporal
         case type
         when ACTIVITY_TYPE
           activity_metadata_from(data, namespace)
-        when DECISION_TYPE
-          decision_metadata_from(data, namespace)
+        when WORKFLOW_TASK_TYPE
+          workflow_task_metadata_from(data, namespace)
         when WORKFLOW_TYPE
           workflow_metadata_from(data)
         else
@@ -43,8 +43,8 @@ module Temporal
         )
       end
 
-      def decision_metadata_from(task, namespace)
-        Metadata::Decision.new(
+      def workflow_task_metadata_from(task, namespace)
+        Metadata::WorkflowTask.new(
           namespace: namespace,
           id: task.started_event_id,
           task_token: task.task_token,

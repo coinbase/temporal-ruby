@@ -3,8 +3,9 @@ require 'google/protobuf/well_known_types'
 require 'securerandom'
 require 'temporal/json'
 require 'temporal/client/errors'
-require 'temporal/workflow/serializer/payload'
-require 'temporal/workflow/serializer/failure'
+require 'temporal/client/serializer'
+require 'temporal/client/serializer/payload'
+require 'temporal/client/serializer/failure'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 
 module Temporal
@@ -31,6 +32,8 @@ module Temporal
           )
         )
         client.register_namespace(request)
+      rescue GRPC::AlreadyExists => e
+        raise Temporal::NamespaceAlreadyExistsFailure, e.details
       end
 
       def describe_namespace(name:)
@@ -79,7 +82,7 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: Temporal::Workflow::Serializer::Payload.new(input).to_proto,
+          input: Serializer::Payload.new(input).to_proto,
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: execution_timeout,
           workflow_task_timeout: task_timeout,
@@ -97,12 +100,16 @@ module Temporal
         end
 
         client.start_workflow_execution(request)
+      rescue GRPC::AlreadyExists => e
+        # Feel like there should be cleaner way to do this...
+        run_id = e.details[/RunId: (.*)\.$/, 1]
+        raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
       def get_workflow_execution_history(namespace:, workflow_id:, run_id:)
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
-          execution: Temporal::Api::Temporal::Api::Common::V1::WorkflowExecution.new(
+          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           )
@@ -126,17 +133,17 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          commands: Array(commands)
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
         )
         client.respond_workflow_task_completed(request)
       end
 
-      def respond_workflow_task_failed(task_token:, cause:, details: nil)
+      def respond_workflow_task_failed(task_token:, cause:, exception: nil)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
           cause: cause,
-          details: JSON.serialize(details)
+          failure: Serializer::Failure.new(exception).to_proto
         )
         client.respond_workflow_task_failed(request)
       end
@@ -155,7 +162,7 @@ module Temporal
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
-          details: JSON.serialize(details),
+          details: Serializer::Payload.new(details).to_proto,
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -169,7 +176,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal::Workflow::Serializer::Payload.new(result).to_proto,
+          result: Serializer::Payload.new(result).to_proto,
         )
         client.respond_activity_task_completed(request)
       end
@@ -181,7 +188,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: Temporal::Workflow::Serializer::Payload.new(result).to_proto
+          result: Serializer::Payload.new(result).to_proto
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -190,7 +197,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           identity: identity,
           task_token: task_token,
-          failure: Temporal::Workflow::Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception).to_proto
         )
         client.respond_activity_task_failed(request)
       end
@@ -202,7 +209,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          failure: Temporal::Workflow::Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception).to_proto
         )
         client.respond_activity_task_failed_by_id(request)
       end
@@ -210,7 +217,7 @@ module Temporal
       def respond_activity_task_canceled(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           task_token: task_token,
-          details: JSON.serialize(details),
+          details: Serializer::Payload.new(details).to_proto,
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -232,7 +239,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: JSON.serialize(input),
+          input: Serializer::Payload.new(input).to_proto,
           identity: identity
         )
         client.signal_workflow_execution(request)

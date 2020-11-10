@@ -30,8 +30,8 @@ describe Temporal::Metadata do
       end
     end
 
-    context 'with decision type' do
-      let(:type) { described_class::DECISION_TYPE }
+    context 'with workflow task type' do
+      let(:type) { described_class::WORKFLOW_TASK_TYPE }
       let(:data) { Fabricate(:api_workflow_task) }
       let(:namespace) { 'test-namespace' }
 

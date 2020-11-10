@@ -64,8 +64,10 @@ module Temporal
         run_id = SecureRandom.uuid
 
         if !allowed?(workflow_id, reuse_policy)
-          raise Temporal::WorkflowExecutionAlreadyStartedFailure,
-            "Workflow execution already started for id #{workflow_id}, reuse policy #{reuse_policy}"
+          raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
+            "Workflow execution already started for id #{workflow_id}, reuse policy #{reuse_policy}",
+            previous_run_id(workflow_id)
+          )
         end
 
         execution = WorkflowExecution.new
@@ -91,6 +93,13 @@ module Temporal
         executions.none? do |(w_id, _), execution|
           w_id == workflow_id && disallowed_statuses.include?(execution.status)
         end
+      end
+
+      def previous_run_id(workflow_id)
+        executions.each do |(w_id, run_id), _|
+          return run_id if w_id == workflow_id
+        end
+        nil
       end
 
       def disallowed_statuses_for(reuse_policy)
