@@ -289,7 +289,7 @@ Temporal.start_workflow(RenewSubscriptionWorkflow, user_id, options: { workflow_
 
 Passing in a `workflow_id` allows you to prevent concurrent execution of a workflow — a subsequent
 call with the same `workflow_id` will always get rejected while it is still running, raising
-`TemporalThrift::WorkflowExecutionAlreadyStartedError`. You can adjust the behaviour for finished
+`Temporal::WorkflowExecutionAlreadyStartedFailure`. You can adjust the behaviour for finished
 workflows by supplying the `workflow_id_reuse_policy:` argument with one of these options:
 
 - `:allow_failed` will allow re-running workflows that have failed (terminated, cancelled, timed out or failed)

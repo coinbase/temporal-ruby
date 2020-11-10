@@ -15,7 +15,7 @@ module Temporal
         end
 
         def to_proto
-          return Temporal::Api::Common::V1::Payloads.new if object.nil?
+          return if object.nil?
 
           Temporal::Api::Common::V1::Payloads.new(
             payloads: [
