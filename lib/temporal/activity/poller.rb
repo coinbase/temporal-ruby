@@ -23,11 +23,12 @@ module Temporal
 
       def stop
         @shutting_down = true
-        Thread.new { Temporal.logger.info('Shutting down activity poller') }.join
+        Temporal.logger.info('Shutting down activity poller')
       end
 
       def wait
         thread.join
+        thread_pool.shutdown
       end
 
       private

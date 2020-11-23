@@ -6,7 +6,9 @@ describe Temporal::Activity::Poller do
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
-  let(:thread_pool) { instance_double(Temporal::ThreadPool, wait_for_available_threads: nil) }
+  let(:thread_pool) do
+    instance_double(Temporal::ThreadPool, wait_for_available_threads: nil, shutdown: nil)
+  end
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
@@ -108,6 +110,19 @@ describe Temporal::Activity::Poller do
           .to have_received(:error)
           .with('Unable to poll activity task queue: #<StandardError: StandardError>')
       end
+    end
+  end
+
+  describe '#wait' do
+    before do
+      subject.start
+      subject.stop
+    end
+
+    it 'shuts down the thread poll' do
+      subject.wait
+
+      expect(thread_pool).to have_received(:shutdown)
     end
   end
 end

@@ -20,7 +20,7 @@ module Temporal
 
       def stop
         @shutting_down = true
-        Thread.new { Temporal.logger.info('Shutting down a workflow poller') }.join
+        Temporal.logger.info('Shutting down a workflow poller')
       end
 
       def wait

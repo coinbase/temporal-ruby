@@ -59,8 +59,11 @@ module Temporal
 
     def stop
       @shutting_down = true
-      pollers.each(&:stop)
-      pollers.each(&:wait)
+
+      Thread.new do
+        pollers.each(&:stop)
+        pollers.each(&:wait)
+      end.join
     end
 
     private
