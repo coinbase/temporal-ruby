@@ -20,6 +20,9 @@ module Temporal
       def initialize(host, port, identity)
         @url = "#{host}:#{port}"
         @identity = identity
+        @poll = true
+        @poll_mutex = Mutex.new
+        @poll_request = nil
       end
 
       def register_namespace(name:, description: nil, global: false, retention_period: 10)
@@ -126,7 +129,13 @@ module Temporal
             name: task_queue
           )
         )
-        client.poll_workflow_task_queue(request)
+
+        poll_mutex.synchronize do
+          return unless can_poll?
+          @poll_request = client.poll_workflow_task_queue(request, return_op: true)
+        end
+
+        poll_request.execute
       end
 
       def respond_workflow_task_completed(task_token:, commands:)
@@ -156,7 +165,13 @@ module Temporal
             name: task_queue
           )
         )
-        client.poll_activity_task_queue(request)
+
+        poll_mutex.synchronize do
+          return unless can_poll?
+          @poll_request = client.poll_activity_task_queue(request, return_op: true)
+        end
+
+        poll_request.execute
       end
 
       def record_activity_task_heartbeat(task_token:, details: nil)
@@ -329,16 +344,27 @@ module Temporal
         client.describe_task_queue(request)
       end
 
+      def cancel_polling_request
+        poll_mutex.synchronize do
+          @poll = false
+          poll_request&.cancel
+        end
+      end
+
       private
 
-      attr_reader :url, :identity
+      attr_reader :url, :identity, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           :this_channel_is_insecure,
-          timeout: 5
+          timeout: 60
         )
+      end
+
+      def can_poll?
+        @poll
       end
     end
   end

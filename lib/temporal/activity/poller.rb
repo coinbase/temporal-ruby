@@ -24,6 +24,7 @@ module Temporal
       def stop
         @shutting_down = true
         Temporal.logger.info('Shutting down activity poller')
+        client.cancel_polling_request
       end
 
       def wait

@@ -2,7 +2,7 @@ require 'temporal/activity/poller'
 require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:client) { instance_double('Temporal::Client::GRPCClient', cancel_polling_request: nil) }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
@@ -110,6 +110,17 @@ describe Temporal::Activity::Poller do
           .to have_received(:error)
           .with('Unable to poll activity task queue: #<StandardError: StandardError>')
       end
+    end
+  end
+
+  describe '#stop' do
+    before { subject.start }
+    after { subject.wait }
+
+    it 'tells client to cancel polling requests' do
+      subject.stop
+
+      expect(client).to have_received(:cancel_polling_request)
     end
   end
 
