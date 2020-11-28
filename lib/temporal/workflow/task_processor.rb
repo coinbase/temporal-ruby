@@ -26,7 +26,7 @@ module Temporal
           raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
         end
 
-        history = Workflow::History.new(task.history.events)
+        history = fetch_full_history
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
         metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
@@ -55,6 +55,25 @@ module Temporal
         scheduled = task.scheduled_time.to_f
         started = task.started_time.to_f
         ((started - scheduled) * 1_000).round
+      end
+
+      def fetch_full_history
+        events = task.history.events.to_a
+        next_page_token = task.next_page_token
+
+        while !next_page_token.empty? do
+          response = client.get_workflow_execution_history(
+            namespace: namespace,
+            workflow_id: task.workflow_execution.workflow_id,
+            run_id: task.workflow_execution.run_id,
+            next_page_token: next_page_token
+          )
+
+          events += response.history.events.to_a
+          next_page_token = response.next_page_token
+        end
+
+        Workflow::History.new(events)
       end
 
       def complete_task(commands)
