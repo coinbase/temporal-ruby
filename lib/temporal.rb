@@ -36,6 +36,29 @@ module Temporal
       response.run_id
     end
 
+    def schedule_workflow(workflow, cron_schedule, *input, **args)
+      options = args.delete(:options) || {}
+      input << args unless args.empty?
+
+      execution_options = ExecutionOptions.new(workflow, options)
+      workflow_id = options[:workflow_id] || SecureRandom.uuid
+
+      response = client.start_workflow_execution(
+        namespace: execution_options.namespace,
+        workflow_id: workflow_id,
+        workflow_name: execution_options.name,
+        task_queue: execution_options.task_queue,
+        input: input,
+        execution_timeout: execution_options.timeouts[:execution],
+        task_timeout: execution_options.timeouts[:task],
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+        headers: execution_options.headers,
+        cron_schedule: cron_schedule
+      )
+
+      response.run_id
+    end
+
     def register_namespace(name, description = nil)
       client.register_namespace(name: name, description: description)
     end

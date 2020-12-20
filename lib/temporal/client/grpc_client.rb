@@ -73,7 +73,8 @@ module Temporal
         execution_timeout:,
         task_timeout:,
         workflow_id_reuse_policy: nil,
-        headers: nil
+        headers: nil,
+        cron_schedule: nil
       )
         request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
@@ -92,7 +93,8 @@ module Temporal
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
             fields: headers
-          )
+          ),
+          cron_schedule: cron_schedule
         )
 
         if workflow_id_reuse_policy

@@ -308,6 +308,24 @@ of precedence):
 3. Globally, when configuring your Temporal library via `Temporal.configure`
 
 
+## Periodic workflow execution
+
+In certain cases you might need a workflow that runs periodically using a cron schedule. This can be
+achieved using the `Temporal.schedule_workflow` API that take a periodic cron schedule as a second
+argument:
+
+```ruby
+Temporal.schedule_workflow(HealthCheckWorkflow, '*/5 * * * *')
+```
+
+This will instruct Temporal to run a HealthCheckWorkflow every 5 minutes. All the rest of the
+arguments are identical to the `Temporal.start_workflow` API.
+
+*NOTE: Your execution timeout will be measured across all the workflow invocations, so make sure to
+set it to allow as many invocations as you need. You can also set it to `nil`, which will use a
+default value of 10 years.*
+
+
 ## Breaking Changes
 
 Since the workflow execution has to be deterministic, breaking changes can not be simply added and

@@ -5,6 +5,11 @@ describe Temporal do
   describe 'client operations' do
     let(:client) { instance_double(Temporal::Client::GRPCClient) }
 
+    class TestStartWorkflow < Temporal::Workflow
+      namespace 'default-test-namespace'
+      task_queue 'default-test-task-queue'
+    end
+
     before { allow(Temporal::Client).to receive(:generate).and_return(client) }
     after { described_class.remove_instance_variable(:@client) rescue NameError }
 
@@ -16,11 +21,6 @@ describe Temporal do
       before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
 
       context 'using a workflow class' do
-        class TestStartWorkflow < Temporal::Workflow
-          namespace 'default-test-namespace'
-          task_queue 'default-test-task-queue'
-        end
-
         it 'returns run_id' do
           result = described_class.start_workflow(TestStartWorkflow, 42)
 
@@ -157,6 +157,33 @@ describe Temporal do
               headers: {}
             )
         end
+      end
+    end
+
+    describe '.schedule_workflow' do
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
+      end
+
+      before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
+
+      it 'starts a cron workflow' do
+        described_class.schedule_workflow(TestStartWorkflow, '* * * * *', 42)
+
+        expect(client)
+          .to have_received(:start_workflow_execution)
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: an_instance_of(String),
+            workflow_name: 'TestStartWorkflow',
+            task_queue: 'default-test-task-queue',
+            cron_schedule: '* * * * *',
+            input: [42],
+            task_timeout: Temporal.configuration.timeouts[:task],
+            execution_timeout: Temporal.configuration.timeouts[:execution],
+            workflow_id_reuse_policy: nil,
+            headers: {}
+          )
       end
     end
 
