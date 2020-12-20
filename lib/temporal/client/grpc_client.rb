@@ -111,13 +111,14 @@ module Temporal
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
-      def get_workflow_execution_history(namespace:, workflow_id:, run_id:)
+      def get_workflow_execution_history(namespace:, workflow_id:, run_id:, next_page_token: nil)
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
           execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
-          )
+          ),
+          next_page_token: next_page_token
         )
 
         client.get_workflow_execution_history(request)
