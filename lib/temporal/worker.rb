@@ -51,17 +51,19 @@ module Temporal
 
       pollers.each(&:start)
 
-      # wait until instructed to shut down
-      while !shutting_down? do
-        sleep 1
-      end
+      # keep the main thread alive
+      sleep 1 while !shutting_down?
     end
 
     def stop
       @shutting_down = true
 
       Thread.new do
-        pollers.each(&:stop)
+        pollers.each(&:stop_polling)
+        # allow workers to drain in-transit tasks.
+        # https://github.com/temporalio/temporal/issues/1058
+        sleep 1
+        pollers.each(&:cancel_pending_requests)
         pollers.each(&:wait)
       end.join
     end
