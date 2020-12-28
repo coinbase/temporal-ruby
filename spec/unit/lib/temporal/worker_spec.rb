@@ -251,8 +251,24 @@ describe Temporal::Worker do
   end
 
   describe '#stop' do
-    let(:workflow_poller) { instance_double(Temporal::Workflow::Poller, start: nil, stop: nil, wait: nil) }
-    let(:activity_poller) { instance_double(Temporal::Activity::Poller, start: nil, stop: nil, wait: nil) }
+    let(:workflow_poller) do
+      instance_double(
+        Temporal::Workflow::Poller,
+        start: nil,
+        stop_polling: nil,
+        wait: nil,
+        cancel_pending_requests: nil
+      )
+    end
+    let(:activity_poller) do
+      instance_double(
+        Temporal::Activity::Poller,
+        start: nil,
+        stop_polling: nil,
+        wait: nil,
+        cancel_pending_requests: nil
+      )
+    end
 
     before do
       allow(Temporal::Workflow::Poller).to receive(:new).and_return(workflow_poller)
@@ -265,14 +281,16 @@ describe Temporal::Worker do
       sleep THREAD_SYNC_DELAY # allow worker to start
     end
 
-    it 'stops the pollers' do
+    it 'stops the pollers and cancels pending requests' do
       subject.stop
 
       sleep THREAD_SYNC_DELAY # wait for the worker to stop
 
       expect(@thread).not_to be_alive
-      expect(workflow_poller).to have_received(:stop)
-      expect(activity_poller).to have_received(:stop)
+      expect(workflow_poller).to have_received(:stop_polling)
+      expect(workflow_poller).to have_received(:cancel_pending_requests)
+      expect(activity_poller).to have_received(:stop_polling)
+      expect(activity_poller).to have_received(:cancel_pending_requests)
     end
 
     it 'waits for the pollers to stop' do

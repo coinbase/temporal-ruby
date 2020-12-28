@@ -21,9 +21,12 @@ module Temporal
         @thread = Thread.new(&method(:poll_loop))
       end
 
-      def stop
+      def stop_polling
         @shutting_down = true
         Temporal.logger.info('Shutting down activity poller')
+      end
+
+      def cancel_pending_requests
         client.cancel_polling_request
       end
 
