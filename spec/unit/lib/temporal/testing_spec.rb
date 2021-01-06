@@ -10,6 +10,13 @@ describe Temporal::Testing::TemporalOverride do
     def execute; end
   end
 
+  class TestTemporalOverride2Workflow < Temporal::Workflow
+    namespace 'default-namespace'
+    task_queue 'default-task-queue'
+
+    def execute; end
+  end
+
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
       let(:client) { instance_double('Temporal::Client::GRPCClient') }
@@ -27,6 +34,51 @@ describe Temporal::Testing::TemporalOverride do
           .to have_received(:start_workflow_execution)
           .with(hash_including(workflow_name: 'TestTemporalOverrideWorkflow'))
       end
+    end
+  end
+
+  describe 'In local testing mode, Temporal.schedule_workflow' do 
+    around do |example|
+      Temporal::Testing.local! { example.run }
+    end
+
+    it 'allows the test to simulate deferred executions' do
+      workflow = TestTemporalOverrideWorkflow.new(nil)
+      allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+      workflow2 = TestTemporalOverride2Workflow.new(nil)
+      allow(TestTemporalOverride2Workflow).to receive(:new).and_return(workflow2)
+
+      allow(workflow).to receive(:execute)
+      allow(workflow2).to receive(:execute)
+      Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
+      Temporal.schedule_workflow(TestTemporalOverride2Workflow, '1 */5 * * *')
+      expect(workflow).not_to have_received(:execute)
+      expect(workflow2).not_to have_received(:execute)
+
+      Temporal.run_all_scheduled_workflows
+      expect(workflow).to have_received(:execute)
+      expect(workflow2).to have_received(:execute)
+    end
+
+    it 'allows the test to simulate a particular deferred execution' do 
+      workflow = TestTemporalOverrideWorkflow.new(nil)
+      allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+      allow(workflow).to receive(:execute)
+      Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '*/3 * * * *', options: { workflow_id: 'my_id' })
+      expect(workflow).not_to have_received(:execute)
+      expect(Temporal.schedules['my_id']).to eq('*/3 * * * *')
+
+      Temporal.run_scheduled_workflow(workflow_id: 'my_id')
+      expect(workflow).to have_received(:execute)
+    end
+
+    it 'complains when an invalid deferred execution is specified' do 
+      expect do
+        Temporal.run_scheduled_workflow(workflow_id: 'invalid_id')
+      end.to raise_error(
+        Temporal::Testing::WorkflowIDNotScheduled,
+        /There is no workflow with id invalid_id that was scheduled with Temporal.schedule_workflow./
+      )
     end
   end
 

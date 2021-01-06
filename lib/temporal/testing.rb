@@ -6,6 +6,8 @@ module Temporal
     DISABLED_MODE = nil
     LOCAL_MODE = :local
 
+    class WorkflowIDNotScheduled < ClientError; end
+
     class << self
       def local!(&block)
         set_mode(LOCAL_MODE, &block)
