@@ -289,7 +289,7 @@ Temporal.start_workflow(RenewSubscriptionWorkflow, user_id, options: { workflow_
 
 Passing in a `workflow_id` allows you to prevent concurrent execution of a workflow — a subsequent
 call with the same `workflow_id` will always get rejected while it is still running, raising
-`TemporalThrift::WorkflowExecutionAlreadyStartedError`. You can adjust the behaviour for finished
+`Temporal::WorkflowExecutionAlreadyStartedFailure`. You can adjust the behaviour for finished
 workflows by supplying the `workflow_id_reuse_policy:` argument with one of these options:
 
 - `:allow_failed` will allow re-running workflows that have failed (terminated, cancelled, timed out or failed)
@@ -306,6 +306,24 @@ of precedence):
 1. Inline when starting or registering a workflow/activity (use `options:` argument)
 2. In your workflow/activity class definitions by calling a class method (e.g. `namespace 'my-namespace'`)
 3. Globally, when configuring your Temporal library via `Temporal.configure`
+
+
+## Periodic workflow execution
+
+In certain cases you might need a workflow that runs periodically using a cron schedule. This can be
+achieved using the `Temporal.schedule_workflow` API that take a periodic cron schedule as a second
+argument:
+
+```ruby
+Temporal.schedule_workflow(HealthCheckWorkflow, '*/5 * * * *')
+```
+
+This will instruct Temporal to run a HealthCheckWorkflow every 5 minutes. All the rest of the
+arguments are identical to the `Temporal.start_workflow` API.
+
+*NOTE: Your execution timeout will be measured across all the workflow invocations, so make sure to
+set it to allow as many invocations as you need. You can also set it to `nil`, which will use a
+default value of 10 years.*
 
 
 ## Breaking Changes

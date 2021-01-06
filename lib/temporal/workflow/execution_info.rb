@@ -34,8 +34,8 @@ module Temporal
           workflow: response.type.name,
           workflow_id: response.execution.workflow_id,
           run_id: response.execution.run_id,
-          start_time: response.start_time.to_time,
-          close_time: response.close_time.to_time,
+          start_time: response.start_time&.to_time,
+          close_time: response.close_time&.to_time,
           status: API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
         ).freeze

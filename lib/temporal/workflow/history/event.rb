@@ -41,9 +41,8 @@ module Temporal
           freeze
         end
 
-        # Returns the ID of the first event associated with the current event,
-        # referred to as a "decision" event. Not related to DecisionTask.
-        def decision_id
+        # Returns the ID of the first event associated with the current event.
+        def originating_event_id
           case type
           when 'TIMER_FIRED'
             attributes.started_event_id
@@ -61,9 +60,8 @@ module Temporal
         private
 
         def extract_attributes(raw_event)
-          attributes_argument = "#{type.downcase}_event_attributes"
-          attributes_argument[0] = attributes_argument[0].downcase
-          raw_event.public_send(attributes_argument)
+          attributes_name = raw_event.attributes
+          raw_event.public_send(attributes_name)
         end
       end
     end

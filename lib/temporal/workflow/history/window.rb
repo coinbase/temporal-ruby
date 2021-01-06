@@ -28,7 +28,7 @@ module Temporal
             @local_time = nil
           when 'WORKFLOW_TASK_COMPLETED'
             @replay = true
-          when 'WORKFLOW_TASK_SCHEDULED', 'WORKFLOW_TASK_FAILED'
+          when 'WORKFLOW_TASK_SCHEDULED'
             # no-op
           else
             events << event

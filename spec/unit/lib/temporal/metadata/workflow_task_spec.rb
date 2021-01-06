@@ -1,9 +1,9 @@
-require 'temporal/metadata/decision'
+require 'temporal/metadata/workflow_task'
 
-describe Temporal::Metadata::Decision do
+describe Temporal::Metadata::WorkflowTask do
   describe '#initialize' do
-    subject { described_class.new(args.to_h) }
-    let(:args) { Fabricate(:decision_metadata) }
+    subject { described_class.new(**args.to_h) }
+    let(:args) { Fabricate(:workflow_task_metadata) }
 
     it 'sets the attributes' do
       expect(subject.namespace).to eq(args.namespace)
@@ -17,7 +17,7 @@ describe Temporal::Metadata::Decision do
 
     it { is_expected.to be_frozen }
     it { is_expected.not_to be_activity }
-    it { is_expected.to be_decision }
+    it { is_expected.to be_workflow_task }
     it { is_expected.not_to be_workflow }
   end
 end
