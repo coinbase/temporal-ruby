@@ -48,7 +48,7 @@ describe Temporal::Testing::TemporalOverride do
 
       it 'restores original context after finishing successfully' do
         TestTemporalOverrideWorkflow.execute_locally
-        expect(Temporal::ThreadLocalContext.get).to equal(nil)
+        expect(Temporal::ThreadLocalContext.get).to eq(nil)
       end
 
       class FailingWorkflow
@@ -59,7 +59,7 @@ describe Temporal::Testing::TemporalOverride do
 
       it 'restores original context after failing' do
         expect { FailingWorkflow.execute_locally }.to raise_error(StandardError)
-        expect(Temporal::ThreadLocalContext.get).to equal(nil)
+        expect(Temporal::ThreadLocalContext.get).to eq(nil)
       end
     end
 
