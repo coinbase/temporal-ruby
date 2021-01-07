@@ -5,11 +5,12 @@ class LoggingMiddleware
 
   def call(metadata)
     entity_name = name_from(metadata)
-    Temporal.logger.info("[#{app_name}]: Started #{entity_name}")
+    entity_type = type_from(metadata)
+    Temporal.logger.info("[#{app_name}]: Started #{entity_name} #{entity_type}")
 
     yield
 
-    Temporal.logger.info("[#{app_name}]: Finished #{entity_name}")
+    Temporal.logger.info("[#{app_name}]: Finished #{entity_name} #{entity_type}")
   rescue StandardError
     Temporal.logger.error("[#{app_name}]: Error #{entity_name}")
 
@@ -19,6 +20,14 @@ class LoggingMiddleware
   private
 
   attr_reader :app_name
+
+  def type_from(metadata)
+    if metadata.activity?
+      'activity'
+    elsif metadata.workflow_task?
+      'task'
+    end
+  end
 
   def name_from(metadata)
     if metadata.activity?

@@ -8,6 +8,7 @@ module Temporal
     extend ConvenienceMethods
 
     def self.execute_in_context(context, input)
+      old_context = Temporal::ThreadLocalContext.get
       Temporal::ThreadLocalContext.set(context)
 
       workflow = new(context)
@@ -19,6 +20,8 @@ module Temporal
       Temporal.logger.debug(error.backtrace.join("\n"))
 
       context.fail(error)
+    ensure
+      Temporal::ThreadLocalContext.set(old_context)
     end
 
     def initialize(context)

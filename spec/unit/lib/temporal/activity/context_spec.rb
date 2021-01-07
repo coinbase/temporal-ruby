@@ -29,6 +29,14 @@ describe Temporal::Activity::Context do
     end
   end
 
+  describe '#heartbeat_details' do
+    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_details: 4).to_h }
+
+    it 'returns the most recent heartbeat details' do
+      expect(subject.heartbeat_details).to eq 4
+    end
+  end
+
   describe '#async!' do
     it 'marks activity context as async' do
       expect { subject.async }.to change { subject.async? }.from(false).to(true)

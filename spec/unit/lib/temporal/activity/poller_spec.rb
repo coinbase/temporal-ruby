@@ -2,11 +2,13 @@ require 'temporal/activity/poller'
 require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:client) { instance_double('Temporal::Client::GRPCClient', cancel_polling_request: nil) }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
-  let(:thread_pool) { instance_double(Temporal::ThreadPool, wait_for_available_threads: nil) }
+  let(:thread_pool) do
+    instance_double(Temporal::ThreadPool, wait_for_available_threads: nil, shutdown: nil)
+  end
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
@@ -26,7 +28,7 @@ describe Temporal::Activity::Poller do
       subject.start
 
       # stop poller before inspecting
-      subject.stop; subject.wait
+      subject.stop_polling; subject.wait
 
       expect(client)
         .to have_received(:poll_activity_task_queue)
@@ -49,7 +51,7 @@ describe Temporal::Activity::Poller do
         subject.start
 
         # stop poller before inspecting
-        subject.stop; subject.wait
+        subject.stop_polling; subject.wait
 
         expect(thread_pool).to have_received(:schedule)
       end
@@ -58,7 +60,7 @@ describe Temporal::Activity::Poller do
         subject.start
 
         # stop poller before inspecting
-        subject.stop; subject.wait
+        subject.stop_polling; subject.wait
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
@@ -80,7 +82,7 @@ describe Temporal::Activity::Poller do
           subject.start
 
           # stop poller before inspecting
-          subject.stop; subject.wait
+          subject.stop_polling; subject.wait
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)
@@ -102,12 +104,37 @@ describe Temporal::Activity::Poller do
         subject.start
 
         # stop poller before inspecting
-        subject.stop; subject.wait
+        subject.stop_polling; subject.wait
 
         expect(Temporal.logger)
           .to have_received(:error)
           .with('Unable to poll activity task queue: #<StandardError: StandardError>')
       end
+    end
+  end
+
+  describe '#cancel_pending_requests' do
+    before { subject.start }
+    after { subject.wait }
+
+    it 'tells client to cancel polling requests' do
+      subject.stop_polling
+      subject.cancel_pending_requests
+
+      expect(client).to have_received(:cancel_polling_request)
+    end
+  end
+
+  describe '#wait' do
+    before do
+      subject.start
+      subject.stop_polling
+    end
+
+    it 'shuts down the thread poll' do
+      subject.wait
+
+      expect(thread_pool).to have_received(:shutdown)
     end
   end
 end

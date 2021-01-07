@@ -48,7 +48,8 @@ module Temporal
           workflow_run_id: run_id,
           workflow_id: workflow_id,
           workflow_name: nil, # not yet used, but will be in the future
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          heartbeat_details: nil
         )
         context = LocalActivityContext.new(metadata)
 
@@ -88,7 +89,8 @@ module Temporal
           workflow_run_id: run_id,
           workflow_id: workflow_id,
           workflow_name: nil, # not yet used, but will be in the future
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          heartbeat_details: nil
         )
         context = LocalActivityContext.new(metadata)
 

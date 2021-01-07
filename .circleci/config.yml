@@ -1,0 +1,34 @@
+version: 2.1
+orbs:
+  ruby: circleci/ruby@0.1.2
+
+jobs:
+  test_gem:
+    docker:
+      - image: circleci/ruby:2.6.3-stretch-node
+    executor: ruby/default
+    steps:
+      - checkout
+      - ruby/bundle-install
+      - run:
+          name: Run RSpec
+          command: bundle exec rspec
+
+  test_examples:
+    docker:
+      - image: circleci/ruby:2.6.3-stretch-node
+    steps:
+      - checkout
+      - run:
+          name: Bundle Install
+          command: cd examples && bundle install --path vendor/bundle
+      - run:
+          name: Run RSpec
+          command: cd examples && bundle exec rspec
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test_gem
+      - test_examples

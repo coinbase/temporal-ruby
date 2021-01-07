@@ -35,6 +35,34 @@ describe Temporal::Testing::TemporalOverride do
       Temporal::Testing.local! { example.run }
     end
 
+    describe 'Workflow.execute_locally' do
+      it 'executes the workflow' do
+        workflow = TestTemporalOverrideWorkflow.new(nil)
+        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+        allow(workflow).to receive(:execute)
+
+        TestTemporalOverrideWorkflow.execute_locally
+
+        expect(workflow).to have_received(:execute)
+      end
+
+      it 'restores original context after finishing successfully' do
+        TestTemporalOverrideWorkflow.execute_locally
+        expect(Temporal::ThreadLocalContext.get).to eq(nil)
+      end
+
+      class FailingWorkflow
+        def execute
+          raise 'uh oh'
+        end
+      end
+
+      it 'restores original context after failing' do
+        expect { FailingWorkflow.execute_locally }.to raise_error(StandardError)
+        expect(Temporal::ThreadLocalContext.get).to eq(nil)
+      end
+    end
+
     describe 'Temporal.start_workflow' do
       let(:workflow) { TestTemporalOverrideWorkflow.new(nil) }
 
