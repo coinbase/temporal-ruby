@@ -35,6 +35,10 @@ module Temporal
         client.record_activity_task_heartbeat(task_token: task_token, details: details)
       end
 
+      def heartbeat_details
+        metadata.heartbeat_details
+      end
+
       def logger
         Temporal.logger
       end

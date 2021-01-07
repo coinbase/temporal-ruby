@@ -10,4 +10,5 @@ Fabricator(:activity_metadata, from: :open_struct) do
   workflow_id { SecureRandom.uuid }
   workflow_name 'TestWorkflow'
   headers { {} }
+  heartbeat_details nil
 end
