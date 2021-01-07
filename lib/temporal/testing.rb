@@ -25,6 +25,31 @@ module Temporal
         mode == LOCAL_MODE
       end
 
+      def execute_scheduled_workflow(workflow_id:)
+        unless scheduled_executions.key?(workflow_id)
+          raise Temporal::Testing::WorkflowIDNotScheduled,
+            "There is no workflow with id #{workflow_id} that was scheduled with Temporal.schedule_workflow.\n"\
+            "Options: #{scheduled_executions.keys}"
+        end
+
+        scheduled_executions[workflow_id].call
+      end
+
+      def execute_all_scheduled_workflows
+        scheduled_executions.transform_values(&:call)
+      end
+
+      # Populated by Temporal.schedule_workflow
+      # format: { <workflow_id>: <cron schedule string>, ... }
+      def schedules
+        @schedules ||= {}
+      end
+
+      # Populated by Temporal.schedule_workflow
+      def scheduled_executions
+        @scheduled_executions ||= {}
+      end
+
       private
 
       attr_reader :mode

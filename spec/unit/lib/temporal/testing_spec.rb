@@ -55,7 +55,7 @@ describe Temporal::Testing::TemporalOverride do
       expect(workflow).not_to have_received(:execute)
       expect(workflow2).not_to have_received(:execute)
 
-      Temporal.run_all_scheduled_workflows
+      Temporal::Testing.execute_all_scheduled_workflows
       expect(workflow).to have_received(:execute)
       expect(workflow2).to have_received(:execute)
     end
@@ -66,15 +66,15 @@ describe Temporal::Testing::TemporalOverride do
       allow(workflow).to receive(:execute)
       Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '*/3 * * * *', options: { workflow_id: 'my_id' })
       expect(workflow).not_to have_received(:execute)
-      expect(Temporal.schedules['my_id']).to eq('*/3 * * * *')
+      expect(Temporal::Testing.schedules['my_id']).to eq('*/3 * * * *')
 
-      Temporal.run_scheduled_workflow(workflow_id: 'my_id')
+      Temporal::Testing.execute_scheduled_workflow(workflow_id: 'my_id')
       expect(workflow).to have_received(:execute)
     end
 
     it 'complains when an invalid deferred execution is specified' do 
       expect do
-        Temporal.run_scheduled_workflow(workflow_id: 'invalid_id')
+        Temporal::Testing.execute_scheduled_workflow(workflow_id: 'invalid_id')
       end.to raise_error(
         Temporal::Testing::WorkflowIDNotScheduled,
         /There is no workflow with id invalid_id that was scheduled with Temporal.schedule_workflow./

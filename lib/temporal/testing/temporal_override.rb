@@ -16,9 +16,11 @@ module Temporal
         end
       end
 
-      # We don't support testing the actual cron schedules, but we will defer 
-      # execution.  You can simulate running these deferred with run_all_scheduled_workflows or 
-      # run_scheduled_workflow, or assert against the cron schedule with schedules.
+      # We don't support testing the actual cron schedules, but we will defer
+      # execution.  You can simulate running these deferred with
+      # Temporal::Testing.execute_all_scheduled_workflows o
+      # Temporal::Testing.execute_scheduled_workflow, or assert against the cron schedule with
+      # Temporal::Testing.schedules.
       def schedule_workflow(workflow, cron_schedule, *input, **args)
         return super if Temporal::Testing.disabled?
 
@@ -61,36 +63,11 @@ module Temporal
         execution.fail_activity(async_token, exception)
       end
 
-      def run_scheduled_workflow(workflow_id:)
-        unless scheduled_executions.key?(workflow_id)
-          raise Temporal::Testing::WorkflowIDNotScheduled,
-            "There is no workflow with id #{workflow_id} that was scheduled with Temporal.schedule_workflow.\n"\
-            "Options: #{scheduled_executions.keys}"
-        end
-
-        scheduled_executions[workflow_id].call
-      end
-
-      def run_all_scheduled_workflows
-        scheduled_executions.transform_values(&:call)
-      end
-      
-      # Populated by schedule_workflow
-      # format: { <workflow_id>: <cron schedule string>, ... }
-      def schedules
-        @schedules ||= {}
-      end
-
       private
 
       def executions
         @executions ||= {}
       end
-
-      def scheduled_executions
-        @scheduled_executions ||= {}
-      end
-
 
       def start_locally(workflow, schedule, *input, **args)
         options = args.delete(:options) || {}
@@ -122,8 +99,8 @@ module Temporal
           end
         else
           # Defer execution; in testing mode, it'll need to be invoked manually.
-          schedules[workflow_id] = schedule # In case someone wants to assert the schedule is what they expect
-          scheduled_executions[workflow_id] = lambda do
+          Temporal::Testing.schedules[workflow_id] = schedule # In case someone wants to assert the schedule is what they expect
+          Temporal::Testing.scheduled_executions[workflow_id] = lambda do
             execution.run do
               workflow.execute_in_context(context, input)
             end
