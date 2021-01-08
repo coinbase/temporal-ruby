@@ -57,6 +57,8 @@ module Temporal
         Temporal::Testing::ScheduledWorkflowsImpl.execute_all
       end
 
+      # For someone who wants to assert that the schedule is what they expect.
+      # Populated by Temporal.schedule_workflow
       # format: { <workflow_id>: <cron schedule string>, ... }
       def self.cron_schedules
         Temporal::Testing::ScheduledWorkflowsImpl.schedules

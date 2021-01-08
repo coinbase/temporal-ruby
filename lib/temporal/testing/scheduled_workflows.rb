@@ -2,6 +2,7 @@ module Temporal
   module Testing
     class WorkflowIDNotScheduled < ClientError; end
 
+    # Implementation for Temporal::Testing::ScheduledWorkflwows
     module ScheduledWorkflowsImpl
       class << self
 
