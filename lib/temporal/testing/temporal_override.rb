@@ -81,7 +81,7 @@ module Temporal
           raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
             "Workflow execution already started for id #{workflow_id}, reuse policy #{reuse_policy}",
             previous_run_id(workflow_id)
-          )  
+          )
         end
 
         execution = WorkflowExecution.new
@@ -99,12 +99,15 @@ module Temporal
           end
         else
           # Defer execution; in testing mode, it'll need to be invoked manually.
-          Temporal::Testing.schedules[workflow_id] = schedule # In case someone wants to assert the schedule is what they expect
-          Temporal::Testing.scheduled_executions[workflow_id] = lambda do
-            execution.run do
-              workflow.execute_in_context(context, input)
-            end
-          end
+          Temporal::Testing::ScheduledWorkflowsImpl.add(
+            workflow_id: workflow_id,
+            cron_schedule: schedule,
+            executor_lambda: lambda do
+              execution.run do
+                workflow.execute_in_context(context, input)
+              end
+            end,
+          )
         end
         run_id
       end
