@@ -99,7 +99,7 @@ module Temporal
           end
         else
           # Defer execution; in testing mode, it'll need to be invoked manually.
-          Temporal::Testing::ScheduledWorkflowsImpl.add(
+          Temporal::Testing::ScheduledWorkflows::Private::Store.add(
             workflow_id: workflow_id,
             cron_schedule: schedule,
             executor_lambda: lambda do

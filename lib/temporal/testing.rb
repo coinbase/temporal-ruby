@@ -44,30 +44,6 @@ module Temporal
         @mode = previous_mode
       end
     end
-
-    # When Temporal.schedule_workflow is called in a test in local mode, we defer the execution and do
-    # not do it automatically.
-    # You can execute them or inspect their cron schedules using this module.
-    module ScheduledWorkflows
-      def self.execute(workflow_id:)
-        Temporal::Testing::ScheduledWorkflowsImpl.execute(workflow_id: workflow_id)
-      end
-
-      def self.execute_all
-        Temporal::Testing::ScheduledWorkflowsImpl.execute_all
-      end
-
-      # For someone who wants to assert that the schedule is what they expect.
-      # Populated by Temporal.schedule_workflow
-      # format: { <workflow_id>: <cron schedule string>, ... }
-      def self.cron_schedules
-        Temporal::Testing::ScheduledWorkflowsImpl.schedules
-      end
-
-      def self.clear_all
-        Temporal::Testing::ScheduledWorkflowsImpl.clear_all
-      end
-    end
   end
 end
 
