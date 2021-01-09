@@ -39,7 +39,8 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
-          headers: headers(task.header&.fields.to_h)
+          headers: headers(task.header&.fields.to_h),
+          heartbeat_details: Temporal::Client::Serializer::Payload.from_proto(task.heartbeat_details)
         )
       end
 

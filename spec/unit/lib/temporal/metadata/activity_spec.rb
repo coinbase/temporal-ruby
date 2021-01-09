@@ -15,6 +15,7 @@ describe Temporal::Metadata::Activity do
       expect(subject.workflow_id).to eq(args.workflow_id)
       expect(subject.workflow_name).to eq(args.workflow_name)
       expect(subject.headers).to eq(args.headers)
+      expect(subject.heartbeat_details).to eq(args.heartbeat_details)
     end
 
     it { is_expected.to be_frozen }
