@@ -1,5 +1,6 @@
 require 'temporal/testing/temporal_override'
 require 'temporal/testing/workflow_override'
+require 'temporal/testing/scheduled_workflows'
 
 module Temporal
   module Testing
