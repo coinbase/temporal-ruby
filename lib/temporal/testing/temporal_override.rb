@@ -7,11 +7,25 @@ require 'temporal/testing/local_workflow_context'
 module Temporal
   module Testing
     module TemporalOverride
+
       def start_workflow(workflow, *input, **args)
         return super if Temporal::Testing.disabled?
 
         if Temporal::Testing.local?
-          start_locally(workflow, *input, **args)
+          start_locally(workflow, nil, *input, **args)
+        end
+      end
+
+      # We don't support testing the actual cron schedules, but we will defer
+      # execution.  You can simulate running these deferred with
+      # Temporal::Testing.execute_all_scheduled_workflows o
+      # Temporal::Testing.execute_scheduled_workflow, or assert against the cron schedule with
+      # Temporal::Testing.schedules.
+      def schedule_workflow(workflow, cron_schedule, *input, **args)
+        return super if Temporal::Testing.disabled?
+
+        if Temporal::Testing.local?
+          start_locally(workflow, cron_schedule, *input, **args)
         end
       end
 
@@ -55,7 +69,7 @@ module Temporal
         @executions ||= {}
       end
 
-      def start_locally(workflow, *input, **args)
+      def start_locally(workflow, schedule, *input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
@@ -79,10 +93,22 @@ module Temporal
           execution, workflow_id, run_id, workflow.disabled_releases, headers
         )
 
-        execution.run do
-          workflow.execute_in_context(context, input)
+        if schedule.nil?
+          execution.run do
+            workflow.execute_in_context(context, input)
+          end
+        else
+          # Defer execution; in testing mode, it'll need to be invoked manually.
+          Temporal::Testing::ScheduledWorkflows::Private::Store.add(
+            workflow_id: workflow_id,
+            cron_schedule: schedule,
+            executor_lambda: lambda do
+              execution.run do
+                workflow.execute_in_context(context, input)
+              end
+            end,
+          )
         end
-
         run_id
       end
 

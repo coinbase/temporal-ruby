@@ -35,6 +35,60 @@ describe Temporal::Testing::TemporalOverride do
       Temporal::Testing.local! { example.run }
     end
 
+    describe 'Temporal.schedule_workflow' do
+      it 'allows the test to simulate deferred executions' do
+        workflow = TestTemporalOverrideWorkflow.new(nil)
+        workflow2 = TestTemporalOverrideWorkflow.new(nil)
+        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow, workflow2)
+
+        allow(workflow).to receive(:execute)
+        allow(workflow2).to receive(:execute)
+        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
+        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '1 */5 * * *')
+        expect(workflow).not_to have_received(:execute)
+        expect(workflow2).not_to have_received(:execute)
+
+        Temporal::Testing::ScheduledWorkflows.execute_all
+        expect(workflow).to have_received(:execute)
+        expect(workflow2).to have_received(:execute)
+      end
+
+      it 'allows the test to simulate a particular deferred execution' do
+        workflow = TestTemporalOverrideWorkflow.new(nil)
+        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+        allow(workflow).to receive(:execute)
+        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '*/3 * * * *', options: { workflow_id: 'my_id' })
+        expect(workflow).not_to have_received(:execute)
+        expect(Temporal::Testing::ScheduledWorkflows.cron_schedules['my_id']).to eq('*/3 * * * *')
+
+        Temporal::Testing::ScheduledWorkflows.execute(workflow_id: 'my_id')
+        expect(workflow).to have_received(:execute)
+      end
+
+      it 'complains when an invalid deferred execution is specified' do
+        expect do
+          Temporal::Testing::ScheduledWorkflows.execute(workflow_id: 'invalid_id')
+        end.to raise_error(
+          Temporal::Testing::WorkflowIDNotScheduled,
+          /There is no workflow with id invalid_id that was scheduled with Temporal.schedule_workflow./
+        )
+      end
+
+      it 'can clear scheduled executions' do
+        workflow = TestTemporalOverrideWorkflow.new(nil)
+        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+        allow(workflow).to receive(:execute)
+        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
+        expect(workflow).not_to have_received(:execute)
+        expect(Temporal::Testing::ScheduledWorkflows.cron_schedules).not_to be_empty
+
+        Temporal::Testing::ScheduledWorkflows.clear_all
+        Temporal::Testing::ScheduledWorkflows.execute_all
+        expect(workflow).not_to have_received(:execute)
+        expect(Temporal::Testing::ScheduledWorkflows.cron_schedules).to be_empty
+      end
+    end
+    
     describe 'Workflow.execute_locally' do
       it 'executes the workflow' do
         workflow = TestTemporalOverrideWorkflow.new(nil)
