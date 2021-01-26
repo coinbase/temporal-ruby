@@ -107,7 +107,7 @@ module Temporal
         client.start_workflow_execution(request)
       rescue GRPC::AlreadyExists => e
         # Feel like there should be cleaner way to do this...
-        run_id = e.details[/RunId: (.*)\.$/, 1]
+        run_id = e.details[/RunId: ([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)/, 1]
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
