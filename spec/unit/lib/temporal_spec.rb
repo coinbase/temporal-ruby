@@ -232,6 +232,47 @@ describe Temporal do
       end
     end
 
+    describe '.reset_workflow' do
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
+      end
+
+      before { allow(client).to receive(:reset_workflow_execution).and_return(temporal_response) }
+
+      context 'when decision_task_id is provided' do
+        let(:workflow_task_id) { 42 }
+
+        it 'calls client reset_workflow_execution' do
+          described_class.reset_workflow(
+            'default-test-namespace',
+            '123',
+            '1234',
+            workflow_task_id: workflow_task_id,
+            reason: 'Test reset'
+          )
+
+          expect(client).to have_received(:reset_workflow_execution).with(
+            namespace: 'default-test-namespace',
+            workflow_id: '123',
+            run_id: '1234',
+            reason: 'Test reset',
+            workflow_task_event_id: workflow_task_id
+          )
+        end
+
+        it 'returns the new run_id' do
+          result = described_class.reset_workflow(
+            'default-test-namespace',
+            '123',
+            '1234',
+            workflow_task_id: workflow_task_id
+          )
+
+          expect(result).to eq('xxx')
+        end
+      end
+    end
+
     context 'activity operations' do
       let(:namespace) { 'test-namespace' }
       let(:activity_id) { rand(100).to_s }
