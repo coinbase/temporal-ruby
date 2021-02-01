@@ -272,7 +272,8 @@ module Temporal
           namespace: namespace,
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
-            run_id: run_id
+            run_id: run_id,
+            request_id: SecureRandom.uuid
           ),
           reason: reason,
           workflow_task_finish_event_id: workflow_task_event_id
