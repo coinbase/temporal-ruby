@@ -20,7 +20,7 @@ module Temporal
       Temporal.logger.debug(error.backtrace.join("\n"))
 
       Temporal.configuration.error_handlers.each do |handler|
-        handler.call(error, context.metadata)
+        handler.call(error, context.send(:metadata))
       end
 
       context.fail(error)
