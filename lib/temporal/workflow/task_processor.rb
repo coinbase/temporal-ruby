@@ -38,10 +38,19 @@ module Temporal
         complete_task(commands)
       rescue Temporal::ClientError => error
         fail_task(error)
+
+        Temporal.configuration.error_handlers.each do |handler|
+          handler.call(error, metadata)
+        end
       rescue StandardError => error
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
+
+        Temporal.configuration.error_handlers.each do |handler|
+          handler.call(error, metadata)
+        end
       ensure
+
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name)
         Temporal.logger.debug("Workflow task processed in #{time_diff_ms}ms")
@@ -91,6 +100,8 @@ module Temporal
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
           exception: error
         )
+      rescue StandardError => error
+        Temporal.logger.error("Unable to fail Workflow task #{workflow_name}: #{error.inspect}")
       end
     end
   end

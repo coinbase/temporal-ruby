@@ -37,6 +37,10 @@ module Temporal
         respond_completed(result) unless context.async?
       rescue StandardError, ScriptError => error
         respond_failed(error)
+
+        Temporal.configuration.error_handlers.each do |handler|
+          handler.call(error, metadata)
+        end
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
@@ -58,6 +62,10 @@ module Temporal
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
+
+        Temporal.configuration.error_handlers.each do |handler|
+          handler.call(error, nil)
+        end
       end
 
       def respond_failed(error)
@@ -65,6 +73,10 @@ module Temporal
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+
+        Temporal.configuration.error_handlers.each do |handler|
+          handler.call(error, nil)
+        end
       end
 
       def parse_payload(payload)

@@ -3,7 +3,7 @@ require 'temporal/metrics_adapters/null'
 
 module Temporal
   class Configuration
-    attr_reader :timeouts
+    attr_reader :timeouts, :error_handlers
     attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -30,6 +30,7 @@ module Temporal
       @namespace = DEFAULT_NAMESPACE
       @task_queue = DEFAULT_TASK_QUEUE
       @headers = DEFAULT_HEADERS
+      @error_handlers = []
     end
 
     def task_list
