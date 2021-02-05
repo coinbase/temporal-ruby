@@ -36,11 +36,9 @@ module Temporal
         end
 
         complete_task(commands)
-      rescue Temporal::ClientError => error
+      rescue StandardError => error
         fail_task(error)
 
-        Temporal::ErrorHandler.handle(error, metadata)
-      rescue StandardError => error
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
 
