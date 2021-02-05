@@ -33,6 +33,10 @@ module Temporal
       @error_handlers = []
     end
 
+    def on_error(&block)
+      @error_handlers << block
+    end
+
     def task_list
       @task_queue
     end

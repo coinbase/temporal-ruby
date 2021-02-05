@@ -3,6 +3,7 @@ $LOAD_PATH << File.expand_path('./gen', __dir__)
 
 require 'securerandom'
 require 'temporal/configuration'
+require 'temporal/error_handler'
 require 'temporal/execution_options'
 require 'temporal/client'
 require 'temporal/activity'

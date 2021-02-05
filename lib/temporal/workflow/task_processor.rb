@@ -39,16 +39,12 @@ module Temporal
       rescue Temporal::ClientError => error
         fail_task(error)
 
-        Temporal.configuration.error_handlers.each do |handler|
-          handler.call(error, metadata)
-        end
+        Temporal::ErrorHandler.handle(error, metadata)
       rescue StandardError => error
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
 
-        Temporal.configuration.error_handlers.each do |handler|
-          handler.call(error, metadata)
-        end
+        Temporal::ErrorHandler.handle(error, metadata)
       ensure
 
         time_diff_ms = ((Time.now - start_time) * 1000).round

@@ -61,10 +61,10 @@ describe Temporal::Activity::TaskProcessor do
         reported_error = nil
         reported_metadata = nil
 
-        Temporal.configuration.error_handlers << proc { |error, metadata|
+        Temporal.configuration.on_error do |error, metadata|
           reported_error = error
           reported_metadata = metadata
-        }
+        end
 
         subject.process
 
@@ -178,10 +178,10 @@ describe Temporal::Activity::TaskProcessor do
           reported_error = nil
           reported_metadata = nil
 
-          Temporal.configuration.error_handlers << proc { |error, metadata|
+          Temporal.configuration.on_error do |error, metadata|
             reported_error = error
             reported_metadata = metadata
-          }
+          end
 
           subject.process
 

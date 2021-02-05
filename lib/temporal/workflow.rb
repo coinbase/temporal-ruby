@@ -19,9 +19,7 @@ module Temporal
       Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
       Temporal.logger.debug(error.backtrace.join("\n"))
 
-      Temporal.configuration.error_handlers.each do |handler|
-        handler.call(error, context.send(:metadata))
-      end
+      Temporal::ErrorHandler.handle(error, context.send(:metadata))
 
       context.fail(error)
     ensure

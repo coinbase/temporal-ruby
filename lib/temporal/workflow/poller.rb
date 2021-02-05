@@ -61,9 +61,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to poll workflow task queue: #{error.inspect}")
 
-        Temporal.configuration.error_handlers.each do |handler|
-          handler.call(error, nil)
-        end
+        Temporal::ErrorHandler.handle(error, nil)
 
         nil
       end
