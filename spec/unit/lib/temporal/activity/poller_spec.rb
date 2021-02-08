@@ -12,7 +12,7 @@ describe Temporal::Activity::Poller do
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
-  subject { described_class.new(namespace, task_queue, lookup, middleware) }
+  subject { described_class.new(namespace, task_queue, nil, lookup, middleware) }
 
   before do
     allow(Temporal::Client).to receive(:generate).and_return(client)

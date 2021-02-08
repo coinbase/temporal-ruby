@@ -9,8 +9,9 @@ module Temporal
   class ThreadPool
     attr_reader :size
 
-    def initialize(size)
+    def initialize(size, rate_limit: nil)
       @size = size
+      @limiter = Limiter::RateQueue.new(rate_limit, interval: 1) if rate_limit
       @queue = Queue.new
       @mutex = Mutex.new
       @availability = ConditionVariable.new
@@ -29,6 +30,7 @@ module Temporal
     end
 
     def schedule(&block)
+      wait_for_available_rate_limit
       @mutex.synchronize do
         @available_threads -= 1
         @queue << block
@@ -44,6 +46,10 @@ module Temporal
     end
 
     private
+
+    def wait_for_available_rate_limit
+      @limiter&.shift
+    end
 
     EXIT_SYMBOL = :exit
 

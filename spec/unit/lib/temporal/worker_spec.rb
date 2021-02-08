@@ -144,12 +144,12 @@ describe Temporal::Worker do
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'default-task-queue', nil, an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_1)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
+        .with('default-namespace', 'other-task-queue', nil, an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
@@ -194,7 +194,7 @@ describe Temporal::Worker do
 
         allow(Temporal::Activity::Poller)
           .to receive(:new)
-          .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [entry_2])
+          .with('default-namespace', 'default-task-queue', nil, an_instance_of(Temporal::ExecutableLookup), [entry_2])
           .and_return(activity_poller_1)
 
         subject.register_workflow(TestWorkerWorkflow)

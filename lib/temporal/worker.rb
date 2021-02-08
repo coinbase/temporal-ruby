@@ -7,13 +7,14 @@ require 'temporal/middleware/entry'
 
 module Temporal
   class Worker
-    def initialize
+    def initialize(options = {})
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
       @workflow_task_middleware = []
       @activity_middleware = []
       @shutting_down = false
+      @options = options
     end
 
     def register_workflow(workflow_class, options = {})
@@ -70,7 +71,7 @@ module Temporal
 
     private
 
-    attr_reader :activities, :workflows, :pollers, :workflow_task_middleware, :activity_middleware
+    attr_reader :activities, :workflows, :pollers, :workflow_task_middleware, :activity_middleware, :options
 
     def shutting_down?
       @shutting_down
@@ -81,7 +82,7 @@ module Temporal
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, activity_middleware)
+      Activity::Poller.new(namespace, task_queue, options[:activities_per_second], lookup.freeze, activity_middleware)
     end
 
     def trap_signals

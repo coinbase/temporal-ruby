@@ -8,9 +8,10 @@ module Temporal
     class Poller
       THREAD_POOL_SIZE = 20
 
-      def initialize(namespace, task_queue, activity_lookup, middleware = [])
+      def initialize(namespace, task_queue, rate_limit, activity_lookup, middleware = [])
         @namespace = namespace
         @task_queue = task_queue
+        @rate_limit = rate_limit
         @activity_lookup = activity_lookup
         @middleware = middleware
         @shutting_down = false
@@ -37,7 +38,7 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :thread
+      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :thread, :rate_limit
 
       def client
         @client ||= Temporal::Client.generate
@@ -77,7 +78,7 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(THREAD_POOL_SIZE)
+        @thread_pool ||= ThreadPool.new(THREAD_POOL_SIZE, rate_limit: rate_limit)
       end
     end
   end

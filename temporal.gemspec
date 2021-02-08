@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'grpc'
   spec.add_dependency 'oj'
+  spec.add_dependency 'ruby-limiter'
 
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rspec'
