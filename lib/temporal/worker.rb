@@ -7,13 +7,16 @@ require 'temporal/middleware/entry'
 
 module Temporal
   class Worker
-    def initialize
+    # activity_thread_pool_size: number of threads that the poller can use to run activities.
+    #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
+    def initialize(activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_THREAD_POOL_SIZE)
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
       @workflow_task_middleware = []
       @activity_middleware = []
       @shutting_down = false
+      @activity_thread_pool_size = activity_thread_pool_size
     end
 
     def register_workflow(workflow_class, options = {})
@@ -44,7 +47,7 @@ module Temporal
       end
 
       activities.each_pair do |(namespace, task_queue), lookup|
-        pollers << activity_poller_for(namespace, task_queue, lookup)
+        pollers << activity_poller_for(namespace, task_queue, lookup, thread_pool_size: activity_thread_pool_size)
       end
 
       trap_signals
@@ -70,7 +73,13 @@ module Temporal
 
     private
 
-    attr_reader :activities, :workflows, :pollers, :workflow_task_middleware, :activity_middleware
+    attr_reader \
+      :activities,
+      :workflows,
+      :pollers,
+      :workflow_task_middleware,
+      :activity_middleware,
+      :activity_thread_pool_size
 
     def shutting_down?
       @shutting_down
@@ -80,8 +89,14 @@ module Temporal
       Workflow::Poller.new(namespace, task_queue, lookup.freeze, workflow_task_middleware)
     end
 
-    def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, activity_middleware)
+    def activity_poller_for(namespace, task_queue, lookup, thread_pool_size:)
+      Activity::Poller.new(
+        namespace,
+        task_queue,
+        lookup.freeze,
+        activity_middleware,
+        thread_pool_size: thread_pool_size,
+      )
     end
 
     def trap_signals
