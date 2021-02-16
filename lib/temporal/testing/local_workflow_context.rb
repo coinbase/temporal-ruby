@@ -9,19 +9,23 @@ require 'temporal/workflow/history/event_target'
 module Temporal
   module Testing
     class LocalWorkflowContext
-      attr_reader :headers
+      attr_reader :metadata
 
-      def initialize(execution, workflow_id, run_id, disabled_releases, headers = {})
+      def initialize(execution, workflow_id, run_id, disabled_releases, metadata)
         @last_event_id = 0
         @execution = execution
         @run_id = run_id
         @workflow_id = workflow_id
         @disabled_releases = disabled_releases
-        @headers = headers
+        @metadata = metadata
       end
 
       def logger
         Temporal.logger
+      end
+
+      def headers
+        metadata.headers
       end
 
       def has_release?(change_name)
