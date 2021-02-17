@@ -19,28 +19,29 @@ module Temporal
       def process
         start_time = Time.now
 
-        Temporal.logger.info("Processing activity task for #{activity_name}")
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
+
+        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
+        context = Activity::Context.new(client, metadata)
 
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
         end
 
-        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
-        context = Activity::Context.new(client, metadata)
+        Temporal.logger.info("Activity task processing (#{context.log_tag})")
 
         result = middleware_chain.invoke(metadata) do
           activity_class.execute_in_context(context, parse_payload(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
-        respond_completed(result) unless context.async?
+        respond_completed(result, context) unless context.async?
       rescue StandardError, ScriptError => error
-        respond_failed(error)
+        respond_failed(error, context)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
-        Temporal.logger.debug("Activity task processed in #{time_diff_ms}ms")
+        Temporal.logger.debug("Activity task processed in #{time_diff_ms}ms (#{context.log_tag})")
       end
 
       private
@@ -53,18 +54,18 @@ module Temporal
         ((started - scheduled) * 1_000).round
       end
 
-      def respond_completed(result)
-        Temporal.logger.info("Activity #{activity_name} completed")
+      def respond_completed(result, context)
+        Temporal.logger.info("Activity task completed (#{context.log_tag})")
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
-        Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
+        Temporal.logger.error("Activity task completion not recorded: #{error.inspect} (#{context.log_tag})")
       end
 
-      def respond_failed(error)
-        Temporal.logger.error("Activity #{activity_name} failed with: #{error.inspect}")
+      def respond_failed(error, context)
+        Temporal.logger.error("Activity task failed: #{error.inspect} (#{context.log_tag})")
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
-        Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+        Temporal.logger.error("Activity task failure not recorded: #{error.inspect} (#{context.log_tag})")
       end
 
       def parse_payload(payload)

@@ -31,7 +31,7 @@ module Temporal
       end
 
       def heartbeat(details = nil)
-        logger.debug('Activity heartbeat')
+        logger.debug("Activity heartbeat #{log_tag}")
         client.record_activity_task_heartbeat(task_token: task_token, details: details)
       end
 
@@ -54,6 +54,10 @@ module Temporal
 
       def headers
         metadata.headers
+      end
+
+      def log_tag
+        "#{metadata.namespace} / #{metadata.workflow_name}[#{metadata.workflow_id}:#{metadata.workflow_run_id}] / #{metadata.name}[#{metadata.id}]##{metadata.attempt}"
       end
 
       private
