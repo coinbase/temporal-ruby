@@ -42,7 +42,7 @@ module Temporal
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
 
-        Temporal::ErrorHandler.handle(error, metadata)
+        Temporal::ErrorHandler.handle(error, task: task.to_h, metadata: metadata.to_h)
       ensure
 
         time_diff_ms = ((Time.now - start_time) * 1000).round

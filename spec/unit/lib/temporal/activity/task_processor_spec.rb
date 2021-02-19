@@ -59,17 +59,20 @@ describe Temporal::Activity::TaskProcessor do
 
       it 'calls error_handlers' do
         reported_error = nil
+        reported_task = nil
         reported_metadata = nil
 
-        Temporal.configuration.on_error do |error, metadata|
+        Temporal.configuration.on_error do |error, task: nil, metadata: nil|
           reported_error = error
-          reported_metadata = metadata
+          reported_task = task.to_h
+          reported_metadata = metadata.to_h
         end
 
         subject.process
 
         expect(reported_error).to be_an_instance_of(Temporal::ActivityNotRegistered)
-        expect(reported_metadata).to be_nil
+        expect(reported_metadata).to be_empty
+        expect(reported_task).to_not be_empty
       end
     end
 
@@ -176,17 +179,20 @@ describe Temporal::Activity::TaskProcessor do
 
         it 'calls error_handlers' do
           reported_error = nil
+          reported_task = nil
           reported_metadata = nil
 
-          Temporal.configuration.on_error do |error, metadata|
+          Temporal.configuration.on_error do |error, task: nil, metadata: nil|
             reported_error = error
+            reported_task = task
             reported_metadata = metadata
           end
 
           subject.process
 
           expect(reported_error).to be_an_instance_of(StandardError)
-          expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::Activity)
+          expect(reported_metadata).to_not be_empty
+          expect(reported_task).to_not be_empty
         end
 
         it 'sends queue_time metric' do
