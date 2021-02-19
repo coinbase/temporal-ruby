@@ -17,6 +17,15 @@ module Temporal
       def workflow?
         true
       end
+
+      def to_h
+        {
+          'attempt' => attempt,
+          'headers' => headers,
+          'workflow_name' => name,
+          'workflow_run_id' => run_id
+        }
+      end
     end
   end
 end

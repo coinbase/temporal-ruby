@@ -17,4 +17,19 @@ describe Temporal::Metadata::Workflow do
     it { is_expected.not_to be_workflow_task }
     it { is_expected.to be_workflow }
   end
+
+
+  describe '#to_h' do
+    subject { described_class.new(**args.to_h) }
+    let(:args) { Fabricate(:workflow_metadata) }
+
+    it 'returns a hash' do
+      expect(subject.to_h).to eq({
+        'attempt' => subject.attempt,
+        'headers' => subject.headers,
+        'workflow_name' => subject.name,
+        'workflow_run_id' => subject.run_id
+      })
+    end
+  end
 end
