@@ -40,20 +40,17 @@ describe Temporal::Workflow::TaskProcessor do
 
       it 'calls error_handlers' do
         reported_error = nil
-        reported_task = nil
         reported_metadata = nil
 
-        Temporal.configuration.on_error do |error, task: nil, metadata: nil|
+        Temporal.configuration.on_error do |error, metadata: nil|
           reported_error = error
-          reported_task = task
           reported_metadata = metadata
         end
 
         subject.process
 
         expect(reported_error).to be_an_instance_of(Temporal::WorkflowNotRegistered)
-        expect(reported_task).to_not be_empty
-        expect(reported_metadata).to be_empty
+        expect(reported_metadata).to_not be_empty
       end
     end
 
@@ -82,7 +79,8 @@ describe Temporal::Workflow::TaskProcessor do
           subject.process
 
           expect(middleware_chain).to have_received(:invoke).with(
-            an_instance_of(Temporal::Metadata::WorkflowTask)
+            an_instance_of(Temporal::Metadata::WorkflowTask),
+            an_instance_of(Hash)
           )
         end
 
@@ -146,19 +144,16 @@ describe Temporal::Workflow::TaskProcessor do
 
         it 'calls error_handlers' do
           reported_error = nil
-          reported_task = nil
           reported_metadata = nil
 
-          Temporal.configuration.on_error do |error, task: nil, metadata: nil|
+          Temporal.configuration.on_error do |error, metadata: nil|
             reported_error = error
-            reported_task = task
             reported_metadata = metadata
           end
 
           subject.process
 
           expect(reported_error).to be_an_instance_of(StandardError)
-          expect(reported_task).to_not be_empty
           expect(reported_metadata).to_not be_empty
         end
 

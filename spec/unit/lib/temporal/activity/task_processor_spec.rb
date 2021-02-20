@@ -59,20 +59,17 @@ describe Temporal::Activity::TaskProcessor do
 
       it 'calls error_handlers' do
         reported_error = nil
-        reported_task = nil
         reported_metadata = nil
 
-        Temporal.configuration.on_error do |error, task: nil, metadata: nil|
+        Temporal.configuration.on_error do |error, metadata: nil|
           reported_error = error
-          reported_task = task.to_h
           reported_metadata = metadata.to_h
         end
 
         subject.process
 
         expect(reported_error).to be_an_instance_of(Temporal::ActivityNotRegistered)
-        expect(reported_metadata).to be_empty
-        expect(reported_task).to_not be_empty
+        expect(reported_metadata).to_not be_empty
       end
     end
 
@@ -95,7 +92,7 @@ describe Temporal::Activity::TaskProcessor do
         it 'invokes the middleware chain' do
           subject.process
 
-          expect(middleware_chain).to have_received(:invoke).with(metadata)
+          expect(middleware_chain).to have_received(:invoke).with(metadata, an_instance_of(Hash))
         end
 
         it 'completes the activity task' do
@@ -155,7 +152,7 @@ describe Temporal::Activity::TaskProcessor do
         it 'invokes the middleware chain' do
           subject.process
 
-          expect(middleware_chain).to have_received(:invoke).with(metadata)
+          expect(middleware_chain).to have_received(:invoke).with(metadata, an_instance_of(Hash))
         end
 
         it 'fails the activity task' do
@@ -179,12 +176,10 @@ describe Temporal::Activity::TaskProcessor do
 
         it 'calls error_handlers' do
           reported_error = nil
-          reported_task = nil
           reported_metadata = nil
 
-          Temporal.configuration.on_error do |error, task: nil, metadata: nil|
+          Temporal.configuration.on_error do |error, metadata: nil|
             reported_error = error
-            reported_task = task
             reported_metadata = metadata
           end
 
@@ -192,7 +187,6 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(reported_error).to be_an_instance_of(StandardError)
           expect(reported_metadata).to_not be_empty
-          expect(reported_task).to_not be_empty
         end
 
         it 'sends queue_time metric' do
