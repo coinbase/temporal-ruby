@@ -186,7 +186,7 @@ describe Temporal::Activity::TaskProcessor do
           subject.process
 
           expect(reported_error).to be_an_instance_of(StandardError)
-          expect(reported_metadata).to_not be_empty
+          expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::Activity)
         end
 
         it 'sends queue_time metric' do

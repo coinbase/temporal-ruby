@@ -30,14 +30,14 @@ module Temporal
 
         context = Activity::Context.new(client, metadata)
 
-        result = middleware_chain.invoke(metadata, task.to_h) do
+        result = middleware_chain.invoke(metadata, task) do
           activity_class.execute_in_context(context, parse_payload(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
       rescue StandardError, ScriptError => error
-        Temporal::ErrorHandler.handle(error, metadata: metadata.to_h)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
 
         respond_failed(error)
       ensure
@@ -62,7 +62,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata.to_h)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
       def respond_failed(error)
@@ -71,7 +71,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata.to_h)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
       def parse_payload(payload)

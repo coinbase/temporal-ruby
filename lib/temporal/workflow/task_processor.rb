@@ -32,7 +32,7 @@ module Temporal
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
 
-        commands = middleware_chain.invoke(metadata, task.to_h) do
+        commands = middleware_chain.invoke(metadata, task) do
           executor.run
         end
 
@@ -43,7 +43,7 @@ module Temporal
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata.to_h)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name)
@@ -97,7 +97,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Workflow task #{workflow_name}: #{error.inspect}")
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata.to_h)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
     end
   end
