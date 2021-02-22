@@ -30,7 +30,6 @@ describe Temporal::Metadata::WorkflowTask do
         'attempt' => subject.attempt,
         'workflow_task_id' => subject.id,
         'namespace' => subject.namespace,
-        'task_token' => subject.task_token,
         'workflow_id' => subject.workflow_id,
         'workflow_name' => subject.workflow_name,
         'workflow_run_id' => subject.workflow_run_id,

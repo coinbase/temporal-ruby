@@ -26,7 +26,6 @@ describe Temporal::Metadata::Workflow do
     it 'returns a hash' do
       expect(subject.to_h).to eq({
         'attempt' => subject.attempt,
-        'headers' => subject.headers,
         'workflow_name' => subject.name,
         'workflow_run_id' => subject.run_id
       })

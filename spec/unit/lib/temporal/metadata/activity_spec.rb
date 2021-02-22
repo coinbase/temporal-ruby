@@ -31,12 +31,10 @@ describe Temporal::Metadata::Activity do
     it 'returns a hash' do
       expect(subject.to_h).to eq({
         'attempt' => subject.attempt,
-        'headers' => subject.headers,
         'heartbeat_details' => subject.heartbeat_details,
         'activity_id' => subject.id,
         'activity_name' => subject.name,
         'namespace' => subject.namespace,
-        'task_token' => subject.task_token,
         'workflow_id' => subject.workflow_id,
         'workflow_name' => subject.workflow_name,
         'workflow_run_id' => subject.workflow_run_id

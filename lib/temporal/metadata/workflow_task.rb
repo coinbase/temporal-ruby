@@ -23,13 +23,12 @@ module Temporal
 
       def to_h
         {
-          'attempt' => attempt,
-          'workflow_task_id' => id,
           'namespace' => namespace,
-          'task_token' => task_token,
-          'workflow_id' => workflow_id,
+          'workflow_task_id' => id,
           'workflow_name' => workflow_name,
+          'workflow_id' => workflow_id,
           'workflow_run_id' => workflow_run_id,
+          'attempt' => attempt
         }
       end
     end

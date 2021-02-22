@@ -20,10 +20,9 @@ module Temporal
 
       def to_h
         {
-          'attempt' => attempt,
-          'headers' => headers,
           'workflow_name' => name,
-          'workflow_run_id' => run_id
+          'workflow_run_id' => run_id,
+          'attempt' => attempt
         }
       end
     end
