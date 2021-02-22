@@ -1,6 +1,7 @@
 require 'temporal/concerns/executable'
 require 'temporal/workflow/convenience_methods'
 require 'temporal/thread_local_context'
+require 'temporal/error_handler'
 
 module Temporal
   class Workflow

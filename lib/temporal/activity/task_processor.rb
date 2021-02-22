@@ -1,4 +1,5 @@
 require 'temporal/metadata'
+require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
 require 'temporal/json'

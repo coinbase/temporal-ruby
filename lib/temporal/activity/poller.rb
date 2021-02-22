@@ -2,6 +2,7 @@ require 'temporal/client'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
+require 'temporal/error_handler'
 
 module Temporal
   class Activity

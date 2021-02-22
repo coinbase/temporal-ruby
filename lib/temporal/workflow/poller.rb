@@ -1,6 +1,7 @@
 require 'temporal/client'
 require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
+require 'temporal/error_handler'
 
 module Temporal
   class Workflow

@@ -1,6 +1,7 @@
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/metadata'
+require 'temporal/error_handler'
 require 'temporal/errors'
 
 module Temporal
