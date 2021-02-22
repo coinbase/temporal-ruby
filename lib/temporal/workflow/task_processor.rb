@@ -7,8 +7,6 @@ require 'temporal/errors'
 module Temporal
   class Workflow
     class TaskProcessor
-      attr_accessor :metadata
-
       def initialize(task, namespace, workflow_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
@@ -54,7 +52,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain, :metadata
 
       def queue_time_ms
         scheduled = task.scheduled_time.to_f

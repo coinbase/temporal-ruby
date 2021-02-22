@@ -7,8 +7,6 @@ require 'temporal/json'
 module Temporal
   class Activity
     class TaskProcessor
-      attr_accessor :metadata
-
       def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
@@ -50,7 +48,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain, :metadata
 
       def queue_time_ms
         scheduled = task.current_attempt_scheduled_time.to_f
