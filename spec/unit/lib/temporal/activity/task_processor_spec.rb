@@ -92,7 +92,7 @@ describe Temporal::Activity::TaskProcessor do
         it 'invokes the middleware chain' do
           subject.process
 
-          expect(middleware_chain).to have_received(:invoke).with(metadata, an_instance_of(Hash))
+          expect(middleware_chain).to have_received(:invoke).with(metadata)
         end
 
         it 'completes the activity task' do
@@ -152,7 +152,7 @@ describe Temporal::Activity::TaskProcessor do
         it 'invokes the middleware chain' do
           subject.process
 
-          expect(middleware_chain).to have_received(:invoke).with(metadata, an_instance_of(Hash))
+          expect(middleware_chain).to have_received(:invoke).with(metadata)
         end
 
         it 'fails the activity task' do

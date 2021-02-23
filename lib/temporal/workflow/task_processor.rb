@@ -32,7 +32,7 @@ module Temporal
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
 
-        commands = middleware_chain.invoke(metadata, task) do
+        commands = middleware_chain.invoke(metadata) do
           executor.run
         end
 

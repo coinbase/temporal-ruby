@@ -30,7 +30,7 @@ module Temporal
 
         context = Activity::Context.new(client, metadata)
 
-        result = middleware_chain.invoke(metadata, task) do
+        result = middleware_chain.invoke(metadata) do
           activity_class.execute_in_context(context, parse_payload(task.input))
         end
 

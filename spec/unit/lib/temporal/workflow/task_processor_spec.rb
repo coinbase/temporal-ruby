@@ -79,8 +79,7 @@ describe Temporal::Workflow::TaskProcessor do
           subject.process
 
           expect(middleware_chain).to have_received(:invoke).with(
-            an_instance_of(Temporal::Metadata::WorkflowTask),
-            an_instance_of(Hash)
+            an_instance_of(Temporal::Metadata::WorkflowTask)
           )
         end
 

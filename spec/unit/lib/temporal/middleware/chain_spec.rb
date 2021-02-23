@@ -3,7 +3,7 @@ require 'temporal/middleware/entry'
 
 describe Temporal::Middleware::Chain do
   class TestChainMiddleware
-    def call(_, _)
+    def call(_)
       yield
 
       # expect this to be ignored
@@ -34,18 +34,18 @@ describe Temporal::Middleware::Chain do
       end
 
       it 'calls each middleware' do
-        subject.invoke(metadata, {}, &block)
+        subject.invoke(metadata, &block)
 
-        expect(middleware_1).to have_received(:call).with(metadata, an_instance_of(Hash)).ordered
-        expect(middleware_2).to have_received(:call).with(metadata, an_instance_of(Hash)).ordered
+        expect(middleware_1).to have_received(:call).with(metadata).ordered
+        expect(middleware_2).to have_received(:call).with(metadata).ordered
       end
 
       it 'calls passed in block' do
-        expect { |b| subject.invoke(metadata, {}, &b) }.to yield_control
+        expect { |b| subject.invoke(metadata, &b) }.to yield_control
       end
 
       it 'returns the result of the passed block' do
-        expect(subject.invoke(metadata, {}, &block)).to eq('result')
+        expect(subject.invoke(metadata, &block)).to eq('result')
       end
     end
 
@@ -53,11 +53,11 @@ describe Temporal::Middleware::Chain do
       let(:middleware) { [] }
 
       it 'calls passed in block' do
-        expect { |b| subject.invoke(metadata, {}, &b) }.to yield_control
+        expect { |b| subject.invoke(metadata, &b) }.to yield_control
       end
 
       it 'returns the result of the passed block' do
-        expect(subject.invoke(metadata, {}, &block)).to eq('result')
+        expect(subject.invoke(metadata, &block)).to eq('result')
       end
     end
   end

@@ -5,7 +5,7 @@ module Temporal
         @middleware = entries.map(&:init_middleware)
       end
 
-      def invoke(metadata, task)
+      def invoke(metadata)
         result = nil
         chain = middleware.dup
 
@@ -13,7 +13,7 @@ module Temporal
           if chain.empty?
             result = yield
           else
-            chain.shift.call(metadata, task, &traverse_chain)
+            chain.shift.call(metadata, &traverse_chain)
           end
         end
 
