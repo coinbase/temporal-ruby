@@ -132,24 +132,24 @@ describe Temporal::Worker do
     it 'starts a poller for each namespace/task list combination' do
       allow(subject).to receive(:shutting_down?).and_return(true)
 
-      expect(Temporal::Workflow::Poller)
+      allow(Temporal::Workflow::Poller)
         .to receive(:new)
         .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_1)
 
-      expect(Temporal::Workflow::Poller)
+      allow(Temporal::Workflow::Poller)
         .to receive(:new)
         .with('other-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [])
         .and_return(workflow_poller_2)
 
-      expect(Temporal::Activity::Poller)
+      allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], thread_pool_size: 20)
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 20})
         .and_return(activity_poller_1)
 
-      expect(Temporal::Activity::Poller)
+      allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [], thread_pool_size: 20)
+        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 20})
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
@@ -166,10 +166,10 @@ describe Temporal::Worker do
     end
 
     it 'can have an activity poller with a different thread pool size' do
-      activity_poller = instance_double(Temporal::Activity::Poller, start: nil, thread_pool_size: 10)
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], thread_pool_size: 10)
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 10})
         .and_return(activity_poller)
 
       worker = Temporal::Worker.new(activity_thread_pool_size: 10)
