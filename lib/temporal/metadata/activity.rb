@@ -23,6 +23,19 @@ module Temporal
       def activity?
         true
       end
+
+      def to_h
+        {
+          'namespace' => namespace,
+          'workflow_id' => workflow_id,
+          'workflow_name' => workflow_name,
+          'workflow_run_id' => workflow_run_id,
+          'activity_id' => id,
+          'activity_name' => name,
+          'attempt' => attempt,
+          'heartbeat_details' => heartbeat_details
+        }
+      end
     end
   end
 end
