@@ -73,7 +73,7 @@ module Temporal
       end
 
       def process(task)
-        client = Temporal::Client.generate
+        client = Temporal::Client.generate(options)
         middleware_chain = Middleware::Chain.new(middleware)
 
         TaskProcessor.new(task, namespace, activity_lookup, client, middleware_chain).process
