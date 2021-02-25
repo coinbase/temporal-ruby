@@ -144,12 +144,12 @@ describe Temporal::Worker do
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 20})
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {max_tasks_per_second: nil, thread_pool_size: 20})
         .and_return(activity_poller_1)
 
       allow(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 20})
+        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {max_tasks_per_second: nil, thread_pool_size: 20})
         .and_return(activity_poller_2)
 
       subject.register_workflow(TestWorkerWorkflow)
@@ -169,27 +169,34 @@ describe Temporal::Worker do
       activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 15})
-        .and_return(activity_poller_1)
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {max_tasks_per_second: nil, thread_pool_size: 10})
+        .and_return(activity_poller)
 
-
-      expect(Temporal::Activity::Poller)
-        .to receive(:new)
-        .with('default-namespace', 'other-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 10})
-        .and_return(activity_poller_2)
-
-      worker = Temporal::Worker.new(activity_thread_pool_size: 15)
+      worker = Temporal::Worker.new(activity_thread_pool_size: 10)
       allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
-      worker.register_activity(TestWorkerActivity, task_queue: 'other-task-queue')
-
-      worker.configure_activity_task_queue('other-task-queue', thread_pool_size: 10)
 
       worker.start
 
-      expect(activity_poller_1).to have_received(:start)
-      expect(activity_poller_2).to have_received(:start)
+      expect(activity_poller).to have_received(:start)
+    end
+
+    it 'can have an activity poller which throttles tasks per second' do
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      expect(Temporal::Activity::Poller)
+        .to receive(:new)
+        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {max_tasks_per_second: 15, thread_pool_size: 20})
+        .and_return(activity_poller)
+
+      worker = Temporal::Worker.new(activity_max_tasks_per_second: 15)
+      allow(worker).to receive(:shutting_down?).and_return(true)
+      worker.register_workflow(TestWorkerWorkflow)
+      worker.register_activity(TestWorkerActivity)
+
+      worker.start
+
+      expect(activity_poller).to have_received(:start)
     end
 
     context 'when middleware is configured' do
@@ -221,7 +228,7 @@ describe Temporal::Worker do
 
         allow(Temporal::Activity::Poller)
           .to receive(:new)
-          .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [entry_2], thread_pool_size: 20)
+          .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [entry_2], max_tasks_per_second: nil, thread_pool_size: 20)
           .and_return(activity_poller_1)
 
         subject.register_workflow(TestWorkerWorkflow)
