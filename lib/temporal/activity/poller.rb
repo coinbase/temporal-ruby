@@ -6,14 +6,17 @@ require 'temporal/activity/task_processor'
 module Temporal
   class Activity
     class Poller
-      THREAD_POOL_SIZE = 20
+      DEFAULT_OPTIONS = {
+        thread_pool_size: 20
+      }.freeze
 
-      def initialize(namespace, task_queue, activity_lookup, middleware = [])
+      def initialize(namespace, task_queue, activity_lookup, middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @activity_lookup = activity_lookup
         @middleware = middleware
         @shutting_down = false
+        @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def start
@@ -37,7 +40,7 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :thread
+      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :options, :thread
 
       def client
         @client ||= Temporal::Client.generate
@@ -77,7 +80,7 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(THREAD_POOL_SIZE)
+        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
       end
     end
   end

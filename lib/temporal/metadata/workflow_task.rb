@@ -20,6 +20,17 @@ module Temporal
       def workflow_task?
         true
       end
+
+      def to_h
+        {
+          'namespace' => namespace,
+          'workflow_task_id' => id,
+          'workflow_name' => workflow_name,
+          'workflow_id' => workflow_id,
+          'workflow_run_id' => workflow_run_id,
+          'attempt' => attempt
+        }
+      end
     end
   end
 end

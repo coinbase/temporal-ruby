@@ -107,7 +107,7 @@ module Temporal
         client.start_workflow_execution(request)
       rescue GRPC::AlreadyExists => e
         # Feel like there should be cleaner way to do this...
-        run_id = e.details[/RunId: (.*)\.$/, 1]
+        run_id = e.details[/RunId: ([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)/, 1]
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
@@ -272,7 +272,8 @@ module Temporal
           namespace: namespace,
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
-            run_id: run_id
+            run_id: run_id,
+            request_id: SecureRandom.uuid
           ),
           reason: reason,
           workflow_task_finish_event_id: workflow_task_event_id
