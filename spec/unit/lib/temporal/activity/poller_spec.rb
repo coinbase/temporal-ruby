@@ -32,7 +32,7 @@ describe Temporal::Activity::Poller do
 
       expect(client)
         .to have_received(:poll_activity_task_queue)
-        .with(namespace: namespace, task_queue: task_queue)
+        .with(namespace: namespace, task_queue: task_queue, max_tasks_per_second: nil)
         .twice
     end
 

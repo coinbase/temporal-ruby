@@ -16,9 +16,10 @@ module Temporal
       @workflow_task_middleware = []
       @activity_middleware = []
       @shutting_down = false
-      @activity_poller_options = {
+      @default_activity_poller_options = {
         thread_pool_size: activity_thread_pool_size,
       }
+      @activity_poller_options = Hash.new { {} }
     end
 
     def register_workflow(workflow_class, options = {})
@@ -33,6 +34,10 @@ module Temporal
       key = [execution_options.namespace, execution_options.task_queue]
 
       @activities[key].add(execution_options.name, activity_class)
+    end
+
+    def configure_activity_task_queue(name, options = {})
+      @activity_poller_options[name] = @activity_poller_options[name].merge(options)
     end
 
     def add_workflow_task_middleware(middleware_class, *args)
@@ -75,7 +80,7 @@ module Temporal
 
     private
 
-    attr_reader :activity_poller_options, :activities, :workflows, :pollers,
+    attr_reader :default_activity_poller_options, :activity_poller_options, :activities, :workflows, :pollers,
                 :workflow_task_middleware, :activity_middleware
 
     def shutting_down?
@@ -86,8 +91,12 @@ module Temporal
       Workflow::Poller.new(namespace, task_queue, lookup.freeze, workflow_task_middleware)
     end
 
+    def activity_poller_options_for_task_queue(task_queue)
+      default_activity_poller_options.merge(activity_poller_options[task_queue])
+    end
+
     def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, activity_middleware, activity_poller_options)
+      Activity::Poller.new(namespace, task_queue, lookup.freeze, activity_middleware, activity_poller_options_for_task_queue(task_queue))
     end
 
     def trap_signals
