@@ -88,7 +88,7 @@ describe Temporal::Testing::TemporalOverride do
         expect(Temporal::Testing::ScheduledWorkflows.cron_schedules).to be_empty
       end
     end
-    
+
     describe 'Workflow.execute_locally' do
       it 'executes the workflow' do
         workflow = TestTemporalOverrideWorkflow.new(nil)
