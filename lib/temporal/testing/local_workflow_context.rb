@@ -53,13 +53,20 @@ module Temporal
         )
         context = LocalActivityContext.new(metadata)
 
-        result = activity_class.execute_in_context(context, input)
-
-        if context.async?
-          execution.register_future(context.async_token, future)
+        begin
+          result = activity_class.execute_in_context(context, input)
+        rescue StandardError => e
+          # Capture any failure from running the activity into the future
+          # instead of raising immediately in order to match the behavior of
+          # running against a Temporal server.
+          future.fail(e)
         else
-          # Fulfil the future straigt away for non-async activities
-          future.set(result)
+          if context.async?
+            execution.register_future(context.async_token, future)
+          else
+            # Fulfill the future straight away for non-async activities
+            future.set(result)
+          end
         end
 
         future
@@ -67,11 +74,11 @@ module Temporal
 
       def execute_activity!(activity_class, *input, **args)
         future = execute_activity(activity_class, *input, **args)
-        result = future.get
+        result_or_exception = future.get
 
-        raise future.exception if future.failed?
+        raise result_or_exception if future.failed?
 
-        result
+        result_or_exception
       end
 
       def execute_local_activity(activity_class, *input, **args)
