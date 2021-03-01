@@ -11,7 +11,8 @@ describe Temporal::Testing::LocalWorkflowContext do
       execution,
       workflow_id,
       run_id,
-      []
+      [],
+      Temporal::Metadata::Workflow.new(name: workflow_id, run_id: run_id, attempt: 1)
     )
   end
   let(:async_token) do

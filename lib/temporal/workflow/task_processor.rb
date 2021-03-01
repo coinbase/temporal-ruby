@@ -1,6 +1,7 @@
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/metadata'
+require 'temporal/error_handler'
 require 'temporal/errors'
 
 module Temporal
@@ -9,6 +10,7 @@ module Temporal
       def initialize(task, namespace, workflow_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
+        @metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)
@@ -29,18 +31,19 @@ module Temporal
         history = fetch_full_history
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history)
-        metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
         end
 
         complete_task(commands)
-      rescue Temporal::ClientError => error
-        fail_task(error)
       rescue StandardError => error
+        fail_task(error)
+
         Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
         Temporal.logger.debug(error.backtrace.join("\n"))
+
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name)
@@ -49,7 +52,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain, :metadata
 
       def queue_time_ms
         scheduled = task.scheduled_time.to_f
@@ -91,6 +94,10 @@ module Temporal
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
           exception: error
         )
+      rescue StandardError => error
+        Temporal.logger.error("Unable to fail Workflow task #{workflow_name}: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
     end
   end
