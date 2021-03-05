@@ -21,7 +21,7 @@ module Temporal
             payloads: [
               Temporal::Api::Common::V1::Payload.new(
                 metadata: { 'encoding' => JSON_ENCODING },
-                data: JSON.serialize(object)
+                data: JSON.serialize(object).b
               )
             ]
           )
