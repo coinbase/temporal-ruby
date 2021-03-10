@@ -98,4 +98,10 @@ describe Temporal::Testing::LocalWorkflowContext do
       expect(result).to eq('ok')
     end
   end
+
+  describe '#replay?' do
+    it 'always false' do
+      expect(workflow_context.replay?).to be false
+    end
+  end
 end

@@ -24,6 +24,11 @@ module Temporal
         Temporal.logger
       end
 
+      def replay?
+        # We never replay in a test context
+        false
+      end
+
       def headers
         metadata.headers
       end
