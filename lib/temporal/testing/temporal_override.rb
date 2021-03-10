@@ -88,9 +88,11 @@ module Temporal
         executions[[workflow_id, run_id]] = execution
 
         execution_options = ExecutionOptions.new(workflow, options)
-        headers = execution_options.headers
+        metadata = Metadata::Workflow.new(
+          name: workflow_id, run_id: run_id, attempt: 1, headers: execution_options.headers
+        )
         context = Temporal::Testing::LocalWorkflowContext.new(
-          execution, workflow_id, run_id, workflow.disabled_releases, headers
+          execution, workflow_id, run_id, workflow.disabled_releases, metadata
         )
 
         if schedule.nil?

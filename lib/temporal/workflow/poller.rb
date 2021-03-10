@@ -1,6 +1,7 @@
 require 'temporal/client'
 require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
+require 'temporal/error_handler'
 
 module Temporal
   class Workflow
@@ -60,6 +61,9 @@ module Temporal
         client.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll workflow task queue: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error)
+
         nil
       end
 

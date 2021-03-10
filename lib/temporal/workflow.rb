@@ -1,6 +1,7 @@
 require 'temporal/concerns/executable'
 require 'temporal/workflow/convenience_methods'
 require 'temporal/thread_local_context'
+require 'temporal/error_handler'
 
 module Temporal
   class Workflow
@@ -18,6 +19,8 @@ module Temporal
     rescue StandardError, ScriptError => error
       Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
       Temporal.logger.debug(error.backtrace.join("\n"))
+
+      Temporal::ErrorHandler.handle(error, metadata: context.metadata)
 
       context.fail(error)
     ensure

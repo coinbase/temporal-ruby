@@ -1,6 +1,7 @@
 require 'securerandom'
 require 'temporal/testing/local_workflow_context'
 require 'temporal/testing/workflow_execution'
+require 'temporal/metadata/workflow'
 
 module Temporal
   module Testing
@@ -25,8 +26,11 @@ module Temporal
         workflow_id = SecureRandom.uuid
         run_id = SecureRandom.uuid
         execution = WorkflowExecution.new
+        metadata = Temporal::Metadata::Workflow.new(
+          name: workflow_id, run_id: run_id, attempt: 1
+        )
         context = Temporal::Testing::LocalWorkflowContext.new(
-          execution, workflow_id, run_id, disabled_releases
+          execution, workflow_id, run_id, disabled_releases, metadata
         )
 
         execute_in_context(context, input)

@@ -2,6 +2,7 @@ require 'temporal/client'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
+require 'temporal/error_handler'
 
 module Temporal
   class Activity
@@ -69,6 +70,9 @@ module Temporal
         client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error)
+
         nil
       end
 

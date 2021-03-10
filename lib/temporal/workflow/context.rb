@@ -15,6 +15,8 @@ require 'temporal/workflow/state_manager'
 module Temporal
   class Workflow
     class Context
+      attr_reader :metadata
+
       def initialize(state_manager, dispatcher, metadata)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -226,7 +228,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :metadata
+      attr_reader :state_manager, :dispatcher
 
       def schedule_command(command)
         state_manager.schedule(command)
