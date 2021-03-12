@@ -27,7 +27,7 @@ module Temporal
 
       def register_namespace(name:, description: nil, global: false, retention_period: 10)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
-          name: name,
+          namespace: name,
           description: description,
           is_global_namespace: global,
           workflow_execution_retention_period: Google::Protobuf::Duration.new(
@@ -40,7 +40,7 @@ module Temporal
       end
 
       def describe_namespace(name:)
-        request = Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest.new(name: name)
+        request = Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest.new(namespace: name)
         client.describe_namespace(request)
       end
 
@@ -51,7 +51,7 @@ module Temporal
 
       def update_namespace(name:, description:)
         request = Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest.new(
-          name: name,
+          namespace: name,
           update_info: Temporal::Api::WorkflowService::V1::UpdateNamespaceInfo.new(
             description: description
           )
@@ -60,7 +60,7 @@ module Temporal
       end
 
       def deprecate_namespace(name:)
-        request = Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(name: name)
+        request = Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(namespace: name)
         client.deprecate_namespace(request)
       end
 
