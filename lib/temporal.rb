@@ -36,7 +36,9 @@ module Temporal
       response.run_id
     end
 
-    def terminate_workflow(namespace:, workflow_id:, run_id: '', reason: '', details: nil)
+    def terminate_workflow(namespace: nil, workflow_id:, run_id: '', reason: '', details: nil)
+      namespace ||= Temporal.configuration.namespace
+
       client.terminate_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
