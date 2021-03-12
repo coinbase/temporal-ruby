@@ -160,6 +160,28 @@ describe Temporal do
       end
     end
 
+    describe '.terminate_workflow' do
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
+      end
+
+      before { allow(client).to receive(:terminate_workflow_execution).and_return(temporal_response) }
+
+      it 'terminates a workflow' do
+        described_class.terminate_workflow(TestStartWorkflow, workflow_id: 'my-workflow', reason: 'just stop it')
+
+        expect(client)
+          .to have_received(:terminate_workflow_execution)
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: 'my-workflow',
+            reason: 'just stop it',
+            details: nil,
+            run_id: nil
+          )
+      end
+    end
+
     describe '.schedule_workflow' do
       let(:temporal_response) do
         Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -239,7 +261,7 @@ describe Temporal do
 
       before { allow(client).to receive(:reset_workflow_execution).and_return(temporal_response) }
 
-      context 'when decision_task_id is provided' do
+      context 'when workflow_task_id is provided' do
         let(:workflow_task_id) { 42 }
 
         it 'calls client reset_workflow_execution' do
