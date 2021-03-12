@@ -17,8 +17,9 @@ module Temporal
         reject: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
       }.freeze
 
-      def initialize(host, port, identity)
-        @url = "#{host}:#{port}"
+      def initialize(host, port, identity, private_key = nil, cert = nil)
+        url = "#{host}:#{port}"
+        @client = generate_client(url, private_key, cert)
         @identity = identity
         @poll = true
         @poll_mutex = Mutex.new
@@ -363,12 +364,19 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :poll_mutex, :poll_request
+      attr_reader :client, :identity, :poll_mutex, :poll_request
 
-      def client
-        @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
+      def generate_client(url, private_key = nil, cert = nil)
+        credentials =
+          if private_key && cert
+            GRPC::Core::ChannelCredentials.new(nil, cert, private_key)
+          else
+            :this_channel_is_insecure
+          end
+
+        Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          :this_channel_is_insecure,
+          credentials,
           timeout: 60
         )
       end

@@ -4,7 +4,8 @@ require 'temporal/metrics_adapters/null'
 module Temporal
   class Configuration
     attr_reader :timeouts, :error_handlers
-    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
+    attr_accessor :client_type, :host, :port, :cert, :private_key, :logger, :metrics_adapter,
+      :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
     # We choose an 10-year execution timeout because that's the maximum the cassandra DB supports,
