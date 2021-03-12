@@ -82,7 +82,11 @@ module Temporal
       def complete_task(commands)
         Temporal.logger.info("Workflow task for #{workflow_name} completed")
 
-        client.respond_workflow_task_completed(task_token: task_token, commands: commands)
+        client.respond_workflow_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          commands: commands
+        )
       end
 
       def fail_task(error)
@@ -90,6 +94,7 @@ module Temporal
         Temporal.logger.debug(error.backtrace.join("\n"))
 
         client.respond_workflow_task_failed(
+          namespace: namespace,
           task_token: task_token,
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
           exception: error

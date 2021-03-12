@@ -58,7 +58,11 @@ module Temporal
 
       def respond_completed(result)
         Temporal.logger.info("Activity #{activity_name} completed")
-        client.respond_activity_task_completed(task_token: task_token, result: result)
+        client.respond_activity_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          result: result
+        )
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
 
@@ -67,7 +71,11 @@ module Temporal
 
       def respond_failed(error)
         Temporal.logger.error("Activity #{activity_name} failed with: #{error.inspect}")
-        client.respond_activity_task_failed(task_token: task_token, exception: error)
+        client.respond_activity_task_failed(
+          namespace: namespace,
+          task_token: task_token,
+          exception: error
+        )
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
 

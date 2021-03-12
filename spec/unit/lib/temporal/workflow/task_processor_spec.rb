@@ -88,7 +88,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(client)
             .to have_received(:respond_workflow_task_completed)
-            .with(task_token: task.task_token, commands: commands)
+            .with(namespace: namespace, task_token: task.task_token, commands: commands)
         end
 
         it 'ignores client exception' do
@@ -127,6 +127,7 @@ describe Temporal::Workflow::TaskProcessor do
           expect(client)
             .to have_received(:respond_workflow_task_failed)
             .with(
+              namespace: namespace,
               task_token: task.task_token,
               cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
               exception: exception
