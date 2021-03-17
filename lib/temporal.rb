@@ -36,18 +36,6 @@ module Temporal
       response.run_id
     end
 
-    def terminate_workflow(workflow, workflow_id:, **options)
-      execution_options = ExecutionOptions.new(workflow, options)
-
-      client.terminate_workflow_execution(
-        namespace: execution_options.namespace,
-        workflow_id: workflow_id,
-        run_id: options[:run_id],
-        reason: options[:reason],
-        details: options[:details]
-      )
-    end
-
     def schedule_workflow(workflow, cron_schedule, *input, **args)
       options = args.delete(:options) || {}
       input << args unless args.empty?
@@ -100,6 +88,18 @@ module Temporal
       )
 
       response.run_id
+    end
+
+    def terminate_workflow(workflow_id, namespace: nil, run_id: nil, reason: nil, details: nil)
+      namespace ||= Temporal.configuration.namespace
+
+      client.terminate_workflow_execution(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id,
+        reason: reason,
+        details: details
+      )
     end
 
     def fetch_workflow_execution_info(namespace, workflow_id, run_id)

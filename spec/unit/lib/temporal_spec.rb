@@ -168,12 +168,12 @@ describe Temporal do
       before { allow(client).to receive(:terminate_workflow_execution).and_return(temporal_response) }
 
       it 'terminates a workflow' do
-        described_class.terminate_workflow(TestStartWorkflow, workflow_id: 'my-workflow', reason: 'just stop it')
+        described_class.terminate_workflow('my-workflow', reason: 'just stop it')
 
         expect(client)
           .to have_received(:terminate_workflow_execution)
           .with(
-            namespace: 'default-test-namespace',
+            namespace: 'default-namespace',
             workflow_id: 'my-workflow',
             reason: 'just stop it',
             details: nil,
