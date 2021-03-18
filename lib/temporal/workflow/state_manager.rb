@@ -305,10 +305,7 @@ module Temporal
       end
 
       def parse_payload(payload)
-        return if payload.nil? || payload.payloads.empty?
-
-        binary = payload.payloads.first.data
-        JSON.deserialize(binary)
+        Client::Serializer::Payload.from_proto(payload)
       end
 
       def parse_failure(failure, default_exception_class = StandardError)

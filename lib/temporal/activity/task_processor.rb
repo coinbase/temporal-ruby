@@ -31,7 +31,7 @@ module Temporal
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, parse_payload(task.input))
+          activity_class.execute_in_context(context, Client::Serializer::Payload.from_proto(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
