@@ -17,11 +17,35 @@ jobs:
   test_examples:
     docker:
       - image: circleci/ruby:2.6.3-stretch-node
+      - image: circleci/postgres:alpine
+        name: postgres
+        environment:
+          POSTGRES_PASSWORD: temporal
+      - image: temporalio/auto-setup:latest
+        name: temporal
+        environment:
+          - DB=postgresql
+          - DB_PORT=5432
+          - POSTGRES_USER=postgres
+          - POSTGRES_PWD=temporal
+          - POSTGRES_SEEDS=postgres
+          - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
     steps:
       - checkout
+
       - run:
           name: Bundle Install
           command: cd examples && bundle install --path vendor/bundle
+
+      - run:
+          name: Register Namespace
+          command: cd examples && bin/register_namespace ruby-samples
+
+      - run:
+          name: Boot up worker
+          command: cd examples && bin/worker
+          background: true
+
       - run:
           name: Run RSpec
           command: cd examples && bundle exec rspec
