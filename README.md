@@ -166,7 +166,7 @@ Besides calling activities workflows can:
 
 - Use timers
 - Receive signals
-- Execute other (child) workflows [not yet implemented]
+- Execute other (child) workflows
 - Respond to queries [not yet implemented]
 
 
