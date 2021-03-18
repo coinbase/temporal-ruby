@@ -273,7 +273,6 @@ module Temporal
           workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id,
-            request_id: SecureRandom.uuid
           ),
           reason: reason,
           workflow_task_finish_event_id: workflow_task_event_id
@@ -281,8 +280,25 @@ module Temporal
         client.reset_workflow_execution(request)
       end
 
-      def terminate_workflow_execution
-        raise NotImplementedError
+      def terminate_workflow_execution(
+        namespace:,
+        workflow_id:,
+        run_id:,
+        reason: nil,
+        details: nil
+      )
+        request = Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionRequest.new(
+          identity: identity,
+          namespace: namespace,
+          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+            workflow_id: workflow_id,
+            run_id: run_id,
+          ),
+          reason: reason,
+          details: Serializer::Payload.new(details).to_proto
+        )
+
+        client.terminate_workflow_execution(request)
       end
 
       def list_open_workflow_executions
