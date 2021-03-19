@@ -31,7 +31,7 @@ module Temporal
         context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, parse_payload(task.input))
+          activity_class.execute_in_context(context, parse_payloads(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
@@ -74,11 +74,8 @@ module Temporal
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
-      def parse_payload(payload)
-        return if payload.nil? || payload.payloads.empty?
-
-        binary = payload.payloads.first.data
-        JSON.deserialize(binary)
+      def parse_payloads(payloads)
+        Temporal::Client.converter.from_payloads(payloads)
       end
     end
   end
