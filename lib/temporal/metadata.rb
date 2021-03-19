@@ -26,7 +26,11 @@ module Temporal
       private
 
       def headers(fields)
-        fields.transform_values { |v| v[:data] }
+        result = {}
+        fields.each do |field, payload|
+          result[field] = Temporal::Client.converter.from_payload(payload)
+        end
+        result
       end
 
       def activity_metadata_from(task, namespace)
@@ -39,8 +43,8 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
-          headers: headers(task.header&.fields.to_h),
-          heartbeat_details: Temporal::Client::Serializer::Payload.from_proto(task.heartbeat_details)
+          headers: headers(task.header&.fields),
+          heartbeat_details: Temporal::Client.converter.from_payloads(task.heartbeat_details)
         )
       end
 
@@ -61,7 +65,7 @@ module Temporal
           name: event.workflow_type.name,
           run_id: event.original_execution_run_id,
           attempt: event.attempt,
-          headers: headers(event.header&.fields.to_h)
+          headers: headers(event.header&.fields)
         )
       end
     end

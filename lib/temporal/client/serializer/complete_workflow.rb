@@ -1,5 +1,4 @@
-require 'temporal/client/serializer/base'
-require 'temporal/client/serializer/payload'
+require 'temporal/client'
 
 module Temporal
   module Client
@@ -10,7 +9,7 @@ module Temporal
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_COMPLETE_WORKFLOW_EXECUTION,
             complete_workflow_execution_command_attributes:
               Temporal::Api::Decision::V1::CompleteWorkflowExecutionCommandAttributes.new(
-                result: Payload.new(object.result).to_proto
+                result: Temporal::Client.converter.to_payloads(object.result)
               )
           )
         end

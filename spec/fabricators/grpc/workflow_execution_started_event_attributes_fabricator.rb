@@ -10,8 +10,8 @@ Fabricator(
   original_execution_run_id { SecureRandom.uuid }
   attempt 1
   header do |attrs|
-    fields = (attrs[:headers] || {}).each_with_object({}) do |(field, payload), h|
-      h[field] = Fabricate(:api_payload, data: payload)
+    fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
+      h[field] = Temporal::Client.converter.to_payload(value)
     end
     Temporal::Api::Common::V1::Header.new(fields: fields)
   end

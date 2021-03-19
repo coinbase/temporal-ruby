@@ -1,4 +1,8 @@
 require 'temporal/client/grpc_client'
+require 'temporal/client/converter/composite'
+require 'temporal/client/converter/nil'
+require 'temporal/client/converter/bytes'
+require 'temporal/client/converter/json'
 
 module Temporal
   module Client
@@ -16,6 +20,20 @@ module Temporal
       identity = "#{thread_id}@#{hostname}"
 
       client_class.new(host, port, identity)
+    end
+
+    def self.default_converter
+      @default_converter ||= Converter::Composite.new(
+        converters: [
+          Converter::Nil.new,
+          Converter::Bytes.new,
+          Converter::JSON.new
+        ]
+      )
+    end
+
+    def self.converter
+      @converter ||= default_converter
     end
   end
 end

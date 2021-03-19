@@ -1,5 +1,5 @@
+require 'temporal/client'
 require 'temporal/client/serializer/base'
-require 'temporal/client/serializer/payload'
 
 module Temporal
   module Client
@@ -12,7 +12,7 @@ module Temporal
               Temporal::Api::Decision::V1::ScheduleActivityTaskCommandAttributes.new(
                 activity_id: object.activity_id.to_s,
                 activity_type: Temporal::Api::Common::V1::ActivityType.new(name: object.activity_type),
-                input: Payload.new(object.input).to_proto,
+                input: Temporal::Client.converter.to_payloads(object.input),
                 namespace: object.namespace,
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 schedule_to_close_timeout: object.timeouts[:schedule_to_close],

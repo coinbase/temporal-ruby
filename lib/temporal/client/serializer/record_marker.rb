@@ -1,5 +1,4 @@
-require 'temporal/client/serializer/base'
-require 'temporal/client/serializer/payload'
+require 'temporal/client'
 
 module Temporal
   module Client
@@ -12,7 +11,7 @@ module Temporal
               Temporal::Api::Decision::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
                 details: {
-                  'data' => Payload.new(object.details).to_proto
+                  'data' => Temporal::Client.converter.to_payloads(object.details)
                 }
               )
           )
