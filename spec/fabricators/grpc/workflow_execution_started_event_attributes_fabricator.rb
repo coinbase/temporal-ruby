@@ -11,7 +11,7 @@ Fabricator(
   attempt 1
   header do |attrs|
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
-      h[field] = Temporal::Client.converter.to_payload(value)
+      h[field] = Temporal.configuration.converter.to_payload(value)
     end
     Temporal::Api::Common::V1::Header.new(fields: fields)
   end

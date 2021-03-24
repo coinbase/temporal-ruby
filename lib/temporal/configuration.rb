@@ -4,6 +4,7 @@ require 'temporal/metrics_adapters/null'
 module Temporal
   class Configuration
     attr_reader :timeouts, :error_handlers
+    attr_writer :converter
     attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -47,6 +48,20 @@ module Temporal
 
     def timeouts=(new_timeouts)
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
+    end
+
+    def default_converter
+      @default_converter ||= Temporal::Client::Converter::Composite.new(
+        converters: [
+          Temporal::Client::Converter::Nil.new,
+          Temporal::Client::Converter::Bytes.new,
+          Temporal::Client::Converter::JSON.new
+        ]
+      )
+    end
+
+    def converter
+      @converter ||= default_converter
     end
   end
 end

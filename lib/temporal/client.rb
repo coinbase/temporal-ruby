@@ -21,19 +21,5 @@ module Temporal
 
       client_class.new(host, port, identity)
     end
-
-    def self.default_converter
-      @default_converter ||= Converter::Composite.new(
-        converters: [
-          Converter::Nil.new,
-          Converter::Bytes.new,
-          Converter::JSON.new
-        ]
-      )
-    end
-
-    def self.converter
-      @converter ||= default_converter
-    end
   end
 end

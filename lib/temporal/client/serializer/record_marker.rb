@@ -11,7 +11,7 @@ module Temporal
               Temporal::Api::Decision::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
                 details: {
-                  'data' => Temporal::Client.converter.to_payloads(object.details)
+                  'data' => Temporal.configuration.converter.to_payloads(object.details)
                 }
               )
           )

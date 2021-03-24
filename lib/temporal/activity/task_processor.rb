@@ -75,7 +75,7 @@ module Temporal
       end
 
       def parse_payloads(payloads)
-        Temporal::Client.converter.from_payloads(payloads)
+        Temporal.configuration.converter.from_payloads(payloads)
       end
     end
   end

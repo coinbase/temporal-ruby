@@ -28,7 +28,7 @@ module Temporal
       def headers(fields)
         result = {}
         fields.each do |field, payload|
-          result[field] = Temporal::Client.converter.from_payload(payload)
+          result[field] = Temporal.configuration.converter.from_payload(payload)
         end
         result
       end
@@ -44,7 +44,7 @@ module Temporal
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
           headers: headers(task.header&.fields),
-          heartbeat_details: Temporal::Client.converter.from_payloads(task.heartbeat_details)
+          heartbeat_details: Temporal.configuration.converter.from_payloads(task.heartbeat_details)
         )
       end
 
