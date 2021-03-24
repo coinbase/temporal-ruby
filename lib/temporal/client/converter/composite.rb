@@ -1,9 +1,11 @@
+require 'temporal/client/converter/base'
+
 module Temporal
   module Client
     module Converter
-      class Composite
-        class ConverterNotFound < Exception; end
-        class MetadataNotSet < Exception; end
+      class Composite < Base
+        class ConverterNotFound < RuntimeError; end
+        class MetadataNotSet < RuntimeError; end
 
         def initialize(converters:)
           @converters = converters
@@ -28,11 +30,6 @@ module Temporal
           converter.from_payload(payload)
         end
 
-        def from_payloads(payloads)
-          return nil if payloads.nil?
-          payloads.payloads.map(&method(:from_payload))
-        end
-
         def to_payload(data)
           converters.each do |converter|
             payload = converter.to_payload(data)
@@ -40,12 +37,6 @@ module Temporal
           end
 
           raise ConverterNotFound
-        end
-
-        def to_payloads(*data)
-          Temporal::Api::Common::V1::Payloads.new(
-            payloads: data.map(&method(:to_payload))
-          )
         end
 
         private

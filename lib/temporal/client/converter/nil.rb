@@ -1,7 +1,9 @@
+require 'temporal/client/converter/base'
+
 module Temporal
   module Client
     module Converter
-      class Nil
+      class Nil < Base
         ENCODING = 'binary/null'.freeze
 
         def encoding

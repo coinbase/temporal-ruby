@@ -1,9 +1,10 @@
+require 'temporal/client/converter/base'
 require 'temporal/json'
 
 module Temporal
   module Client
     module Converter
-      class Bytes
+      class Bytes < Base
         ENCODING = 'binary/plain'.freeze
 
         def encoding
