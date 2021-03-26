@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'set'
 require 'temporal/testing/local_workflow_context'
 require 'temporal/testing/workflow_execution'
 require 'temporal/metadata/workflow'
