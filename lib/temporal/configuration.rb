@@ -55,7 +55,8 @@ module Temporal
         converters: [
           Temporal::Client::Converter::Nil.new,
           Temporal::Client::Converter::Bytes.new,
-          Temporal::Client::Converter::JSON.new
+          Temporal::Client::Converter::JSON.new,
+          Temporal::Client::Converter::Legacy.new
         ]
       )
     end
