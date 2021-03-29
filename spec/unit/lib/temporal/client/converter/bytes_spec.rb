@@ -6,7 +6,7 @@ describe Temporal::Client::Converter::Bytes do
   describe 'round trip' do
     it 'encodes to a binary/plain payload' do
       payload = Temporal::Api::Common::V1::Payload.new(
-        metadata: { 'encoding' => 'binary/plain' },
+        metadata: { 'encoding' => described_class::ENCODING },
         data: 'test'.b
       )
 
@@ -15,7 +15,7 @@ describe Temporal::Client::Converter::Bytes do
 
     it 'decodes a binary/plain payload to a byte string' do
       payload = Temporal::Api::Common::V1::Payload.new(
-        metadata: { 'encoding' => 'binary/plain' },
+        metadata: { 'encoding' => described_class::ENCODING },
         data: 'test'.b
       )
 

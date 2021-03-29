@@ -3,6 +3,7 @@ require 'temporal/client/converter/composite'
 require 'temporal/client/converter/nil'
 require 'temporal/client/converter/bytes'
 require 'temporal/client/converter/json'
+require 'temporal/client/converter/legacy'
 
 module Temporal
   module Client
