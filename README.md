@@ -98,7 +98,7 @@ Temporal service handles all the persistence, fault tolerance and coordination o
 activities. To set it up locally, download and boot the Docker Compose file from the official repo:
 
 ```sh
-> curl -O https://raw.githubusercontent.com/temporalio/temporal/master/docker/docker-compose.yml
+> curl -O https://raw.githubusercontent.com/temporalio/docker-compose/main/docker-compose.yml
 
 > docker-compose up
 ```
@@ -166,7 +166,7 @@ Besides calling activities workflows can:
 
 - Use timers
 - Receive signals
-- Execute other (child) workflows [not yet implemented]
+- Execute other (child) workflows
 - Respond to queries [not yet implemented]
 
 
