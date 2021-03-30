@@ -52,14 +52,17 @@ module Temporal
         @failed = true
       end
 
+      # When the activity completes successfully, the block will be called with any result
       def done(&block)
-        # do nothing
-        return if failed?
+        add_callback do |result, _|
+          block.call(result) if ready?
+        end
+      end
 
-        if ready?
-          block.call(result)
-        else
-          callbacks << block
+      # When the activity fails, the block will be called with the exception
+      def failed(&block)
+        add_callback do |_, exception|
+          block.call(exception) if failed?
         end
       end
 
@@ -70,6 +73,16 @@ module Temporal
       end
 
       private
+
+      def add_callback(&block)
+        if finished?
+          yield(result, exception)
+        else
+          # If the future is still outstanding, schedule a callback for invocation by the
+          # workflow context when the workflow or activity is finished
+          callbacks << block
+        end
+      end
 
       attr_reader :context, :cancelation_id, :result, :exception
     end
