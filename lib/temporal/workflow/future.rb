@@ -78,7 +78,7 @@ module Temporal
         if finished?
           yield(result, exception)
         else
-          # If the future is still outstanding, schedule a callback for invoctaion by the
+          # If the future is still outstanding, schedule a callback for invocation by the
           # workflow context when the workflow or activity is finished
           callbacks << block
         end
