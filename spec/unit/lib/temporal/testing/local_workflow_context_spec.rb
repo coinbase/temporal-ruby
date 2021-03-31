@@ -83,6 +83,23 @@ describe Temporal::Testing::LocalWorkflowContext do
 
         expect(f.get).to eq('async_ok')
       end
+
+      it 'failed asynchronous result' do
+        f = workflow_context.execute_activity(TestAsyncActivity)
+
+        expect(f.failed?).to be false
+        expect(f.finished?).to be false
+        expect(f.ready?).to be false
+
+        error = StandardError.new('crash')
+        execution.fail_activity(async_token, error)
+
+        expect(f.failed?).to be true
+        expect(f.finished?).to be true
+        expect(f.ready?).to be false
+
+        expect(f.get).to eq(error)
+      end
     end
   end
 
