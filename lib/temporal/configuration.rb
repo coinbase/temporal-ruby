@@ -22,6 +22,14 @@ module Temporal
     DEFAULT_HEADERS = {}.freeze
     DEFAULT_NAMESPACE = 'default-namespace'.freeze
     DEFAULT_TASK_QUEUE = 'default-task-queue'.freeze
+    DEFAULT_CONVERTER = Temporal::Client::Converter::Composite.new(
+      converters: [
+        Temporal::Client::Converter::Nil.new,
+        Temporal::Client::Converter::Bytes.new,
+        Temporal::Client::Converter::JSON.new,
+        Temporal::Client::Converter::Legacy.new
+      ]
+    ).freeze
 
     def initialize
       @client_type = :grpc
@@ -31,6 +39,7 @@ module Temporal
       @namespace = DEFAULT_NAMESPACE
       @task_queue = DEFAULT_TASK_QUEUE
       @headers = DEFAULT_HEADERS
+      @converter = DEFAULT_CONVERTER
       @error_handlers = []
     end
 
@@ -50,19 +59,8 @@ module Temporal
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
     end
 
-    def default_converter
-      @default_converter ||= Temporal::Client::Converter::Composite.new(
-        converters: [
-          Temporal::Client::Converter::Nil.new,
-          Temporal::Client::Converter::Bytes.new,
-          Temporal::Client::Converter::JSON.new,
-          Temporal::Client::Converter::Legacy.new
-        ]
-      )
-    end
-
     def converter
-      @converter ||= default_converter
+      @converter
     end
   end
 end
