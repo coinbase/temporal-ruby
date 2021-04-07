@@ -17,6 +17,7 @@ describe Temporal::Client::GRPCClient do
           workflow_name: 'Test',
           task_queue: 'test',
           execution_timeout: 0,
+          run_timeout: 0,
           task_timeout: 0
         )
       }.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) { |e|

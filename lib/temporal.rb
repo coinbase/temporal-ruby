@@ -28,6 +28,8 @@ module Temporal
         task_queue: execution_options.task_queue,
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
+        # If unspecified, individual runs should have the full time for the execution (which includes retries).
+        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers
@@ -50,6 +52,10 @@ module Temporal
         task_queue: execution_options.task_queue,
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
+        # Execution timeout is across all scheduled jobs, whereas run is for an individual run.
+        # This default is here for backward compatibility.  Certainly, the run timeout shouldn't be higher
+        # than the execution timeout.
+        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
