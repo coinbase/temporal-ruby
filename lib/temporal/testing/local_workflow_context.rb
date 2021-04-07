@@ -9,19 +9,23 @@ require 'temporal/workflow/history/event_target'
 module Temporal
   module Testing
     class LocalWorkflowContext
-      attr_reader :headers
+      attr_reader :metadata
 
-      def initialize(execution, workflow_id, run_id, disabled_releases, headers = {})
+      def initialize(execution, workflow_id, run_id, disabled_releases, metadata)
         @last_event_id = 0
         @execution = execution
         @run_id = run_id
         @workflow_id = workflow_id
         @disabled_releases = disabled_releases
-        @headers = headers
+        @metadata = metadata
       end
 
       def logger
         Temporal.logger
+      end
+
+      def headers
+        metadata.headers
       end
 
       def has_release?(change_name)
@@ -48,17 +52,25 @@ module Temporal
           workflow_run_id: run_id,
           workflow_id: workflow_id,
           workflow_name: nil, # not yet used, but will be in the future
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          heartbeat_details: nil
         )
         context = LocalActivityContext.new(metadata)
 
-        result = activity_class.execute_in_context(context, input)
-
-        if context.async?
-          execution.register_future(context.async_token, future)
+        begin
+          result = activity_class.execute_in_context(context, input)
+        rescue StandardError => e
+          # Capture any failure from running the activity into the future
+          # instead of raising immediately in order to match the behavior of
+          # running against a Temporal server.
+          future.fail(e)
         else
-          # Fulfil the future straigt away for non-async activities
-          future.set(result)
+          if context.async?
+            execution.register_future(context.async_token, future)
+          else
+            # Fulfill the future straight away for non-async activities
+            future.set(result)
+          end
         end
 
         future
@@ -66,11 +78,11 @@ module Temporal
 
       def execute_activity!(activity_class, *input, **args)
         future = execute_activity(activity_class, *input, **args)
-        result = future.get
+        result_or_exception = future.get
 
-        raise future.exception if future.failed?
+        raise result_or_exception if future.failed?
 
-        result
+        result_or_exception
       end
 
       def execute_local_activity(activity_class, *input, **args)
@@ -88,7 +100,8 @@ module Temporal
           workflow_run_id: run_id,
           workflow_id: workflow_id,
           workflow_name: nil, # not yet used, but will be in the future
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          heartbeat_details: nil
         )
         context = LocalActivityContext.new(metadata)
 

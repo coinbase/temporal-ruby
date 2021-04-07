@@ -4,7 +4,7 @@ require 'temporal/metadata/activity'
 describe Temporal::Activity::Context do
   let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:metadata_hash) { Fabricate(:activity_metadata).to_h }
-  let(:metadata) { Temporal::Metadata::Activity.new(metadata_hash) }
+  let(:metadata) { Temporal::Metadata::Activity.new(**metadata_hash) }
   let(:task_token) { SecureRandom.uuid }
 
   subject { described_class.new(client, metadata) }
@@ -26,6 +26,14 @@ describe Temporal::Activity::Context do
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
         .with(task_token: metadata.task_token, details: { foo: :bar })
+    end
+  end
+
+  describe '#heartbeat_details' do
+    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_details: 4).to_h }
+
+    it 'returns the most recent heartbeat details' do
+      expect(subject.heartbeat_details).to eq 4
     end
   end
 

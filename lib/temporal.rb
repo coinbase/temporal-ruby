@@ -36,13 +36,38 @@ module Temporal
       response.run_id
     end
 
+    def schedule_workflow(workflow, cron_schedule, *input, **args)
+      options = args.delete(:options) || {}
+      input << args unless args.empty?
+
+      execution_options = ExecutionOptions.new(workflow, options)
+      workflow_id = options[:workflow_id] || SecureRandom.uuid
+
+      response = client.start_workflow_execution(
+        namespace: execution_options.namespace,
+        workflow_id: workflow_id,
+        workflow_name: execution_options.name,
+        task_queue: execution_options.task_queue,
+        input: input,
+        execution_timeout: execution_options.timeouts[:execution],
+        task_timeout: execution_options.timeouts[:task],
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+        headers: execution_options.headers,
+        cron_schedule: cron_schedule
+      )
+
+      response.run_id
+    end
+
     def register_namespace(name, description = nil)
       client.register_namespace(name: name, description: description)
     end
 
     def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
+      execution_options = ExecutionOptions.new(workflow)
+
       client.signal_workflow_execution(
-        namespace: workflow.namespace, # TODO: allow passing namespace instead
+        namespace: execution_options.namespace, # TODO: allow passing namespace instead
         workflow_id: workflow_id,
         run_id: run_id,
         signal: signal,
@@ -50,19 +75,31 @@ module Temporal
       )
     end
 
-    def reset_workflow(namespace, workflow_id, run_id, decision_task_id: nil, reason: 'manual reset')
-      decision_task_id ||= get_last_completed_decision_task(namespace, workflow_id, run_id)
-      raise Error, 'Could not find a completed decision task event' unless decision_task_id
+    def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
+      workflow_task_id ||= get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
+      raise Error, 'Could not find a completed workflow task event' unless workflow_task_id
 
       response = client.reset_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
-        decision_task_event_id: decision_task_id
+        workflow_task_event_id: workflow_task_id
       )
 
       response.run_id
+    end
+
+    def terminate_workflow(workflow_id, namespace: nil, run_id: nil, reason: nil, details: nil)
+      namespace ||= Temporal.configuration.namespace
+
+      client.terminate_workflow_execution(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id,
+        reason: reason,
+        details: details
+      )
     end
 
     def fetch_workflow_execution_info(namespace, workflow_id, run_id)
@@ -121,16 +158,15 @@ module Temporal
       @client ||= Temporal::Client.generate
     end
 
-    def get_last_completed_decision_task(namespace, workflow_id, run_id)
+    def get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
       history_response = client.get_workflow_execution_history(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )
       history = Workflow::History.new(history_response.history.events)
-      decision_task_event = history.last_completed_decision_task
-
-      decision_task_event&.id
+      workflow_task_event = history.get_last_completed_workflow_task
+      workflow_task_event&.id
     end
   end
 end

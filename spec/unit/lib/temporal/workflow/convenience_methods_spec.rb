@@ -20,7 +20,7 @@ describe Temporal::Workflow::ConvenienceMethods do
       end
 
       it 'executes activity' do
-        subject.execute(input, options)
+        subject.execute(input, **options)
 
         expect(context)
           .to have_received(:execute_workflow)
@@ -47,7 +47,7 @@ describe Temporal::Workflow::ConvenienceMethods do
       end
 
       it 'executes activity' do
-        subject.execute!(input, options)
+        subject.execute!(input, **options)
 
         expect(context)
           .to have_received(:execute_workflow!)
@@ -60,7 +60,7 @@ describe Temporal::Workflow::ConvenienceMethods do
 
       it 'raises an error' do
         expect do
-          subject.execute!(input, options)
+          subject.execute!(input, **options)
         end.to raise_error('Called Workflow#execute! outside of a Workflow context')
       end
     end

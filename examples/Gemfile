@@ -2,4 +2,7 @@ source 'https://rubygems.org'
 
 gem 'temporal-ruby', path: '../'
 
+gem 'dry-types', '>= 1.2.0'
+gem 'dry-struct', '~> 1.1.1'
+
 gem 'rspec', group: :test

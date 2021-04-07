@@ -16,11 +16,19 @@ module Temporal
   class ActivityException < ClientError; end
 
   class ActivityNotRegistered < ClientError; end
+  class WorkflowNotRegistered < ClientError; end
 
   class ApiError < Error; end
 
   class NotFoundFailure < ApiError; end
-  class WorkflowExecutionAlreadyStartedFailure < ApiError; end
+  class WorkflowExecutionAlreadyStartedFailure < ApiError
+    attr_reader :run_id
+
+    def initialize(message, run_id)
+      super(message)
+      @run_id = run_id
+    end
+  end
   class NamespaceNotActiveFailure < ApiError; end
   class ClientVersionNotSupportedFailure < ApiError; end
   class FeatureVersionNotSupportedFailure < ApiError; end

@@ -2,18 +2,22 @@ require 'temporal/client'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
+require 'temporal/error_handler'
 
 module Temporal
   class Activity
     class Poller
-      THREAD_POOL_SIZE = 20
+      DEFAULT_OPTIONS = {
+        thread_pool_size: 20
+      }.freeze
 
-      def initialize(namespace, task_queue, activity_lookup, middleware = [])
+      def initialize(namespace, task_queue, activity_lookup, middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @activity_lookup = activity_lookup
         @middleware = middleware
         @shutting_down = false
+        @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def start
@@ -21,18 +25,23 @@ module Temporal
         @thread = Thread.new(&method(:poll_loop))
       end
 
-      def stop
+      def stop_polling
         @shutting_down = true
-        Thread.new { Temporal.logger.info('Shutting down activity poller') }.join
+        Temporal.logger.info('Shutting down activity poller')
+      end
+
+      def cancel_pending_requests
+        client.cancel_polling_request
       end
 
       def wait
         thread.join
+        thread_pool.shutdown
       end
 
       private
 
-      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :thread
+      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :options, :thread
 
       def client
         @client ||= Temporal::Client.generate
@@ -61,6 +70,9 @@ module Temporal
         client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error)
+
         nil
       end
 
@@ -72,7 +84,7 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(THREAD_POOL_SIZE)
+        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
       end
     end
   end

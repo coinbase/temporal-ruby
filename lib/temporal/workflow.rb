@@ -1,6 +1,7 @@
 require 'temporal/concerns/executable'
 require 'temporal/workflow/convenience_methods'
 require 'temporal/thread_local_context'
+require 'temporal/error_handler'
 
 module Temporal
   class Workflow
@@ -8,6 +9,7 @@ module Temporal
     extend ConvenienceMethods
 
     def self.execute_in_context(context, input)
+      old_context = Temporal::ThreadLocalContext.get
       Temporal::ThreadLocalContext.set(context)
 
       workflow = new(context)
@@ -18,7 +20,11 @@ module Temporal
       Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
       Temporal.logger.debug(error.backtrace.join("\n"))
 
+      Temporal::ErrorHandler.handle(error, metadata: context.metadata)
+
       context.fail(error)
+    ensure
+      Temporal::ThreadLocalContext.set(old_context)
     end
 
     def initialize(context)

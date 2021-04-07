@@ -16,7 +16,7 @@ module Temporal
       end
 
       def fail(token, error)
-        store[token].fail(error.class.name, error.message)
+        store[token].fail(error)
       end
 
       private

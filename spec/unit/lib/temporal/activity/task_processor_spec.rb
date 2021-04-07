@@ -10,7 +10,7 @@ describe Temporal::Activity::TaskProcessor do
     Fabricate(
       :api_activity_task,
       activity_name: activity_name,
-      input: Temporal::Workflow::Serializer::Payload.new(input).to_proto
+      input: Temporal::Client::Serializer::Payload.new(input).to_proto
     )
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
@@ -55,6 +55,21 @@ describe Temporal::Activity::TaskProcessor do
           .and_raise(StandardError)
 
         subject.process
+      end
+
+      it 'calls error_handlers' do
+        reported_error = nil
+        reported_metadata = nil
+
+        Temporal.configuration.on_error do |error, metadata: nil|
+          reported_error = error
+          reported_metadata = metadata.to_h
+        end
+
+        subject.process
+
+        expect(reported_error).to be_an_instance_of(Temporal::ActivityNotRegistered)
+        expect(reported_metadata).to_not be_empty
       end
     end
 
@@ -157,6 +172,21 @@ describe Temporal::Activity::TaskProcessor do
             .and_raise(StandardError)
 
           subject.process
+        end
+
+        it 'calls error_handlers' do
+          reported_error = nil
+          reported_metadata = nil
+
+          Temporal.configuration.on_error do |error, metadata: nil|
+            reported_error = error
+            reported_metadata = metadata
+          end
+
+          subject.process
+
+          expect(reported_error).to be_an_instance_of(StandardError)
+          expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::Activity)
         end
 
         it 'sends queue_time metric' do

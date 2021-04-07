@@ -4,7 +4,7 @@ require 'temporal/execution_options'
 require 'temporal/errors'
 require 'temporal/thread_local_context'
 require 'temporal/workflow/history/event_target'
-require 'temporal/workflow/decision'
+require 'temporal/workflow/command'
 require 'temporal/workflow/future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
@@ -15,6 +15,8 @@ require 'temporal/workflow/state_manager'
 module Temporal
   class Workflow
     class Context
+      attr_reader :metadata
+
       def initialize(state_manager, dispatcher, metadata)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -41,7 +43,7 @@ module Temporal
 
         execution_options = ExecutionOptions.new(activity_class, options)
 
-        decision = Decision::ScheduleActivity.new(
+        command = Command::ScheduleActivity.new(
           activity_id: options[:activity_id],
           activity_type: execution_options.name,
           input: input,
@@ -52,7 +54,7 @@ module Temporal
           headers: execution_options.headers
         )
 
-        target, cancelation_id = schedule_decision(decision)
+        target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
@@ -93,7 +95,7 @@ module Temporal
 
         execution_options = ExecutionOptions.new(workflow_class, options)
 
-        decision = Decision::StartChildWorkflow.new(
+        command = Command::StartChildWorkflow.new(
           workflow_id: options[:workflow_id] || SecureRandom.uuid,
           workflow_type: execution_options.name,
           input: input,
@@ -104,7 +106,7 @@ module Temporal
           headers: execution_options.headers
         )
 
-        target, cancelation_id = schedule_decision(decision)
+        target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
@@ -133,8 +135,8 @@ module Temporal
         return marker.last if marker
 
         result = block.call
-        decision = Decision::RecordMarker.new(name: StateManager::SIDE_EFFECT_MARKER, details: result)
-        schedule_decision(decision)
+        command = Command::RecordMarker.new(name: StateManager::SIDE_EFFECT_MARKER, details: result)
+        schedule_command(command)
 
         result
       end
@@ -144,8 +146,8 @@ module Temporal
       end
 
       def start_timer(timeout, timer_id = nil)
-        decision = Decision::StartTimer.new(timeout: timeout, timer_id: timer_id)
-        target, cancelation_id = schedule_decision(decision)
+        command = Command::StartTimer.new(timeout: timeout, timer_id: timer_id)
+        target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'fired') do |result|
@@ -161,20 +163,20 @@ module Temporal
       end
 
       def cancel_timer(timer_id)
-        decision = Decision::CancelTimer.new(timer_id: timer_id)
-        schedule_decision(decision)
+        command = Command::CancelTimer.new(timer_id: timer_id)
+        schedule_command(command)
       end
 
       # TODO: check if workflow can be completed
       def complete(result = nil)
-        decision = Decision::CompleteWorkflow.new(result: result)
-        schedule_decision(decision)
+        command = Command::CompleteWorkflow.new(result: result)
+        schedule_command(command)
       end
 
       # TODO: check if workflow can be failed
       def fail(exception)
-        decision = Decision::FailWorkflow.new(exception: exception)
-        schedule_decision(decision)
+        command = Command::FailWorkflow.new(exception: exception)
+        schedule_command(command)
       end
 
       def wait_for_all(*futures)
@@ -208,9 +210,9 @@ module Temporal
       end
 
       def cancel_activity(activity_id)
-        decision = Decision::RequestActivityCancellation.new(activity_id: activity_id)
+        command = Command::RequestActivityCancellation.new(activity_id: activity_id)
 
-        schedule_decision(decision)
+        schedule_command(command)
       end
 
       def cancel(target, cancelation_id)
@@ -226,10 +228,10 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :metadata
+      attr_reader :state_manager, :dispatcher
 
-      def schedule_decision(decision)
-        state_manager.schedule(decision)
+      def schedule_command(command)
+        state_manager.schedule(command)
       end
 
       def call_in_fiber(block, *args)
