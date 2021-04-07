@@ -1,5 +1,10 @@
 require 'logger'
 require 'temporal/metrics_adapters/null'
+require 'temporal/client/converter/nil'
+require 'temporal/client/converter/bytes'
+require 'temporal/client/converter/json'
+require 'temporal/client/converter/legacy'
+require 'temporal/client/converter/composite'
 
 module Temporal
   class Configuration
