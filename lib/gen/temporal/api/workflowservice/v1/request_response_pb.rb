@@ -3,8 +3,6 @@
 
 require 'google/protobuf'
 
-require 'google/protobuf/duration_pb'
-require 'google/protobuf/timestamp_pb'
 require 'temporal/api/enums/v1/workflow_pb'
 require 'temporal/api/enums/v1/namespace_pb'
 require 'temporal/api/enums/v1/failed_cause_pb'
@@ -22,10 +20,12 @@ require 'temporal/api/query/v1/message_pb'
 require 'temporal/api/replication/v1/message_pb'
 require 'temporal/api/taskqueue/v1/message_pb'
 require 'temporal/api/version/v1/message_pb'
+require 'google/protobuf/duration_pb'
+require 'google/protobuf/timestamp_pb'
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/workflowservice/v1/request_response.proto", :syntax => :proto3) do
     add_message "temporal.api.workflowservice.v1.RegisterNamespaceRequest" do
-      optional :name, :string, 1
+      optional :namespace, :string, 1
       optional :description, :string, 2
       optional :owner_email, :string, 3
       optional :workflow_execution_retention_period, :message, 4, "google.protobuf.Duration"
@@ -50,7 +50,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :next_page_token, :bytes, 2
     end
     add_message "temporal.api.workflowservice.v1.DescribeNamespaceRequest" do
-      optional :name, :string, 1
+      optional :namespace, :string, 1
       optional :id, :string, 2
     end
     add_message "temporal.api.workflowservice.v1.DescribeNamespaceResponse" do
@@ -61,7 +61,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :is_global_namespace, :bool, 5
     end
     add_message "temporal.api.workflowservice.v1.UpdateNamespaceRequest" do
-      optional :name, :string, 1
+      optional :namespace, :string, 1
       optional :update_info, :message, 2, "temporal.api.namespace.v1.UpdateNamespaceInfo"
       optional :config, :message, 3, "temporal.api.namespace.v1.NamespaceConfig"
       optional :replication_config, :message, 4, "temporal.api.replication.v1.NamespaceReplicationConfig"
@@ -76,7 +76,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :is_global_namespace, :bool, 5
     end
     add_message "temporal.api.workflowservice.v1.DeprecateNamespaceRequest" do
-      optional :name, :string, 1
+      optional :namespace, :string, 1
       optional :security_token, :string, 2
     end
     add_message "temporal.api.workflowservice.v1.DeprecateNamespaceResponse" do
@@ -148,6 +148,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :force_create_new_workflow_task, :bool, 6
       optional :binary_checksum, :string, 7
       map :query_results, :string, :message, 8, "temporal.api.query.v1.WorkflowQueryResult"
+      optional :namespace, :string, 9
     end
     add_message "temporal.api.workflowservice.v1.RespondWorkflowTaskCompletedResponse" do
       optional :workflow_task, :message, 1, "temporal.api.workflowservice.v1.PollWorkflowTaskQueueResponse"
@@ -158,6 +159,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :failure, :message, 3, "temporal.api.failure.v1.Failure"
       optional :identity, :string, 4
       optional :binary_checksum, :string, 5
+      optional :namespace, :string, 6
     end
     add_message "temporal.api.workflowservice.v1.RespondWorkflowTaskFailedResponse" do
     end
@@ -190,6 +192,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :task_token, :bytes, 1
       optional :details, :message, 2, "temporal.api.common.v1.Payloads"
       optional :identity, :string, 3
+      optional :namespace, :string, 4
     end
     add_message "temporal.api.workflowservice.v1.RecordActivityTaskHeartbeatResponse" do
       optional :cancel_requested, :bool, 1
@@ -209,6 +212,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :task_token, :bytes, 1
       optional :result, :message, 2, "temporal.api.common.v1.Payloads"
       optional :identity, :string, 3
+      optional :namespace, :string, 4
     end
     add_message "temporal.api.workflowservice.v1.RespondActivityTaskCompletedResponse" do
     end
@@ -226,6 +230,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :task_token, :bytes, 1
       optional :failure, :message, 2, "temporal.api.failure.v1.Failure"
       optional :identity, :string, 3
+      optional :namespace, :string, 4
     end
     add_message "temporal.api.workflowservice.v1.RespondActivityTaskFailedResponse" do
     end
@@ -243,6 +248,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :task_token, :bytes, 1
       optional :details, :message, 2, "temporal.api.common.v1.Payloads"
       optional :identity, :string, 3
+      optional :namespace, :string, 4
     end
     add_message "temporal.api.workflowservice.v1.RespondActivityTaskCanceledResponse" do
     end
@@ -396,7 +402,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :completed_type, :enum, 2, "temporal.api.enums.v1.QueryResultType"
       optional :query_result, :message, 3, "temporal.api.common.v1.Payloads"
       optional :error_message, :string, 4
-      optional :worker_version_info, :message, 5, "temporal.api.version.v1.WorkerVersionInfo"
+      optional :namespace, :string, 6
     end
     add_message "temporal.api.workflowservice.v1.RespondQueryTaskCompletedResponse" do
     end
@@ -439,7 +445,12 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     add_message "temporal.api.workflowservice.v1.GetClusterInfoRequest" do
     end
     add_message "temporal.api.workflowservice.v1.GetClusterInfoResponse" do
-      optional :supported_sdk_versions, :message, 1, "temporal.api.version.v1.SupportedSDKVersions"
+      map :supported_clients, :string, :string, 1
+      optional :server_version, :string, 2
+      optional :cluster_id, :string, 3
+      optional :version_info, :message, 4, "temporal.api.version.v1.VersionInfo"
+      optional :cluster_name, :string, 5
+      optional :history_shard_count, :int32, 6
     end
     add_message "temporal.api.workflowservice.v1.ListTaskQueuePartitionsRequest" do
       optional :namespace, :string, 1

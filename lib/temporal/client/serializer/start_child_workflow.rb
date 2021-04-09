@@ -6,10 +6,10 @@ module Temporal
     module Serializer
       class StartChildWorkflow < Base
         def to_proto
-          Temporal::Api::Decision::V1::Command.new(
+          Temporal::Api::Command::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
             start_child_workflow_execution_command_attributes:
-              Temporal::Api::Decision::V1::StartChildWorkflowExecutionCommandAttributes.new(
+              Temporal::Api::Command::V1::StartChildWorkflowExecutionCommandAttributes.new(
                 namespace: object.namespace,
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
