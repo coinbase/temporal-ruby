@@ -6,6 +6,7 @@ require 'temporal/client/serializer/record_marker'
 require 'temporal/client/serializer/start_timer'
 require 'temporal/client/serializer/cancel_timer'
 require 'temporal/client/serializer/complete_workflow'
+require 'temporal/client/serializer/continue_as_new'
 require 'temporal/client/serializer/fail_workflow'
 
 module Temporal
@@ -19,6 +20,7 @@ module Temporal
         Workflow::Command::StartTimer => Serializer::StartTimer,
         Workflow::Command::CancelTimer => Serializer::CancelTimer,
         Workflow::Command::CompleteWorkflow => Serializer::CompleteWorkflow,
+        Workflow::Command::ContinueAsNew => Serializer::ContinueAsNew,
         Workflow::Command::FailWorkflow => Serializer::FailWorkflow
       }.freeze
 
