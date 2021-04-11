@@ -59,11 +59,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
@@ -111,11 +112,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
@@ -152,11 +154,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'fired') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'canceled') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
