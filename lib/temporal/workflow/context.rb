@@ -186,7 +186,7 @@ module Temporal
         completed!
       end
 
-      def continue_as_new(workflow_class, *input, **args)
+      def continue_as_new(*input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
