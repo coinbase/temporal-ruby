@@ -16,6 +16,7 @@ module Temporal
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 input: Payload.new(object.input).to_proto,
                 workflow_execution_timeout: object.timeouts[:execution],
+                workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],
                 retry_policy: serialize_retry_policy(object.retry_policy),
                 header: serialize_headers(object.headers)
