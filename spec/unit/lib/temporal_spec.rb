@@ -39,6 +39,7 @@ describe Temporal do
               task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: nil,
               headers: {}
@@ -66,6 +67,7 @@ describe Temporal do
               task_queue: 'test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: nil,
               headers: { 'Foo' => 'Bar' }
@@ -90,6 +92,7 @@ describe Temporal do
               task_queue: 'default-test-task-queue',
               input: [42, { arg_1: 1, arg_2: 2 }],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: nil,
               headers: {}
@@ -108,6 +111,7 @@ describe Temporal do
               task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: nil,
               headers: {}
@@ -128,6 +132,7 @@ describe Temporal do
               task_queue: 'default-test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: :allow,
               headers: {}
@@ -152,6 +157,7 @@ describe Temporal do
               task_queue: 'test-task-queue',
               input: [42],
               task_timeout: Temporal.configuration.timeouts[:task],
+              run_timeout: Temporal.configuration.timeouts[:run],
               execution_timeout: Temporal.configuration.timeouts[:execution],
               workflow_id_reuse_policy: nil,
               headers: {}
@@ -202,6 +208,7 @@ describe Temporal do
             cron_schedule: '* * * * *',
             input: [42],
             task_timeout: Temporal.configuration.timeouts[:task],
+            run_timeout: Temporal.configuration.timeouts[:run],
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: nil,
             headers: {}
