@@ -71,6 +71,7 @@ module Temporal
         task_queue:,
         input: nil,
         execution_timeout:,
+        run_timeout:,
         task_timeout:,
         workflow_id_reuse_policy: nil,
         headers: nil,
@@ -88,7 +89,7 @@ module Temporal
           ),
           input: Serializer::Payload.new(input).to_proto,
           workflow_execution_timeout: execution_timeout,
-          workflow_run_timeout: execution_timeout,
+          workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(

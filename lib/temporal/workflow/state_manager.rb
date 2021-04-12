@@ -1,3 +1,4 @@
+require 'set'
 require 'temporal/json'
 require 'temporal/errors'
 require 'temporal/workflow/command'
