@@ -1,10 +1,9 @@
-require 'temporal/client/converter/base'
 require 'temporal/json'
 
 module Temporal
   module Client
     module Converter
-      class JSON < Base
+      class JSON
         ENCODING = 'json/plain'.freeze
 
         def encoding

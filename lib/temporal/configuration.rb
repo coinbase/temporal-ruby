@@ -3,7 +3,6 @@ require 'temporal/metrics_adapters/null'
 require 'temporal/client/converter/nil'
 require 'temporal/client/converter/bytes'
 require 'temporal/client/converter/json'
-require 'temporal/client/converter/legacy'
 require 'temporal/client/converter/composite'
 
 module Temporal
@@ -32,7 +31,6 @@ module Temporal
         Temporal::Client::Converter::Nil.new,
         Temporal::Client::Converter::Bytes.new,
         Temporal::Client::Converter::JSON.new,
-        Temporal::Client::Converter::Legacy.new
       ]
     ).freeze
 
