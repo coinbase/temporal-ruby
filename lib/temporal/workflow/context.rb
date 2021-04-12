@@ -186,11 +186,11 @@ module Temporal
         completed!
       end
 
-      def continue_as_new(*input, **args)
+      def continue_as_new(workflow_class, *input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        execution_options = ExecutionOptions.new(self.class, options)
+        execution_options = ExecutionOptions.new(workflow_class, options)
 
         command = Command::ContinueAsNew.new(
           workflow_type: execution_options.name,
