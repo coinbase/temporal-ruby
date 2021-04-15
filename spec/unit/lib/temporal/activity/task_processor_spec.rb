@@ -10,7 +10,7 @@ describe Temporal::Activity::TaskProcessor do
     Fabricate(
       :api_activity_task,
       activity_name: activity_name,
-      input: Temporal.configuration.converter.to_payloads(*input)
+      input: Temporal.configuration.converter.to_payloads(input)
     )
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }

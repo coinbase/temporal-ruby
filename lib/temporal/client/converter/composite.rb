@@ -33,7 +33,8 @@ module Temporal
           converter.from_payload(payload)
         end
 
-        def to_payloads(*data)
+        def to_payloads(data)
+          return nil if data.nil?
           Temporal::Api::Common::V1::Payloads.new(
             payloads: data.map(&method(:to_payload))
           )
