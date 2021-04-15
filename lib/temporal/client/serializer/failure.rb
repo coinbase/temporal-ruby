@@ -11,7 +11,7 @@ module Temporal
             stack_trace: stack_trace_from(object.backtrace),
             application_failure_info: Temporal::Api::Failure::V1::ApplicationFailureInfo.new(
               type: object.class.name,
-              details: Temporal.configuration.converter.to_payloads(object.message)
+              details: Temporal.configuration.converter.to_payloads([object.message])
             )
           )
         end
