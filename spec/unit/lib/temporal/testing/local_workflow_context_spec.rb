@@ -25,6 +25,12 @@ describe Temporal::Testing::LocalWorkflowContext do
     )
   end
 
+  class TestHeartbeatingActivity < Temporal::Activity
+    def execute
+      activity.heartbeat
+    end
+  end
+
   class TestFailedActivity < Temporal::Activity
     def execute
       raise 'oops'
@@ -114,5 +120,10 @@ describe Temporal::Testing::LocalWorkflowContext do
       result = workflow_context.execute_activity!(TestActivity)
       expect(result).to eq('ok')
     end
+  end
+
+  it 'can heartbeat' do
+    # Heartbeat doesn't do anything in local mode, but at least it can be called.
+    workflow_context.execute_activity!(TestHeartbeatingActivity)
   end
 end
