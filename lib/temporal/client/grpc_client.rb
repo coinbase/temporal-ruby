@@ -178,7 +178,7 @@ module Temporal
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
-          details: Temporal.configuration.converter.to_payloads(details),
+          details: Temporal.configuration.converter.to_payloads([details]),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -192,7 +192,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal.configuration.converter.to_payloads(result),
+          result: Temporal.configuration.converter.to_payloads([result]),
         )
         client.respond_activity_task_completed(request)
       end
