@@ -138,7 +138,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', parse_payloads(event.attributes.result))
+          dispatch(target, 'completed', parse_payloads(event.attributes.result)&.first)
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -217,7 +217,7 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', parse_payloads(event.attributes.result))
+          dispatch(target, 'completed', parse_payloads(event.attributes.result)&.first)
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
