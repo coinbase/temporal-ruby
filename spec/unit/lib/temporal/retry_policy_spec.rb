@@ -15,6 +15,17 @@ describe Temporal::RetryPolicy do
       }
     end
 
+    let(:no_retry_policy) do
+      {
+        interval: nil,
+        backoff: nil,
+        max_interval: nil,
+        max_attempts: 1,
+        expiration_interval: nil,
+        non_retriable_errors: nil
+      }
+    end
+
     shared_examples 'error' do |message|
       it 'raises InvalidRetryPolicy error' do
         expect { subject.validate! }.to raise_error(described_class::InvalidRetryPolicy, message)
@@ -29,17 +40,24 @@ describe Temporal::RetryPolicy do
       end
     end
 
+    context 'with no retries' do
+      let(:attributes) { no_retry_policy }
+      it 'does not raise' do
+        expect { subject.validate! }.not_to raise_error
+      end
+    end
+
     context 'with invalid attributes' do
       context 'with missing :interval' do
         let(:attributes) { valid_attributes.tap { |h| h.delete(:interval) } }
 
-        include_examples 'error', 'interval and backoff must be set'
+        include_examples 'error', 'interval and backoff must be set if max_attempts != 1'
       end
 
       context 'with missing :backoff' do
         let(:attributes) { valid_attributes.tap { |h| h.delete(:backoff) } }
 
-        include_examples 'error', 'interval and backoff must be set'
+        include_examples 'error', 'interval and backoff must be set if max_attempts != 1'
       end
 
       context 'with :max_attempts and :expiration_interval missing' do

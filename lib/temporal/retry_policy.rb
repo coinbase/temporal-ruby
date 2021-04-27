@@ -7,8 +7,8 @@ module Temporal
     class InvalidRetryPolicy < ClientError; end
 
     def validate!
-      unless interval && backoff
-        raise InvalidRetryPolicy, 'interval and backoff must be set'
+      unless max_attempts == 1 || (interval && backoff)
+        raise InvalidRetryPolicy, 'interval and backoff must be set if max_attempts != 1'
       end
 
       unless max_attempts || expiration_interval
