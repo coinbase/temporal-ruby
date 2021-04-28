@@ -10,7 +10,26 @@ describe Temporal::RetryPolicy do
         backoff: 1.5,
         max_interval: 5,
         max_attempts: 3,
-        expiration_interval: nil,
+        non_retriable_errors: nil
+      }
+    end
+
+    let(:no_retry_policy) do
+      {
+        interval: nil,
+        backoff: nil,
+        max_interval: nil,
+        max_attempts: 1,
+        non_retriable_errors: nil
+      }
+    end
+
+    let(:unlimited_attempts) do
+      {
+        interval: 1,
+        backoff: 2.0,
+        max_interval: 10,
+        max_attempts: nil,
         non_retriable_errors: nil
       }
     end
@@ -29,31 +48,34 @@ describe Temporal::RetryPolicy do
       end
     end
 
+    context 'with no retries' do
+      let(:attributes) { no_retry_policy }
+      it 'does not raise' do
+        expect { subject.validate! }.not_to raise_error
+      end
+    end
+
+    context 'with unlimited attempts' do
+      let(:attributes) { unlimited_attempts }
+      it 'does not raise' do
+        expect { subject.validate! }.not_to raise_error
+      end
+    end
+
     context 'with invalid attributes' do
       context 'with missing :interval' do
         let(:attributes) { valid_attributes.tap { |h| h.delete(:interval) } }
 
-        include_examples 'error', 'interval and backoff must be set'
+        include_examples 'error', 'interval and backoff must be set if max_attempts != 1'
       end
 
       context 'with missing :backoff' do
         let(:attributes) { valid_attributes.tap { |h| h.delete(:backoff) } }
 
-        include_examples 'error', 'interval and backoff must be set'
+        include_examples 'error', 'interval and backoff must be set if max_attempts != 1'
       end
 
-      context 'with :max_attempts and :expiration_interval missing' do
-        let(:attributes) do
-          valid_attributes.tap do |h|
-            h.delete(:max_attempts)
-            h.delete(:expiration_interval)
-          end
-        end
-
-        include_examples 'error', 'max_attempts or expiration_interval must be set'
-      end
-
-      %i[interval max_interval expiration_interval].each do |attr|
+      %i[interval max_interval].each do |attr|
         context "with #{attr} set to a float" do
           let(:attributes) { valid_attributes.tap { |h| h[attr] = 1.5 } }
 
