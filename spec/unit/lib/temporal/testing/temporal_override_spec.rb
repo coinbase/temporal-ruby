@@ -1,3 +1,4 @@
+require 'temporal/errors'
 require 'temporal/testing'
 require 'temporal/workflow'
 require 'temporal/api/errordetails/v1/message_pb'
@@ -96,6 +97,17 @@ describe Temporal::Testing::TemporalOverride do
         allow(workflow).to receive(:execute)
 
         TestTemporalOverrideWorkflow.execute_locally
+
+        expect(workflow).to have_received(:execute)
+      end
+
+      it 're-raises FailWorkflowTaskError' do
+        workflow = TestTemporalOverrideWorkflow.new(nil)
+        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
+        allow(workflow).to receive(:execute).and_raise(Temporal::FailWorkflowTaskError, 'failure')
+
+        expect { TestTemporalOverrideWorkflow.execute_locally }
+          .to raise_error(Temporal::FailWorkflowTaskError)
 
         expect(workflow).to have_received(:execute)
       end

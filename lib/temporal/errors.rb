@@ -15,6 +15,9 @@ module Temporal
   # Represents any timeout
   class TimeoutError < ClientError; end
 
+  # Indicates the workflow task should be failed
+  class FailWorkflowTaskError < Error; end
+
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
   class ActivityException < ClientError; end
