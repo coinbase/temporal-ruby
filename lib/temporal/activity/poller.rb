@@ -67,7 +67,7 @@ module Temporal
       end
 
       def poll_for_task
-        client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
+        client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue, max_tasks_per_second: options[:max_tasks_per_second])
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue: #{error.inspect}")
 

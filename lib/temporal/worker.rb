@@ -9,7 +9,7 @@ module Temporal
   class Worker
     # activity_thread_pool_size: number of threads that the poller can use to run activities.
     #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
-    def initialize(activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size])
+    def initialize(activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size], activity_max_tasks_per_second: nil)
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
@@ -18,6 +18,7 @@ module Temporal
       @shutting_down = false
       @activity_poller_options = {
         thread_pool_size: activity_thread_pool_size,
+        max_tasks_per_second: activity_max_tasks_per_second
       }
     end
 

@@ -161,12 +161,15 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_activity_task_queue(namespace:, task_queue:)
+      def poll_activity_task_queue(namespace:, task_queue:, max_tasks_per_second: nil)
         request = Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
+          ),
+          task_queue_meta: Temporal::Api::TaskQueue::V1::TaskQueueMetadata.new(
+            max_tasks_per_second: max_tasks_per_second
           )
         )
 
