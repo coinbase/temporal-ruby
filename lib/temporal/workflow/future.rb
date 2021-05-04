@@ -3,13 +3,14 @@ require 'fiber'
 module Temporal
   class Workflow
     class Future
-      attr_reader :target, :callbacks
+      attr_reader :target, :success_callbacks, :failure_callbacks
 
       def initialize(target, context, cancelation_id: nil)
         @target = target
         @context = context
         @cancelation_id = cancelation_id
-        @callbacks = []
+        @success_callbacks = []
+        @failure_callbacks = []
         @ready = false
         @failed = false
         @result = nil
@@ -52,14 +53,25 @@ module Temporal
         @failed = true
       end
 
+      # When the activity completes successfully, the block will be called with any result
       def done(&block)
-        # do nothing
-        return if failed?
-
         if ready?
           block.call(result)
         else
-          callbacks << block
+          # If the future is still outstanding, schedule a callback for invocation by the
+          # workflow context when the workflow or activity is finished
+          success_callbacks << block
+        end
+      end
+
+      # When the activity fails, the block will be called with the exception
+      def failed(&block)
+        if failed?
+          block.call(exception)
+        else
+          # If the future is still outstanding, schedule a callback for invocation by the
+          # workflow context when the workflow or activity is finished
+          failure_callbacks << block
         end
       end
 

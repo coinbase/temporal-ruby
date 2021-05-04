@@ -15,6 +15,8 @@ require 'temporal/workflow/state_manager'
 module Temporal
   class Workflow
     class Context
+      attr_reader :metadata
+
       def initialize(state_manager, dispatcher, metadata)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -57,11 +59,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
@@ -109,11 +112,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
@@ -150,11 +154,12 @@ module Temporal
 
         dispatcher.register_handler(target, 'fired') do |result|
           future.set(result)
-          future.callbacks.each { |callback| call_in_fiber(callback, result) }
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'canceled') do |exception|
           future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         future
@@ -226,7 +231,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :metadata
+      attr_reader :state_manager, :dispatcher
 
       def schedule_command(command)
         state_manager.schedule(command)

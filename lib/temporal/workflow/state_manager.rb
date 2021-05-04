@@ -1,3 +1,4 @@
+require 'set'
 require 'temporal/json'
 require 'temporal/errors'
 require 'temporal/workflow/command'
@@ -131,7 +132,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_SCHEDULED'
           state_machine.schedule
-          discard_command(event.originating_event_id)
+          discard_command(target)
 
         when 'ACTIVITY_TASK_STARTED'
           state_machine.start
@@ -150,7 +151,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
-          discard_command(event.originating_event_id)
+          discard_command(target)
 
         when 'REQUEST_CANCEL_ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -162,7 +163,7 @@ module Temporal
 
         when 'TIMER_STARTED'
           state_machine.start
-          discard_command(event.originating_event_id)
+          discard_command(target)
 
         when 'TIMER_FIRED'
           state_machine.complete
@@ -206,7 +207,7 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_INITIATED'
           state_machine.schedule
-          discard_command(event.originating_event_id)
+          discard_command(target)
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
@@ -277,8 +278,18 @@ module Temporal
         dispatcher.dispatch(target, name, attributes)
       end
 
-      def discard_command(command_id)
-        commands.delete_if { |(id, _)| id == command_id }
+      def discard_command(target)
+        # Pop the first command from the list, it is expected to match
+        existing_command_id, existing_command = commands.shift
+
+        if !existing_command_id
+          raise NonDeterministicWorkflowError, "A command #{target} was not scheduled upon replay"
+        end
+
+        existing_target = event_target_from(existing_command_id, existing_command)
+        if target != existing_target
+          raise NonDeterministicWorkflowError, "Unexpected command #{existing_target} (expected #{target})"
+        end
       end
 
       def handle_marker(id, type, details)

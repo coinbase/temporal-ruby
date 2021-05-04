@@ -1,4 +1,5 @@
 require 'temporal/metadata'
+require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
 require 'temporal/json'
@@ -9,6 +10,7 @@ module Temporal
       def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
+        @metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
@@ -28,7 +30,7 @@ module Temporal
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
         end
 
-        Temporal.logger.info("Activity task processing (#{context.log_tag})")
+        context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
           activity_class.execute_in_context(context, parse_payload(task.input))
@@ -37,7 +39,9 @@ module Temporal
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result, context) unless context.async?
       rescue StandardError, ScriptError => error
-        respond_failed(error, context)
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
+
+        respond_failed(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
@@ -46,7 +50,7 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain
+      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain, :metadata
 
       def queue_time_ms
         scheduled = task.current_attempt_scheduled_time.to_f
@@ -58,14 +62,18 @@ module Temporal
         Temporal.logger.info("Activity task completed (#{context.log_tag})")
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
-        Temporal.logger.error("Activity task completion not recorded: #{error.inspect} (#{context.log_tag})")
+        Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
       def respond_failed(error, context)
         Temporal.logger.error("Activity task failed: #{error.inspect} (#{context.log_tag})")
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
-        Temporal.logger.error("Activity task failure not recorded: #{error.inspect} (#{context.log_tag})")
+        Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+
+        Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
       def parse_payload(payload)
