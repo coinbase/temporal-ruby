@@ -9,7 +9,10 @@ module Temporal
   class Worker
     # activity_thread_pool_size: number of threads that the poller can use to run activities.
     #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
-    def initialize(activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size])
+    def initialize(
+      activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
+      workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size]
+    )
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
@@ -18,6 +21,9 @@ module Temporal
       @shutting_down = false
       @activity_poller_options = {
         thread_pool_size: activity_thread_pool_size,
+      }
+      @workflow_poller_options = {
+        thread_pool_size: workflow_thread_pool_size,
       }
     end
 
@@ -75,7 +81,8 @@ module Temporal
 
     private
 
-    attr_reader :activity_poller_options, :activities, :workflows, :pollers,
+    attr_reader :activity_poller_options, :workflow_poller_options,
+                :activities, :workflows, :pollers,
                 :workflow_task_middleware, :activity_middleware
 
     def shutting_down?
@@ -83,7 +90,7 @@ module Temporal
     end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, workflow_task_middleware)
+      Workflow::Poller.new(namespace, task_queue, lookup.freeze, workflow_task_middleware, workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
