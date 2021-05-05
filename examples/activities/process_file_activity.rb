@@ -10,7 +10,7 @@ class ProcessFileActivity < Temporal::Activity
   def execute(input)
     file_contents = File.read(input)
 
-    logger.info("Processing file: #{input}")
+    logger.info("Processing file", { input: input })
     logger.info("File contents: #{file_contents}")
 
     raise 'unknown file'

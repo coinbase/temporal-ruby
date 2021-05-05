@@ -19,7 +19,7 @@ class FailingActivitiesWorkflow < Temporal::Workflow
     end
     workflow.wait_for_all(*futures)
 
-    logger.info("#{futures.count(&:failed?)} activites of #{count} failed")
+    logger.info("Activities failed", { total: count, failed: futures.count(&:failed?) })
 
     {
       finished: futures.count(&:finished?),

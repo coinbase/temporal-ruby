@@ -11,7 +11,7 @@ module Temporal
 
         Result.new(true)
       rescue StandardError => error # TODO: is there a need for a specialized error here?
-        logger.error("Saga execution aborted: #{error.inspect}")
+        logger.error("Saga execution aborted", { error: error.inspect })
         logger.debug(error.backtrace.join("\n"))
 
         saga.compensate

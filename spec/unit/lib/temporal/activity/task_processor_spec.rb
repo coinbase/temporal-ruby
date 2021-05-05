@@ -20,7 +20,7 @@ describe Temporal::Activity::TaskProcessor do
   let(:input) { ['arg1', 'arg2'] }
 
   describe '#process' do
-    let(:context) { instance_double('Temporal::Activity::Context', async?: false, log_tag: '') }
+    let(:context) { instance_double('Temporal::Activity::Context', async?: false) }
 
     before do
       allow(Temporal::Metadata)
