@@ -12,7 +12,7 @@ module Trip
     def execute(trip_id, total)
       logger.info "Processing payment", { amount: total, trip_id: trip_id })
 
-      raise InsufficientFunds, "Unable to charge", { amount: total }
+      raise InsufficientFunds, "Unable to charge: #{total}"
     end
   end
 end
