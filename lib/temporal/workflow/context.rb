@@ -17,9 +17,10 @@ module Temporal
     class Context
       attr_reader :metadata
 
-      def initialize(state_manager, dispatcher, metadata)
+      def initialize(state_manager, dispatcher, workflow_class, metadata)
         @state_manager = state_manager
         @dispatcher = dispatcher
+        @workflow_class = workflow_class
         @metadata = metadata
         @completed = false
       end
@@ -186,7 +187,7 @@ module Temporal
         completed!
       end
 
-      def continue_as_new(workflow_class, *input, **args)
+      def continue_as_new(*input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
@@ -253,7 +254,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher
+      attr_reader :state_manager, :dispatcher, :workflow_class
 
       def completed!
         @completed = true
