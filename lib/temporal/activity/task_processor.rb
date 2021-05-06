@@ -21,6 +21,7 @@ module Temporal
       def process
         start_time = Time.now
 
+        Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
         metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
@@ -69,7 +70,7 @@ module Temporal
         Temporal.logger.error("Activity task failed", metadata.to_h.merge(error: error.inspect))
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
-        Temporal.logger.error("Unable to fail Activity", metadata.to_h.merge(error: error.inspect))
+        Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
