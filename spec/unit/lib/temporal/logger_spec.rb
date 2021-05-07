@@ -8,6 +8,12 @@ describe Temporal::Logger do
       allow(subject).to receive(:add)
     end
 
+    it 'accepts data argument to log method' do
+      subject.log(Logger::DEBUG, 'test', { a: 1 })
+
+      expect(subject).to have_received(:add).with(Logger::DEBUG, 'test {"a":1}')
+    end
+
     it 'accepts data argument to debug method' do
       subject.debug('test', { a: 1 })
 
