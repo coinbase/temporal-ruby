@@ -20,13 +20,12 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     end
     add_message "temporal.api.errordetails.v1.ClientVersionNotSupportedFailure" do
       optional :client_version, :string, 1
-      optional :client_impl, :string, 2
+      optional :client_name, :string, 2
       optional :supported_versions, :string, 3
     end
-    add_message "temporal.api.errordetails.v1.FeatureVersionNotSupportedFailure" do
-      optional :feature, :string, 1
-      optional :feature_version, :string, 2
-      optional :supported_versions, :string, 3
+    add_message "temporal.api.errordetails.v1.ServerVersionNotSupportedFailure" do
+      optional :server_version, :string, 1
+      optional :client_supported_server_versions, :string, 2
     end
     add_message "temporal.api.errordetails.v1.NamespaceAlreadyExistsFailure" do
     end
@@ -45,7 +44,7 @@ module Temporal
         WorkflowExecutionAlreadyStartedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.WorkflowExecutionAlreadyStartedFailure").msgclass
         NamespaceNotActiveFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.NamespaceNotActiveFailure").msgclass
         ClientVersionNotSupportedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.ClientVersionNotSupportedFailure").msgclass
-        FeatureVersionNotSupportedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.FeatureVersionNotSupportedFailure").msgclass
+        ServerVersionNotSupportedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.ServerVersionNotSupportedFailure").msgclass
         NamespaceAlreadyExistsFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.NamespaceAlreadyExistsFailure").msgclass
         CancellationAlreadyRequestedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.CancellationAlreadyRequestedFailure").msgclass
         QueryFailedFailure = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.errordetails.v1.QueryFailedFailure").msgclass

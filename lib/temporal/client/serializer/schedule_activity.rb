@@ -6,10 +6,10 @@ module Temporal
     module Serializer
       class ScheduleActivity < Base
         def to_proto
-          Temporal::Api::Decision::V1::Command.new(
+          Temporal::Api::Command::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_SCHEDULE_ACTIVITY_TASK,
             schedule_activity_task_command_attributes:
-              Temporal::Api::Decision::V1::ScheduleActivityTaskCommandAttributes.new(
+              Temporal::Api::Command::V1::ScheduleActivityTaskCommandAttributes.new(
                 activity_id: object.activity_id.to_s,
                 activity_type: Temporal::Api::Common::V1::ActivityType.new(name: object.activity_type),
                 input: Payload.new(object.input).to_proto,

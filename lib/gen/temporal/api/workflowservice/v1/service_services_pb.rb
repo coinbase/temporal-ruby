@@ -199,9 +199,6 @@ module Temporal
             # Things cleared are:
             # 1. StickyTaskQueue
             # 2. StickyScheduleToStartTimeout
-            # 3. ClientLibraryVersion
-            # 4. ClientFeatureVersion
-            # 5. ClientImpl
             rpc :ResetStickyTaskQueue, ::Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueRequest, ::Temporal::Api::WorkflowService::V1::ResetStickyTaskQueueResponse
             # QueryWorkflow returns query result for a specified workflow execution
             rpc :QueryWorkflow, ::Temporal::Api::WorkflowService::V1::QueryWorkflowRequest, ::Temporal::Api::WorkflowService::V1::QueryWorkflowResponse
