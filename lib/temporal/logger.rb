@@ -2,24 +2,16 @@ require 'logger'
 
 module Temporal
   class Logger < ::Logger
-    def debug(message, data = {})
-      super(message.to_s + ' ' + JSON.serialize(data))
+    SEVERITIES = %i[debug info warn error fatal unknown].freeze
+
+    SEVERITIES.each do |severity|
+      define_method severity do |message, data = {}|
+        super(message.to_s + ' ' + Oj.dump(data, mode: :strict))
+      end
     end
 
-    def info(message, data = {})
-      super(message.to_s + ' ' + JSON.serialize(data))
-    end
-
-    def warn(message, data = {})
-      super(message.to_s + ' ' + JSON.serialize(data))
-    end
-
-    def error(message, data = {})
-      super(message.to_s + ' ' + JSON.serialize(data))
-    end
-
-    def fatal(message, data = {})
-      super(message.to_s + ' ' + JSON.serialize(data))
+    def log(severity, message, data = {})
+      super(severity, message.to_s + ' ' + Oj.dump(data, mode: strict))
     end
   end
 end
