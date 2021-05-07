@@ -11,7 +11,7 @@ module Temporal
     end
 
     def log(severity, message, data = {})
-      super(severity, message.to_s + ' ' + Oj.dump(data, mode: strict))
+      super(severity, message.to_s + ' ' + Oj.dump(data, mode: :strict))
     end
   end
 end
