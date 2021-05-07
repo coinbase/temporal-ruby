@@ -24,7 +24,6 @@ module Temporal
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
-        metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
         context = Activity::Context.new(client, metadata)
 
         if !activity_class
@@ -36,11 +35,11 @@ module Temporal
         end
 
         # Do not complete asynchronous activities, these should be completed manually
-        respond_completed(result, context) unless context.async?
+        respond_completed(result) unless context.async?
       rescue StandardError, ScriptError => error
         Temporal::ErrorHandler.handle(error, metadata: metadata)
 
-        respond_failed(error, context)
+        respond_failed(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
@@ -57,7 +56,7 @@ module Temporal
         ((started - scheduled) * 1_000).round
       end
 
-      def respond_completed(result, context)
+      def respond_completed(result)
         Temporal.logger.info("Activity task completed", metadata.to_h)
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
@@ -66,7 +65,7 @@ module Temporal
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
-      def respond_failed(error, context)
+      def respond_failed(error)
         Temporal.logger.error("Activity task failed", metadata.to_h.merge(error: error.inspect))
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
