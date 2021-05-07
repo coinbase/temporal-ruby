@@ -15,7 +15,7 @@ module Temporal
       workflow = new(context)
       result = workflow.execute(*input)
 
-      context.complete(result)
+      context.complete(result) unless context.completed?
     rescue FailWorkflowTaskError => error
       Temporal.logger.error("Workflow requested to fail the workflow task: #{error.inspect}")
       # Rethrowing the exception fails the workflow task as opposed to failing the entire

@@ -3,15 +3,25 @@
 
 require 'google/protobuf'
 
+require 'google/protobuf/timestamp_pb'
+require 'temporal/api/enums/v1/common_pb'
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/version/v1/message.proto", :syntax => :proto3) do
-    add_message "temporal.api.version.v1.SupportedSDKVersions" do
-      optional :go_sdk, :string, 1
-      optional :java_sdk, :string, 2
+    add_message "temporal.api.version.v1.ReleaseInfo" do
+      optional :version, :string, 1
+      optional :release_time, :message, 2, "google.protobuf.Timestamp"
+      optional :notes, :string, 3
     end
-    add_message "temporal.api.version.v1.WorkerVersionInfo" do
-      optional :implementation, :string, 1
-      optional :feature_version, :string, 2
+    add_message "temporal.api.version.v1.Alert" do
+      optional :message, :string, 1
+      optional :severity, :enum, 2, "temporal.api.enums.v1.Severity"
+    end
+    add_message "temporal.api.version.v1.VersionInfo" do
+      optional :current, :message, 1, "temporal.api.version.v1.ReleaseInfo"
+      optional :recommended, :message, 2, "temporal.api.version.v1.ReleaseInfo"
+      optional :instructions, :string, 3
+      repeated :alerts, :message, 4, "temporal.api.version.v1.Alert"
+      optional :last_update_time, :message, 5, "google.protobuf.Timestamp"
     end
   end
 end
@@ -20,8 +30,9 @@ module Temporal
   module Api
     module Version
       module V1
-        SupportedSDKVersions = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.version.v1.SupportedSDKVersions").msgclass
-        WorkerVersionInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.version.v1.WorkerVersionInfo").msgclass
+        ReleaseInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.version.v1.ReleaseInfo").msgclass
+        Alert = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.version.v1.Alert").msgclass
+        VersionInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.version.v1.VersionInfo").msgclass
       end
     end
   end

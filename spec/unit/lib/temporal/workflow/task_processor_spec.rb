@@ -133,6 +133,14 @@ describe Temporal::Workflow::TaskProcessor do
             )
         end
 
+        it 'does not fail the task beyond the first attempt' do
+          task.attempt = 2
+          subject.process
+
+          expect(client)
+            .not_to have_received(:respond_workflow_task_failed)
+        end
+
         it 'ignores client exception' do
           allow(client)
             .to receive(:respond_workflow_task_failed)
