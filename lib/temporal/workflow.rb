@@ -15,7 +15,7 @@ module Temporal
       workflow = new(context)
       result = workflow.execute(*input)
 
-      context.complete(result)
+      context.complete(result) unless context.completed?
     rescue StandardError, ScriptError => error
       Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
       Temporal.logger.debug(error.backtrace.join("\n"))

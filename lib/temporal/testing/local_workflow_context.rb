@@ -18,6 +18,11 @@ module Temporal
         @workflow_id = workflow_id
         @disabled_releases = disabled_releases
         @metadata = metadata
+        @completed = false
+      end
+
+      def completed?
+        @completed
       end
 
       def logger
@@ -144,10 +149,12 @@ module Temporal
       end
 
       def complete(result = nil)
+        completed!
         result
       end
 
       def fail(exception)
+        completed!
         raise exception
       end
 
@@ -181,6 +188,10 @@ module Temporal
       private
 
       attr_reader :execution, :run_id, :workflow_id, :disabled_releases
+
+      def completed!
+        @completed = true
+      end
 
       def next_event_id
         @last_event_id += 1
