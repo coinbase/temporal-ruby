@@ -19,6 +19,12 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :INDEXED_VALUE_TYPE_BOOL, 5
       value :INDEXED_VALUE_TYPE_DATETIME, 6
     end
+    add_enum "temporal.api.enums.v1.Severity" do
+      value :SEVERITY_UNSPECIFIED, 0
+      value :SEVERITY_HIGH, 1
+      value :SEVERITY_MEDIUM, 2
+      value :SEVERITY_LOW, 3
+    end
   end
 end
 
@@ -28,6 +34,7 @@ module Temporal
       module V1
         EncodingType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.EncodingType").enummodule
         IndexedValueType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.IndexedValueType").enummodule
+        Severity = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.Severity").enummodule
       end
     end
   end

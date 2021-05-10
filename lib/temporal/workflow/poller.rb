@@ -1,4 +1,5 @@
 require 'temporal/client'
+require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
 require 'temporal/error_handler'
@@ -6,12 +7,17 @@ require 'temporal/error_handler'
 module Temporal
   class Workflow
     class Poller
-      def initialize(namespace, task_queue, workflow_lookup, middleware = [])
+      DEFAULT_OPTIONS = {
+        thread_pool_size: 10
+      }.freeze
+
+      def initialize(namespace, task_queue, workflow_lookup, middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @workflow_lookup = workflow_lookup
         @middleware = middleware
         @shutting_down = false
+        @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def start
@@ -29,19 +35,16 @@ module Temporal
       end
 
       def wait
-        @thread.join
+        thread.join
+        thread_pool.shutdown
       end
 
       private
 
-      attr_reader :namespace, :task_queue, :client, :workflow_lookup, :middleware
+      attr_reader :namespace, :task_queue, :workflow_lookup, :middleware, :options, :thread
 
       def client
         @client ||= Temporal::Client.generate
-      end
-
-      def middleware_chain
-        @middleware_chain ||= Middleware::Chain.new(middleware)
       end
 
       def shutting_down?
@@ -49,11 +52,17 @@ module Temporal
       end
 
       def poll_loop
-        while !shutting_down? do
+        loop do
+          thread_pool.wait_for_available_threads
+
+          return if shutting_down?
+
           Temporal.logger.debug("Polling Worklow task queue", { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
-          process(task) if task&.workflow_type
+          next unless task&.workflow_type
+
+          thread_pool.schedule { process(task) }
         end
       end
 
@@ -68,7 +77,13 @@ module Temporal
       end
 
       def process(task)
+        middleware_chain = Middleware::Chain.new(middleware)
+
         TaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
+      end
+
+      def thread_pool
+        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
       end
     end
   end

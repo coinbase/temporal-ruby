@@ -124,7 +124,7 @@ end
 
 module Temporal
   module Api
-    module Decision
+    module Command
       module V1
         ScheduleActivityTaskCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.ScheduleActivityTaskCommandAttributes").msgclass
         RequestCancelActivityTaskCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.RequestCancelActivityTaskCommandAttributes").msgclass

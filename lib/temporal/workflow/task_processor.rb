@@ -7,7 +7,7 @@ require 'temporal/errors'
 module Temporal
   class Workflow
     class TaskProcessor
-      MAX_FAILED_ATTEMPTS = 10
+      MAX_FAILED_ATTEMPTS = 1
 
       def initialize(task, namespace, workflow_lookup, client, middleware_chain)
         @task = task
@@ -88,8 +88,10 @@ module Temporal
         Temporal.logger.error("Workflow task failed", metadata.to_h.merge(error: error.inspect))
         Temporal.logger.debug(error.backtrace.join("\n"))
 
-        # Stop from getting into infinite loop if the error persists
-        return if task.attempt >= MAX_FAILED_ATTEMPTS
+        # Only fail the workflow task on the first attempt. Subsequent failures of the same workflow task
+        # should timeout. This is to avoid spinning on the failed workflow task as the service doesn't
+        # yet exponentially backoff on retries.
+        return if task.attempt > MAX_FAILED_ATTEMPTS
 
         client.respond_workflow_task_failed(
           task_token: task_token,
