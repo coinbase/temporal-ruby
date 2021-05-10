@@ -46,7 +46,7 @@ describe Temporal::Saga::Concern do
   end
 
   context 'when execution compensates' do
-    let(:logger) { instance_double('Logger') }
+    let(:logger) { instance_double('Temporal::Logger') }
     let(:error) { TestSagaConcernError.new('execution failed') }
 
     class TestSagaConcernError < StandardError
@@ -85,7 +85,7 @@ describe Temporal::Saga::Concern do
 
       expect(logger)
         .to have_received(:error)
-        .with('Saga execution aborted: #<TestSagaConcernError: execution failed>')
+        .with('Saga execution aborted', { error: '#<TestSagaConcernError: execution failed>' })
       expect(logger).to have_received(:debug).with("line 1\nline 2")
     end
   end

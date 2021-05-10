@@ -32,8 +32,7 @@ module Temporal
           'workflow_run_id' => workflow_run_id,
           'activity_id' => id,
           'activity_name' => name,
-          'attempt' => attempt,
-          'heartbeat_details' => heartbeat_details
+          'attempt' => attempt
         }
       end
     end

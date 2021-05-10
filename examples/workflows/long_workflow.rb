@@ -5,7 +5,7 @@ class LongWorkflow < Temporal::Workflow
     future = LongRunningActivity.execute(cycles, interval)
 
     workflow.on_signal do |signal, input|
-      logger.warn "Signal received: #{signal}"
+      logger.warn "Signal received", { signal: signal }
       future.cancel
     end
 

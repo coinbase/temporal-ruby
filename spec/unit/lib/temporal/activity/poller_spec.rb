@@ -108,7 +108,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal.logger)
           .to have_received(:error)
-          .with('Unable to poll activity task queue: #<StandardError: StandardError>')
+          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>'})
       end
     end
   end

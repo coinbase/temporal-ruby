@@ -57,7 +57,7 @@ module Temporal
 
           return if shutting_down?
 
-          Temporal.logger.debug("Polling worklow task queue (#{namespace} / #{task_queue})")
+          Temporal.logger.debug("Polling Worklow task queue", { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
           next unless task&.workflow_type
@@ -69,7 +69,7 @@ module Temporal
       def poll_for_task
         client.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
-        Temporal.logger.error("Unable to poll workflow task queue: #{error.inspect}")
+        Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
 
         Temporal::ErrorHandler.handle(error)
 
