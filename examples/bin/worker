@@ -51,4 +51,10 @@ worker.register_activity(Trip::RentCarActivity)
 worker.add_workflow_task_middleware(LoggingMiddleware, 'EXAMPLE')
 worker.add_activity_middleware(LoggingMiddleware, 'EXAMPLE')
 
-worker.start
+thread = Thread.new {worker.start}
+
+sleep(2)
+worker.stop
+puts("Worker stopped")
+puts(Thread.list)
+
