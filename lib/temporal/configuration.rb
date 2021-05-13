@@ -1,4 +1,4 @@
-require 'logger'
+require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
 
 module Temporal
