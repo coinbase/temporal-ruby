@@ -393,7 +393,7 @@ module Temporal
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          :this_channel_is_insecure,
+          Temporal.configuration.grpc_ssl_config,
           timeout: 60
         )
       end

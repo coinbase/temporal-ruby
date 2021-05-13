@@ -1,10 +1,10 @@
-require 'temporal/logger'
+require 'logger'
 require 'temporal/metrics_adapters/null'
 
 module Temporal
   class Configuration
     attr_reader :timeouts, :error_handlers
-    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
+    attr_accessor :channel_creds, :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
     # We choose an 10-year execution timeout because that's the maximum the cassandra DB supports,
@@ -26,12 +26,13 @@ module Temporal
 
     def initialize
       @client_type = :grpc
-      @logger = Temporal::Logger.new(STDOUT, progname: 'temporal_client')
+      @logger = Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
       @namespace = DEFAULT_NAMESPACE
       @task_queue = DEFAULT_TASK_QUEUE
       @headers = DEFAULT_HEADERS
+      @channel_creds = nil
       @error_handlers = []
     end
 
@@ -49,6 +50,14 @@ module Temporal
 
     def timeouts=(new_timeouts)
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
+    end
+
+    def grpc_ssl_config
+      if @channel_creds.nil?
+        :this_channel_is_insecure
+      else
+        @channel_creds
+      end
     end
   end
 end
