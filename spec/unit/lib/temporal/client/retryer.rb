@@ -23,6 +23,18 @@ describe Temporal::Client::Retryer do
     end
   end
 
+  it 'caps out amount slept' do
+    expect(described_class).to receive(:sleep).at_least(10).times do |amount|
+      expect(amount).to be <= 6.0 # At most 6 seconds between retries.
+    end
+    max_wait = 30
+    expect do
+      described_class.retry_for(max_wait, retry_message: "Still trying", metadata_hash: {}) do
+        raise 'try again'
+      end
+    end.to raise_error(StandardError)
+  end
+
   it 'can succeed' do
     result = described_class.retry_for(1, retry_message: "Still trying", metadata_hash: {}) do
       5
