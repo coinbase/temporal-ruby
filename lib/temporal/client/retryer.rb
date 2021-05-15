@@ -12,21 +12,17 @@ module Temporal
         # https://github.com/temporalio/sdk-java/blob/ad8831d4a4d9d257baf3482ab49f1aa681895c0e/temporal-serviceclient/src/main/java/io/temporal/serviceclient/RpcRetryOptions.java#L32
         current_interval_s = INITIAL_INTERVAL_S
         elapsed_s = 0.0
-        result = nil
         loop do
           begin
-            result = yield
+            return yield
           rescue
-            Temporal.logger.debug(retry_message, metadata_hash)
-            sleep(current_interval_s)
             elapsed_s += current_interval_s
             raise if elapsed_s >= give_up_after_s
+            Temporal.logger.debug(retry_message, metadata_hash)
+            sleep(current_interval_s)
             current_interval_s = [current_interval_s * BACKOFF_COEFFICIENT, MAX_INTERVAL_S].min
-          else
-            break
           end
         end
-        result
       end
     end
   end

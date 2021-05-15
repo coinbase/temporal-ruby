@@ -5,14 +5,15 @@ require 'time'
 describe Temporal::Client::Retryer do
   it 'backs off and stops retrying eventually' do
     timestamps = []
-    max_wait = 5.0
+    max_wait = 2.0
     expect do
       result = described_class.retry_for(max_wait, retry_message: "Still trying", metadata_hash: {}) do
         timestamps << Time.now.to_f
         raise 'try again'
       end
     end.to raise_error(StandardError)
-    expect(timestamps.last - timestamps.first).to be <= max_wait
+    epsilon = 0.1 # fudge factor for execution time, which isn't tracked in Retryer.
+    expect(timestamps.last - timestamps.first).to be <= max_wait + epsilon
 
     # Test backoff
     initial_interval = 0.2
