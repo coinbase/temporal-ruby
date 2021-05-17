@@ -6,13 +6,13 @@ class LoggingMiddleware
   def call(metadata)
     entity_name = name_from(metadata)
     entity_type = type_from(metadata)
-    Temporal.logger.info("[#{app_name}]: Started #{entity_name} #{entity_type}")
+    Temporal.logger.info("[#{app_name}]: Started", metadata: metadata.to_h)
 
     yield
 
-    Temporal.logger.info("[#{app_name}]: Finished #{entity_name} #{entity_type}")
+    Temporal.logger.info("[#{app_name}]: Finished", metadata: metadata.to_h)
   rescue StandardError
-    Temporal.logger.error("[#{app_name}]: Error #{entity_name}")
+    Temporal.logger.error("[#{app_name}]: Error", metadata: metadata.to_h)
 
     raise
   end

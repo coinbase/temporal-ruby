@@ -10,9 +10,9 @@ module Trip
     )
 
     def execute(trip_id, total)
-      logger.info "Processing payment for #{total} (trip_id #{trip_id})"
+      logger.info "Processing payment", { amount: total, trip_id: trip_id }
 
-      raise InsufficientFunds, "Unable to charge #{total}"
+      raise InsufficientFunds, "Unable to charge: #{total}"
     end
   end
 end

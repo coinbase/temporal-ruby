@@ -10,7 +10,7 @@ module Temporal
       end
 
       def heartbeat(details = nil)
-        raise NotImplementedError, 'not yet available for testing'
+        # behavior is not yet testable in local mode
       end
     end
   end

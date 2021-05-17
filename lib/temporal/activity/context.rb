@@ -31,7 +31,7 @@ module Temporal
       end
 
       def heartbeat(details = nil)
-        logger.debug('Activity heartbeat')
+        logger.debug("Activity heartbeat", metadata.to_h)
         client.record_activity_task_heartbeat(task_token: task_token, details: details)
       end
 

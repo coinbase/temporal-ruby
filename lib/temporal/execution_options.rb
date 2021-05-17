@@ -12,7 +12,7 @@ module Temporal
       @timeouts = options[:timeouts] || {}
       @headers = options[:headers] || {}
 
-      if object.singleton_class.included_modules.include?(Concerns::Executable)
+      if has_executable_concern?(object)
         @namespace ||= object.namespace
         @task_queue ||= object.task_queue
         @retry_policy ||= object.retry_policy
@@ -30,6 +30,14 @@ module Temporal
 
     def task_list
       @task_queue
+    end
+
+    private
+
+    def has_executable_concern?(object)
+      object.singleton_class.included_modules.include?(Concerns::Executable)
+    rescue TypeError
+      false
     end
   end
 end

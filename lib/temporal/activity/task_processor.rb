@@ -21,14 +21,14 @@ module Temporal
       def process
         start_time = Time.now
 
-        Temporal.logger.info("Processing activity task for #{activity_name}")
+        Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
+
+        context = Activity::Context.new(client, metadata)
 
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
         end
-
-        context = Activity::Context.new(client, metadata)
 
         result = middleware_chain.invoke(metadata) do
           activity_class.execute_in_context(context, parse_payloads(task.input))
@@ -43,7 +43,7 @@ module Temporal
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name)
-        Temporal.logger.debug("Activity task processed in #{time_diff_ms}ms")
+        Temporal.logger.debug("Activity task processed", metadata.to_h.merge(execution_time: time_diff_ms))
       end
 
       private
@@ -57,19 +57,19 @@ module Temporal
       end
 
       def respond_completed(result)
-        Temporal.logger.info("Activity #{activity_name} completed")
+        Temporal.logger.info("Activity task completed", metadata.to_h)
         client.respond_activity_task_completed(task_token: task_token, result: result)
       rescue StandardError => error
-        Temporal.logger.error("Unable to complete Activity #{activity_name}: #{error.inspect}")
+        Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
       def respond_failed(error)
-        Temporal.logger.error("Activity #{activity_name} failed with: #{error.inspect}")
+        Temporal.logger.error("Activity task failed", metadata.to_h.merge(error: error.inspect))
         client.respond_activity_task_failed(task_token: task_token, exception: error)
       rescue StandardError => error
-        Temporal.logger.error("Unable to fail Activity #{activity_name}: #{error.inspect}")
+        Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end

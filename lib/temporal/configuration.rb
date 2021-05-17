@@ -1,4 +1,4 @@
-require 'logger'
+require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
 require 'temporal/client/converter/nil'
 require 'temporal/client/converter/bytes'
@@ -16,6 +16,8 @@ module Temporal
     # matching the go SDK, see https://github.com/temporalio/sdk-go/blob/d96130dad3d2bc189bc7626543bd5911cc07ff6d/internal/internal_workflow_testsuite.go#L68
     DEFAULT_TIMEOUTS = {
       execution: 86_400 * 365 * 10, # End-to-end workflow time, including all recurrences if it's scheduled.
+      # Time for a single run, excluding retries.  Server defaults to execution timeout; we default here as well to be explicit.
+      run: 86_400 * 365 * 10,
       task: 10,               # Workflow task processing time
       schedule_to_close: nil, # End-to-end activity time (default: schedule_to_start + start_to_close)
       schedule_to_start: 10,  # Queue time for an activity
@@ -36,7 +38,7 @@ module Temporal
 
     def initialize
       @client_type = :grpc
-      @logger = Logger.new(STDOUT, progname: 'temporal_client')
+      @logger = Temporal::Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
       @namespace = DEFAULT_NAMESPACE
