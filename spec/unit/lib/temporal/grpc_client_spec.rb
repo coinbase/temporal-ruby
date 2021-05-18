@@ -11,6 +11,8 @@ describe Temporal::Client::GRPCClient do
 
   describe '#start_workflow_execution' do
     it 'provides the existing run_id when the workflow is already started' do
+      client = Temporal::Client::GRPCClient.new(nil, nil, nil, :this_channel_is_insecure)
+      allow(client).to receive(:client).and_return(grpc_stub)
       allow(grpc_stub).to receive(:start_workflow_execution).and_raise(
         GRPC::AlreadyExists,
         'Workflow execution already finished successfully. WorkflowId: TestWorkflow-1, RunId: baaf1d86-4459-4ecd-a288-47aeae55245d. Workflow Id reuse policy: allow duplicate workflow Id if last run failed.'
