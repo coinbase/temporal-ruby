@@ -15,7 +15,10 @@ module Temporal
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      client_class.new(host, port, identity)
+      if client_type == :grpc
+        client_class.new(host, port, identity, Temporal.configuration.grpc_ssl_config)
+      else
+        client_class.new(host, port, identity)
     end
   end
 end

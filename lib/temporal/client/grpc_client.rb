@@ -22,9 +22,10 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
-      def initialize(host, port, identity)
+      def initialize(host, port, identity, grpc_ssl_config)
         @url = "#{host}:#{port}"
         @identity = identity
+        @channel_creds = grpc_ssl_config
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -388,12 +389,12 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :poll_mutex, :poll_request
+      attr_reader :url, :channel_creds, :identity, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          Temporal.configuration.grpc_ssl_config,
+          channel_creds,
           timeout: 60
         )
       end
