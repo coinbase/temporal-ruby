@@ -19,6 +19,7 @@ module Temporal
         client_class.new(host, port, identity, Temporal.configuration.grpc_ssl_config)
       else
         client_class.new(host, port, identity)
+      end
     end
   end
 end
