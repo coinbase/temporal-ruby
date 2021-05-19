@@ -1,8 +1,8 @@
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
-require 'temporal/client/converter/nil'
-require 'temporal/client/converter/bytes'
-require 'temporal/client/converter/json'
+require 'temporal/client/converter/payload/nil'
+require 'temporal/client/converter/payload/bytes'
+require 'temporal/client/converter/payload/json'
 require 'temporal/client/converter/composite'
 
 module Temporal
@@ -29,10 +29,10 @@ module Temporal
     DEFAULT_NAMESPACE = 'default-namespace'.freeze
     DEFAULT_TASK_QUEUE = 'default-task-queue'.freeze
     DEFAULT_CONVERTER = Temporal::Client::Converter::Composite.new(
-      converters: [
-        Temporal::Client::Converter::Nil.new,
-        Temporal::Client::Converter::Bytes.new,
-        Temporal::Client::Converter::JSON.new,
+      payload_converters: [
+        Temporal::Client::Converter::Payload::Nil.new,
+        Temporal::Client::Converter::Payload::Bytes.new,
+        Temporal::Client::Converter::Payload::JSON.new,
       ]
     ).freeze
 

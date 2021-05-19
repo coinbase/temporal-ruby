@@ -1,6 +1,6 @@
-require 'temporal/client/converter/bytes'
+require 'temporal/client/converter/payload/bytes'
 
-describe Temporal::Client::Converter::Bytes do
+describe Temporal::Client::Converter::Payload::Bytes do
   subject { described_class.new }
 
   describe 'round trip' do

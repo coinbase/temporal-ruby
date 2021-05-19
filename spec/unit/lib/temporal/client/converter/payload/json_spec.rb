@@ -1,6 +1,6 @@
-require 'temporal/client/converter/json'
+require 'temporal/client/converter/payload/json'
 
-describe Temporal::Client::Converter::JSON do
+describe Temporal::Client::Converter::Payload::JSON do
   subject { described_class.new }
 
   describe 'round trip' do

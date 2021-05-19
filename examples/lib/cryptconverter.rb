@@ -3,7 +3,7 @@ require 'openssl'
 module Temporal
   module Client
     module Converter
-      class Crypt
+      class Crypt < Base
         CIPHER = 'aes-256-gcm'.freeze
         GCM_NONCE_SIZE = 12
         GCM_TAG_SIZE = 16
@@ -11,10 +11,6 @@ module Temporal
         METADATA_KEY_ID_KEY = 'encryption-key-id'.freeze
         METADATA_ENCODING_KEY = 'encoding'.freeze
         METADATA_ENCODING = 'binary/encrypted'.freeze
-
-        def initialize(converter:)
-          @converter = converter
-        end
 
         def get_key_id
           'test'
@@ -35,16 +31,6 @@ module Temporal
           )
         end
 
-        def encrypt_payload(payload, key_id, key)
-          Temporal::Api::Common::V1::Payload.new(
-            metadata: {
-              METADATA_ENCODING_KEY => METADATA_ENCODING,
-              METADATA_KEY_ID_KEY => key_id,
-            },
-            data: encrypt(Temporal::Api::Common::V1::Payload.encode(payload), key)
-          )
-        end
-
         def from_payloads(payloads)
           return nil if payloads.nil?
 
@@ -56,30 +42,7 @@ module Temporal
           end
         end
 
-        def decrypt_payload(payload)
-          key_id = payload.metadata[METADATA_KEY_ID_KEY]
-
-          unless key_id
-            raise "Unable to decrypt payload, no encryption key id"
-          end
-
-          key = get_key(key_id)
-          serialized_payload = decrypt(payload.data, key)
-
-          Temporal::Api::Common::V1::Payload.decode(serialized_payload)
-        end
-
-        def from_payload(payload)
-          converter.from_payload(payload)
-        end
-
-        def to_payload(data)
-          converter.to_payload(data)
-        end
-
         private
-
-        attr_reader :converter
 
         def encrypt(data, key)
           cipher = OpenSSL::Cipher.new(CIPHER)
@@ -93,6 +56,16 @@ module Temporal
           iv + crypt + cipher.auth_tag
         end
 
+        def encrypt_payload(payload, key_id, key)
+          Temporal::Api::Common::V1::Payload.new(
+            metadata: {
+              METADATA_ENCODING_KEY => METADATA_ENCODING,
+              METADATA_KEY_ID_KEY => key_id,
+            },
+            data: encrypt(Temporal::Api::Common::V1::Payload.encode(payload), key)
+          )
+        end
+
         def decrypt(data, key)
           cipher = OpenSSL::Cipher.new(CIPHER)
           cipher.decrypt
@@ -102,6 +75,19 @@ module Temporal
           cipher.auth_tag = data[-GCM_TAG_SIZE, GCM_TAG_SIZE]
 
           cipher.update(data[GCM_NONCE_SIZE...-GCM_TAG_SIZE]) + cipher.final
+        end
+
+        def decrypt_payload(payload)
+          key_id = payload.metadata[METADATA_KEY_ID_KEY]
+
+          unless key_id
+            raise "Unable to decrypt payload, no encryption key id"
+          end
+
+          key = get_key(key_id)
+          serialized_payload = decrypt(payload.data, key)
+
+          Temporal::Api::Common::V1::Payload.decode(serialized_payload)
         end
       end
     end

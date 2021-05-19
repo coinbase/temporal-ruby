@@ -10,7 +10,7 @@ Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 
 Temporal.configure do |config|
   config.converter =  Temporal::Client::Converter::Crypt.new(
-    converter: Temporal::Configuration::DEFAULT_CONVERTER
+    payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
   )
 end
 

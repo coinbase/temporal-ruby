@@ -1,8 +1,4 @@
 require 'temporal/client/grpc_client'
-require 'temporal/client/converter/composite'
-require 'temporal/client/converter/nil'
-require 'temporal/client/converter/bytes'
-require 'temporal/client/converter/json'
 
 module Temporal
   module Client

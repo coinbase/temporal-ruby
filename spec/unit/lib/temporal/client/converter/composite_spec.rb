@@ -1,20 +1,21 @@
-require 'temporal/client/converter/bytes'
+require 'temporal/client/converter/payload/bytes'
+require 'temporal/client/converter/payload/json'
 
 describe Temporal::Client::Converter::Composite do
-  let(:bytes_converter) { Temporal::Client::Converter::Bytes.new }
-  let(:json_converter) { Temporal::Client::Converter::JSON.new }
+  let(:bytes_converter) { Temporal::Client::Converter::Payload::Bytes.new }
+  let(:json_converter) { Temporal::Client::Converter::Payload::JSON.new }
 
-  subject { described_class.new(converters: [bytes_converter, json_converter]) }
+  subject { described_class.new(payload_converters: [bytes_converter, json_converter]) }
 
   describe 'encoding' do
     it 'tries converters until it finds a match' do
       payloads = [
         Temporal::Api::Common::V1::Payload.new(
-          metadata: { 'encoding' =>  Temporal::Client::Converter::Bytes::ENCODING },
+          metadata: { 'encoding' =>  Temporal::Client::Converter::Payload::Bytes::ENCODING },
           data: 'test'.b
         ),
         Temporal::Api::Common::V1::Payload.new(
-          metadata: { 'encoding' =>  Temporal::Client::Converter::JSON::ENCODING },
+          metadata: { 'encoding' =>  Temporal::Client::Converter::Payload::JSON::ENCODING },
           data: '"test"'
         ),
       ]
@@ -32,11 +33,11 @@ describe Temporal::Client::Converter::Composite do
     it 'uses metadata to pick a converter' do
       payloads = [
         Temporal::Api::Common::V1::Payload.new(
-          metadata: { 'encoding' =>  Temporal::Client::Converter::Bytes::ENCODING },
+          metadata: { 'encoding' =>  Temporal::Client::Converter::Payload::Bytes::ENCODING },
           data: 'test'.b
         ),
         Temporal::Api::Common::V1::Payload.new(
-          metadata: { 'encoding' =>  Temporal::Client::Converter::JSON::ENCODING },
+          metadata: { 'encoding' =>  Temporal::Client::Converter::Payload::JSON::ENCODING },
           data: '"test"'
         ),
       ]
