@@ -179,7 +179,7 @@ module Temporal
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
-          details: Temporal.configuration.converter.to_payloads([details]),
+          details: Temporal.configuration.converter.to_details_payloads(details),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -193,7 +193,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal.configuration.converter.to_payloads([result]),
+          result: Temporal.configuration.converter.to_result_payloads(result),
         )
         client.respond_activity_task_completed(request)
       end
@@ -205,7 +205,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: Temporal.configuration.converter.to_payloads([result])
+          result: Temporal.configuration.converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -234,7 +234,7 @@ module Temporal
       def respond_activity_task_canceled(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           task_token: task_token,
-          details: Temporal.configuration.converter.to_payloads(details),
+          details: Temporal.configuration.converter.to_details_payloads(details),
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -294,7 +294,7 @@ module Temporal
             run_id: run_id,
           ),
           reason: reason,
-          details: Serializer::Payload.new(details).to_proto
+          details: Temporal.configuration.converter.to_payload(details)
         )
 
         client.terminate_workflow_execution(request)

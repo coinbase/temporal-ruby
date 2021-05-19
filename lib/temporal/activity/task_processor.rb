@@ -31,7 +31,7 @@ module Temporal
         end
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, parse_payloads(task.input))
+          activity_class.execute_in_context(context, from_payloads(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
@@ -74,7 +74,7 @@ module Temporal
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end
 
-      def parse_payloads(payloads)
+      def from_payloads(payloads)
         Temporal.configuration.converter.from_payloads(payloads)
       end
     end

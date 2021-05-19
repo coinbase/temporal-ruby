@@ -22,6 +22,28 @@ module Temporal
           )
         end
 
+        def from_result_payloads(payloads)
+          payload = payloads&.payloads&.first
+          return nil if payload.nil?
+
+          from_payload(payload)
+        end
+
+        def from_details_payloads(payloads)
+          payload = payloads&.payloads&.first
+          return nil if payload.nil?
+
+          from_payload(payload)
+        end
+
+        def to_result_payloads(data)
+          to_payloads([data])
+        end
+
+        def to_details_payloads(data)
+          to_payloads([data])
+        end
+
         def to_payload(data)
           payload_converter.to_payload(data)
         end

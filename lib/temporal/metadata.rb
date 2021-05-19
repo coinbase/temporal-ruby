@@ -44,7 +44,7 @@ module Temporal
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
           headers: headers(task.header&.fields),
-          heartbeat_details: Temporal.configuration.converter.from_payloads(task.heartbeat_details)&.first
+          heartbeat_details: Temporal.configuration.converter.from_details_payloads(task.heartbeat_details)
         )
       end
 

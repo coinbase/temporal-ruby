@@ -11,7 +11,7 @@ module Temporal
               Temporal::Api::Command::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
                 details: {
-                  'data' => object.details.nil? ? nil : Temporal.configuration.converter.to_payloads([object.details])
+                  'data' => Temporal.configuration.converter.to_details_payloads(object.details)
                 }
               )
           )
