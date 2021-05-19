@@ -52,6 +52,7 @@ describe Temporal::Testing::LocalWorkflowContext do
   describe '#execute_activity' do
     describe 'outcome is captured in the future' do
       it 'delay failure' do
+        allow(Temporal::ErrorHandler).to receive(:handle)
         f = workflow_context.execute_activity(TestFailedActivity)
         f.wait
 
@@ -61,6 +62,9 @@ describe Temporal::Testing::LocalWorkflowContext do
 
         expect(f.get).to be_a(RuntimeError)
         expect(f.get.message).to eq('oops')
+
+        expect(Temporal::ErrorHandler).to have_received(:handle)
+          .with(f.get, hash_including(metadata: kind_of(Temporal::Metadata::Activity)))
       end
 
       it 'successful synchronous result' do

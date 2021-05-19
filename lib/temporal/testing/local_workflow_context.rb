@@ -65,6 +65,8 @@ module Temporal
         begin
           result = activity_class.execute_in_context(context, input)
         rescue StandardError => e
+          Temporal::ErrorHandler.handle(e, metadata: metadata)
+
           # Capture any failure from running the activity into the future
           # instead of raising immediately in order to match the behavior of
           # running against a Temporal server.
