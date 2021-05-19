@@ -205,7 +205,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: Temporal.configuration.converter.to_payloads(result)
+          result: Temporal.configuration.converter.to_payloads([result])
         )
         client.respond_activity_task_completed_by_id(request)
       end
