@@ -18,6 +18,8 @@ module Temporal
       context.complete(result) unless context.completed?
     rescue FailWorkflowTaskError => error
       Temporal.logger.error("Workflow requested to fail the workflow task: #{error.inspect}")
+      Temporal::ErrorHandler.handle(error, metadata: context.metadata)
+
       # Rethrowing the exception fails the workflow task as opposed to failing the entire
       # workflow. Temporal will then retry this task until it succeeds or a timeout limit is reached.
       # This stands in contrast to the next rescue block that will cause the entire workflow to

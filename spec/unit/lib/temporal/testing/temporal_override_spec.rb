@@ -105,11 +105,13 @@ describe Temporal::Testing::TemporalOverride do
         workflow = TestTemporalOverrideWorkflow.new(nil)
         allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
         allow(workflow).to receive(:execute).and_raise(Temporal::FailWorkflowTaskError, 'failure')
+        allow(Temporal::ErrorHandler).to receive(:handle)
 
         expect { TestTemporalOverrideWorkflow.execute_locally }
           .to raise_error(Temporal::FailWorkflowTaskError)
 
         expect(workflow).to have_received(:execute)
+        expect(Temporal::ErrorHandler).to have_received(:handle)
       end
 
       it 'restores original context after finishing successfully' do
