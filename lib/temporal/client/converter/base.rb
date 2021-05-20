@@ -23,17 +23,11 @@ module Temporal
         end
 
         def from_result_payloads(payloads)
-          payload = payloads&.payloads&.first
-          return nil if payload.nil?
-
-          from_payload(payload)
+          from_payloads(payloads)&.first
         end
 
         def from_details_payloads(payloads)
-          payload = payloads&.payloads&.first
-          return nil if payload.nil?
-
-          from_payload(payload)
+          from_payloads(payloads)&.first
         end
 
         def to_result_payloads(data)

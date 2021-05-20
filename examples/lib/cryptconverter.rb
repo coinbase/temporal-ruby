@@ -24,7 +24,7 @@ module Temporal
           key_id = get_key_id
           key = get_key(key_id)
 
-          payloads = converter.to_payloads(data)
+          payloads = super(data)
 
           Temporal::Api::Common::V1::Payloads.new(
             payloads: payloads.payloads.map { |payload| encrypt_payload(payload, key_id, key) }

@@ -51,6 +51,11 @@ jobs:
           background: true
 
       - run:
+          name: Boot up crypt worker
+          command: cd examples && bin/crypt_worker
+          background: true
+
+      - run:
           name: Run RSpec
           command: cd examples && bundle exec rspec
 

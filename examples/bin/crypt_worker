@@ -9,7 +9,8 @@ Dir[File.expand_path('../activities/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 
 Temporal.configure do |config|
-  config.converter =  Temporal::Client::Converter::Crypt.new(
+  config.task_queue = 'crypt'
+  config.converter = Temporal::Client::Converter::Crypt.new(
     payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
   )
 end
