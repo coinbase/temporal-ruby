@@ -15,6 +15,11 @@ module Temporal
         reject: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
       }.freeze
 
+      HISTORY_EVENT_FILTER = {
+        all: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+        close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
+      }.freeze
+
       def initialize(host, port, identity)
         @url = "#{host}:#{port}"
         @identity = identity
@@ -110,14 +115,23 @@ module Temporal
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
-      def get_workflow_execution_history(namespace:, workflow_id:, run_id:, next_page_token: nil)
+      def get_workflow_execution_history(
+        namespace:,
+        workflow_id:,
+        run_id:,
+        next_page_token: nil,
+        wait_for_new_event: false,
+        event_type: :all
+      )
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
           execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
-          next_page_token: next_page_token
+          next_page_token: next_page_token,
+          wait_new_event: wait_for_new_event,
+          history_event_filter_type: HISTORY_EVENT_FILTER[event_type]
         )
 
         client.get_workflow_execution_history(request)
