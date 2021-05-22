@@ -6,8 +6,8 @@ module Temporal
       BACKOFF_COEFFICIENT = 1.2
 
       # Used for backoff retries in certain cases when calling temporal server.
-      # metadata_hash: for logging, pass in metadata.to_h
-      def self.retry_for(give_up_after_s, retry_message:, metadata_hash:, &block)
+      # on_retry - a proc that's executed each time you need to retry
+      def self.retry_for(give_up_after_s, on_retry: nil, &block)
         # Values taken from the Java SDK
         # https://github.com/temporalio/sdk-java/blob/ad8831d4a4d9d257baf3482ab49f1aa681895c0e/temporal-serviceclient/src/main/java/io/temporal/serviceclient/RpcRetryOptions.java#L32
         current_interval_s = INITIAL_INTERVAL_S
@@ -18,7 +18,7 @@ module Temporal
           rescue
             elapsed_s += current_interval_s
             raise if elapsed_s >= give_up_after_s
-            Temporal.logger.debug(retry_message, metadata_hash)
+            on_retry.call if on_retry
             sleep(current_interval_s)
             current_interval_s = [current_interval_s * BACKOFF_COEFFICIENT, MAX_INTERVAL_S].min
           end

@@ -11,7 +11,7 @@ describe Temporal::Client::Retryer do
     end
 
     expect do
-      result = described_class.retry_for(max_wait, retry_message: "Still trying", metadata_hash: {}) do
+      result = described_class.retry_for(max_wait) do
         raise 'try again'
       end
     end.to raise_error(StandardError)
@@ -32,14 +32,14 @@ describe Temporal::Client::Retryer do
     end
     max_wait = 30
     expect do
-      described_class.retry_for(max_wait, retry_message: "Still trying", metadata_hash: {}) do
+      described_class.retry_for(max_wait) do
         raise 'try again'
       end
     end.to raise_error(StandardError)
   end
 
   it 'can succeed' do
-    result = described_class.retry_for(1, retry_message: "Still trying", metadata_hash: {}) do
+    result = described_class.retry_for(1) do
       5
     end
     expect(result).to eq(5)
@@ -47,7 +47,7 @@ describe Temporal::Client::Retryer do
 
   it 'can succeed after retries' do
     i = 0
-    result = described_class.retry_for(1, retry_message: "Still trying", metadata_hash: {}) do
+    result = described_class.retry_for(1) do
       if i < 2
         i += 1
         raise "keep trying"
@@ -56,6 +56,24 @@ describe Temporal::Client::Retryer do
       end
     end
     expect(result).to eq(6)
+  end
+
+  it 'executes the on_retry callback' do
+    i = 0
+    on_retry_calls = 0
+    retries = 2
+    on_retry = Proc.new {
+      on_retry_calls += 1
+    }
+    result = described_class.retry_for(1, on_retry: on_retry) do
+      if i < retries
+        i += 1
+        raise "keep trying"
+      else
+        6
+      end
+    end
+    expect(on_retry_calls).to equal(retries)
   end
 end
 
