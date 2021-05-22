@@ -5,17 +5,15 @@ require 'time'
 describe Temporal::Client::Retryer do
   it 'backs off and stops retrying eventually' do
     sleep_amounts = []
-    max_wait = 6.0
-    expect(described_class).to receive(:sleep).at_least(10).times do |amount|
+    expect(described_class).to receive(:sleep).exactly(10).times do |amount|
       sleep_amounts << amount
     end
 
     expect do
-      result = described_class.retry_for(max_wait) do
+      described_class.with_retries(times: 10) do
         raise 'try again'
       end
     end.to raise_error(StandardError)
-    expect(sleep_amounts.sum).to be <= max_wait
 
     # Test backoff
     initial_interval = 0.2
@@ -30,16 +28,15 @@ describe Temporal::Client::Retryer do
     expect(described_class).to receive(:sleep).at_least(10).times do |amount|
       expect(amount).to be <= 6.0 # At most 6 seconds between retries.
     end
-    max_wait = 30
     expect do
-      described_class.retry_for(max_wait) do
+      described_class.with_retries do
         raise 'try again'
       end
     end.to raise_error(StandardError)
   end
 
   it 'can succeed' do
-    result = described_class.retry_for(1) do
+    result = described_class.with_retries do
       5
     end
     expect(result).to eq(5)
@@ -47,7 +44,7 @@ describe Temporal::Client::Retryer do
 
   it 'can succeed after retries' do
     i = 0
-    result = described_class.retry_for(1) do
+    result = described_class.with_retries do
       if i < 2
         i += 1
         raise "keep trying"
@@ -65,7 +62,7 @@ describe Temporal::Client::Retryer do
     on_retry = Proc.new {
       on_retry_calls += 1
     }
-    result = described_class.retry_for(1, on_retry: on_retry) do
+    result = described_class.with_retries(on_retry: on_retry) do
       if i < retries
         i += 1
         raise "keep trying"

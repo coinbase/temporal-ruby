@@ -61,6 +61,7 @@ module Temporal
 
           task = poll_for_task
           next unless task&.activity_type
+
           thread_pool.schedule { process(task) }
         end
       end

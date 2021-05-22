@@ -62,10 +62,7 @@ module Temporal
         log_retry = proc do
           Temporal.logger.debug("Failed to report activity task completion, retrying", metadata.to_h)
         end
-        Temporal::Client::Retryer.retry_for(
-          60.0,
-          on_retry: log_retry,
-        ) do
+        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
           client.respond_activity_task_completed(task_token: task_token, result: result)
         end
       rescue StandardError => error
@@ -79,10 +76,7 @@ module Temporal
         log_retry = proc do
           Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
         end
-        Temporal::Client::Retryer.retry_for(
-          60.0,
-          on_retry: log_retry,
-        ) do
+        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
           client.respond_activity_task_failed(task_token: task_token, exception: error)
         end
       rescue StandardError => error
