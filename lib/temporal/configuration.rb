@@ -1,4 +1,4 @@
-require 'logger'
+require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
 
 module Temporal
@@ -26,7 +26,7 @@ module Temporal
 
     def initialize
       @client_type = :grpc
-      @logger = Logger.new(STDOUT, progname: 'temporal_client')
+      @logger = Temporal::Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
       @namespace = DEFAULT_NAMESPACE

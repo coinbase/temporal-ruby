@@ -11,17 +11,17 @@ module Temporal
       end
 
       SEVERITIES.each do |severity|
-        define_method severity do |message|
+        define_method severity do |message, data = {}|
           return if replay?
 
-          main_logger.public_send(severity, message)
+          main_logger.public_send(severity, message, data)
         end
       end
 
-      def log(severity, message)
+      def log(severity, message, data = {})
         return if replay?
 
-        main_logger.log(severity, message)
+        main_logger.log(severity, message, data)
       end
 
       private

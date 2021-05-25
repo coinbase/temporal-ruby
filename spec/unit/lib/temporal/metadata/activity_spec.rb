@@ -31,7 +31,6 @@ describe Temporal::Metadata::Activity do
     it 'returns a hash' do
       expect(subject.to_h).to eq({
         'attempt' => subject.attempt,
-        'heartbeat_details' => subject.heartbeat_details,
         'activity_id' => subject.id,
         'activity_name' => subject.name,
         'namespace' => subject.namespace,

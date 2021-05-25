@@ -23,7 +23,7 @@ module Temporal
       def process
         start_time = Time.now
 
-        Temporal.logger.info("Processing a workflow task for #{workflow_name}")
+        Temporal.logger.debug("Processing Workflow task", metadata.to_h)
         Temporal.metrics.timing('workflow_task.queue_time', queue_time_ms, workflow: workflow_name)
 
         if !workflow_class
@@ -40,16 +40,13 @@ module Temporal
 
         complete_task(commands)
       rescue StandardError => error
-        fail_task(error)
-
-        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
-        Temporal.logger.debug(error.backtrace.join("\n"))
-
         Temporal::ErrorHandler.handle(error, metadata: metadata)
+
+        fail_task(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name)
-        Temporal.logger.debug("Workflow task processed in #{time_diff_ms}ms")
+        Temporal.logger.debug("Workflow task processed", metadata.to_h.merge(execution_time: time_diff_ms))
       end
 
       private
@@ -82,13 +79,13 @@ module Temporal
       end
 
       def complete_task(commands)
-        Temporal.logger.info("Workflow task for #{workflow_name} completed")
+        Temporal.logger.info("Workflow task completed", metadata.to_h)
 
         client.respond_workflow_task_completed(task_token: task_token, commands: commands)
       end
 
       def fail_task(error)
-        Temporal.logger.error("Workflow task for #{workflow_name} failed with: #{error.inspect}")
+        Temporal.logger.error("Workflow task failed", metadata.to_h.merge(error: error.inspect))
         Temporal.logger.debug(error.backtrace.join("\n"))
 
         # Only fail the workflow task on the first attempt. Subsequent failures of the same workflow task
@@ -102,7 +99,7 @@ module Temporal
           exception: error
         )
       rescue StandardError => error
-        Temporal.logger.error("Unable to fail Workflow task #{workflow_name}: #{error.inspect}")
+        Temporal.logger.error("Unable to fail Workflow task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
       end

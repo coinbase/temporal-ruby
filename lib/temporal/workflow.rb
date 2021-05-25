@@ -26,7 +26,7 @@ module Temporal
       # be failed for all other kinds of StandardErrors.
       raise
     rescue StandardError, ScriptError => error
-      Temporal.logger.error("Workflow execution failed with: #{error.inspect}")
+      Temporal.logger.error("Workflow execution failed", context.metadata.to_h.merge(error: error.inspect))
       Temporal.logger.debug(error.backtrace.join("\n"))
 
       Temporal::ErrorHandler.handle(error, metadata: context.metadata)

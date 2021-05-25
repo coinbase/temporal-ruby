@@ -4,4 +4,4 @@ require_relative '../init'
 namespace, workflow_id, run_id = ARGV
 
 run_id = Temporal.reset_workflow(namespace, workflow_id, run_id)
-Temporal.logger.info "Reset workflow: #{run_id}"
+Temporal.logger.info "Reset workflow", { workflow_id: workflow_id, run_id: run_id }
