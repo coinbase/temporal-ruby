@@ -7,7 +7,7 @@ describe 'Converter', :integration do
 
     Temporal.configure do |config|
       config.task_queue = 'crypt'
-      config.converter = Temporal::Client::Converter::Crypt.new(
+      config.converter = Temporal::CryptConverter.new(
         payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
       )
     end
