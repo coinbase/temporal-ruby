@@ -2,6 +2,7 @@ require 'temporal/errors'
 require 'temporal/metadata/activity'
 require 'temporal/metadata/workflow'
 require 'temporal/metadata/workflow_task'
+require 'temporal/concerns/payloads'
 
 module Temporal
   module Metadata
@@ -10,6 +11,8 @@ module Temporal
     WORKFLOW_TYPE = :workflow
 
     class << self
+      include Concerns::Payloads
+
       def generate(type, data, namespace = nil)
         case type
         when ACTIVITY_TYPE
@@ -28,7 +31,7 @@ module Temporal
       def headers(fields)
         result = {}
         fields.each do |field, payload|
-          result[field] = Temporal.configuration.converter.from_payload(payload)
+          result[field] = from_payload(payload)
         end
         result
       end
@@ -44,7 +47,7 @@ module Temporal
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
           headers: headers(task.header&.fields),
-          heartbeat_details: Temporal.configuration.converter.from_details_payloads(task.heartbeat_details)
+          heartbeat_details: from_details_payloads(task.heartbeat_details)
         )
       end
 

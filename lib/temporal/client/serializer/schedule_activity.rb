@@ -1,10 +1,12 @@
-require 'temporal/client'
 require 'temporal/client/serializer/base'
+require 'temporal/concerns/payloads'
 
 module Temporal
   module Client
     module Serializer
       class ScheduleActivity < Base
+        include Concerns::Payloads
+
         def to_proto
           Temporal::Api::Command::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_SCHEDULE_ACTIVITY_TASK,
@@ -12,7 +14,7 @@ module Temporal
               Temporal::Api::Command::V1::ScheduleActivityTaskCommandAttributes.new(
                 activity_id: object.activity_id.to_s,
                 activity_type: Temporal::Api::Common::V1::ActivityType.new(name: object.activity_type),
-                input: Temporal.configuration.converter.to_payloads(object.input),
+                input: to_payloads(object.input),
                 namespace: object.namespace,
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 schedule_to_close_timeout: object.timeouts[:schedule_to_close],

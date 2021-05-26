@@ -5,10 +5,13 @@ require 'temporal/client/errors'
 require 'temporal/client/serializer'
 require 'temporal/client/serializer/failure'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
+require 'temporal/concerns/payloads'
 
 module Temporal
   module Client
     class GRPCClient
+      include Concerns::Payloads
+
       WORKFLOW_ID_REUSE_POLICY = {
         allow_failed: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
         allow: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
@@ -90,7 +93,7 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: Temporal.configuration.converter.to_payloads(input),
+          input: to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
@@ -193,7 +196,7 @@ module Temporal
       def record_activity_task_heartbeat(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           task_token: task_token,
-          details: Temporal.configuration.converter.to_details_payloads(details),
+          details: to_details_payloads(details),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -207,7 +210,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           identity: identity,
           task_token: task_token,
-          result: Temporal.configuration.converter.to_result_payloads(result),
+          result: to_result_payloads(result),
         )
         client.respond_activity_task_completed(request)
       end
@@ -219,7 +222,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: Temporal.configuration.converter.to_result_payloads(result)
+          result: to_result_payloads(result)
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -248,7 +251,7 @@ module Temporal
       def respond_activity_task_canceled(task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           task_token: task_token,
-          details: Temporal.configuration.converter.to_details_payloads(details),
+          details: to_details_payloads(details),
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -270,7 +273,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: Temporal.configuration.converter.to_payloads(input),
+          input: to_payloads(input),
           identity: identity
         )
         client.signal_workflow_execution(request)
@@ -308,7 +311,7 @@ module Temporal
             run_id: run_id,
           ),
           reason: reason,
-          details: Temporal.configuration.converter.to_payload(details)
+          details: to_details_payload(details)
         )
 
         client.terminate_workflow_execution(request)

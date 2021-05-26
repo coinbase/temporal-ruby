@@ -2,11 +2,13 @@ require 'temporal/metadata'
 require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
-require 'temporal/json'
+require 'temporal/concerns/payloads'
 
 module Temporal
   class Activity
     class TaskProcessor
+      include Concerns::Payloads
+
       def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
@@ -72,10 +74,6 @@ module Temporal
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
-      end
-
-      def from_payloads(payloads)
-        Temporal.configuration.converter.from_payloads(payloads)
       end
     end
   end

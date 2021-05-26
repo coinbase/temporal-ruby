@@ -1,14 +1,16 @@
 require 'set'
-require 'temporal/json'
 require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/metadata'
+require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
     class StateManager
+      include Concerns::Payloads
+
       SIDE_EFFECT_MARKER = 'SIDE_EFFECT'.freeze
       RELEASE_MARKER = 'RELEASE'.freeze
 
@@ -313,18 +315,6 @@ module Temporal
           releases[release_name] = true
           schedule(Command::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
         end
-      end
-
-      def from_result_payloads(payloads)
-        Temporal.configuration.converter.from_result_payloads(payloads)
-      end
-
-      def from_result_payloads(payloads)
-        Temporal.configuration.converter.from_result_payloads(payloads)
-      end
-
-      def from_payloads(payloads)
-        Temporal.configuration.converter.from_payloads(payloads)
       end
 
       def parse_failure(failure, default_exception_class = StandardError)

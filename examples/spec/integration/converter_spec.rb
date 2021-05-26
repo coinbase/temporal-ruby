@@ -62,6 +62,6 @@ describe 'Converter', :integration do
 
     converter = Temporal.configuration.converter
 
-    expect(converter.from_result_payloads(result)).to eq('Hello World, Tom')
+    expect(converter.from_payloads(result)&.first).to eq('Hello World, Tom')
   end
 end
