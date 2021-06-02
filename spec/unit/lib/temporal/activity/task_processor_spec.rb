@@ -35,6 +35,9 @@ describe Temporal::Activity::TaskProcessor do
       allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Temporal.metrics).to receive(:timing)
+
+      # Skip sleeps during retries to speed up the test.
+      allow(Temporal::Client::Retryer).to receive(:sleep).and_return(nil)
     end
 
     context 'when activity is not registered' do
