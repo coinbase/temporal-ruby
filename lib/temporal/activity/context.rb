@@ -7,6 +7,8 @@ require 'temporal/activity/async_token'
 module Temporal
   class Activity
     class Context
+      attr_reader :metadata
+
       def initialize(client, metadata)
         @client = client
         @metadata = metadata
@@ -58,7 +60,7 @@ module Temporal
 
       private
 
-      attr_reader :client, :metadata
+      attr_reader :client
 
       def task_token
         metadata.task_token
