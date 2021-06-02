@@ -1,11 +1,6 @@
-require 'activities/randomly_failing_activity'
-
 class FailingWorkflow < Temporal::Workflow
+  class SomeError < StandardError; end
   def execute
-    RandomlyFailingActivity.execute!
-
-    return 'You are very lucky!'
-  rescue RandomlyFailingActivity::WrongGuess => e
-    return e.message
+    raise SomeError, 'Whoops'
   end
 end
