@@ -1,6 +1,6 @@
-require 'workflows/failing_workflow'
+require 'workflows/randomly_failing_workflow'
 
-describe FailingWorkflow do
+describe RandomlyFailingWorkflow do
   subject { described_class }
 
   before do

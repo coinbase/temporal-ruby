@@ -11,6 +11,8 @@ require 'temporal/workflow'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
 require 'temporal/metrics'
+require 'temporal/json'
+require 'temporal/errors'
 
 module Temporal
   class << self
@@ -79,6 +81,40 @@ module Temporal
         signal: signal,
         input: input
       )
+    end
+
+    def await_workflow_result(workflow:, workflow_id:, run_id:, **args)
+      options = args.delete(:options) || {}
+      execution_options = ExecutionOptions.new(workflow, options)
+
+      history_response = client.get_workflow_execution_history(
+        namespace: execution_options.namespace,
+        workflow_id: workflow_id,
+        run_id: run_id,
+        wait_for_new_event: true,
+        event_type: :close
+      )
+      event = history_response['history']['events'].first
+      case event.event_type
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED
+        payloads = event['workflow_execution_completed_event_attributes'].result
+        return nil if !payloads # happens when the workflow itself returns nil
+        JSON.deserialize(payloads['payloads'].first['data'])
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_TIMED_OUT
+        raise Temporal::WorkflowTimedOut
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_TERMINATED
+        raise Temporal::WorkflowTerminated
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED
+        raise Temporal::WorkflowCanceled
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_FAILED
+        event['workflow_execution_failed_event_attributes']
+        # failure_info: Temporal::Api::Failure::V1::Failure
+        failure_info = event['workflow_execution_failed_event_attributes']['failure']
+        raise Temporal::WorkflowFailed.new(
+          failure_info['message'],
+          stack_trace: failure_info['stack_trace']
+        )
+      end
     end
 
     def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
