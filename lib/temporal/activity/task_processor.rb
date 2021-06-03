@@ -3,6 +3,7 @@ require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
 require 'temporal/concerns/payloads'
+require 'temporal/client/retryer'
 
 module Temporal
   class Activity
@@ -60,7 +61,12 @@ module Temporal
 
       def respond_completed(result)
         Temporal.logger.info("Activity task completed", metadata.to_h)
-        client.respond_activity_task_completed(task_token: task_token, result: result)
+        log_retry = proc do
+          Temporal.logger.debug("Failed to report activity task completion, retrying", metadata.to_h)
+        end
+        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
+          client.respond_activity_task_completed(task_token: task_token, result: result)
+        end
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
 
@@ -69,7 +75,12 @@ module Temporal
 
       def respond_failed(error)
         Temporal.logger.error("Activity task failed", metadata.to_h.merge(error: error.inspect))
-        client.respond_activity_task_failed(task_token: task_token, exception: error)
+        log_retry = proc do
+          Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
+        end
+        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
+          client.respond_activity_task_failed(task_token: task_token, exception: error)
+        end
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
