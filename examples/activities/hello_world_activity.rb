@@ -1,7 +1,9 @@
 class HelloWorldActivity < Temporal::Activity
   def execute(name)
-    p "Hello World, #{name}"
+    text = "Hello World, #{name}"
 
-    return
+    p text
+
+    return text
   end
 end

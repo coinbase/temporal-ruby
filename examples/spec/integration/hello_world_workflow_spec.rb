@@ -11,7 +11,7 @@ describe HelloWorldWorkflow do
     expect(HelloWorldActivity).to have_received(:execute!).with('Alice')
   end
 
-  it 'returns nil' do
-    expect(subject.execute_locally).to eq(nil)
+  it 'returns text' do
+    expect(subject.execute_locally).to eq("Hello World, Alice")
   end
 end
