@@ -1,4 +1,5 @@
-require 'temporal/client'
+require 'temporal/client/serializer/base'
+require 'temporal/client/serializer/retry_policy'
 require 'temporal/concerns/payloads'
 
 module Temporal

@@ -1,3 +1,4 @@
+require 'temporal/client/serializer/base'
 require 'temporal/concerns/payloads'
 
 module Temporal

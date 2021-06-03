@@ -1,4 +1,5 @@
 require 'temporal/client/serializer/base'
+require 'temporal/client/serializer/retry_policy'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -21,28 +22,13 @@ module Temporal
                 schedule_to_start_timeout: object.timeouts[:schedule_to_start],
                 start_to_close_timeout: object.timeouts[:start_to_close],
                 heartbeat_timeout: object.timeouts[:heartbeat],
-                retry_policy: serialize_retry_policy(object.retry_policy),
+                retry_policy: Temporal::Client::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
                 header: serialize_headers(object.headers)
               )
           )
         end
 
         private
-
-        def serialize_retry_policy(retry_policy)
-          return unless retry_policy
-
-          non_retriable_errors = Array(retry_policy.non_retriable_errors).map(&:name)
-          options = {
-            initial_interval: retry_policy.interval,
-            backoff_coefficient: retry_policy.backoff,
-            maximum_interval: retry_policy.max_interval,
-            maximum_attempts: retry_policy.max_attempts,
-            non_retryable_error_types: non_retriable_errors
-          }.compact
-
-          Temporal::Api::Common::V1::RetryPolicy.new(options)
-        end
 
         def serialize_headers(headers)
           return unless headers
