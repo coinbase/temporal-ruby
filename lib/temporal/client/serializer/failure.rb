@@ -5,6 +5,7 @@ module Temporal
   module Client
     module Serializer
       class Failure < Base
+        include Concerns::Payloads
 
         def to_proto
           Temporal::Api::Failure::V1::Failure.new(
