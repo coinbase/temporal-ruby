@@ -83,7 +83,8 @@ module Temporal
       )
     end
 
-    def await_workflow_result(workflow:, workflow_id:, run_id:, **args)
+    # run_id of nil: await the latest run
+    def await_workflow_result(workflow:, workflow_id:, run_id: nil, **args)
       options = args.delete(:options) || {}
       execution_options = ExecutionOptions.new(workflow, options)
 

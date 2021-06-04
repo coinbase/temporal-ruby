@@ -25,6 +25,41 @@ describe 'Temporal.await_workflow_result' do
     end
   end
 
+  it 'allows the run ID to be left out and reports on the latest one' do
+    workflow_id = SecureRandom.uuid
+    expected_first_result = 17
+    first_run_id = Temporal.start_workflow(
+      ResultWorkflow,
+      expected_first_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_first_result = Temporal.await_workflow_result(
+      workflow: ResultWorkflow,
+      workflow_id: workflow_id,
+    )
+    expect(actual_first_result).to eq(expected_first_result)
+
+    expected_second_result = 18
+    run_id = Temporal.start_workflow(
+      ResultWorkflow,
+      expected_second_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_second_result = Temporal.await_workflow_result(
+      workflow: ResultWorkflow,
+      workflow_id: workflow_id,
+    )
+    expect(actual_second_result).to eq(expected_second_result)
+
+    # old run ID still works
+    actual_old_result = Temporal.await_workflow_result(
+      workflow: ResultWorkflow,
+      workflow_id: workflow_id,
+      run_id: first_run_id,
+    )
+    expect(actual_old_result).to eq(expected_first_result)
+  end
+
   it 'is idempotent' do
     workflow_id = SecureRandom.uuid
     expected_result = 5
