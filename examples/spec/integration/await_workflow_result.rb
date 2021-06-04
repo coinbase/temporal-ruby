@@ -1,6 +1,5 @@
 require 'workflows/failing_workflow'
 require 'workflows/result_workflow'
-require 'workflows/timeout_workflow'
 require 'workflows/quick_timeout_workflow'
 
 describe 'Temporal.await_workflow_result' do
@@ -24,6 +23,32 @@ describe 'Temporal.await_workflow_result' do
       )
       expect(actual_result).to eq(expected_result)
     end
+  end
+
+  it 'is idempotent' do
+    workflow_id = SecureRandom.uuid
+    expected_result = 5
+    run_id = Temporal.start_workflow(
+      ResultWorkflow,
+      expected_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_result = Temporal.await_workflow_result(
+      workflow: ResultWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    )
+    expect(actual_result).to eq(expected_result)
+
+    # We should be able to await after it's already complete (and indeed,
+    # after we've already gotten the result.)
+    actual_result = Temporal.await_workflow_result(
+      workflow: ResultWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    )
+    expect(actual_result).to eq(expected_result)
+
   end
 
   it 'raises for workflows that fail' do
