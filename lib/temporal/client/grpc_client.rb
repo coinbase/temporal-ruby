@@ -311,7 +311,7 @@ module Temporal
             run_id: run_id,
           ),
           reason: reason,
-          details: to_details_payload(details)
+          details: to_details_payloads(details)
         )
 
         client.terminate_workflow_execution(request)
