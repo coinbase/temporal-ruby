@@ -14,7 +14,7 @@ describe 'Temporal.terminate_workflow' do
 
     expect do
       Temporal.await_workflow_result(
-        workflow: TimeoutWorkflow,
+        TimeoutWorkflow,
         workflow_id: workflow_id,
         run_id: run_id,
       )
