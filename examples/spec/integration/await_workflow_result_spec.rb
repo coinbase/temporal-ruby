@@ -17,12 +17,47 @@ describe 'Temporal.await_workflow_result' do
         { options: { workflow_id: workflow_id } },
       )
       actual_result = Temporal.await_workflow_result(
-        workflow: ResultWorkflow,
+        ResultWorkflow,
         workflow_id: workflow_id,
         run_id: run_id,
       )
       expect(actual_result).to eq(expected_result)
     end
+  end
+
+  it 'allows the run ID to be left out and reports on the latest one' do
+    workflow_id = SecureRandom.uuid
+    expected_first_result = 17
+    first_run_id = Temporal.start_workflow(
+      ResultWorkflow,
+      expected_first_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_first_result = Temporal.await_workflow_result(
+      ResultWorkflow,
+      workflow_id: workflow_id,
+    )
+    expect(actual_first_result).to eq(expected_first_result)
+
+    expected_second_result = 18
+    Temporal.start_workflow(
+      ResultWorkflow,
+      expected_second_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_second_result = Temporal.await_workflow_result(
+      ResultWorkflow,
+      workflow_id: workflow_id,
+    )
+    expect(actual_second_result).to eq(expected_second_result)
+
+    # old run ID still works
+    actual_old_result = Temporal.await_workflow_result(
+      ResultWorkflow,
+      workflow_id: workflow_id,
+      run_id: first_run_id,
+    )
+    expect(actual_old_result).to eq(expected_first_result)
   end
 
   it 'is idempotent' do
@@ -34,7 +69,7 @@ describe 'Temporal.await_workflow_result' do
       { options: { workflow_id: workflow_id } },
     )
     actual_result = Temporal.await_workflow_result(
-      workflow: ResultWorkflow,
+      ResultWorkflow,
       workflow_id: workflow_id,
       run_id: run_id,
     )
@@ -43,7 +78,7 @@ describe 'Temporal.await_workflow_result' do
     # We should be able to await after it's already complete (and indeed,
     # after we've already gotten the result.)
     actual_result = Temporal.await_workflow_result(
-      workflow: ResultWorkflow,
+      ResultWorkflow,
       workflow_id: workflow_id,
       run_id: run_id,
     )
@@ -60,7 +95,7 @@ describe 'Temporal.await_workflow_result' do
 
     expect do
       Temporal.await_workflow_result(
-        workflow: FailingWorkflow,
+        FailingWorkflow,
         workflow_id: workflow_id,
         run_id: run_id,
       )
@@ -79,7 +114,7 @@ describe 'Temporal.await_workflow_result' do
 
     expect do
       Temporal.await_workflow_result(
-        workflow: QuickTimeoutWorkflow,
+        QuickTimeoutWorkflow,
         workflow_id: workflow_id,
         run_id: run_id,
       )
