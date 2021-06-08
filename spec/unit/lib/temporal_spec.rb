@@ -362,6 +362,84 @@ describe Temporal do
         end
       end
     end
+
+    describe '.await_workflow_result' do
+      class NamespacedWorkflow < Temporal::Workflow
+        namespace 'some-namespace'
+        task_queue 'some-task-queue'
+      end
+
+      it 'looks up history in the correct namespace for namespaced workflows' do
+        response = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
+          history: Temporal::Api::History::V1::History.new(
+            events: [
+              {
+                event_type: :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED,
+                workflow_execution_completed_event_attributes: Temporal::Api::History::V1::WorkflowExecutionCompletedEventAttributes.new(
+                  result: nil
+                )
+              }
+            ]
+          ),
+        )
+
+        workflow_id = 'dummy_workflow_id'
+        run_id = 'dummy_run_id'
+        expect(client)
+          .to receive(:get_workflow_execution_history)
+          .with(
+            namespace: 'some-namespace',
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+          )
+          .and_return(response)
+
+        Temporal.await_workflow_result(
+          NamespacedWorkflow,
+          workflow_id: workflow_id,
+          run_id: run_id,
+        )
+      end
+
+      # Unit test, rather than integration test, because we don't support cancellation via the SDK yet.
+      # See integration test for other failure conditions.
+      it 'raises when the workflow was canceled' do
+        response = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
+          history: Temporal::Api::History::V1::History.new(
+            events: [
+              {
+                event_type: :EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED,
+                workflow_execution_canceled_event_attributes: Temporal::Api::History::V1::WorkflowExecutionCanceledEventAttributes.new(
+                )
+              }
+            ]
+          ),
+        )
+
+        workflow_id = 'dummy_workflow_id'
+        run_id = 'dummy_run_id'
+        expect(client)
+          .to receive(:get_workflow_execution_history)
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+          )
+          .and_return(response)
+
+        expect do
+          Temporal.await_workflow_result(
+            TestStartWorkflow,
+            workflow_id: workflow_id,
+            run_id: run_id,
+          )
+        end.to raise_error(Temporal::WorkflowCanceled)
+      end
+    end
   end
 
   describe '.configure' do

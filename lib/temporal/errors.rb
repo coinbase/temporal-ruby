@@ -27,7 +27,7 @@ module Temporal
   class NotFoundFailure < ApiError; end
 
   # Superclass for errors raised when retrieving a workflow result on the
-  # client and it failed on the worker.
+  # client, but the workflow failed remotely.
   class WorkflowError < Error; end
 
   # The workflow failed in user code.
