@@ -370,18 +370,8 @@ describe Temporal do
       end
 
       it 'looks up history in the correct namespace for namespaced workflows' do
-        response = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
-          history: Temporal::Api::History::V1::History.new(
-            events: [
-              {
-                event_type: :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED,
-                workflow_execution_completed_event_attributes: Temporal::Api::History::V1::WorkflowExecutionCompletedEventAttributes.new(
-                  result: nil
-                )
-              }
-            ]
-          ),
-        )
+        completed_event = Fabricate(:workflow_completed_event, result: nil)
+        response = Fabricate(:workflow_execution_history, events: [completed_event])
 
         workflow_id = 'dummy_workflow_id'
         run_id = 'dummy_run_id'
@@ -406,17 +396,8 @@ describe Temporal do
       # Unit test, rather than integration test, because we don't support cancellation via the SDK yet.
       # See integration test for other failure conditions.
       it 'raises when the workflow was canceled' do
-        response = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
-          history: Temporal::Api::History::V1::History.new(
-            events: [
-              {
-                event_type: :EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED,
-                workflow_execution_canceled_event_attributes: Temporal::Api::History::V1::WorkflowExecutionCanceledEventAttributes.new(
-                )
-              }
-            ]
-          ),
-        )
+        completed_event = Fabricate(:workflow_canceled_event)
+        response = Fabricate(:workflow_execution_history, events: [completed_event])
 
         workflow_id = 'dummy_workflow_id'
         run_id = 'dummy_run_id'

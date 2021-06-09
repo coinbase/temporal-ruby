@@ -4,11 +4,13 @@ describe SerialHelloWorldWorkflow, :integration do
   it 'completes' do
     workflow_id, run_id = run_workflow(described_class, 'Alice', 'Bob', 'John')
 
-    result = Temporal.await_workflow_result(
-      described_class,
-      workflow_id: workflow_id,
-      run_id: run_id,
+    result = fetch_history(
+      workflow_id,
+      run_id,
+      wait_for_new_event: true,
+      event_type: :close,
     )
-    expect(result).to eq(nil)
+
+    expect(result.history.events.first.event_type).to eq(:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)
   end
 end
