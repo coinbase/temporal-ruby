@@ -6,14 +6,14 @@ description = ARGV[1]
 
 fail 'Missing namespace name, please run register_namespace <namespace_name>' unless namespace
 
-Temporal.register_namespace(namespace, description) rescue exit
+Temporal.register_namespace(namespace, description) rescue nil
 
 client = Temporal.send(:client)
 
 # wait for namespace to get created
 begin
-  client.describe_namespace(name: namespace)
-  Temporal.logger.info 'Namespace created', { namespace: namespace }
+  result = client.describe_namespace(name: namespace)
+  Temporal.logger.info 'Namespace created', result.to_h
 rescue
   Temporal.logger.debug 'Waiting for namespace to set up'
   sleep 1
