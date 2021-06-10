@@ -10,12 +10,11 @@ Temporal.register_namespace(namespace, description) rescue exit
 
 client = Temporal.send(:client)
 
-sleep 5
-
 # wait for namespace to get created
 loop do
   begin
     client.describe_namespace(name: namespace)
+    Temporal.logger.info 'Namespace created', { namespace: name }
   rescue
     p 'Waiting for namespace to set up'
     sleep 1
