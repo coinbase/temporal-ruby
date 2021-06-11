@@ -179,6 +179,17 @@ module Temporal
       )
     end
 
+    def get_cron_schedule(namespace, workflow_id, run_id: nil)
+      history_response = client.get_workflow_execution_history(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      
+      history.first_workflow_event.attributes.cron_schedule
+    end
+
     def configure(&block)
       yield configuration
     end
