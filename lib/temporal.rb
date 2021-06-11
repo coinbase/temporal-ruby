@@ -27,7 +27,8 @@ module Temporal
                  :complete_activity,
                  :fail_activity,
                  :list_open_workflow_executions,
-                 :list_closed_workflow_executions
+                 :list_closed_workflow_executions,
+                 :get_cron_schedule
 
   class << self
     def configure(&block)

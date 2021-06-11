@@ -372,6 +372,25 @@ module Temporal
       fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
     end
 
+    # Fetch a workflow's cron schedule
+    #
+    # @param namespace [String]
+    # @param workflow_id [String]
+    # @param run_id [String] If not specified, the most recent run will be used
+    #
+    # @return [String] the schedule in crontab format, or nil if there is no schedule
+    def get_cron_schedule(namespace, workflow_id, run_id: nil)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      cron_schedule = history.events.first.attributes.cron_schedule
+
+      cron_schedule == '' ? nil : cron_schedule
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
