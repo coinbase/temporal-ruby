@@ -393,6 +393,40 @@ describe Temporal do
         )
       end
 
+      [
+        {type: 'hash', expected_result: { 'key' => 'value' }},
+        {type: 'integer', expected_result: 5},
+        {type: 'nil', expected_result: nil},
+        {type: 'string', expected_result: 'a result'},
+      ].each do |type:, expected_result:|
+        it "completes and returns a #{type}" do
+          payload = Temporal::Api::Common::V1::Payloads.new(
+            payloads: [
+              Temporal::Client::Converter::Payload::JSON.new.to_payload(expected_result)
+            ],
+          )
+          completed_event = Fabricate(:workflow_completed_event, result: payload)
+          response = Fabricate(:workflow_execution_history, events: [completed_event])
+          workflow_id = 'dummy_workflow_id'
+          expect(client)
+            .to receive(:get_workflow_execution_history)
+            .with(
+              namespace: 'default-test-namespace',
+              workflow_id: workflow_id,
+              run_id: nil,
+              wait_for_new_event: true,
+              event_type: :close,
+            )
+            .and_return(response)
+
+          actual_result = Temporal.await_workflow_result(
+            TestStartWorkflow,
+            workflow_id: workflow_id,
+          )
+          expect(actual_result).to eq(expected_result)
+        end
+      end
+
       # Unit test, rather than integration test, because we don't support cancellation via the SDK yet.
       # See integration test for other failure conditions.
       it 'raises when the workflow was canceled' do

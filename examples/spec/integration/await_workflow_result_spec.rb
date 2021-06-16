@@ -1,28 +1,23 @@
 require 'workflows/failing_workflow'
 require 'workflows/result_workflow'
 require 'workflows/quick_timeout_workflow'
+require 'workflows/loop_workflow'
 
 describe 'Temporal.await_workflow_result' do
-  [
-    {type: 'hash', expected_result: { 'key' => 'value' }},
-    {type: 'integer', expected_result: 5},
-    {type: 'nil', expected_result: nil},
-    {type: 'string', expected_result: 'a result'},
-  ].each do |type:, expected_result:|
-    it "completes and returns a #{type}" do
-      workflow_id = SecureRandom.uuid
-      run_id = Temporal.start_workflow(
-        ResultWorkflow,
-        expected_result,
-        { options: { workflow_id: workflow_id } },
-      )
-      actual_result = Temporal.await_workflow_result(
-        ResultWorkflow,
-        workflow_id: workflow_id,
-        run_id: run_id,
-      )
-      expect(actual_result).to eq(expected_result)
-    end
+  it "completes and returns a value" do
+    workflow_id = SecureRandom.uuid
+    expected_result = { 'key' => 'value' }
+    run_id = Temporal.start_workflow(
+      ResultWorkflow,
+      expected_result,
+      { options: { workflow_id: workflow_id } },
+    )
+    actual_result = Temporal.await_workflow_result(
+      ResultWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    )
+    expect(actual_result).to eq(expected_result)
   end
 
   it 'allows the run ID to be left out and reports on the latest one' do
@@ -58,32 +53,6 @@ describe 'Temporal.await_workflow_result' do
       run_id: first_run_id,
     )
     expect(actual_old_result).to eq(expected_first_result)
-  end
-
-  it 'is idempotent' do
-    workflow_id = SecureRandom.uuid
-    expected_result = 5
-    run_id = Temporal.start_workflow(
-      ResultWorkflow,
-      expected_result,
-      { options: { workflow_id: workflow_id } },
-    )
-    actual_result = Temporal.await_workflow_result(
-      ResultWorkflow,
-      workflow_id: workflow_id,
-      run_id: run_id,
-    )
-    expect(actual_result).to eq(expected_result)
-
-    # We should be able to await after it's already complete (and indeed,
-    # after we've already gotten the result.)
-    actual_result = Temporal.await_workflow_result(
-      ResultWorkflow,
-      workflow_id: workflow_id,
-      run_id: run_id,
-    )
-    expect(actual_result).to eq(expected_result)
-
   end
 
   it 'raises for workflows that fail' do
