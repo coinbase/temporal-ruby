@@ -2,12 +2,14 @@ require 'temporal/metadata'
 require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
-require 'temporal/json'
+require 'temporal/concerns/payloads'
 require 'temporal/client/retryer'
 
 module Temporal
   class Activity
     class TaskProcessor
+      include Concerns::Payloads
+
       def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
@@ -32,7 +34,7 @@ module Temporal
         end
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, parse_payload(task.input))
+          activity_class.execute_in_context(context, from_payloads(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually
@@ -83,13 +85,6 @@ module Temporal
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, metadata: metadata)
-      end
-
-      def parse_payload(payload)
-        return if payload.nil? || payload.payloads.empty?
-
-        binary = payload.payloads.first.data
-        JSON.deserialize(binary)
       end
     end
   end

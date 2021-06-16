@@ -1,9 +1,14 @@
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
+require 'temporal/client/converter/payload/nil'
+require 'temporal/client/converter/payload/bytes'
+require 'temporal/client/converter/payload/json'
+require 'temporal/client/converter/composite'
 
 module Temporal
   class Configuration
     attr_reader :timeouts, :error_handlers
+    attr_writer :converter
     attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -23,6 +28,13 @@ module Temporal
     DEFAULT_HEADERS = {}.freeze
     DEFAULT_NAMESPACE = 'default-namespace'.freeze
     DEFAULT_TASK_QUEUE = 'default-task-queue'.freeze
+    DEFAULT_CONVERTER = Temporal::Client::Converter::Composite.new(
+      payload_converters: [
+        Temporal::Client::Converter::Payload::Nil.new,
+        Temporal::Client::Converter::Payload::Bytes.new,
+        Temporal::Client::Converter::Payload::JSON.new,
+      ]
+    ).freeze
 
     def initialize
       @client_type = :grpc
@@ -32,6 +44,7 @@ module Temporal
       @namespace = DEFAULT_NAMESPACE
       @task_queue = DEFAULT_TASK_QUEUE
       @headers = DEFAULT_HEADERS
+      @converter = DEFAULT_CONVERTER
       @error_handlers = []
     end
 
@@ -49,6 +62,10 @@ module Temporal
 
     def timeouts=(new_timeouts)
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
+    end
+
+    def converter
+      @converter
     end
   end
 end

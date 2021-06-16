@@ -1,11 +1,13 @@
 require 'temporal/client/serializer/base'
-require 'temporal/client/serializer/payload'
 require 'temporal/client/serializer/retry_policy'
+require 'temporal/concerns/payloads'
 
 module Temporal
   module Client
     module Serializer
       class StartChildWorkflow < Base
+        include Concerns::Payloads
+
         def to_proto
           Temporal::Api::Command::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
@@ -15,7 +17,7 @@ module Temporal
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
-                input: Payload.new(object.input).to_proto,
+                input: to_payloads(object.input),
                 workflow_execution_timeout: object.timeouts[:execution],
                 workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],

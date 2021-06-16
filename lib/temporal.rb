@@ -83,8 +83,10 @@ module Temporal
       )
     end
 
+    # Long polls for a workflow to be completed and returns whatever the execute function
+    # returned.
     # run_id of nil: await the latest run
-    def await_workflow_result(workflow:, workflow_id:, run_id: nil, **args)
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, **args)
       options = args.delete(:options) || {}
       execution_options = ExecutionOptions.new(workflow, options)
 
@@ -100,7 +102,7 @@ module Temporal
       when :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED
         payloads = event['workflow_execution_completed_event_attributes'].result
         return nil if !payloads # happens when the workflow itself returns nil
-        JSON.deserialize(payloads['payloads'].first['data'])
+        Temporal::Client::Converter::Payload::JSON.new.from_payload(payloads['payloads'].first)
       when :EVENT_TYPE_WORKFLOW_EXECUTION_TIMED_OUT
         raise Temporal::WorkflowTimedOut
       when :EVENT_TYPE_WORKFLOW_EXECUTION_TERMINATED
@@ -108,13 +110,17 @@ module Temporal
       when :EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED
         raise Temporal::WorkflowCanceled
       when :EVENT_TYPE_WORKFLOW_EXECUTION_FAILED
-        event['workflow_execution_failed_event_attributes']
         # failure_info: Temporal::Api::Failure::V1::Failure
         failure_info = event['workflow_execution_failed_event_attributes']['failure']
         raise Temporal::WorkflowFailed.new(
           failure_info['message'],
           stack_trace: failure_info['stack_trace']
         )
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW
+        new_run_id = event['workflow_execution_continued_as_new_event_attributes']['new_execution_run_id']
+        raise Temporal::WorkflowContinuedAsNew.new(new_run_id: new_run_id)
+      else
+        raise NotImplementedError, "Unexpected event type #{event.event_type}."
       end
     end
 
