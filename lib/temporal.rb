@@ -116,6 +116,11 @@ module Temporal
           failure_info['message'],
           stack_trace: failure_info['stack_trace']
         )
+      when :EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW
+        new_run_id = event['workflow_execution_continued_as_new_event_attributes']['new_execution_run_id']
+        raise Temporal::WorkflowContinuedAsNew.new(new_run_id: new_run_id)
+      else
+        raise NotImplementedError, "Unexpected event type #{event.event_type}."
       end
     end
 

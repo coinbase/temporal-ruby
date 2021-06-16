@@ -121,4 +121,22 @@ describe 'Temporal.await_workflow_result' do
     end.to raise_error(Temporal::WorkflowTimedOut)
   end
 
+  it 'raises Temporal::WorkflowContinuedAsNew when the workflow continues as new' do
+    workflow_id = SecureRandom.uuid
+    run_id = Temporal.start_workflow(
+      LoopWorkflow,
+      2, # it continues as new if this arg is > 1
+      { options: { workflow_id: workflow_id } },
+    )
+
+    expect do
+      Temporal.await_workflow_result(
+        LoopWorkflow,
+        workflow_id: workflow_id,
+        run_id: run_id,
+      )
+    end.to raise_error(Temporal::WorkflowContinuedAsNew) do |error|
+      expect(error.new_run_id).to_not eq(nil)
+    end
+  end
 end
