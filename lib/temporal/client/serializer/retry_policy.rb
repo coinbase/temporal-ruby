@@ -13,7 +13,7 @@ module Temporal
             backoff_coefficient: object.backoff,
             maximum_interval: object.max_interval,
             maximum_attempts: object.max_attempts,
-            non_retriable_error_reasons: non_retriable_errors,
+            non_retryable_error_types: non_retriable_errors,
           }.compact
 
           Temporal::Api::Common::V1::RetryPolicy.new(options)
