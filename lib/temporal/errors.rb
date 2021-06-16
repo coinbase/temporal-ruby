@@ -42,6 +42,13 @@ module Temporal
   class WorkflowTimedOut < WorkflowError; end
   class WorkflowTerminated < WorkflowError; end
   class WorkflowCanceled < WorkflowError; end
+  class WorkflowContinuedAsNew < WorkflowError
+    attr_reader :new_run_id
+    def initialize(new_run_id:)
+      super
+      @new_run_id = new_run_id
+    end
+  end
 
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id
