@@ -1,14 +1,16 @@
 require 'set'
-require 'temporal/json'
 require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/metadata'
+require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
     class StateManager
+      include Concerns::Payloads
+
       SIDE_EFFECT_MARKER = 'SIDE_EFFECT'.freeze
       RELEASE_MARKER = 'RELEASE'.freeze
 
@@ -102,7 +104,7 @@ module Temporal
           dispatch(
             History::EventTarget.workflow,
             'started',
-            parse_payload(event.attributes.input),
+            from_payloads(event.attributes.input),
             Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
           )
 
@@ -139,7 +141,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', parse_payload(event.attributes.result))
+          dispatch(target, 'completed', from_result_payloads(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -194,10 +196,10 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.marker_name, parse_payload(event.attributes.details['data']))
+          handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signal_name, parse_payload(event.attributes.input))
+          dispatch(target, 'signaled', event.attributes.signal_name, from_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -211,14 +213,14 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', parse_payload(event.attributes.cause))
+          dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', parse_payload(event.attributes.result))
+          dispatch(target, 'completed', from_result_payloads(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
@@ -315,19 +317,12 @@ module Temporal
         end
       end
 
-      def parse_payload(payload)
-        return if payload.nil? || payload.payloads.empty?
-
-        binary = payload.payloads.first.data
-        JSON.deserialize(binary)
-      end
-
       def parse_failure(failure, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
           exception_class = safe_constantize(failure.application_failure_info.type)
           exception_class ||= default_exception_class
-          details = parse_payload(failure.application_failure_info.details)
+          details = from_payloads(failure.application_failure_info.details)
           backtrace = failure.stack_trace.split("\n")
 
           exception_class.new(details).tap do |exception|
@@ -337,7 +332,7 @@ module Temporal
           TimeoutError.new("Timeout type: #{failure.timeout_failure_info.timeout_type.to_s}")
         when :canceled_failure_info
           # TODO: Distinguish between different entity cancellations
-          StandardError.new(parse_payload(failure.canceled_failure_info.details))
+          StandardError.new(from_payloads(failure.canceled_failure_info.details))
         else
           StandardError.new(failure.message)
         end

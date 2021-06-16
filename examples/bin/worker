@@ -1,11 +1,21 @@
 #!/usr/bin/env ruby
 require_relative '../init'
+require_relative '../lib/cryptconverter'
 
 require 'temporal/worker'
 
 Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../activities/*.rb', __dir__)].each { |f| require f }
 Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
+
+if !ENV['USE_ENCRYPTION'].nil?
+  Temporal.configure do |config|
+    config.task_queue = 'crypt'
+    config.converter = Temporal::CryptConverter.new(
+      payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
+    )
+  end
+end
 
 worker = Temporal::Worker.new
 
@@ -14,15 +24,18 @@ worker.register_workflow(AsyncHelloWorldWorkflow)
 worker.register_workflow(BranchingWorkflow)
 worker.register_workflow(CancellingTimerWorkflow)
 worker.register_workflow(CheckWorkflow)
-worker.register_workflow(FailingWorkflow)
 worker.register_workflow(FailingActivitiesWorkflow)
+worker.register_workflow(FailingWorkflow)
 worker.register_workflow(HelloWorldWorkflow)
 worker.register_workflow(LocalHelloWorldWorkflow)
 worker.register_workflow(LongWorkflow)
 worker.register_workflow(LoopWorkflow)
 worker.register_workflow(ParentWorkflow)
 worker.register_workflow(ProcessFileWorkflow)
+worker.register_workflow(QuickTimeoutWorkflow)
+worker.register_workflow(RandomlyFailingWorkflow)
 worker.register_workflow(ReleaseWorkflow)
+worker.register_workflow(ResultWorkflow)
 worker.register_workflow(SerialHelloWorldWorkflow)
 worker.register_workflow(SideEffectWorkflow)
 worker.register_workflow(SimpleTimerWorkflow)

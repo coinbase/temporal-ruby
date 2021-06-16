@@ -10,7 +10,7 @@ describe Temporal::Activity::TaskProcessor do
     Fabricate(
       :api_activity_task,
       activity_name: activity_name,
-      input: Temporal::Client::Serializer::Payload.new(input).to_proto
+      input: Temporal.configuration.converter.to_payloads(input)
     )
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
@@ -35,6 +35,9 @@ describe Temporal::Activity::TaskProcessor do
       allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Temporal.metrics).to receive(:timing)
+
+      # Skip sleeps during retries to speed up the test.
+      allow(Temporal::Client::Retryer).to receive(:sleep).and_return(nil)
     end
 
     context 'when activity is not registered' do
