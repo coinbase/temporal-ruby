@@ -42,7 +42,10 @@ module Temporal
   class WorkflowTimedOut < WorkflowError; end
   class WorkflowTerminated < WorkflowError; end
   class WorkflowCanceled < WorkflowError; end
-  class WorkflowContinuedAsNew < WorkflowError
+
+  # Errors where the workflow run didn't complete but not an error for the whole workflow.
+  class WorkflowRunError < Error; end
+  class WorkflowRunContinuedAsNew < WorkflowRunError
     attr_reader :new_run_id
     def initialize(new_run_id:)
       super
