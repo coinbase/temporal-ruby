@@ -324,8 +324,7 @@ module Temporal
           exception_class ||= default_exception_class
           details = from_payloads(failure.application_failure_info.details)
           backtrace = failure.stack_trace.split("\n")
-
-          exception_class.new(details).tap do |exception|
+          exception_class.new(details.first).tap do |exception|
             exception.set_backtrace(backtrace) if !backtrace.empty?
           end
         when :timeout_failure_info
