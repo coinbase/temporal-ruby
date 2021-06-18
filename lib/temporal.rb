@@ -192,8 +192,9 @@ module Temporal
         run_id: run_id
       )
       history = Workflow::History.new(history_response.history.events)
+      cron_schedule = history.first_workflow_event.attributes.cron_schedule
       
-      history.first_workflow_event.attributes.cron_schedule
+      cron_schedule != '' ? cron_schedule : nil
     end
 
     def configure(&block)
