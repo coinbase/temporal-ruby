@@ -100,27 +100,28 @@ module Temporal
           wait_for_new_event: true,
           event_type: :close
         )
-        event = history_response['history']['events'].first
-        case event.event_type
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED
-          payloads = event['workflow_execution_completed_event_attributes'].result
+        history = Workflow::History.new(history_response.history.events)
+        closed_event = history.events.first
+        case closed_event.type
+        when 'WORKFLOW_EXECUTION_COMPLETED'
+          payloads = closed_event.attributes.result
           return nil if !payloads # happens when the workflow itself returns nil
           return Temporal::Client::Converter::Payload::JSON.new.from_payload(payloads['payloads'].first)
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_TIMED_OUT
+        when 'WORKFLOW_EXECUTION_TIMED_OUT'
           raise Temporal::WorkflowTimedOut
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_TERMINATED
+        when 'WORKFLOW_EXECUTION_TERMINATED'
           raise Temporal::WorkflowTerminated
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED
+        when 'WORKFLOW_EXECUTION_CANCELED'
           raise Temporal::WorkflowCanceled
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_FAILED
+        when 'WORKFLOW_EXECUTION_FAILED'
           # failure_info: Temporal::Api::Failure::V1::Failure
-          failure_info = event['workflow_execution_failed_event_attributes']['failure']
+          failure_info = closed_event.attributes.failure
           raise Temporal::WorkflowFailed.new(
             failure_info['message'],
             stack_trace: failure_info['stack_trace']
           )
-        when :EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW
-          new_run_id = event['workflow_execution_continued_as_new_event_attributes']['new_execution_run_id']
+        when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
+          new_run_id = closed_event.attributes.new_execution_run_id
           if run_id
             # If they specified a run ID, we should throw to let them know they're not getting the result
             # they wanted.  They can re-call on the new run ID if they want.
@@ -130,7 +131,7 @@ module Temporal
             # await the next run until the workflow is complete.
           end
         else
-          raise NotImplementedError, "Unexpected event type #{event.event_type}."
+          raise NotImplementedError, "Unexpected event type #{closed_event.type}."
         end
       end
     end
