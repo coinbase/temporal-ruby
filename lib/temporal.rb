@@ -106,7 +106,7 @@ module Temporal
         when 'WORKFLOW_EXECUTION_COMPLETED'
           payloads = closed_event.attributes.result
           return nil if !payloads # happens when the workflow itself returns nil
-          return Temporal::Client::Converter::Payload::JSON.new.from_payload(payloads['payloads'].first)
+          return from_result_payloads(payloads)
         when 'WORKFLOW_EXECUTION_TIMED_OUT'
           raise Temporal::WorkflowTimedOut
         when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -214,6 +214,8 @@ module Temporal
     end
 
     private
+
+    include Concerns::Payloads
 
     def client
       @client ||= Temporal::Client.generate
