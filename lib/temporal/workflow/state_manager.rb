@@ -199,7 +199,7 @@ module Temporal
           handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signal_name, from_payloads(event.attributes.input))
+          dispatch(target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo

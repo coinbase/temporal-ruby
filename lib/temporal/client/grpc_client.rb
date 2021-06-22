@@ -273,7 +273,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: to_payloads(input),
+          input: to_signal_payloads(input),
           identity: identity
         )
         client.signal_workflow_execution(request)
