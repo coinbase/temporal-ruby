@@ -46,6 +46,10 @@ jobs:
           command: cd examples && bin/register_namespace ruby-samples
 
       - run:
+          name: Wait for Namespace to settle
+          command: sleep 15
+
+      - run:
           name: Boot up worker
           command: cd examples && bin/worker
           background: true

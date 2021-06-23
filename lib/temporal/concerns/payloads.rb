@@ -17,6 +17,10 @@ module Temporal
         from_payloads(payloads)&.first
       end
 
+      def from_signal_payloads(payloads)
+        from_payloads(payloads)&.first
+      end
+
       def to_payloads(data)
         payload_converter.to_payloads(data)
       end
@@ -30,6 +34,10 @@ module Temporal
       end
 
       def to_details_payloads(data)
+        to_payloads([data])
+      end
+
+      def to_signal_payloads(data)
         to_payloads([data])
       end
 
