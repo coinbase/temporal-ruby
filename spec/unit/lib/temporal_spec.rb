@@ -236,6 +236,52 @@ describe Temporal do
       end
     end
 
+    describe '.signal_workflow' do
+      before { allow(client).to receive(:signal_workflow_execution).and_return(nil) }
+
+      it 'signals workflow with a specified class' do
+        described_class.signal_workflow(TestStartWorkflow, 'signal', 'workflow_id', 'run_id')
+
+        expect(client)
+          .to have_received(:signal_workflow_execution)
+          .with(
+            namespace: 'default-test-namespace',
+            signal: 'signal', 
+            workflow_id: 'workflow_id',
+            run_id: 'run_id',
+            input: nil,
+          )
+      end
+
+      it 'signals workflow with input' do
+        described_class.signal_workflow(TestStartWorkflow, 'signal', 'workflow_id', 'run_id', 'input')
+
+        expect(client)
+          .to have_received(:signal_workflow_execution)
+          .with(
+            namespace: 'default-test-namespace',
+            signal: 'signal', 
+            workflow_id: 'workflow_id',
+            run_id: 'run_id',
+            input: 'input',
+          )
+      end
+
+      it 'signals workflow with a specified namespace' do
+        described_class.signal_workflow_namespace('other-test-namespace', 'signal', 'workflow_id', 'run_id')
+
+        expect(client)
+          .to have_received(:signal_workflow_execution)
+          .with(
+            namespace: 'other-test-namespace',
+            signal: 'signal', 
+            workflow_id: 'workflow_id',
+            run_id: 'run_id',
+            input: nil,
+          )
+      end
+    end
+
     describe '.fetch_workflow_execution_info' do
       let(:response) do
         Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
