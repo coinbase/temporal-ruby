@@ -3,6 +3,11 @@ require 'temporal/metadata'
 require 'time'
 
 describe Temporal::Client::Retryer do
+  before do
+    # Skip sleeps during retries to speed up the test.
+    allow(Temporal::Client::Retryer).to receive(:sleep).and_return(nil)
+  end
+
   it 'backs off and stops retrying eventually' do
     sleep_amounts = []
     expect(described_class).to receive(:sleep).exactly(10).times do |amount|
@@ -71,6 +76,41 @@ describe Temporal::Client::Retryer do
       end
     end
     expect(on_retry_calls).to equal(retries)
+  end
+
+  {
+    GRPC::AlreadyExists => false,
+    GRPC::Cancelled => false,
+    GRPC::FailedPrecondition => false,
+    GRPC::InvalidArgument => false,
+    GRPC::NotFound => false,
+    GRPC::PermissionDenied => false,
+    GRPC::Unauthenticated => false,
+    GRPC::Unimplemented => false,
+    StandardError => true,
+    GRPC::Unknown => true,
+    GRPC::Unavailable => true
+  }.each do |error_class, expect_retry|
+    it "#{expect_retry ? 'does' : 'does not'} retry #{error_class}" do
+      on_retry_calls = 0
+      retried = false
+      on_retry = Proc.new {
+        on_retry_calls += 1
+      }
+
+      begin
+        described_class.with_retries(on_retry: on_retry) do
+          if !retried
+            retried = true
+            raise error_class.new("nope")
+          end
+        end
+      rescue => e
+        expect(e.class).to eq(error_class)
+      ensure
+        expect(on_retry_calls).to equal(expect_retry ? 1 : 0)
+      end
+    end
   end
 end
 
