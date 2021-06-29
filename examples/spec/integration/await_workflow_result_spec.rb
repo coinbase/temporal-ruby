@@ -68,8 +68,8 @@ describe 'Temporal.await_workflow_result' do
         workflow_id: workflow_id,
         run_id: run_id,
       )
-    end.to raise_error(Temporal::WorkflowFailed) do |e|
-      expect(e.stack_trace).to match(/failing_workflow.rb/)
+    end.to raise_error(FailingWorkflow::SomeError) do |e|
+      expect(e.backtrace.first).to match(/failing_workflow.rb/)
       expect(e.message).to eq('Whoops')
     end
   end

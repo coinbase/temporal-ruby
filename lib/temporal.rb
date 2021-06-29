@@ -13,6 +13,7 @@ require 'temporal/workflow/execution_info'
 require 'temporal/metrics'
 require 'temporal/json'
 require 'temporal/errors'
+require 'temporal/workflow/errors'
 
 module Temporal
   class << self
@@ -114,12 +115,7 @@ module Temporal
         when 'WORKFLOW_EXECUTION_CANCELED'
           raise Temporal::WorkflowCanceled
         when 'WORKFLOW_EXECUTION_FAILED'
-          # failure_info: Temporal::Api::Failure::V1::Failure
-          failure_info = closed_event.attributes.failure
-          raise Temporal::WorkflowFailed.new(
-            failure_info['message'],
-            stack_trace: failure_info['stack_trace']
-          )
+          raise Temporal::Workflow::Errors.new.error_from(closed_event.attributes.failure)
         when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
           new_run_id = closed_event.attributes.new_execution_run_id
           if run_id
