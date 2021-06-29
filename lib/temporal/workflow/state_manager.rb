@@ -324,6 +324,7 @@ module Temporal
           exception_class ||= default_exception_class
           message = from_details_payloads(failure.application_failure_info.details)
           backtrace = failure.stack_trace.split("\n")
+
           exception_class.new(message).tap do |exception|
             exception.set_backtrace(backtrace) if !backtrace.empty?
           end
