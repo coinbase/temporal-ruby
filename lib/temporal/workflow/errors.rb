@@ -34,8 +34,6 @@ module Temporal
         nil
       end
 
-
-
     end
   end
 end
