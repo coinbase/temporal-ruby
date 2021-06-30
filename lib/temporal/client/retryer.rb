@@ -9,19 +9,17 @@ module Temporal
       # List pulled from RpcRetryOptions in the Java SDK
       # https://github.com/temporalio/sdk-java/blob/ad8831d4a4d9d257baf3482ab49f1aa681895c0e/temporal-serviceclient/src/main/java/io/temporal/serviceclient/RpcRetryOptions.java#L32
       # No amount of retrying will help in these cases.
-      def self.do_not_retry_errors
-        [
-          GRPC::AlreadyExists,
-          GRPC::Cancelled,
-          GRPC::FailedPrecondition,
-          GRPC::InvalidArgument,
-          # If the activity has timed out, the server will return this and will never accept a retry
-          GRPC::NotFound,
-          GRPC::PermissionDenied,
-          GRPC::Unauthenticated,
-          GRPC::Unimplemented,
-        ]
-      end
+      DO_NOT_RETRY_ERRORS = [
+        GRPC::AlreadyExists,
+        GRPC::Cancelled,
+        GRPC::FailedPrecondition,
+        GRPC::InvalidArgument,
+        # If the activity has timed out, the server will return this and will never accept a retry
+        GRPC::NotFound,
+        GRPC::PermissionDenied,
+        GRPC::Unauthenticated,
+        GRPC::Unimplemented,
+      ].freeze
 
       # Used for backoff retries in certain cases when calling temporal server.
       # on_retry - a proc that's executed each time you need to retry
@@ -33,7 +31,7 @@ module Temporal
         loop do
           begin
             return yield
-          rescue *do_not_retry_errors
+          rescue *DO_NOT_RETRY_ERRORS
             raise
           rescue => e
             raise e if retry_i >= times
