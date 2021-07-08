@@ -4,11 +4,7 @@ require 'activities/failing_activity'
 # re-raised in the workflow.
 class CallFailingActivityWorkflow < Temporal::Workflow
   def execute(message)
-    begin
-      FailingActivity.execute!(message)
-    rescue => e
-      return {class: e.class, message: e.message}
-    end
+    FailingActivity.execute!(message)
     raise 'Whoops, no error received'
   end
 end

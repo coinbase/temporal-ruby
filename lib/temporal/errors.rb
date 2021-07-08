@@ -25,6 +25,25 @@ module Temporal
   class ApiError < Error; end
 
   class NotFoundFailure < ApiError; end
+
+  # Superclass for system errors raised when retrieving a workflow result on the
+  # client, but the workflow failed remotely.
+  class WorkflowError < Error; end
+
+  class WorkflowTimedOut < WorkflowError; end
+  class WorkflowTerminated < WorkflowError; end
+  class WorkflowCanceled < WorkflowError; end
+
+  # Errors where the workflow run didn't complete but not an error for the whole workflow.
+  class WorkflowRunError < Error; end
+  class WorkflowRunContinuedAsNew < WorkflowRunError
+    attr_reader :new_run_id
+    def initialize(new_run_id:)
+      super
+      @new_run_id = new_run_id
+    end
+  end
+
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id
 
@@ -39,4 +58,5 @@ module Temporal
   class NamespaceAlreadyExistsFailure < ApiError; end
   class CancellationAlreadyRequestedFailure < ApiError; end
   class QueryFailedFailure < ApiError; end
+
 end

@@ -11,6 +11,9 @@ require 'temporal/workflow'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
 require 'temporal/metrics'
+require 'temporal/json'
+require 'temporal/errors'
+require 'temporal/workflow/errors'
 
 module Temporal
   class << self
@@ -79,6 +82,54 @@ module Temporal
         signal: signal,
         input: input
       )
+    end
+
+    # Long polls for a workflow to be completed and returns whatever the execute function
+    # returned.
+    # run_id of nil: await the entire workflow completion.  This can span multiple runs
+    # in the case where the workflow uses continue as new.
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, **args)
+      options = args.delete(:options) || {}
+      execution_options = ExecutionOptions.new(workflow, options)
+
+      current_run_id = run_id
+      loop do
+        history_response = client.get_workflow_execution_history(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          run_id: current_run_id,
+          wait_for_new_event: true,
+          event_type: :close
+        )
+        history = Workflow::History.new(history_response.history.events)
+        closed_event = history.events.first
+        case closed_event.type
+        when 'WORKFLOW_EXECUTION_COMPLETED'
+          payloads = closed_event.attributes.result
+          return nil if !payloads # happens when the workflow itself returns nil
+          return from_result_payloads(payloads)
+        when 'WORKFLOW_EXECUTION_TIMED_OUT'
+          raise Temporal::WorkflowTimedOut
+        when 'WORKFLOW_EXECUTION_TERMINATED'
+          raise Temporal::WorkflowTerminated
+        when 'WORKFLOW_EXECUTION_CANCELED'
+          raise Temporal::WorkflowCanceled
+        when 'WORKFLOW_EXECUTION_FAILED'
+          raise Temporal::Workflow::Errors.new.error_from(closed_event.attributes.failure)
+        when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
+          new_run_id = closed_event.attributes.new_execution_run_id
+          if run_id
+            # If they specified a run ID, we should throw to let them know they're not getting the result
+            # they wanted.  They can re-call on the new run ID if they want.
+            raise Temporal::WorkflowRunContinuedAsNew.new(new_run_id: new_run_id)
+          else
+            current_run_id = new_run_id
+            # await the next run until the workflow is complete.
+          end
+        else
+          raise NotImplementedError, "Unexpected event type #{closed_event.type}."
+        end
+      end
     end
 
     def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
@@ -159,6 +210,8 @@ module Temporal
     end
 
     private
+
+    include Concerns::Payloads
 
     def client
       @client ||= Temporal::Client.generate
