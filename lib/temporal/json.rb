@@ -4,7 +4,9 @@ require 'oj'
 module Temporal
   module JSON
     OJ_OPTIONS = {
-      mode: :object
+      mode: :object,
+      # use ruby's built-in serialization.  If nil, OJ seems to default to ~15 decimal places of precision
+      float_precision: 0
     }.freeze
 
     def self.serialize(value)
