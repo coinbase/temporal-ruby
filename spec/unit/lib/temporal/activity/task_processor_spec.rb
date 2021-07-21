@@ -14,7 +14,7 @@ describe Temporal::Activity::TaskProcessor do
       input: Temporal.configuration.converter.to_payloads(input)
     )
   end
-  let(:metadata) { Temporal::Metadata.generate_activity_metadata(task) }
+  let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace) }
   let(:activity_name) { 'TestActivity' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }

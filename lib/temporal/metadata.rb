@@ -10,7 +10,7 @@ module Temporal
     class << self
       include Concerns::Payloads
 
-      def generate_activity_metadata(task, namespace=nil)
+      def generate_activity_metadata(task, namespace)
         Metadata::Activity.new(
           namespace: namespace,
           id: task.activity_id,
@@ -25,7 +25,7 @@ module Temporal
         )
       end
 
-      def generate_workflow_task_metadata(task, namespace=nil)
+      def generate_workflow_task_metadata(task, namespace)
         Metadata::WorkflowTask.new(
           namespace: namespace,
           id: task.started_event_id,
