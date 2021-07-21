@@ -394,6 +394,29 @@ describe Temporal do
         )
       end
 
+      it 'can override the namespace with options' do 
+        completed_event = Fabricate(:workflow_completed_event, result: nil)
+        response = Fabricate(:workflow_execution_history, events: [completed_event])
+
+        expect(client)
+          .to receive(:get_workflow_execution_history)
+          .with(
+            namespace: 'some-other-namespace',
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+          )
+          .and_return(response)
+
+        Temporal.await_workflow_result(
+          NamespacedWorkflow,
+          workflow_id: workflow_id,
+          run_id: run_id,
+          options: {namespace: 'some-other-namespace'}
+        )
+      end
+
       [
         {type: 'hash', expected_result: { 'key' => 'value' }},
         {type: 'integer', expected_result: 5},
@@ -403,7 +426,7 @@ describe Temporal do
         it "completes and returns a #{type}" do
           payload = Temporal::Api::Common::V1::Payloads.new(
             payloads: [
-              Temporal::Client::Converter::Payload::JSON.new.to_payload(expected_result)
+              Temporal.configuration.converter.to_payload(expected_result)
             ],
           )
           completed_event = Fabricate(:workflow_completed_event, result: payload)

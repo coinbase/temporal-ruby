@@ -90,8 +90,7 @@ module Temporal
     # itself timed out.
     # run_id of nil: await the entire workflow completion.  This can span multiple runs
     # in the case where the workflow uses continue-as-new.
-    def await_workflow_result(workflow, workflow_id:, run_id: nil, **args)
-      options = args.delete(:options) || {}
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, options: {})
       execution_options = ExecutionOptions.new(workflow, options)
 
       current_run_id = run_id
@@ -112,7 +111,6 @@ module Temporal
         case closed_event.type
         when 'WORKFLOW_EXECUTION_COMPLETED'
           payloads = closed_event.attributes.result
-          return nil if !payloads # happens when the workflow itself returns nil
           return from_result_payloads(payloads)
         when 'WORKFLOW_EXECUTION_TIMED_OUT'
           raise Temporal::WorkflowTimedOut
