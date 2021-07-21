@@ -13,7 +13,7 @@ module Temporal
       def initialize(task, namespace, activity_lookup, client, middleware_chain)
         @task = task
         @namespace = namespace
-        @metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
+        @metadata = Metadata.generate_activity_metadata(task, namespace)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
