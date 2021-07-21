@@ -23,7 +23,7 @@ module Temporal
         {
           'workflow_name' => name,
           'workflow_id' => workflow_id,
-          'workflow_run_id' => run_id,
+          'run_id' => run_id,
           'attempt' => attempt,
           'namespace' => namespace,
         }
