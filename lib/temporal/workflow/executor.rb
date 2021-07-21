@@ -8,11 +8,13 @@ require 'temporal/workflow/history/event_target'
 module Temporal
   class Workflow
     class Executor
-      def initialize(workflow_class, history, config)
+      # metadata: Metadata::WorkflowTask
+      def initialize(workflow_class, history, config, task_metadata)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
-        @state_manager = StateManager.new(dispatcher)
+        @state_manager = StateManager.new(dispatcher, task_metadata)
         @history = history
+        @task_metadata = task_metadata
         @config = config
       end
 

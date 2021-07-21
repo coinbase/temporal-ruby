@@ -12,7 +12,7 @@ module Temporal
       def initialize(task, namespace, workflow_lookup, middleware_chain, config)
         @task = task
         @namespace = namespace
-        @metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
+        @metadata = Metadata.generate_workflow_task_metadata(task, namespace)
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)
@@ -32,7 +32,7 @@ module Temporal
 
         history = fetch_full_history
         # TODO: For sticky workflows we need to cache the Executor instance
-        executor = Workflow::Executor.new(workflow_class, history, config)
+        executor = Workflow::Executor.new(workflow_class, history, config, @metadata)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run

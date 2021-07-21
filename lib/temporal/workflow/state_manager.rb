@@ -20,8 +20,9 @@ module Temporal
 
       attr_reader :commands, :local_time
 
-      def initialize(dispatcher)
+      def initialize(dispatcher, task_metadata)
         @dispatcher = dispatcher
+        @task_metadata = task_metadata
         @commands = []
         @marker_ids = Set.new
         @releases = {}
@@ -89,7 +90,7 @@ module Temporal
 
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases
+      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :task_metadata
 
       def next_event_id
         @last_event_id += 1
@@ -106,7 +107,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
+            Metadata.generate_workflow_metadata(event.attributes, task_metadata),
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'

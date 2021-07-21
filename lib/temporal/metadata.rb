@@ -6,37 +6,11 @@ require 'temporal/concerns/payloads'
 
 module Temporal
   module Metadata
-    ACTIVITY_TYPE = :activity
-    WORKFLOW_TASK_TYPE = :workflow_task
-    WORKFLOW_TYPE = :workflow
 
     class << self
       include Concerns::Payloads
 
-      def generate(type, data, namespace = nil)
-        case type
-        when ACTIVITY_TYPE
-          activity_metadata_from(data, namespace)
-        when WORKFLOW_TASK_TYPE
-          workflow_task_metadata_from(data, namespace)
-        when WORKFLOW_TYPE
-          workflow_metadata_from(data)
-        else
-          raise InternalError, 'Unsupported metadata type'
-        end
-      end
-
-      private
-
-      def headers(fields)
-        result = {}
-        fields.each do |field, payload|
-          result[field] = from_payload(payload)
-        end
-        result
-      end
-
-      def activity_metadata_from(task, namespace)
+      def generate_activity_metadata(task, namespace=nil)
         Metadata::Activity.new(
           namespace: namespace,
           id: task.activity_id,
@@ -51,7 +25,7 @@ module Temporal
         )
       end
 
-      def workflow_task_metadata_from(task, namespace)
+      def generate_workflow_task_metadata(task, namespace=nil)
         Metadata::WorkflowTask.new(
           namespace: namespace,
           id: task.started_event_id,
@@ -63,13 +37,27 @@ module Temporal
         )
       end
 
-      def workflow_metadata_from(event)
+      # event: WorkflowExecutionStartedEventAttributes
+      # task_metadata: Temporal::Metadata::WorkflowTask
+      def generate_workflow_metadata(event, task_metadata)
         Metadata::Workflow.new(
           name: event.workflow_type.name,
+          workflow_id: task_metadata.workflow_id,
           run_id: event.original_execution_run_id,
           attempt: event.attempt,
-          headers: headers(event.header&.fields)
+          namespace: task_metadata.namespace,
+          headers: headers(event.header&.fields),
         )
+      end
+
+      private
+
+      def headers(fields)
+        result = {}
+        fields.each do |field, payload|
+          result[field] = from_payload(payload)
+        end
+        result
       end
     end
   end
