@@ -85,9 +85,11 @@ module Temporal
     end
 
     # Long polls for a workflow to be completed and returns whatever the execute function
-    # returned.
+    # returned.  This function times out after 30 seconds and throws Temporal::TimeoutError,
+    # not to be confused with Temporal::WorkflowTimedOut which reports that the workflow
+    # itself timed out.
     # run_id of nil: await the entire workflow completion.  This can span multiple runs
-    # in the case where the workflow uses continue as new.
+    # in the case where the workflow uses continue-as-new.
     def await_workflow_result(workflow, workflow_id:, run_id: nil, **args)
       options = args.delete(:options) || {}
       execution_options = ExecutionOptions.new(workflow, options)
@@ -99,9 +101,13 @@ module Temporal
           workflow_id: workflow_id,
           run_id: current_run_id,
           wait_for_new_event: true,
-          event_type: :close
+          event_type: :close,
         )
         history = Workflow::History.new(history_response.history.events)
+        if history.events.empty?
+          # Temporal server has a hard-coded timeout of 30s, and in that case it returns the empty list.
+          raise Temporal::TimeoutError
+        end
         closed_event = history.events.first
         case closed_event.type
         when 'WORKFLOW_EXECUTION_COMPLETED'
