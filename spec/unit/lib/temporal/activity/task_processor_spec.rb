@@ -13,7 +13,7 @@ describe Temporal::Activity::TaskProcessor do
       input: Temporal.configuration.converter.to_payloads(input)
     )
   end
-  let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
+  let(:metadata) { Temporal::Metadata.generate_activity_metadata(task) }
   let(:activity_name) { 'TestActivity' }
   let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
@@ -24,8 +24,8 @@ describe Temporal::Activity::TaskProcessor do
 
     before do
       allow(Temporal::Metadata)
-        .to receive(:generate)
-        .with(Temporal::Metadata::ACTIVITY_TYPE, task, namespace)
+        .to receive(:generate_activity_metadata)
+        .with(task, namespace)
         .and_return(metadata)
       allow(Temporal::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
 

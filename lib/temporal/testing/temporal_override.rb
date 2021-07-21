@@ -89,7 +89,12 @@ module Temporal
 
         execution_options = ExecutionOptions.new(workflow, options)
         metadata = Metadata::Workflow.new(
-          name: workflow_id, run_id: run_id, attempt: 1, headers: execution_options.headers
+          name: workflow_id, 
+          workflow_id: workflow_id, 
+          run_id: run_id, 
+          attempt: 1, 
+          namespace: execution_options.namespace, 
+          headers: execution_options.headers,
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow.disabled_releases, metadata
