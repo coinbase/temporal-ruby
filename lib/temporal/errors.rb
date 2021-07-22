@@ -29,23 +29,17 @@ module Temporal
 
   class NotFoundFailure < ApiError; end
 
-  # Superclass for errors raised when retrieving a workflow result on the
+  # Superclass for system errors raised when retrieving a workflow result on the
   # client, but the workflow failed remotely.
   class WorkflowError < Error; end
 
-  # The workflow failed in user code.
-  class WorkflowFailed < WorkflowError
-    attr_reader :stack_trace
-
-    def initialize(message, stack_trace:)
-      super(message)
-      @stack_trace = stack_trace
-    end
-  end
   class WorkflowTimedOut < WorkflowError; end
   class WorkflowTerminated < WorkflowError; end
   class WorkflowCanceled < WorkflowError; end
-  class WorkflowContinuedAsNew < WorkflowError
+
+  # Errors where the workflow run didn't complete but not an error for the whole workflow.
+  class WorkflowRunError < Error; end
+  class WorkflowRunContinuedAsNew < WorkflowRunError
     attr_reader :new_run_id
     def initialize(new_run_id:)
       super

@@ -415,12 +415,13 @@ describe Temporal do
         task_queue 'some-task-queue'
       end
 
+      let(:workflow_id) {'dummy_worklfow_id'}
+      let(:run_id) {'dummy_run_id'}
+
       it 'looks up history in the correct namespace for namespaced workflows' do
         completed_event = Fabricate(:workflow_completed_event, result: nil)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
-        workflow_id = 'dummy_workflow_id'
-        run_id = 'dummy_run_id'
         expect(client)
           .to receive(:get_workflow_execution_history)
           .with(
@@ -429,6 +430,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
+            timeout_s: 30,
           )
           .and_return(response)
 
@@ -436,6 +438,30 @@ describe Temporal do
           NamespacedWorkflow,
           workflow_id: workflow_id,
           run_id: run_id,
+        )
+      end
+
+      it 'can override the namespace' do 
+        completed_event = Fabricate(:workflow_completed_event, result: nil)
+        response = Fabricate(:workflow_execution_history, events: [completed_event])
+
+        expect(client)
+          .to receive(:get_workflow_execution_history)
+          .with(
+            namespace: 'some-other-namespace',
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+            timeout_s: 30,
+          )
+          .and_return(response)
+
+        Temporal.await_workflow_result(
+          NamespacedWorkflow,
+          workflow_id: workflow_id,
+          run_id: run_id,
+          namespace: 'some-other-namespace'
         )
       end
 
@@ -448,12 +474,11 @@ describe Temporal do
         it "completes and returns a #{type}" do
           payload = Temporal::Api::Common::V1::Payloads.new(
             payloads: [
-              Temporal::Client::Converter::Payload::JSON.new.to_payload(expected_result)
+              Temporal.configuration.converter.to_payload(expected_result)
             ],
           )
           completed_event = Fabricate(:workflow_completed_event, result: payload)
           response = Fabricate(:workflow_execution_history, events: [completed_event])
-          workflow_id = 'dummy_workflow_id'
           expect(client)
             .to receive(:get_workflow_execution_history)
             .with(
@@ -462,6 +487,7 @@ describe Temporal do
               run_id: nil,
               wait_for_new_event: true,
               event_type: :close,
+              timeout_s: 30,
             )
             .and_return(response)
 
@@ -479,8 +505,6 @@ describe Temporal do
         completed_event = Fabricate(:workflow_canceled_event)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
-        workflow_id = 'dummy_workflow_id'
-        run_id = 'dummy_run_id'
         expect(client)
           .to receive(:get_workflow_execution_history)
           .with(
@@ -489,6 +513,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
+            timeout_s: 30,
           )
           .and_return(response)
 
@@ -499,6 +524,29 @@ describe Temporal do
             run_id: run_id,
           )
         end.to raise_error(Temporal::WorkflowCanceled)
+      end
+
+      it 'raises TimeoutError when the server times out' do 
+        response = Fabricate(:workflow_execution_history, events: [])
+        expect(client)
+          .to receive(:get_workflow_execution_history)
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+            timeout_s: 3,
+          )
+          .and_raise(GRPC::DeadlineExceeded)
+          expect do
+            Temporal.await_workflow_result(
+              TestStartWorkflow,
+              workflow_id: workflow_id,
+              run_id: run_id,
+              timeout_s: 3,
+            )
+          end.to raise_error(Temporal::TimeoutError)
       end
     end
   end
