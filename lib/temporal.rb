@@ -120,7 +120,7 @@ module Temporal
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        return from_result_payloads(payloads)
+        return ResultConverter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -216,9 +216,12 @@ module Temporal
       @metrics ||= Metrics.new(configuration.metrics_adapter)
     end
 
-    private
+    class ResultConverter
+      extend Concerns::Payloads
+    end
+    private_constant :ResultConverter
 
-    include Concerns::Payloads
+    private
 
     def client
       @client ||= Temporal::Client.generate
