@@ -1,11 +1,13 @@
+require 'temporal/errors'
+
 module Temporal
   class Workflow
     class Errors
-      include Concerns::Payloads
+      extend Concerns::Payloads
 
       # Convert a failure returned from the server to an Error to raise to the client
       # failure: Temporal::Api::Failure::V1::Failure
-      def error_from(failure, default_exception_class = StandardError)
+      def self.generate_error(failure, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
           exception_class = safe_constantize(failure.application_failure_info.type)
@@ -26,9 +28,7 @@ module Temporal
         end
       end
 
-      private
-
-      def safe_constantize(const)
+      private_class_method def self.safe_constantize(const)
         Object.const_get(const) if Object.const_defined?(const)
       rescue NameError
         nil
