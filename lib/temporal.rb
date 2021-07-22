@@ -97,53 +97,45 @@ module Temporal
       options = namespace ? {namespace: namespace} : {}
       execution_options = ExecutionOptions.new(workflow, options)
       max_timeout_s = 30 # Hardcoded in the temporal server.
-      current_run_id = run_id
-      loop do
-        history_response = nil
-        begin
-          history_response = client.get_workflow_execution_history(
-            namespace: execution_options.namespace,
-            workflow_id: workflow_id,
-            run_id: current_run_id,
-            wait_for_new_event: true,
-            event_type: :close,
-            timeout_s: timeout_s || max_timeout_s,
-          )
-        rescue GRPC::DeadlineExceeded => e
-          message = if timeout_s 
-            "Timed out after your specified limit of timeout_s: #{timeout_s} seconds"
-          else
-            "Timed out after #{max_timeout_s} seconds, which is the maximum supported amount."
-          end
-          raise TimeoutError.new(message)
-        end
-        history = Workflow::History.new(history_response.history.events)
-        closed_event = history.events.first
-        case closed_event.type
-        when 'WORKFLOW_EXECUTION_COMPLETED'
-          payloads = closed_event.attributes.result
-          return from_result_payloads(payloads)
-        when 'WORKFLOW_EXECUTION_TIMED_OUT'
-          raise Temporal::WorkflowTimedOut
-        when 'WORKFLOW_EXECUTION_TERMINATED'
-          raise Temporal::WorkflowTerminated
-        when 'WORKFLOW_EXECUTION_CANCELED'
-          raise Temporal::WorkflowCanceled
-        when 'WORKFLOW_EXECUTION_FAILED'
-          raise Temporal::Workflow::Errors.new.error_from(closed_event.attributes.failure)
-        when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
-          new_run_id = closed_event.attributes.new_execution_run_id
-          if run_id
-            # If they specified a run ID, we should throw to let them know they're not getting the result
-            # they wanted.  They can re-call on the new run ID if they want.
-            raise Temporal::WorkflowRunContinuedAsNew.new(new_run_id: new_run_id)
-          else
-            current_run_id = new_run_id
-            # await the next run until the workflow is complete.
-          end
+      history_response = nil
+      begin
+        history_response = client.get_workflow_execution_history(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          run_id: run_id,
+          wait_for_new_event: true,
+          event_type: :close,
+          timeout_s: timeout_s || max_timeout_s,
+        )
+      rescue GRPC::DeadlineExceeded => e
+        message = if timeout_s 
+          "Timed out after your specified limit of timeout_s: #{timeout_s} seconds"
         else
-          raise NotImplementedError, "Unexpected event type #{closed_event.type}."
+          "Timed out after #{max_timeout_s} seconds, which is the maximum supported amount."
         end
+        raise TimeoutError.new(message)
+      end
+      history = Workflow::History.new(history_response.history.events)
+      closed_event = history.events.first
+      case closed_event.type
+      when 'WORKFLOW_EXECUTION_COMPLETED'
+        payloads = closed_event.attributes.result
+        return from_result_payloads(payloads)
+      when 'WORKFLOW_EXECUTION_TIMED_OUT'
+        raise Temporal::WorkflowTimedOut
+      when 'WORKFLOW_EXECUTION_TERMINATED'
+        raise Temporal::WorkflowTerminated
+      when 'WORKFLOW_EXECUTION_CANCELED'
+        raise Temporal::WorkflowCanceled
+      when 'WORKFLOW_EXECUTION_FAILED'
+        raise Temporal::Workflow::Errors.new.error_from(closed_event.attributes.failure)
+      when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
+        new_run_id = closed_event.attributes.new_execution_run_id
+        # Throw to let the caller know they're not getting the result
+        # they wanted.  They can re-call with the new run_id to poll.
+        raise Temporal::WorkflowRunContinuedAsNew.new(new_run_id: new_run_id)
+      else
+        raise NotImplementedError, "Unexpected event type #{closed_event.type}."
       end
     end
 
