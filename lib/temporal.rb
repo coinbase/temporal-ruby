@@ -92,7 +92,9 @@ module Temporal
     # in the case where the workflow uses continue-as-new.
     # timeout_s: seconds to wait for the result.  This cannot be longer than 30 seconds because
     # that is the maximum the server supports.
-    def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout_s: nil, options: {})
+    # namespace: if nil, choose the one declared on the Workflow, or the global default
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout_s: nil, namespace: nil)
+      options = namespace ? {namespace: namespace} : {}
       execution_options = ExecutionOptions.new(workflow, options)
       max_timeout_s = 30 # Hardcoded in the temporal server.
       current_run_id = run_id

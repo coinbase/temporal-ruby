@@ -395,7 +395,7 @@ describe Temporal do
         )
       end
 
-      it 'can override the namespace with options' do 
+      it 'can override the namespace' do 
         completed_event = Fabricate(:workflow_completed_event, result: nil)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
@@ -415,7 +415,7 @@ describe Temporal do
           NamespacedWorkflow,
           workflow_id: workflow_id,
           run_id: run_id,
-          options: {namespace: 'some-other-namespace'}
+          namespace: 'some-other-namespace'
         )
       end
 
