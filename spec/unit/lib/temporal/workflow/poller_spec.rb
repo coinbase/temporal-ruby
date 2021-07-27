@@ -1,14 +1,11 @@
-require 'temporal/activity/poller'
+require 'temporal/workflow/poller'
 require 'temporal/middleware/entry'
 
-describe Temporal::Activity::Poller do
-  let(:client) { instance_double('Temporal::Client::GRPCClient', cancel_polling_request: nil) }
+describe Temporal::Workflow::Poller do
+  let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
-  let(:thread_pool) do
-    instance_double(Temporal::ThreadPool, wait_for_available_threads: nil, shutdown: nil)
-  end
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
@@ -16,15 +13,14 @@ describe Temporal::Activity::Poller do
 
   before do
     allow(Temporal::Client).to receive(:generate).and_return(client)
-    allow(Temporal::ThreadPool).to receive(:new).and_return(thread_pool)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
   end
 
   describe '#start' do
-    it 'polls for activity tasks' do
+    it 'polls for decision tasks' do
       allow(subject).to receive(:shutting_down?).and_return(false, false, true)
-      allow(client).to receive(:poll_activity_task_queue).and_return(nil)
+      allow(client).to receive(:poll_workflow_task_queue).and_return(nil)
 
       subject.start
 
@@ -32,14 +28,14 @@ describe Temporal::Activity::Poller do
       subject.stop_polling; subject.wait
 
       expect(client)
-        .to have_received(:poll_activity_task_queue)
+        .to have_received(:poll_workflow_task_queue)
         .with(namespace: namespace, task_queue: task_queue)
         .twice
     end
 
     it 'reports time since last poll' do
       allow(subject).to receive(:shutting_down?).and_return(false, false, true)
-      allow(client).to receive(:poll_activity_task_queue).and_return(nil)
+      allow(client).to receive(:poll_workflow_task_queue).and_return(nil)
 
       subject.start
 
@@ -49,7 +45,7 @@ describe Temporal::Activity::Poller do
       expect(Temporal.metrics)
         .to have_received(:timing)
         .with(
-          'activity_poller.time_since_last_poll',
+          'workflow_poller.time_since_last_poll',
           an_instance_of(Fixnum),
           namespace: namespace,
           task_queue: task_queue
@@ -57,24 +53,16 @@ describe Temporal::Activity::Poller do
         .twice
     end
 
-    context 'when an activity task is received' do
-      let(:task_processor) { instance_double(Temporal::Activity::TaskProcessor, process: nil) }
-      let(:task) { Fabricate(:api_activity_task) }
+    context 'when an decision task is received' do
+      let(:task_processor) do
+        instance_double(Temporal::Workflow::TaskProcessor, process: nil)
+      end
+      let(:task) { Fabricate(:api_workflow_task) }
 
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_activity_task_queue).and_return(task)
-        allow(Temporal::Activity::TaskProcessor).to receive(:new).and_return(task_processor)
-        allow(thread_pool).to receive(:schedule).and_yield
-      end
-
-      it 'schedules task processing using a ThreadPool' do
-        subject.start
-
-        # stop poller before inspecting
-        subject.stop_polling; subject.wait
-
-        expect(thread_pool).to have_received(:schedule)
+        allow(client).to receive(:poll_workflow_task_queue).and_return(task)
+        allow(Temporal::Workflow::TaskProcessor).to receive(:new).and_return(task_processor)
       end
 
       it 'uses TaskProcessor to process tasks' do
@@ -83,7 +71,7 @@ describe Temporal::Activity::Poller do
         # stop poller before inspecting
         subject.stop_polling; subject.wait
 
-        expect(Temporal::Activity::TaskProcessor)
+        expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
           .with(task, namespace, lookup, client, middleware_chain)
         expect(task_processor).to have_received(:process)
@@ -106,7 +94,7 @@ describe Temporal::Activity::Poller do
           subject.stop_polling; subject.wait
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
-          expect(Temporal::Activity::TaskProcessor)
+          expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
             .with(task, namespace, lookup, client, middleware_chain)
         end
@@ -116,7 +104,7 @@ describe Temporal::Activity::Poller do
     context 'when client is unable to poll' do
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_activity_task_queue).and_raise(StandardError)
+        allow(client).to receive(:poll_workflow_task_queue).and_raise(StandardError)
       end
 
       it 'logs' do
@@ -129,33 +117,13 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal.logger)
           .to have_received(:error)
-          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>'})
+          .with(
+            'Unable to poll Workflow task queue',
+            namespace: namespace,
+            task_queue: task_queue,
+            error: '#<StandardError: StandardError>'
+          )
       end
-    end
-  end
-
-  describe '#cancel_pending_requests' do
-    before { subject.start }
-    after { subject.wait }
-
-    it 'tells client to cancel polling requests' do
-      subject.stop_polling
-      subject.cancel_pending_requests
-
-      expect(client).to have_received(:cancel_polling_request)
-    end
-  end
-
-  describe '#wait' do
-    before do
-      subject.start
-      subject.stop_polling
-    end
-
-    it 'shuts down the thread poll' do
-      subject.wait
-
-      expect(thread_pool).to have_received(:shutdown)
     end
   end
 end

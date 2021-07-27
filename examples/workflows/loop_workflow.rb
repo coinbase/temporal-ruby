@@ -8,6 +8,6 @@ class LoopWorkflow < Temporal::Workflow
       return workflow.continue_as_new(count - 1)
     end
 
-    return
+    return count
   end
 end

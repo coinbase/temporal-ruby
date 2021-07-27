@@ -52,14 +52,20 @@ module Temporal
       end
 
       def poll_loop
+        last_poll_time = Time.now
+        metrics_tags = { namespace: namespace, task_queue: task_queue }.freeze
+
         loop do
           thread_pool.wait_for_available_threads
 
           return if shutting_down?
 
+          time_diff_ms = ((Time.now - last_poll_time) * 1000).round
+          Temporal.metrics.timing('activity_poller.time_since_last_poll', time_diff_ms, metrics_tags)
           Temporal.logger.debug("Polling activity task queue", { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
+          last_poll_time = Time.now
           next unless task&.activity_type
 
           thread_pool.schedule { process(task) }

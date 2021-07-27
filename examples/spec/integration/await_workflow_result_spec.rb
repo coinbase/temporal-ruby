@@ -68,8 +68,8 @@ describe 'Temporal.await_workflow_result' do
         workflow_id: workflow_id,
         run_id: run_id,
       )
-    end.to raise_error(Temporal::WorkflowFailed) do |e|
-      expect(e.stack_trace).to match(/failing_workflow.rb/)
+    end.to raise_error(FailingWorkflow::SomeError) do |e|
+      expect(e.backtrace.first).to match(/failing_workflow.rb/)
       expect(e.message).to eq('Whoops')
     end
   end
@@ -90,7 +90,7 @@ describe 'Temporal.await_workflow_result' do
     end.to raise_error(Temporal::WorkflowTimedOut)
   end
 
-  it 'raises Temporal::WorkflowContinuedAsNew when the workflow continues as new' do
+  it 'raises Temporal::WorkflowRunContinuedAsNew when the workflow continues as new' do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.start_workflow(
       LoopWorkflow,
@@ -104,8 +104,9 @@ describe 'Temporal.await_workflow_result' do
         workflow_id: workflow_id,
         run_id: run_id,
       )
-    end.to raise_error(Temporal::WorkflowContinuedAsNew) do |error|
+    end.to raise_error(Temporal::WorkflowRunContinuedAsNew) do |error|
       expect(error.new_run_id).to_not eq(nil)
     end
   end
+
 end
