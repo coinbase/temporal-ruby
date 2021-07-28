@@ -384,7 +384,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
-            timeout_s: 30,
+            timeout: 30,
           )
           .and_return(response)
 
@@ -407,7 +407,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
-            timeout_s: 30,
+            timeout: 30,
           )
           .and_return(response)
 
@@ -441,7 +441,7 @@ describe Temporal do
               run_id: nil,
               wait_for_new_event: true,
               event_type: :close,
-              timeout_s: 30,
+              timeout: 30,
             )
             .and_return(response)
 
@@ -467,7 +467,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
-            timeout_s: 30,
+            timeout: 30,
           )
           .and_return(response)
 
@@ -490,7 +490,7 @@ describe Temporal do
             run_id: run_id,
             wait_for_new_event: true,
             event_type: :close,
-            timeout_s: 3,
+            timeout: 3,
           )
           .and_raise(GRPC::DeadlineExceeded)
           expect do
@@ -498,7 +498,7 @@ describe Temporal do
               TestStartWorkflow,
               workflow_id: workflow_id,
               run_id: run_id,
-              timeout_s: 3,
+              timeout: 3,
             )
           end.to raise_error(Temporal::TimeoutError)
       end

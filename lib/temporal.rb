@@ -90,13 +90,13 @@ module Temporal
     # itself timed out.
     # run_id of nil: await the entire workflow completion.  This can span multiple runs
     # in the case where the workflow uses continue-as-new.
-    # timeout_s: seconds to wait for the result.  This cannot be longer than 30 seconds because
+    # timeout: seconds to wait for the result.  This cannot be longer than 30 seconds because
     # that is the maximum the server supports.
     # namespace: if nil, choose the one declared on the Workflow, or the global default
-    def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout_s: nil, namespace: nil)
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout: nil, namespace: nil)
       options = namespace ? {namespace: namespace} : {}
       execution_options = ExecutionOptions.new(workflow, options)
-      max_timeout_s = 30 # Hardcoded in the temporal server.
+      max_timeout = Temporal::Client::GRPCClient::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
       history_response = nil
       begin
         history_response = client.get_workflow_execution_history(
@@ -105,13 +105,13 @@ module Temporal
           run_id: run_id,
           wait_for_new_event: true,
           event_type: :close,
-          timeout_s: timeout_s || max_timeout_s,
+          timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
-        message = if timeout_s 
-          "Timed out after your specified limit of timeout_s: #{timeout_s} seconds"
+        message = if timeout 
+          "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
-          "Timed out after #{max_timeout_s} seconds, which is the maximum supported amount."
+          "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
         end
         raise TimeoutError.new(message)
       end

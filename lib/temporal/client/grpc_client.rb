@@ -118,6 +118,8 @@ module Temporal
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
+      SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL = 30
+
       def get_workflow_execution_history(
         namespace:,
         workflow_id:,
@@ -125,16 +127,15 @@ module Temporal
         next_page_token: nil,
         wait_for_new_event: false,
         event_type: :all,
-        timeout_s: nil
+        timeout: nil
       )
         if wait_for_new_event 
-          if timeout_s.nil?
+          if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
-          elsif timeout_s > 30
-            # temporal-server hardcodes the server timeout at 30 seconds.
+          elsif timeout > SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
             raise ClientError.new(
-              "You may not specify a timeout of more than 30 seconds, got: #{timeout_s}."
+              "You may not specify a timeout of more than #{SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL} seconds, got: #{timeout}."
             )
           end
         end
@@ -148,7 +149,7 @@ module Temporal
           wait_new_event: wait_for_new_event,
           history_event_filter_type: HISTORY_EVENT_FILTER[event_type]
         )
-        deadline = timeout_s ? Time.now + timeout_s : nil
+        deadline = timeout ? Time.now + timeout : nil
         client.get_workflow_execution_history(request, deadline: deadline)
       end
 
