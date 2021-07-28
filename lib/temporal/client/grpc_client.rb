@@ -118,14 +118,27 @@ module Temporal
         raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
       end
 
+      SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL = 30
+
       def get_workflow_execution_history(
         namespace:,
         workflow_id:,
         run_id:,
         next_page_token: nil,
         wait_for_new_event: false,
-        event_type: :all
+        event_type: :all,
+        timeout: nil
       )
+        if wait_for_new_event 
+          if timeout.nil?
+            # This is an internal error.  Wrappers should enforce this.
+            raise "You must specify a timeout when wait_for_new_event = true."
+          elsif timeout > SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
+            raise ClientError.new(
+              "You may not specify a timeout of more than #{SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL} seconds, got: #{timeout}."
+            )
+          end
+        end
         request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
           execution: Temporal::Api::Common::V1::WorkflowExecution.new(
@@ -136,8 +149,8 @@ module Temporal
           wait_new_event: wait_for_new_event,
           history_event_filter_type: HISTORY_EVENT_FILTER[event_type]
         )
-
-        client.get_workflow_execution_history(request)
+        deadline = timeout ? Time.now + timeout : nil
+        client.get_workflow_execution_history(request, deadline: deadline)
       end
 
       def poll_workflow_task_queue(namespace:, task_queue:)

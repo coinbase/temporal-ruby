@@ -4,9 +4,12 @@ describe Temporal::Client::GRPCClient do
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
+  let(:now) { Time.now}
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
+    
+    allow(Time).to receive(:now).and_return(now)
   end
 
   describe '#start_workflow_execution' do
@@ -65,16 +68,46 @@ describe Temporal::Client::GRPCClient do
     end
 
     context 'when wait_for_new_event is true' do
-      it 'calls GRPC service' do
+      let (:timeout) { 13 }
+      it 'calls GRPC service with a deadline' do
         subject.get_workflow_execution_history(
           namespace: namespace,
           workflow_id: workflow_id,
           run_id: run_id,
-          wait_for_new_event: true
+          wait_for_new_event: true,
+          timeout: timeout
         )
 
-        expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request|
+        expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request, deadline:|
           expect(request.wait_new_event).to eq(true)
+          expect(deadline).to eq(now + timeout)
+        end
+      end
+
+      it 'demands a timeout to be specified' do 
+        expect do
+          subject.get_workflow_execution_history(
+            namespace: namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true
+          )
+        end.to raise_error do |e|
+          expect(e.message).to eq("You must specify a timeout when wait_for_new_event = true.")
+        end
+      end
+
+      it 'disallows a timeout larger than the server timeout' do 
+        expect do
+          subject.get_workflow_execution_history(
+            namespace: namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            timeout: 60
+          )
+        end.to raise_error(Temporal::ClientError) do |e|
+          expect(e.message).to eq("You may not specify a timeout of more than 30 seconds, got: 60.")
         end
       end
     end

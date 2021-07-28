@@ -11,6 +11,9 @@ require 'temporal/workflow'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
 require 'temporal/metrics'
+require 'temporal/json'
+require 'temporal/errors'
+require 'temporal/workflow/errors'
 
 module Temporal
   class << self
@@ -79,6 +82,61 @@ module Temporal
         signal: signal,
         input: input
       )
+    end
+
+    # Long polls for a workflow to be completed and returns whatever the execute function
+    # returned.  This function times out after 30 seconds and throws Temporal::TimeoutError,
+    # not to be confused with Temporal::WorkflowTimedOut which reports that the workflow
+    # itself timed out.
+    # run_id of nil: await the entire workflow completion.  This can span multiple runs
+    # in the case where the workflow uses continue-as-new.
+    # timeout: seconds to wait for the result.  This cannot be longer than 30 seconds because
+    # that is the maximum the server supports.
+    # namespace: if nil, choose the one declared on the Workflow, or the global default
+    def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout: nil, namespace: nil)
+      options = namespace ? {namespace: namespace} : {}
+      execution_options = ExecutionOptions.new(workflow, options)
+      max_timeout = Temporal::Client::GRPCClient::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
+      history_response = nil
+      begin
+        history_response = client.get_workflow_execution_history(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          run_id: run_id,
+          wait_for_new_event: true,
+          event_type: :close,
+          timeout: timeout || max_timeout,
+        )
+      rescue GRPC::DeadlineExceeded => e
+        message = if timeout 
+          "Timed out after your specified limit of timeout: #{timeout} seconds"
+        else
+          "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
+        end
+        raise TimeoutError.new(message)
+      end
+      history = Workflow::History.new(history_response.history.events)
+      closed_event = history.events.first
+      case closed_event.type
+      when 'WORKFLOW_EXECUTION_COMPLETED'
+        payloads = closed_event.attributes.result
+        return ResultConverter.from_result_payloads(payloads)
+      when 'WORKFLOW_EXECUTION_TIMED_OUT'
+        raise Temporal::WorkflowTimedOut
+      when 'WORKFLOW_EXECUTION_TERMINATED'
+        raise Temporal::WorkflowTerminated
+      when 'WORKFLOW_EXECUTION_CANCELED'
+        raise Temporal::WorkflowCanceled
+      when 'WORKFLOW_EXECUTION_FAILED'
+        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure)
+      when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
+        new_run_id = closed_event.attributes.new_execution_run_id
+        # Throw to let the caller know they're not getting the result
+        # they wanted.  They can re-call with the new run_id to poll.
+        raise Temporal::WorkflowRunContinuedAsNew.new(new_run_id: new_run_id)
+      else
+        raise NotImplementedError, "Unexpected event type #{closed_event.type}."
+      end
     end
 
     def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
@@ -157,6 +215,11 @@ module Temporal
     def metrics
       @metrics ||= Metrics.new(configuration.metrics_adapter)
     end
+
+    class ResultConverter
+      extend Concerns::Payloads
+    end
+    private_constant :ResultConverter
 
     private
 
