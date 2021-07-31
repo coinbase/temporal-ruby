@@ -72,7 +72,7 @@ module Temporal
       client.register_namespace(name: name, description: description)
     end
 
-    def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
+    def signal_workflow(workflow, signal, workflow_id, run_id, input = nil, namespace: nil)
       signal_workflow_namespace(
         ExecutionOptions.new(workflow).namespace,
         signal,
