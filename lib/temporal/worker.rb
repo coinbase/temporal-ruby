@@ -90,10 +90,6 @@ module Temporal
 
     private
 
-    def drain_in_transit_tasks
-      
-    end
-
     attr_reader :activity_poller_options, :workflow_poller_options,
                 :activities, :workflows, :pollers,
                 :workflow_task_middleware, :activity_middleware
