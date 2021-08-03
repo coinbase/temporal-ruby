@@ -35,6 +35,10 @@ module Temporal
       end
 
       def wait
+        if !shutting_down?
+          raise "Activity poller waiting for shutdown completion without being in shutting_down state!"
+        end
+
         thread.join
         thread_pool.shutdown
       end
