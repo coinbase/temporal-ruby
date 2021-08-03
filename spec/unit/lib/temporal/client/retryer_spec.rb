@@ -78,37 +78,30 @@ describe Temporal::Client::Retryer do
     expect(on_retry_calls).to equal(retries)
   end
 
-  {
-    GRPC::AlreadyExists => false,
-    GRPC::Cancelled => false,
-    GRPC::FailedPrecondition => false,
-    GRPC::InvalidArgument => false,
-    GRPC::NotFound => false,
-    GRPC::PermissionDenied => false,
-    GRPC::Unauthenticated => false,
-    GRPC::Unimplemented => false,
-    StandardError => true,
-    GRPC::Unknown => true,
-    GRPC::Unavailable => true
-  }.each do |error_class, expect_retry|
-    it "#{expect_retry ? 'does' : 'does not'} retry #{error_class}" do
-      on_retry_calls = 0
-      retried = false
-      on_retry = Proc.new {
-        on_retry_calls += 1
-      }
+  described_class::DO_NOT_RETRY_ERRORS.each do |error_class|
+    context "when #{error_class} is raised" do
+      let(:error) { error_class.new('nope') }
+      let(:on_retry) { Proc.new {} }
 
-      begin
-        described_class.with_retries(on_retry: on_retry) do
-          if !retried
-            retried = true
-            raise error_class.new("nope")
+      it 'does not retry' do
+        calls = 0
+
+        expect do
+          described_class.with_retries do
+            calls += 1
+            raise error
           end
-        end
-      rescue => e
-        expect(e.class).to eq(error_class)
-      ensure
-        expect(on_retry_calls).to equal(expect_retry ? 1 : 0)
+        end.to raise_error(error)
+
+        expect(calls).to eq(1)
+      end
+
+      it 'does not call on_retry' do
+        allow(on_retry).to receive(:call).and_call_original
+
+        described_class.with_retries(on_retry: on_retry) { raise error } rescue nil
+
+        expect(on_retry).not_to have_received(:call)
       end
     end
   end
