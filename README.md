@@ -1,4 +1,4 @@
-# Ruby worker for Temporal [Under Development]
+# Ruby worker for Temporal
 
 [![Coverage Status](https://coveralls.io/repos/github/coinbase/temporal-ruby/badge.svg?branch=master)](https://coveralls.io/github/coinbase/temporal-ruby?branch=master)
 
