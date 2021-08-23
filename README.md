@@ -430,7 +430,7 @@ Temporal::Testing.local! do
 end
 ```
 
-Make sure to check out [example integration specs](examples/specs/integration) for more details.
+Make sure to check out [example integration specs](examples/spec/integration) for more details.
 
 
 ## TODO
