@@ -43,7 +43,7 @@ module Temporal
       private
 
       attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :thread
-      
+
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection, options)
       end
