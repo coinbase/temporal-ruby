@@ -4,7 +4,7 @@ $LOAD_PATH << File.expand_path('./gen', __dir__)
 require 'securerandom'
 require 'temporal/configuration'
 require 'temporal/execution_options'
-require 'temporal/client'
+require 'temporal/connection'
 require 'temporal/activity'
 require 'temporal/activity/async_token'
 require 'temporal/workflow'
@@ -21,10 +21,10 @@ module Temporal
       options = args.delete(:options) || {}
       input << args unless args.empty?
 
-      execution_options = ExecutionOptions.new(workflow, options)
+      execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
 
-      response = client.start_workflow_execution(
+      response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
@@ -45,10 +45,10 @@ module Temporal
       options = args.delete(:options) || {}
       input << args unless args.empty?
 
-      execution_options = ExecutionOptions.new(workflow, options)
+      execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
 
-      response = client.start_workflow_execution(
+      response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
@@ -69,13 +69,13 @@ module Temporal
     end
 
     def register_namespace(name, description = nil)
-      client.register_namespace(name: name, description: description)
+      connection.register_namespace(name: name, description: description)
     end
 
     def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
-      execution_options = ExecutionOptions.new(workflow)
+      execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
-      client.signal_workflow_execution(
+      connection.signal_workflow_execution(
         namespace: execution_options.namespace, # TODO: allow passing namespace instead
         workflow_id: workflow_id,
         run_id: run_id,
@@ -95,11 +95,11 @@ module Temporal
     # namespace: if nil, choose the one declared on the Workflow, or the global default
     def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout: nil, namespace: nil)
       options = namespace ? {namespace: namespace} : {}
-      execution_options = ExecutionOptions.new(workflow, options)
-      max_timeout = Temporal::Client::GRPCClient::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
+      execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
+      max_timeout = Temporal::Connection::GRPC::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
       history_response = nil
       begin
-        history_response = client.get_workflow_execution_history(
+        history_response = connection.get_workflow_execution_history(
           namespace: execution_options.namespace,
           workflow_id: workflow_id,
           run_id: run_id,
@@ -143,7 +143,7 @@ module Temporal
       workflow_task_id ||= get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
       raise Error, 'Could not find a completed workflow task event' unless workflow_task_id
 
-      response = client.reset_workflow_execution(
+      response = connection.reset_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
@@ -157,7 +157,7 @@ module Temporal
     def terminate_workflow(workflow_id, namespace: nil, run_id: nil, reason: nil, details: nil)
       namespace ||= Temporal.configuration.namespace
 
-      client.terminate_workflow_execution(
+      connection.terminate_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
@@ -167,7 +167,7 @@ module Temporal
     end
 
     def fetch_workflow_execution_info(namespace, workflow_id, run_id)
-      response = client.describe_workflow_execution(
+      response = connection.describe_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
@@ -179,7 +179,7 @@ module Temporal
     def complete_activity(async_token, result = nil)
       details = Activity::AsyncToken.decode(async_token)
 
-      client.respond_activity_task_completed_by_id(
+      connection.respond_activity_task_completed_by_id(
         namespace: details.namespace,
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
@@ -191,7 +191,7 @@ module Temporal
     def fail_activity(async_token, exception)
       details = Activity::AsyncToken.decode(async_token)
 
-      client.respond_activity_task_failed_by_id(
+      connection.respond_activity_task_failed_by_id(
         namespace: details.namespace,
         activity_id: details.activity_id,
         workflow_id: details.workflow_id,
@@ -201,19 +201,20 @@ module Temporal
     end
 
     def configure(&block)
-      yield configuration
+      yield config
     end
 
     def configuration
-      @configuration ||= Configuration.new
+      warn '[DEPRECATION] This method is now deprecated without a substitution'
+      config
     end
 
     def logger
-      configuration.logger
+      config.logger
     end
 
     def metrics
-      @metrics ||= Metrics.new(configuration.metrics_adapter)
+      @metrics ||= Metrics.new(config.metrics_adapter)
     end
 
     class ResultConverter
@@ -222,13 +223,17 @@ module Temporal
     private_constant :ResultConverter
 
     private
+    
+    def config
+      @config ||= Configuration.new
+    end
 
-    def client
-      @client ||= Temporal::Client.generate
+    def connection
+      @connection ||= Temporal::Connection.generate(config.for_connection)
     end
 
     def get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
-      history_response = client.get_workflow_execution_history(
+      history_response = connection.get_workflow_execution_history(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id

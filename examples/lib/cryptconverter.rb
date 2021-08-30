@@ -1,7 +1,7 @@
 require 'openssl'
 
 module Temporal
-  class CryptConverter < Temporal::Client::Converter::Base
+  class CryptConverter < Temporal::Connection::Converter::Base
     CIPHER = 'aes-256-gcm'.freeze
     GCM_NONCE_SIZE = 12
     GCM_TAG_SIZE = 16

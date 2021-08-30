@@ -1,8 +1,12 @@
 require 'temporal/worker'
 require 'temporal/workflow'
 require 'temporal/activity'
+require 'temporal/configuration'
 
 describe Temporal::Worker do
+  subject { described_class.new(config) }
+  let(:config) { Temporal::Configuration.new }
+
   class TestWorkerWorkflow < Temporal::Workflow
     namespace 'default-namespace'
     task_queue 'default-task-queue'
@@ -138,6 +142,7 @@ describe Temporal::Worker do
           'default-namespace',
           'default-task-queue',
           an_instance_of(Temporal::ExecutableLookup),
+          config,
           [],
           thread_pool_size: 10
         )
@@ -149,6 +154,7 @@ describe Temporal::Worker do
           'other-namespace',
           'default-task-queue',
           an_instance_of(Temporal::ExecutableLookup),
+          config,
           [],
           thread_pool_size: 10
         )
@@ -160,6 +166,7 @@ describe Temporal::Worker do
           'default-namespace',
           'default-task-queue',
           an_instance_of(Temporal::ExecutableLookup),
+          config,
           [],
           thread_pool_size: 20
         )
@@ -171,6 +178,7 @@ describe Temporal::Worker do
           'default-namespace',
           'other-task-queue',
           an_instance_of(Temporal::ExecutableLookup),
+          config,
           [],
           thread_pool_size: 20
         )
@@ -193,7 +201,14 @@ describe Temporal::Worker do
       activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
-        .with('default-namespace', 'default-task-queue', an_instance_of(Temporal::ExecutableLookup), [], {thread_pool_size: 10})
+        .with(
+          'default-namespace',
+          'default-task-queue',
+          an_instance_of(Temporal::ExecutableLookup),
+          an_instance_of(Temporal::Configuration),
+          [],
+          {thread_pool_size: 10}
+        )
         .and_return(activity_poller)
 
       worker = Temporal::Worker.new(activity_thread_pool_size: 10)
@@ -235,6 +250,7 @@ describe Temporal::Worker do
             'default-namespace',
             'default-task-queue',
             an_instance_of(Temporal::ExecutableLookup),
+            config,
             [entry_1],
             thread_pool_size: 10
           )
@@ -246,6 +262,7 @@ describe Temporal::Worker do
             'default-namespace',
             'default-task-queue',
             an_instance_of(Temporal::ExecutableLookup),
+            config,
             [entry_2],
             thread_pool_size: 20
           )

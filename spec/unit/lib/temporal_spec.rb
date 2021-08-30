@@ -1,24 +1,25 @@
 require 'temporal'
 require 'temporal/workflow'
+require 'temporal/connection/grpc'
 
 describe Temporal do
   describe 'client operations' do
-    let(:client) { instance_double(Temporal::Client::GRPCClient) }
+    let(:connection) { instance_double(Temporal::Connection::GRPC) }
 
     class TestStartWorkflow < Temporal::Workflow
       namespace 'default-test-namespace'
       task_queue 'default-test-task-queue'
     end
 
-    before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-    after { described_class.remove_instance_variable(:@client) rescue NameError }
+    before { allow(Temporal::Connection).to receive(:generate).and_return(connection) }
+    after { described_class.remove_instance_variable(:@connection) rescue NameError }
 
     describe '.start_workflow' do
       let(:temporal_response) do
         Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
       end
 
-      before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
+      before { allow(connection).to receive(:start_workflow_execution).and_return(temporal_response) }
 
       context 'using a workflow class' do
         it 'returns run_id' do
@@ -30,7 +31,7 @@ describe Temporal do
         it 'starts a workflow using the default options' do
           described_class.start_workflow(TestStartWorkflow, 42)
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'default-test-namespace',
@@ -58,7 +59,7 @@ describe Temporal do
             }
           )
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'test-namespace',
@@ -83,7 +84,7 @@ describe Temporal do
             options: { name: 'test-workflow' }
           )
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'default-test-namespace',
@@ -102,7 +103,7 @@ describe Temporal do
         it 'starts a workflow using specified workflow_id' do
           described_class.start_workflow(TestStartWorkflow, 42, options: { workflow_id: '123' })
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'default-test-namespace',
@@ -123,7 +124,7 @@ describe Temporal do
             TestStartWorkflow, 42, options: { workflow_id_reuse_policy: :allow }
           )
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'default-test-namespace',
@@ -148,7 +149,7 @@ describe Temporal do
             options: { namespace: 'test-namespace', task_queue: 'test-task-queue' }
           )
 
-          expect(client)
+          expect(connection)
             .to have_received(:start_workflow_execution)
             .with(
               namespace: 'test-namespace',
@@ -171,12 +172,12 @@ describe Temporal do
         Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
       end
 
-      before { allow(client).to receive(:terminate_workflow_execution).and_return(temporal_response) }
+      before { allow(connection).to receive(:terminate_workflow_execution).and_return(temporal_response) }
 
       it 'terminates a workflow' do
         described_class.terminate_workflow('my-workflow', reason: 'just stop it')
 
-        expect(client)
+        expect(connection)
           .to have_received(:terminate_workflow_execution)
           .with(
             namespace: 'default-namespace',
@@ -193,12 +194,12 @@ describe Temporal do
         Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
       end
 
-      before { allow(client).to receive(:start_workflow_execution).and_return(temporal_response) }
+      before { allow(connection).to receive(:start_workflow_execution).and_return(temporal_response) }
 
       it 'starts a cron workflow' do
         described_class.schedule_workflow(TestStartWorkflow, '* * * * *', 42)
 
-        expect(client)
+        expect(connection)
           .to have_received(:start_workflow_execution)
           .with(
             namespace: 'default-test-namespace',
@@ -217,12 +218,12 @@ describe Temporal do
     end
 
     describe '.register_namespace' do
-      before { allow(client).to receive(:register_namespace).and_return(nil) }
+      before { allow(connection).to receive(:register_namespace).and_return(nil) }
 
       it 'registers namespace with the specified name' do
         described_class.register_namespace('new-namespace')
 
-        expect(client)
+        expect(connection)
           .to have_received(:register_namespace)
           .with(name: 'new-namespace', description: nil)
       end
@@ -230,7 +231,7 @@ describe Temporal do
       it 'registers namespace with the specified name and description' do
         described_class.register_namespace('new-namespace', 'namespace description')
 
-        expect(client)
+        expect(connection)
           .to have_received(:register_namespace)
           .with(name: 'new-namespace', description: 'namespace description')
       end
@@ -244,12 +245,12 @@ describe Temporal do
       end
       let(:api_info) { Fabricate(:api_workflow_execution_info) }
 
-      before { allow(client).to receive(:describe_workflow_execution).and_return(response) }
+      before { allow(connection).to receive(:describe_workflow_execution).and_return(response) }
 
       it 'requests execution info from Temporal' do
         described_class.fetch_workflow_execution_info('namespace', '111', '222')
 
-        expect(client)
+        expect(connection)
           .to have_received(:describe_workflow_execution)
           .with(namespace: 'namespace', workflow_id: '111', run_id: '222')
       end
@@ -266,12 +267,12 @@ describe Temporal do
         Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
       end
 
-      before { allow(client).to receive(:reset_workflow_execution).and_return(temporal_response) }
+      before { allow(connection).to receive(:reset_workflow_execution).and_return(temporal_response) }
 
       context 'when workflow_task_id is provided' do
         let(:workflow_task_id) { 42 }
 
-        it 'calls client reset_workflow_execution' do
+        it 'calls connection reset_workflow_execution' do
           described_class.reset_workflow(
             'default-test-namespace',
             '123',
@@ -280,7 +281,7 @@ describe Temporal do
             reason: 'Test reset'
           )
 
-          expect(client).to have_received(:reset_workflow_execution).with(
+          expect(connection).to have_received(:reset_workflow_execution).with(
             namespace: 'default-test-namespace',
             workflow_id: '123',
             run_id: '1234',
@@ -312,12 +313,12 @@ describe Temporal do
       end
 
       describe '.complete_activity' do
-        before { allow(client).to receive(:respond_activity_task_completed_by_id).and_return(nil) }
+        before { allow(connection).to receive(:respond_activity_task_completed_by_id).and_return(nil) }
 
         it 'completes activity with a result' do
           described_class.complete_activity(async_token, 'all work completed')
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_activity_task_completed_by_id)
             .with(
               namespace: namespace,
@@ -331,7 +332,7 @@ describe Temporal do
         it 'completes activity without a result' do
           described_class.complete_activity(async_token)
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_activity_task_completed_by_id)
             .with(
               namespace: namespace,
@@ -344,13 +345,13 @@ describe Temporal do
       end
 
       describe '.fail_activity' do
-        before { allow(client).to receive(:respond_activity_task_failed_by_id).and_return(nil) }
+        before { allow(connection).to receive(:respond_activity_task_failed_by_id).and_return(nil) }
 
         it 'fails activity with a provided error' do
           exception = StandardError.new('something went wrong')
           described_class.fail_activity(async_token, exception)
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_activity_task_failed_by_id)
             .with(
               namespace: namespace,
@@ -376,7 +377,7 @@ describe Temporal do
         completed_event = Fabricate(:workflow_completed_event, result: nil)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
-        expect(client)
+        expect(connection)
           .to receive(:get_workflow_execution_history)
           .with(
             namespace: 'some-namespace',
@@ -399,7 +400,7 @@ describe Temporal do
         completed_event = Fabricate(:workflow_completed_event, result: nil)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
-        expect(client)
+        expect(connection)
           .to receive(:get_workflow_execution_history)
           .with(
             namespace: 'some-other-namespace',
@@ -433,7 +434,7 @@ describe Temporal do
           )
           completed_event = Fabricate(:workflow_completed_event, result: payload)
           response = Fabricate(:workflow_execution_history, events: [completed_event])
-          expect(client)
+          expect(connection)
             .to receive(:get_workflow_execution_history)
             .with(
               namespace: 'default-test-namespace',
@@ -459,7 +460,7 @@ describe Temporal do
         completed_event = Fabricate(:workflow_canceled_event)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
 
-        expect(client)
+        expect(connection)
           .to receive(:get_workflow_execution_history)
           .with(
             namespace: 'default-test-namespace',
@@ -482,7 +483,7 @@ describe Temporal do
 
       it 'raises TimeoutError when the server times out' do 
         response = Fabricate(:workflow_execution_history, events: [])
-        expect(client)
+        expect(connection)
           .to receive(:get_workflow_execution_history)
           .with(
             namespace: 'default-test-namespace',

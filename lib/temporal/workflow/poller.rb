@@ -1,4 +1,4 @@
-require 'temporal/client'
+require 'temporal/connection'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
@@ -11,10 +11,11 @@ module Temporal
         thread_pool_size: 10
       }.freeze
 
-      def initialize(namespace, task_queue, workflow_lookup, middleware = [], options = {})
+      def initialize(namespace, task_queue, workflow_lookup, config, middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @workflow_lookup = workflow_lookup
+        @config = config
         @middleware = middleware
         @shutting_down = false
         @options = DEFAULT_OPTIONS.merge(options)
@@ -31,7 +32,7 @@ module Temporal
       end
 
       def cancel_pending_requests
-        client.cancel_polling_request
+        connection.cancel_polling_request
       end
 
       def wait
@@ -41,10 +42,10 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :workflow_lookup, :middleware, :options, :thread
+      attr_reader :namespace, :task_queue, :connection, :workflow_lookup, :config, :middleware, :options, :thread
 
-      def client
-        @client ||= Temporal::Client.generate
+      def connection
+        @connection ||= Temporal::Connection.generate(config.for_connection, options)
       end
 
       def shutting_down?
@@ -73,7 +74,7 @@ module Temporal
       end
 
       def poll_for_task
-        client.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
+        connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
         Temporal::ErrorHandler.handle(error)
@@ -84,7 +85,7 @@ module Temporal
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, namespace, workflow_lookup, client, middleware_chain).process
+        TaskProcessor.new(task, namespace, workflow_lookup, middleware_chain, config).process
       end
 
       def thread_pool

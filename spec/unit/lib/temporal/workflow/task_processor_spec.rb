@@ -1,8 +1,9 @@
 require 'temporal/workflow/task_processor'
 require 'temporal/middleware/chain'
+require 'temporal/configuration'
 
 describe Temporal::Workflow::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, client, middleware_chain) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, config) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -13,16 +14,21 @@ describe Temporal::Workflow::TaskProcessor do
     )
   end
   let(:workflow_name) { 'TestWorkflow' }
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { ['arg1', 'arg2'] }
+  let(:config) { Temporal::Configuration.new }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Workflow::Context') }
 
     before do
-      allow(client).to receive(:respond_workflow_task_completed)
-      allow(client).to receive(:respond_workflow_task_failed)
+      allow(Temporal::Connection)
+        .to receive(:generate)
+        .with(config.for_connection)
+        .and_return(connection)
+      allow(connection).to receive(:respond_workflow_task_completed)
+      allow(connection).to receive(:respond_workflow_task_failed)
 
       allow(middleware_chain).to receive(:invoke).and_call_original
 
@@ -30,8 +36,8 @@ describe Temporal::Workflow::TaskProcessor do
     end
 
     context 'when workflow is not registered' do
-      it 'ignores client exception' do
-        allow(client)
+      it 'ignores connection exception' do
+        allow(connection)
           .to receive(:respond_workflow_task_failed)
           .and_raise(StandardError)
 
@@ -86,13 +92,13 @@ describe Temporal::Workflow::TaskProcessor do
         it 'completes the workflow task' do
           subject.process
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_workflow_task_completed)
             .with(task_token: task.task_token, commands: commands)
         end
 
-        it 'ignores client exception' do
-          allow(client)
+        it 'ignores connection exception' do
+          allow(connection)
             .to receive(:respond_workflow_task_completed)
             .and_raise(StandardError)
 
@@ -124,7 +130,7 @@ describe Temporal::Workflow::TaskProcessor do
         it 'fails the workflow task' do
           subject.process
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_workflow_task_failed)
             .with(
               task_token: task.task_token,
@@ -137,12 +143,12 @@ describe Temporal::Workflow::TaskProcessor do
           task.attempt = 2
           subject.process
 
-          expect(client)
+          expect(connection)
             .not_to have_received(:respond_workflow_task_failed)
         end
 
-        it 'ignores client exception' do
-          allow(client)
+        it 'ignores connection exception' do
+          allow(connection)
             .to receive(:respond_workflow_task_failed)
             .and_raise(StandardError)
 

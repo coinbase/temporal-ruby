@@ -1,8 +1,9 @@
 require 'temporal/activity/task_processor'
 require 'temporal/middleware/chain'
+require 'temporal/configuration'
 
 describe Temporal::Activity::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, client, middleware_chain) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, config) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -15,36 +16,41 @@ describe Temporal::Activity::TaskProcessor do
   end
   let(:metadata) { Temporal::Metadata.generate(Temporal::Metadata::ACTIVITY_TYPE, task) }
   let(:activity_name) { 'TestActivity' }
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
+  let(:config) { Temporal::Configuration.new }
   let(:input) { ['arg1', 'arg2'] }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Activity::Context', async?: false) }
 
     before do
+      allow(Temporal::Connection)
+        .to receive(:generate)
+        .with(config.for_connection)
+        .and_return(connection)
       allow(Temporal::Metadata)
         .to receive(:generate)
         .with(Temporal::Metadata::ACTIVITY_TYPE, task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(client, metadata).and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata).and_return(context)
 
-      allow(client).to receive(:respond_activity_task_completed)
-      allow(client).to receive(:respond_activity_task_failed)
+      allow(connection).to receive(:respond_activity_task_completed)
+      allow(connection).to receive(:respond_activity_task_failed)
 
       allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Temporal.metrics).to receive(:timing)
 
       # Skip sleeps during retries to speed up the test.
-      allow(Temporal::Client::Retryer).to receive(:sleep).and_return(nil)
+      allow(Temporal::Connection::Retryer).to receive(:sleep).and_return(nil)
     end
 
     context 'when activity is not registered' do
       it 'fails the activity task' do
         subject.process
 
-        expect(client)
+        expect(connection)
           .to have_received(:respond_activity_task_failed)
           .with(
             task_token: task.task_token,
@@ -52,8 +58,8 @@ describe Temporal::Activity::TaskProcessor do
           )
       end
 
-      it 'ignores client exception' do
-        allow(client)
+      it 'ignores connection exception' do
+        allow(connection)
           .to receive(:respond_activity_task_failed)
           .and_raise(StandardError)
 
@@ -101,13 +107,13 @@ describe Temporal::Activity::TaskProcessor do
         it 'completes the activity task' do
           subject.process
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_activity_task_completed)
             .with(task_token: task.task_token, result: 'result')
         end
 
-        it 'ignores client exception' do
-          allow(client)
+        it 'ignores connection exception' do
+          allow(connection)
             .to receive(:respond_activity_task_completed)
             .and_raise(StandardError)
 
@@ -136,7 +142,7 @@ describe Temporal::Activity::TaskProcessor do
           it 'does not complete the activity task' do
             subject.process
 
-            expect(client).not_to have_received(:respond_activity_task_completed)
+            expect(connection).not_to have_received(:respond_activity_task_completed)
           end
         end
       end
@@ -161,7 +167,7 @@ describe Temporal::Activity::TaskProcessor do
         it 'fails the activity task' do
           subject.process
 
-          expect(client)
+          expect(connection)
             .to have_received(:respond_activity_task_failed)
             .with(
               task_token: task.task_token,
@@ -169,8 +175,8 @@ describe Temporal::Activity::TaskProcessor do
             )
         end
 
-        it 'ignores client exception' do
-          allow(client)
+        it 'ignores connection exception' do
+          allow(connection)
             .to receive(:respond_activity_task_failed)
             .and_raise(StandardError)
 
@@ -214,7 +220,7 @@ describe Temporal::Activity::TaskProcessor do
           it 'fails the activity task' do
             subject.process
 
-            expect(client)
+            expect(connection)
               .to have_received(:respond_activity_task_failed)
               .with(
                 task_token: task.task_token,
@@ -229,7 +235,7 @@ describe Temporal::Activity::TaskProcessor do
           it 'does not handle the exception' do
             expect { subject.process }.to raise_error(exception)
 
-            expect(client).not_to have_received(:respond_activity_task_failed)
+            expect(connection).not_to have_received(:respond_activity_task_failed)
           end
         end
 
@@ -239,7 +245,7 @@ describe Temporal::Activity::TaskProcessor do
           it 'fails the activity task' do
             subject.process
 
-            expect(client)
+            expect(connection)
               .to have_received(:respond_activity_task_failed)
               .with(task_token: task.task_token, exception: exception)
           end

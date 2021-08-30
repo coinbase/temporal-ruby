@@ -12,18 +12,18 @@ describe Temporal::Testing::TemporalOverride do
 
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
-      let(:client) { instance_double('Temporal::Client::GRPCClient') }
+      let(:connection) { instance_double('Temporal::Connection::GRPC') }
       let(:response) { Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx') }
 
-      before { allow(Temporal::Client).to receive(:generate).and_return(client) }
-      after { Temporal.remove_instance_variable(:@client) rescue NameError }
+      before { allow(Temporal::Connection).to receive(:generate).and_return(connection) }
+      after { Temporal.remove_instance_variable(:@connection) rescue NameError }
 
       it 'invokes original implementation' do
-        allow(client).to receive(:start_workflow_execution).and_return(response)
+        allow(connection).to receive(:start_workflow_execution).and_return(response)
 
         Temporal.start_workflow(TestTemporalOverrideWorkflow)
 
-        expect(client)
+        expect(connection)
           .to have_received(:start_workflow_execution)
           .with(hash_including(workflow_name: 'TestTemporalOverrideWorkflow'))
       end

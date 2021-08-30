@@ -1,4 +1,4 @@
-require 'temporal/client'
+require 'temporal/connection'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
@@ -11,10 +11,11 @@ module Temporal
         thread_pool_size: 20
       }.freeze
 
-      def initialize(namespace, task_queue, activity_lookup, middleware = [], options = {})
+      def initialize(namespace, task_queue, activity_lookup, config, middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @activity_lookup = activity_lookup
+        @config = config
         @middleware = middleware
         @shutting_down = false
         @options = DEFAULT_OPTIONS.merge(options)
@@ -31,7 +32,7 @@ module Temporal
       end
 
       def cancel_pending_requests
-        client.cancel_polling_request
+        connection.cancel_polling_request
       end
 
       def wait
@@ -41,10 +42,10 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :activity_lookup, :middleware, :options, :thread
-
-      def client
-        @client ||= Temporal::Client.generate
+      attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :thread
+      
+      def connection
+        @connection ||= Temporal::Connection.generate(config.for_connection, options)
       end
 
       def shutting_down?
@@ -73,7 +74,7 @@ module Temporal
       end
 
       def poll_for_task
-        client.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
+        connection.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
 
@@ -85,7 +86,7 @@ module Temporal
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, namespace, activity_lookup, client, middleware_chain).process
+        TaskProcessor.new(task, namespace, activity_lookup, middleware_chain, config).process
       end
 
       def thread_pool

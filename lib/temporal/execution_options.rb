@@ -4,7 +4,7 @@ module Temporal
   class ExecutionOptions
     attr_reader :name, :namespace, :task_queue, :retry_policy, :timeouts, :headers
 
-    def initialize(object, options = {})
+    def initialize(object, options, defaults = nil)
       @name = options[:name] || object.to_s
       @namespace = options[:namespace]
       @task_queue = options[:task_queue] || options[:task_list]
@@ -20,15 +20,17 @@ module Temporal
         @headers = object.headers.merge(@headers) if object.headers
       end
 
-      @namespace ||= Temporal.configuration.namespace
-      @task_queue ||= Temporal.configuration.task_queue
-      @timeouts = Temporal.configuration.timeouts.merge(@timeouts)
-      @headers = Temporal.configuration.headers.merge(@headers)
+      if defaults
+        @namespace ||= defaults.namespace
+        @task_queue ||= defaults.task_queue
+        @timeouts = defaults.timeouts.merge(@timeouts)
+        @headers = defaults.headers.merge(@headers)
+      end
 
       freeze
     end
 
-    def task_list
+    def task_queue
       @task_queue
     end
 
