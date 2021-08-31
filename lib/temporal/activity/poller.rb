@@ -45,7 +45,7 @@ module Temporal
       attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :thread
 
       def connection
-        @connection ||= Temporal::Connection.generate(config.for_connection, options)
+        @connection ||= Temporal::Connection.generate(config.for_connection)
       end
 
       def shutting_down?

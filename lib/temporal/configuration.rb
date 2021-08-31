@@ -55,11 +55,11 @@ module Temporal
       @error_handlers << block
     end
 
-    def task_queue
+    def task_list
       @task_queue
     end
 
-    def task_queue=(name)
+    def task_list=(name)
       self.task_queue = name
     end
 
@@ -82,7 +82,7 @@ module Temporal
     def default_execution_options
       Execution.new(
         namespace: namespace,
-        task_queue: task_queue,
+        task_queue: task_list,
         timeouts: timeouts,
         headers: headers
       ).freeze

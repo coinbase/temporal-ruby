@@ -6,7 +6,7 @@ module Temporal
       grpc: Temporal::Connection::GRPC
     }.freeze
 
-    def self.generate(configuration, options = {})
+    def self.generate(configuration)
       connection_class = CLIENT_TYPES_MAP[configuration.type]
       host = configuration.host
       port = configuration.port
@@ -15,7 +15,7 @@ module Temporal
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      connection_class.new(host, port, identity, options)
+      connection_class.new(host, port, identity)
     end
   end
 end

@@ -30,7 +30,7 @@ module Temporal
       freeze
     end
 
-    def task_queue
+    def task_list
       @task_queue
     end
 
