@@ -3,22 +3,23 @@ require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
 require 'temporal/concerns/payloads'
-require 'temporal/client/retryer'
+require 'temporal/connection/retryer'
+require 'temporal/connection'
 
 module Temporal
   class Activity
     class TaskProcessor
       include Concerns::Payloads
 
-      def initialize(task, namespace, activity_lookup, client, middleware_chain)
+      def initialize(task, namespace, activity_lookup, middleware_chain, config)
         @task = task
         @namespace = namespace
         @metadata = Metadata.generate(Metadata::ACTIVITY_TYPE, task, namespace)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
-        @client = client
         @middleware_chain = middleware_chain
+        @config = config
       end
 
       def process
@@ -27,7 +28,7 @@ module Temporal
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name)
 
-        context = Activity::Context.new(client, metadata)
+        context = Activity::Context.new(connection, metadata)
 
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
@@ -51,7 +52,12 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class, :client, :middleware_chain, :metadata
+      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class,
+      :middleware_chain, :metadata, :config
+      
+      def connection
+        @connection ||= Temporal::Connection.generate(config.for_connection)
+      end
 
       def queue_time_ms
         scheduled = task.current_attempt_scheduled_time.to_f
@@ -64,8 +70,8 @@ module Temporal
         log_retry = proc do
           Temporal.logger.debug("Failed to report activity task completion, retrying", metadata.to_h)
         end
-        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
-          client.respond_activity_task_completed(task_token: task_token, result: result)
+        Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
+          connection.respond_activity_task_completed(task_token: task_token, result: result)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
@@ -78,8 +84,8 @@ module Temporal
         log_retry = proc do
           Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
         end
-        Temporal::Client::Retryer.with_retries(on_retry: log_retry) do
-          client.respond_activity_task_failed(task_token: task_token, exception: error)
+        Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
+          connection.respond_activity_task_failed(task_token: task_token, exception: error)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))

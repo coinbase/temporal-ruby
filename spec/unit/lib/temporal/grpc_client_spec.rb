@@ -1,5 +1,5 @@
-describe Temporal::Client::GRPCClient do
-  subject { Temporal::Client::GRPCClient.new(nil, nil, nil) }
+describe Temporal::Connection::GRPC do
+  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }

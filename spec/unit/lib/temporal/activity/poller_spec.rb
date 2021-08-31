@@ -1,37 +1,39 @@
 require 'temporal/activity/poller'
 require 'temporal/middleware/entry'
+require 'temporal/configuration'
 
 describe Temporal::Activity::Poller do
-  let(:client) { instance_double('Temporal::Client::GRPCClient', cancel_polling_request: nil) }
+  let(:connection) { instance_double('Temporal::Connection::GRPC', cancel_polling_request: nil) }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
   let(:thread_pool) do
     instance_double(Temporal::ThreadPool, wait_for_available_threads: nil, shutdown: nil)
   end
+  let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
 
-  subject { described_class.new(namespace, task_queue, lookup, middleware) }
+  subject { described_class.new(namespace, task_queue, lookup, config, middleware) }
 
   before do
-    allow(Temporal::Client).to receive(:generate).and_return(client)
+    allow(Temporal::Connection).to receive(:generate).and_return(connection)
     allow(Temporal::ThreadPool).to receive(:new).and_return(thread_pool)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
   end
 
   describe '#start' do
-    it 'polls for activity tasks' do
+    it 'measures time between polls' do
       allow(subject).to receive(:shutting_down?).and_return(false, false, true)
-      allow(client).to receive(:poll_activity_task_queue).and_return(nil)
+      allow(connection).to receive(:poll_activity_task_queue).and_return(nil)
 
       subject.start
 
       # stop poller before inspecting
       subject.stop_polling; subject.wait
 
-      expect(client)
+      expect(connection)
         .to have_received(:poll_activity_task_queue)
         .with(namespace: namespace, task_queue: task_queue)
         .twice
@@ -39,7 +41,7 @@ describe Temporal::Activity::Poller do
 
     it 'reports time since last poll' do
       allow(subject).to receive(:shutting_down?).and_return(false, false, true)
-      allow(client).to receive(:poll_activity_task_queue).and_return(nil)
+      allow(connection).to receive(:poll_activity_task_queue).and_return(nil)
 
       subject.start
 
@@ -63,7 +65,7 @@ describe Temporal::Activity::Poller do
 
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_activity_task_queue).and_return(task)
+        allow(connection).to receive(:poll_activity_task_queue).and_return(task)
         allow(Temporal::Activity::TaskProcessor).to receive(:new).and_return(task_processor)
         allow(thread_pool).to receive(:schedule).and_yield
       end
@@ -85,7 +87,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, client, middleware_chain)
+          .with(task, namespace, lookup, middleware_chain, config)
         expect(task_processor).to have_received(:process)
       end
 
@@ -108,15 +110,15 @@ describe Temporal::Activity::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, client, middleware_chain)
+            .with(task, namespace, lookup, middleware_chain, config)
         end
       end
     end
 
-    context 'when client is unable to poll' do
+    context 'when connection is unable to poll' do
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(client).to receive(:poll_activity_task_queue).and_raise(StandardError)
+        allow(connection).to receive(:poll_activity_task_queue).and_raise(StandardError)
       end
 
       it 'logs' do
@@ -138,11 +140,11 @@ describe Temporal::Activity::Poller do
     before { subject.start }
     after { subject.wait }
 
-    it 'tells client to cancel polling requests' do
+    it 'tells connection to cancel polling requests' do
       subject.stop_polling
       subject.cancel_pending_requests
 
-      expect(client).to have_received(:cancel_polling_request)
+      expect(connection).to have_received(:cancel_polling_request)
     end
   end
 
