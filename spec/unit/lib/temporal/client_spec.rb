@@ -203,28 +203,6 @@ describe Temporal::Client do
     end
   end
 
-  describe '#terminate_workflow' do
-    let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
-    end
-
-    before { allow(connection).to receive(:terminate_workflow_execution).and_return(temporal_response) }
-
-    it 'terminates a workflow' do
-      subject.terminate_workflow('my-workflow', reason: 'just stop it')
-
-      expect(connection)
-        .to have_received(:terminate_workflow_execution)
-        .with(
-          namespace: 'default-namespace',
-          workflow_id: 'my-workflow',
-          reason: 'just stop it',
-          details: nil,
-          run_id: nil
-        )
-    end
-  end
-
   describe '#register_namespace' do
     before { allow(connection).to receive(:register_namespace).and_return(nil) }
 
@@ -386,31 +364,6 @@ describe Temporal::Client do
     end
   end
 
-  describe '#fetch_workflow_execution_info' do
-    let(:response) do
-      Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
-        workflow_execution_info: api_info
-      )
-    end
-    let(:api_info) { Fabricate(:api_workflow_execution_info) }
-
-    before { allow(connection).to receive(:describe_workflow_execution).and_return(response) }
-
-    it 'requests execution info from Temporal' do
-      subject.fetch_workflow_execution_info('namespace', '111', '222')
-
-      expect(connection)
-        .to have_received(:describe_workflow_execution)
-        .with(namespace: 'namespace', workflow_id: '111', run_id: '222')
-    end
-
-    it 'returns Workflow::ExecutionInfo' do
-      info = subject.fetch_workflow_execution_info('namespace', '111', '222')
-
-      expect(info).to be_a(Temporal::Workflow::ExecutionInfo)
-    end
-  end
-
   describe '#reset_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -449,6 +402,53 @@ describe Temporal::Client do
 
         expect(result).to eq('xxx')
       end
+    end
+  end
+
+  describe '#terminate_workflow' do
+    let(:temporal_response) do
+      Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
+    end
+
+    before { allow(connection).to receive(:terminate_workflow_execution).and_return(temporal_response) }
+
+    it 'terminates a workflow' do
+      subject.terminate_workflow('my-workflow', reason: 'just stop it')
+
+      expect(connection)
+        .to have_received(:terminate_workflow_execution)
+        .with(
+          namespace: 'default-namespace',
+          workflow_id: 'my-workflow',
+          reason: 'just stop it',
+          details: nil,
+          run_id: nil
+        )
+    end
+  end
+
+  describe '#fetch_workflow_execution_info' do
+    let(:response) do
+      Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
+        workflow_execution_info: api_info
+      )
+    end
+    let(:api_info) { Fabricate(:api_workflow_execution_info) }
+
+    before { allow(connection).to receive(:describe_workflow_execution).and_return(response) }
+
+    it 'requests execution info from Temporal' do
+      subject.fetch_workflow_execution_info('namespace', '111', '222')
+
+      expect(connection)
+        .to have_received(:describe_workflow_execution)
+        .with(namespace: 'namespace', workflow_id: '111', run_id: '222')
+    end
+
+    it 'returns Workflow::ExecutionInfo' do
+      info = subject.fetch_workflow_execution_info('namespace', '111', '222')
+
+      expect(info).to be_a(Temporal::Workflow::ExecutionInfo)
     end
   end
 
