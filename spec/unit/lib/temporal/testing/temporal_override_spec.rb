@@ -3,6 +3,9 @@ require 'temporal/workflow'
 require 'temporal/api/errordetails/v1/message_pb'
 
 describe Temporal::Testing::TemporalOverride do
+  let(:client) { Temporal::Client.new(config) }
+  let(:config) { Temporal::Configuration.new }
+
   class TestTemporalOverrideWorkflow < Temporal::Workflow
     namespace 'default-namespace'
     task_queue 'default-task-queue'
@@ -16,12 +19,12 @@ describe Temporal::Testing::TemporalOverride do
       let(:response) { Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx') }
 
       before { allow(Temporal::Connection).to receive(:generate).and_return(connection) }
-      after { Temporal.remove_instance_variable(:@connection) rescue NameError }
+      after { client.remove_instance_variable(:@connection) rescue NameError }
 
       it 'invokes original implementation' do
         allow(connection).to receive(:start_workflow_execution).and_return(response)
 
-        Temporal.start_workflow(TestTemporalOverrideWorkflow)
+        client.start_workflow(TestTemporalOverrideWorkflow)
 
         expect(connection)
           .to have_received(:start_workflow_execution)
@@ -43,8 +46,8 @@ describe Temporal::Testing::TemporalOverride do
 
         allow(workflow).to receive(:execute)
         allow(workflow2).to receive(:execute)
-        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
-        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '1 */5 * * *')
+        client.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
+        client.schedule_workflow(TestTemporalOverrideWorkflow, '1 */5 * * *')
         expect(workflow).not_to have_received(:execute)
         expect(workflow2).not_to have_received(:execute)
 
@@ -57,7 +60,7 @@ describe Temporal::Testing::TemporalOverride do
         workflow = TestTemporalOverrideWorkflow.new(nil)
         allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
         allow(workflow).to receive(:execute)
-        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '*/3 * * * *', options: { workflow_id: 'my_id' })
+        client.schedule_workflow(TestTemporalOverrideWorkflow, '*/3 * * * *', options: { workflow_id: 'my_id' })
         expect(workflow).not_to have_received(:execute)
         expect(Temporal::Testing::ScheduledWorkflows.cron_schedules['my_id']).to eq('*/3 * * * *')
 
@@ -78,7 +81,7 @@ describe Temporal::Testing::TemporalOverride do
         workflow = TestTemporalOverrideWorkflow.new(nil)
         allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
         allow(workflow).to receive(:execute)
-        Temporal.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
+        client.schedule_workflow(TestTemporalOverrideWorkflow, '* * * * *')
         expect(workflow).not_to have_received(:execute)
         expect(Temporal::Testing::ScheduledWorkflows.cron_schedules).not_to be_empty
 
@@ -125,7 +128,7 @@ describe Temporal::Testing::TemporalOverride do
       it 'calls the workflow directly' do
         allow(workflow).to receive(:execute)
 
-        Temporal.start_workflow(TestTemporalOverrideWorkflow)
+        client.start_workflow(TestTemporalOverrideWorkflow)
 
         expect(workflow).to have_received(:execute)
         expect(TestTemporalOverrideWorkflow)
@@ -135,7 +138,7 @@ describe Temporal::Testing::TemporalOverride do
 
       describe 'execution control' do
         subject do
-          Temporal.start_workflow(
+          client.start_workflow(
             TestTemporalOverrideWorkflow,
             options: { workflow_id: workflow_id, workflow_id_reuse_policy: policy }
           )
@@ -149,7 +152,7 @@ describe Temporal::Testing::TemporalOverride do
         # Simulate existing execution
         before do
           if execution
-            Temporal.send(:executions)[[workflow_id, run_id]] = execution
+            client.send(:executions)[[workflow_id, run_id]] = execution
           end
         end
 

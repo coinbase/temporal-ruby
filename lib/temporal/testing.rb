@@ -47,5 +47,5 @@ module Temporal
   end
 end
 
-Temporal.singleton_class.prepend Temporal::Testing::TemporalOverride
+Temporal::Client.prepend Temporal::Testing::TemporalOverride
 Temporal::Workflow.extend Temporal::Testing::WorkflowOverride

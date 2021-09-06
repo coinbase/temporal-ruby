@@ -23,7 +23,7 @@ module Helpers
   end
 
   def fetch_history(workflow_id, run_id, options = {})
-    connection = Temporal.send(:connection)
+    connection = Temporal.send(:default_client).send(:connection)
 
     result = connection.get_workflow_execution_history(
       {
