@@ -1,5 +1,3 @@
-require 'temporal/retry_policy'
-
 module Temporal
   module Concerns
     module Executable
@@ -19,8 +17,7 @@ module Temporal
 
       def retry_policy(*args)
         return @retry_policy if args.empty?
-        @retry_policy = Temporal::RetryPolicy.new(args.first)
-        @retry_policy.validate!
+        @retry_policy = args.first
       end
 
       def timeouts(*args)
