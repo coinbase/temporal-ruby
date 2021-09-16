@@ -280,11 +280,11 @@ describe Temporal::Client do
     end
 
     [
-      {type: 'hash', expected_result: { 'key' => 'value' }},
-      {type: 'integer', expected_result: 5},
-      {type: 'nil', expected_result: nil},
-      {type: 'string', expected_result: 'a result'},
-    ].each do |type:, expected_result:|
+      ['hash', { 'key' => 'value' }],
+      ['integer', 5],
+      ['nil', nil],
+      ['string', 'a result'],
+    ].each do |(type, expected_result)|
       it "completes and returns a #{type}" do
         payload = Temporal::Api::Common::V1::Payloads.new(
           payloads: [

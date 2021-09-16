@@ -17,10 +17,12 @@ module Temporal
         WORKFLOW_TYPE                         = :workflow
         CANCEL_WORKFLOW_REQUEST_TYPE          = :cancel_workflow_request
 
+        # NOTE: The order is important, first prefix match wins (will be a longer match)
         TARGET_TYPES = {
-          'ACTIVITY_TASK'                              => ACTIVITY_TYPE,
           'ACTIVITY_TASK_CANCEL'                       => CANCEL_ACTIVITY_REQUEST_TYPE,
+          'ACTIVITY_TASK'                              => ACTIVITY_TYPE,
           'REQUEST_CANCEL_ACTIVITY_TASK'               => CANCEL_ACTIVITY_REQUEST_TYPE,
+          'TIMER_CANCELED'                             => CANCEL_TIMER_REQUEST_TYPE,
           'TIMER'                                      => TIMER_TYPE,
           'CANCEL_TIMER'                               => CANCEL_TIMER_REQUEST_TYPE,
           'CHILD_WORKFLOW_EXECUTION'                   => CHILD_WORKFLOW_TYPE,
@@ -31,8 +33,8 @@ module Temporal
           'EXTERNAL_WORKFLOW_EXECUTION_CANCEL'         => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
           'REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION' => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
           'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'          => WORKFLOW_TYPE,
-          'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
           'WORKFLOW_EXECUTION_CANCEL'                  => CANCEL_WORKFLOW_REQUEST_TYPE,
+          'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
         }.freeze
 
         attr_reader :id, :type
