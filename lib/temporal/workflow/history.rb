@@ -11,8 +11,8 @@ module Temporal
         @iterator = @events.each
       end
 
-      def last_completed_workflow_task
-        events.select { |event| event.type == 'WORKFLOW_TASK_COMPLETED' }.last
+      def find_event_by_id(id)
+        events.find { |event| event.id == id }
       end
 
       # It is very important to replay the History window by window in order to

@@ -1,6 +1,8 @@
+require 'securerandom'
 require 'temporal/client'
 require 'temporal/configuration'
 require 'temporal/workflow'
+require 'temporal/workflow/history'
 require 'temporal/connection/grpc'
 
 describe Temporal::Client do
@@ -8,6 +10,9 @@ describe Temporal::Client do
 
   let(:config) { Temporal::Configuration.new }
   let(:connection) { instance_double(Temporal::Connection::GRPC) }
+  let(:namespace) { 'default-test-namespace' }
+  let(:workflow_id) { SecureRandom.uuid }
+  let(:run_id) { SecureRandom.uuid }
 
   class TestStartWorkflow < Temporal::Workflow
     namespace 'default-test-namespace'
@@ -20,7 +25,12 @@ describe Temporal::Client do
     .with(config.for_connection)
     .and_return(connection)
   end
-  after { subject.remove_instance_variable(:@connection) }
+
+  after do
+    if subject.instance_variable_get(:@connection)
+      subject.remove_instance_variable(:@connection)
+    end
+  end
 
   describe '#start_workflow' do
     let(:temporal_response) do
@@ -368,8 +378,37 @@ describe Temporal::Client do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
     end
+    let(:history) do
+      Temporal::Workflow::History.new([
+        Fabricate(:api_workflow_execution_started_event, event_id: 1),
+        Fabricate(:api_workflow_task_scheduled_event, event_id: 2),
+        Fabricate(:api_workflow_task_started_event, event_id: 3),
+        Fabricate(:api_workflow_task_completed_event, event_id: 4),
+        Fabricate(:api_activity_task_scheduled_event, event_id: 5),
+        Fabricate(:api_activity_task_started_event, event_id: 6),
+        Fabricate(:api_activity_task_completed_event, event_id: 7),
+        Fabricate(:api_workflow_task_scheduled_event, event_id: 8),
+        Fabricate(:api_workflow_task_started_event, event_id: 9),
+        Fabricate(:api_workflow_task_completed_event, event_id: 10),
+        Fabricate(:api_activity_task_scheduled_event, event_id: 11),
+        Fabricate(:api_activity_task_started_event, event_id: 12),
+        Fabricate(:api_activity_task_failed_event, event_id: 13),
+        Fabricate(:api_workflow_task_scheduled_event, event_id: 14),
+        Fabricate(:api_workflow_task_started_event, event_id: 15),
+        Fabricate(:api_workflow_task_completed_event, event_id: 16),
+        Fabricate(:api_workflow_execution_completed_event, event_id: 17)
+      ])
+    end
 
     before { allow(connection).to receive(:reset_workflow_execution).and_return(temporal_response) }
+
+    before do
+      allow(connection).to receive(:reset_workflow_execution).and_return(temporal_response)
+      allow(subject)
+        .to receive(:get_workflow_history)
+        .with(namespace: namespace, workflow_id: workflow_id, run_id: run_id)
+        .and_return(history)
+    end
 
     context 'when workflow_task_id is provided' do
       let(:workflow_task_id) { 42 }
@@ -401,6 +440,87 @@ describe Temporal::Client do
         )
 
         expect(result).to eq('xxx')
+      end
+    end
+
+    context 'when neither strategy nor workflow_task_id is provided' do
+      it 'uses default strategy' do
+        subject.reset_workflow(namespace, workflow_id, run_id)
+
+        expect(connection).to have_received(:reset_workflow_execution).with(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          run_id: run_id,
+          reason: 'manual reset',
+          workflow_task_event_id: 16
+        )
+      end
+    end
+
+    context 'when both strategy and workflow_task_id are provided' do
+      it 'uses default strategy' do
+        expect do
+          subject.reset_workflow(
+            namespace,
+            workflow_id,
+            run_id,
+            strategy: :last_workflow_task,
+            workflow_task_id: 10
+          )
+        end.to raise_error(ArgumentError, 'Please specify either :strategy or :workflow_task_id')
+      end
+    end
+
+    context 'with a specified strategy' do
+      context ':last_workflow_task' do
+        it 'resets workflow' do
+          subject.reset_workflow(namespace, workflow_id, run_id, strategy: :last_workflow_task)
+
+          expect(connection).to have_received(:reset_workflow_execution).with(
+            namespace: namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            reason: 'manual reset',
+            workflow_task_event_id: 16
+          )
+        end
+      end
+
+      context ':first_workflow_task' do
+        it 'resets workflow' do
+          subject.reset_workflow(namespace, workflow_id, run_id, strategy: :first_workflow_task)
+
+          expect(connection).to have_received(:reset_workflow_execution).with(
+            namespace: namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            reason: 'manual reset',
+            workflow_task_event_id: 4
+          )
+        end
+      end
+
+
+      context ':last_failed_activity' do
+        it 'resets workflow' do
+          subject.reset_workflow(namespace, workflow_id, run_id, strategy: :last_failed_activity)
+
+          expect(connection).to have_received(:reset_workflow_execution).with(
+            namespace: namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            reason: 'manual reset',
+            workflow_task_event_id: 10
+          )
+        end
+      end
+
+      context 'unsupported strategy' do
+        it 'resets workflow' do
+          expect do
+            subject.reset_workflow(namespace, workflow_id, run_id, strategy: :foobar)
+          end.to raise_error(ArgumentError, 'Unsupported reset strategy')
+        end
       end
     end
   end

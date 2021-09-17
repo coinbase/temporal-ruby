@@ -34,10 +34,10 @@ Fabricator(:api_workflow_execution_completed_event, from: :api_history_event) do
   end
 end
 
-Fabricator(:api_decision_task_scheduled_event, from: :api_history_event) do
-  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_DECISION_TASK_SCHEDULED }
-  decision_task_scheduled_event_attributes do |attrs|
-    Temporal::Api::History::V1::DecisionTaskScheduledEventAttributes.new(
+Fabricator(:api_workflow_task_scheduled_event, from: :api_history_event) do
+  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_SCHEDULED }
+  workflow_task_scheduled_event_attributes do |attrs|
+    Temporal::Api::History::V1::WorkflowTaskScheduledEventAttributes.new(
       task_queue: Fabricate(:api_task_queue),
       start_to_close_timeout: 15,
       attempt: 0
@@ -45,10 +45,10 @@ Fabricator(:api_decision_task_scheduled_event, from: :api_history_event) do
   end
 end
 
-Fabricator(:api_decision_task_started_event, from: :api_history_event) do
-  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_DECISION_TASK_STARTED }
-  decision_task_started_event_attributes do |attrs|
-    Temporal::Api::History::V1::DecisionTaskStartedEventAttributes.new(
+Fabricator(:api_workflow_task_started_event, from: :api_history_event) do
+  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_STARTED }
+  workflow_task_started_event_attributes do |attrs|
+    Temporal::Api::History::V1::WorkflowTaskStartedEventAttributes.new(
       scheduled_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host',
       request_id: SecureRandom.uuid
@@ -56,10 +56,10 @@ Fabricator(:api_decision_task_started_event, from: :api_history_event) do
   end
 end
 
-Fabricator(:api_decision_task_completed_event, from: :api_history_event) do
-  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_DECISION_TASK_COMPLETED }
-  decision_task_completed_event_attributes do |attrs|
-    Temporal::Api::History::V1::DecisionTaskCompletedEventAttributes.new(
+Fabricator(:api_workflow_task_completed_event, from: :api_history_event) do
+  event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_COMPLETED }
+  workflow_task_completed_event_attributes do |attrs|
+    Temporal::Api::History::V1::WorkflowTaskCompletedEventAttributes.new(
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host'
@@ -71,10 +71,10 @@ Fabricator(:api_activity_task_scheduled_event, from: :api_history_event) do
   event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_SCHEDULED }
   activity_task_scheduled_event_attributes do |attrs|
     Temporal::Api::History::V1::ActivityTaskScheduledEventAttributes.new(
-      activity_id: attrs[:event_id],
-      activity_type: Temporal::Api::History::V1::ActivityType.new(name: 'TestActivity'),
+      activity_id: attrs[:event_id].to_s,
+      activity_type: Temporal::Api::Common::V1::ActivityType.new(name: 'TestActivity'),
       workflow_task_completed_event_id: attrs[:event_id] - 1,
-      domain: 'test-domain',
+      namespace: 'test-namespace',
       task_queue: Fabricate(:api_task_queue)
     )
   end
@@ -107,8 +107,7 @@ Fabricator(:api_activity_task_failed_event, from: :api_history_event) do
   event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_FAILED }
   activity_task_failed_event_attributes do |attrs|
     Temporal::Api::History::V1::ActivityTaskFailedEventAttributes.new(
-      reason: 'StandardError',
-      details: 'Activity failed',
+      failure: Temporal::Api::Failure::V1::Failure.new(message: "Activity failed"),
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host'
