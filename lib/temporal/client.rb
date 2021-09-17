@@ -5,6 +5,7 @@ require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
+require 'temporal/reset_strategy'
 
 module Temporal
   class Client
@@ -134,9 +135,16 @@ module Temporal
       end
     end
 
-    def reset_workflow(namespace, workflow_id, run_id, workflow_task_id: nil, reason: 'manual reset')
-      workflow_task_id ||= get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
-      raise Error, 'Could not find a completed workflow task event' unless workflow_task_id
+    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset')
+      # Pick default strategy for backwards-compatibility
+      strategy ||= :last_workflow_task unless workflow_task_id
+
+      if strategy && workflow_task_id
+        raise ArgumentError, 'Please specify either :strategy or :workflow_task_id'
+      end
+
+      workflow_task_id ||= find_workflow_task(namespace, workflow_id, run_id, strategy)&.id
+      raise Error, 'Could not find an event to reset to' unless workflow_task_id
 
       response = connection.reset_workflow_execution(
         namespace: namespace,
@@ -195,6 +203,16 @@ module Temporal
       )
     end
 
+    def get_workflow_history(namespace:, workflow_id:, run_id:)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+
+      Workflow::History.new(history_response.history.events)
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
@@ -208,15 +226,31 @@ module Temporal
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end
 
-    def get_last_completed_workflow_task_id(namespace, workflow_id, run_id)
-      history_response = connection.get_workflow_execution_history(
+    def find_workflow_task(namespace, workflow_id, run_id, strategy)
+      history = get_workflow_history(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )
-      history = Workflow::History.new(history_response.history.events)
-      workflow_task_event = history.get_last_completed_workflow_task
-      workflow_task_event&.id
+
+      # TODO: Move this into a separate class if it keeps growing
+      case strategy
+      when ResetStrategy::LAST_WORKFLOW_TASK
+        events = %[WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED].freeze
+        history.events.select { |event| events.include?(event.type) }.last
+      when ResetStrategy::FIRST_WORKFLOW_TASK
+        events = %[WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED].freeze
+        history.events.select { |event| events.include?(event.type) }.first
+      when ResetStrategy::LAST_FAILED_ACTIVITY
+        events = %[ACTIVITY_TASK_FAILED ACTIVITY_TASK_TIMED_OUT].freeze
+        failed_event = history.events.select { |event| events.include?(event.type) }.last
+        return unless failed_event
+
+        scheduled_event = history.find_event_by_id(failed_event.attributes.scheduled_event_id)
+        history.find_event_by_id(scheduled_event.attributes.workflow_task_completed_event_id)
+      else
+        raise ArgumentError, 'Unsupported reset strategy'
+      end
     end
   end
 end
