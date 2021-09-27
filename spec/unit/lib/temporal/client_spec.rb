@@ -213,7 +213,7 @@ describe Temporal::Client do
     end
   end
 
-  describe '#signal_or_start_workflow' do
+  describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
@@ -221,7 +221,7 @@ describe Temporal::Client do
     before { allow(connection).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
 
     it 'starts a workflow using the default options with a signal' do
-      subject.signal_or_start_workflow(TestStartWorkflow, 'the question', 'what do you get if you multiply six by nine?', 42)
+      subject.signal_with_start_workflow(TestStartWorkflow, 'the question', 'what do you get if you multiply six by nine?', 42)
 
       expect(connection)
         .to have_received(:signal_with_start_workflow_execution)

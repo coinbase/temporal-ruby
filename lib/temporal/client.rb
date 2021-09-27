@@ -64,7 +64,7 @@ module Temporal
       response.run_id
     end
 
-    def signal_or_start_workflow(workflow, signal_name, signal_input, *input, **args)
+    def signal_with_start_workflow(workflow, signal_name, signal_input, *input, **args)
       options = args.delete(:options) || {}
       input << args unless args.empty?
 

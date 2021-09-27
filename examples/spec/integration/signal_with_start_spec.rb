@@ -4,7 +4,7 @@ describe 'signal with start' do
 
   it 'signals at workflow start time' do
     workflow_id = SecureRandom.uuid
-    run_id = Temporal.signal_or_start_workflow(
+    run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
       'signal_name', # the actual signal name
       'expected value',
@@ -22,9 +22,9 @@ describe 'signal with start' do
     expect(result).to eq('expected value') # the workflow should return the signal value
   end
 
-  it 'does not launch a new workflow when signaling a running workflow through signal_or_start' do
+  it 'does not launch a new workflow when signaling a running workflow through signal_with_start' do
     workflow_id = SecureRandom.uuid
-    run_id = Temporal.signal_or_start_workflow(
+    run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
       'signal_name', # the actual signal name
       'expected value',
@@ -33,7 +33,7 @@ describe 'signal with start' do
       options: { workflow_id: workflow_id }
     )
 
-    second_run_id = Temporal.signal_or_start_workflow(
+    second_run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
       'signal_name', # the actual signal name
       'expected value',
