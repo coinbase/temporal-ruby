@@ -28,7 +28,7 @@ module Temporal
         input: input,
         execution_timeout: execution_options.timeouts[:execution],
         # If unspecified, individual runs should have the full time for the execution (which includes retries).
-        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
+        run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers
@@ -54,7 +54,7 @@ module Temporal
         # Execution timeout is across all scheduled jobs, whereas run is for an individual run.
         # This default is here for backward compatibility.  Certainly, the run timeout shouldn't be higher
         # than the execution timeout.
-        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
+        run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
@@ -62,6 +62,35 @@ module Temporal
       )
 
       response.run_id
+    end
+
+    def signal_or_start_workflow(workflow, signal_name, signal_input, *input, **args)
+      options = args.delete(:options) || {}
+      input << args unless args.empty?
+
+      execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
+      workflow_id = options[:workflow_id] || SecureRandom.uuid
+
+      response = connection.signal_with_start_workflow_execution(
+        namespace: execution_options.namespace,
+        workflow_id: workflow_id,
+        workflow_name: execution_options.name,
+        task_queue: execution_options.task_queue,
+        input: input,
+        execution_timeout: execution_options.timeouts[:execution],
+        run_timeout: compute_run_timeout(execution_options),
+        task_timeout: execution_options.timeouts[:task],
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+        headers: execution_options.headers,
+        signal_name: signal_name,
+        signal_input: signal_input
+      )
+
+      response.run_id
+    end
+
+    def compute_run_timeout(execution_options)
+      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def register_namespace(name, description = nil)
