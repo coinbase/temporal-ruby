@@ -159,6 +159,7 @@ module Temporal
 
         when 'REQUEST_CANCEL_ACTIVITY_TASK_FAILED'
           state_machine.fail
+          discard_command(target)
           dispatch(target, 'failed', event.attributes.cause, nil)
 
         when 'ACTIVITY_TASK_CANCELED'
@@ -175,10 +176,12 @@ module Temporal
 
         when 'CANCEL_TIMER_FAILED'
           state_machine.failed
+          discard_command(target)
           dispatch(target, 'failed', event.attributes.cause, nil)
 
         when 'TIMER_CANCELED'
           state_machine.cancel
+          discard_command(target)
           dispatch(target, 'canceled')
 
         when 'WORKFLOW_EXECUTION_CANCEL_REQUESTED'

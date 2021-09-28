@@ -1,4 +1,4 @@
-# Ruby worker for Temporal [Under Development]
+# Ruby worker for Temporal
 
 [![Coverage Status](https://coveralls.io/repos/github/coinbase/temporal-ruby/badge.svg?branch=master)](https://coveralls.io/github/coinbase/temporal-ruby?branch=master)
 
@@ -430,7 +430,7 @@ Temporal::Testing.local! do
 end
 ```
 
-Make sure to check out [example integration specs](examples/specs/integration) for more details.
+Make sure to check out [example integration specs](examples/spec/integration) for more details.
 
 
 ## TODO

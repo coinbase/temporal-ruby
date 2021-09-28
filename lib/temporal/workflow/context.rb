@@ -17,12 +17,13 @@ module Temporal
     class Context
       attr_reader :metadata
 
-      def initialize(state_manager, dispatcher, workflow_class, metadata)
+      def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager
         @dispatcher = dispatcher
         @workflow_class = workflow_class
         @metadata = metadata
         @completed = false
+        @config = config
       end
 
       def completed?
@@ -47,7 +48,7 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        execution_options = ExecutionOptions.new(activity_class, options)
+        execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
 
         command = Command::ScheduleActivity.new(
           activity_id: options[:activity_id],
@@ -100,7 +101,7 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        execution_options = ExecutionOptions.new(workflow_class, options)
+        execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::StartChildWorkflow.new(
           workflow_id: options[:workflow_id] || SecureRandom.uuid,
@@ -194,7 +195,7 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        execution_options = ExecutionOptions.new(workflow_class, options)
+        execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::ContinueAsNew.new(
           workflow_type: execution_options.name,
@@ -257,7 +258,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class
+      attr_reader :state_manager, :dispatcher, :workflow_class, :config
 
       def completed!
         @completed = true

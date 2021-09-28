@@ -18,6 +18,10 @@ module Temporal
       def last_completed_workflow_task
         events.select { |event| event.type == 'WORKFLOW_TASK_COMPLETED' }.last
       end
+      
+      def find_event_by_id(id)
+        events.find { |event| event.id == id }
+      end
 
       # It is very important to replay the History window by window in order to
       # simulate the exact same state the workflow was in when it processed the
