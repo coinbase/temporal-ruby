@@ -104,6 +104,15 @@ module Temporal
           timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
+        # client timed out
+        closed_event = nil
+      else
+        history = Workflow::History.new(history_response.history.events)
+        closed_event = history.events.first
+        # If this is nil, the server timed out
+      end
+
+      if closed_event.nil?
         message = if timeout 
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
@@ -111,8 +120,6 @@ module Temporal
         end
         raise TimeoutError.new(message)
       end
-      history = Workflow::History.new(history_response.history.events)
-      closed_event = history.events.first
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
