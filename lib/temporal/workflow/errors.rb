@@ -11,11 +11,32 @@ module Temporal
         case failure.failure_info
         when :application_failure_info
           exception_class = safe_constantize(failure.application_failure_info.type)
-          exception_class ||= default_exception_class
-          message = from_details_payloads(failure.application_failure_info.details)
-          backtrace = failure.stack_trace.split("\n")
+          fallback_to_default = false
+          if exception_class.nil?
+            Temporal.logger.error(
+              "Could not find original error class. Defaulting to StandardError.", 
+              {original_error: failure.application_failure_info.type},
+            )
+            exception_class = default_exception_class
+          end
 
-          exception_class.new(message).tap do |exception|
+          message = from_details_payloads(failure.application_failure_info.details)
+
+          begin
+            exception = exception_class.new(message)
+          rescue ArgumentError => deserialization_error
+            # We don't currently support serializing/deserializing exceptions with more than one argument.
+            exception = default_exception_class.new(message)
+            Temporal.logger.error(
+              "Could not instantiate original error. Defaulting to StandardError.", 
+              {
+                original_error: failure.application_failure_info.type,
+                instantiation_error_message: deserialization_error.message,
+              },
+            ) 
+          end
+          exception.tap do |exception|
+            backtrace = failure.stack_trace.split("\n")
             exception.set_backtrace(backtrace) if !backtrace.empty?
           end
         when :timeout_failure_info
