@@ -233,6 +233,53 @@ describe Temporal::Client do
     end
   end
 
+
+  describe '#signal_workflow' do
+    before { allow(connection).to receive(:signal_workflow_execution).and_return(nil) }
+
+    it 'signals workflow with a specified class' do
+      subject.signal_workflow(TestStartWorkflow, 'signal', 'workflow_id', 'run_id')
+
+      expect(connection)
+        .to have_received(:signal_workflow_execution)
+        .with(
+          namespace: 'default-test-namespace',
+          signal: 'signal', 
+          workflow_id: 'workflow_id',
+          run_id: 'run_id',
+          input: nil,
+        )
+    end
+
+    it 'signals workflow with input' do
+      subject.signal_workflow(TestStartWorkflow, 'signal', 'workflow_id', 'run_id', 'input')
+
+      expect(connection)
+        .to have_received(:signal_workflow_execution)
+        .with(
+          namespace: 'default-test-namespace',
+          signal: 'signal', 
+          workflow_id: 'workflow_id',
+          run_id: 'run_id',
+          input: 'input',
+        )
+    end
+
+    it 'signals workflow with a specified namespace' do
+      subject.signal_workflow(TestStartWorkflow, 'signal', 'workflow_id', 'run_id', namespace: 'other-test-namespace')
+
+      expect(connection)
+        .to have_received(:signal_workflow_execution)
+        .with(
+          namespace: 'other-test-namespace',
+          signal: 'signal', 
+          workflow_id: 'workflow_id',
+          run_id: 'run_id',
+          input: nil,
+        )
+    end
+  end
+
   describe '#await_workflow_result' do
     class NamespacedWorkflow < Temporal::Workflow
       namespace 'some-namespace'
