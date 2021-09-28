@@ -10,22 +10,24 @@ module Temporal
       def self.generate_error(failure, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
+          message = from_details_payloads(failure.application_failure_info.details)
+
           exception_class = safe_constantize(failure.application_failure_info.type)
-          fallback_to_default = false
           if exception_class.nil?
             Temporal.logger.error(
               "Could not find original error class. Defaulting to StandardError.", 
               {original_error: failure.application_failure_info.type},
             )
+            message = "#{failure.application_failure_info.type}: #{message}"
             exception_class = default_exception_class
           end
 
-          message = from_details_payloads(failure.application_failure_info.details)
 
           begin
             exception = exception_class.new(message)
           rescue ArgumentError => deserialization_error
             # We don't currently support serializing/deserializing exceptions with more than one argument.
+            message = "#{exception_class}: #{message}"
             exception = default_exception_class.new(message)
             Temporal.logger.error(
               "Could not instantiate original error. Defaulting to StandardError.", 
