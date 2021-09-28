@@ -9,11 +9,7 @@ describe SerialHelloWorldWorkflow, :integration do
       run_id,
       wait_for_new_event: true,
       event_type: :close,
-<<<<<<< HEAD
-      timeout_s: 15,
-=======
       timeout: 15,
->>>>>>> public/master
     )
 
     expect(result.history.events.first.event_type).to eq(:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)

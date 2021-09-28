@@ -23,7 +23,8 @@ module Temporal
                  :terminate_workflow,
                  :fetch_workflow_execution_info,
                  :complete_activity,
-                 :fail_activity
+                 :fail_activity,
+                 :get_cron_schedule
 
   class << self
     def configure(&block)

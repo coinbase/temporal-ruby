@@ -18,11 +18,7 @@ module Helpers
       run_id,
       wait_for_new_event: true,
       event_type: :close,
-<<<<<<< HEAD
-      timeout_s: 15,
-=======
       timeout: 15,
->>>>>>> public/master
     )
   end
 
