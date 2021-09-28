@@ -1,4 +1,3 @@
-require 'temporal/client'
 require 'temporal/workflow/poller'
 require 'temporal/activity/poller'
 require 'temporal/execution_options'
@@ -10,9 +9,11 @@ module Temporal
     # activity_thread_pool_size: number of threads that the poller can use to run activities.
     #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
     def initialize(
+      config = Temporal.configuration,
       activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size]
     )
+      @config = config
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
@@ -29,14 +30,14 @@ module Temporal
     end
 
     def register_workflow(workflow_class, options = {})
-      execution_options = ExecutionOptions.new(workflow_class, options)
+      execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
       key = [execution_options.namespace, execution_options.task_queue]
 
       @workflows[key].add(execution_options.name, workflow_class)
     end
 
     def register_activity(activity_class, options = {})
-      execution_options = ExecutionOptions.new(activity_class, options)
+      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
       key = [execution_options.namespace, execution_options.task_queue]
 
       @activities[key].add(execution_options.name, activity_class)
@@ -90,7 +91,7 @@ module Temporal
 
     private
 
-    attr_reader :activity_poller_options, :workflow_poller_options,
+    attr_reader :config, :activity_poller_options, :workflow_poller_options,
                 :activities, :workflows, :pollers,
                 :workflow_task_middleware, :activity_middleware
 
@@ -103,11 +104,11 @@ module Temporal
     def on_stopped_test_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, workflow_task_middleware, workflow_poller_options)
+      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, activity_middleware, activity_poller_options)
+      Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
     end
 
     def trap_signals

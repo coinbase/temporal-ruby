@@ -11,7 +11,7 @@ module Temporal
     class LocalWorkflowContext
       attr_reader :metadata
 
-      def initialize(execution, workflow_id, run_id, disabled_releases, metadata)
+      def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.configuration)
         @last_event_id = 0
         @execution = execution
         @run_id = run_id
@@ -19,6 +19,7 @@ module Temporal
         @disabled_releases = disabled_releases
         @metadata = metadata
         @completed = false
+        @config = config
       end
 
       def completed?
@@ -47,7 +48,7 @@ module Temporal
         target = Workflow::History::EventTarget.new(event_id, Workflow::History::EventTarget::ACTIVITY_TYPE)
         future = Workflow::Future.new(target, self, cancelation_id: activity_id)
 
-        execution_options = ExecutionOptions.new(activity_class, options)
+        execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
         metadata = Metadata::Activity.new(
           namespace: execution_options.namespace,
           id: activity_id,
@@ -96,7 +97,7 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        execution_options = ExecutionOptions.new(activity_class, options)
+        execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
         activity_id = options[:activity_id] || SecureRandom.uuid
         metadata = Metadata::Activity.new(
           namespace: execution_options.namespace,
@@ -126,7 +127,7 @@ module Temporal
         execution = WorkflowExecution.new
         workflow_id = SecureRandom.uuid
         run_id = SecureRandom.uuid
-        execution_options = ExecutionOptions.new(workflow_class, options)
+        execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow_class.disabled_releases, execution_options.headers
         )
@@ -189,7 +190,7 @@ module Temporal
 
       private
 
-      attr_reader :execution, :run_id, :workflow_id, :disabled_releases
+      attr_reader :execution, :run_id, :workflow_id, :disabled_releases, :config
 
       def completed!
         @completed = true

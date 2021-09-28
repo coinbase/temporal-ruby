@@ -9,12 +9,13 @@ module Temporal
   class Workflow
     class Executor
       # metadata: Metadata::WorkflowTask
-      def initialize(workflow_class, history, task_metadata)
+      def initialize(workflow_class, history, config, task_metadata)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @state_manager = StateManager.new(dispatcher, task_metadata)
         @history = history
         @task_metadata = task_metadata
+        @config = config
       end
 
       def run
@@ -33,10 +34,10 @@ module Temporal
 
       private
 
-      attr_reader :workflow_class, :dispatcher, :state_manager, :history
+      attr_reader :workflow_class, :dispatcher, :state_manager, :history, :config
 
       def execute_workflow(input, metadata)
-        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata)
+        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config)
 
         Fiber.new do
           workflow_class.execute_in_context(context, input)

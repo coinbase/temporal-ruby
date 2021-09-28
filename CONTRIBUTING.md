@@ -1,4 +1,4 @@
-# Contributing to Odin
+# Contributing to Temporal-Ruby
 
 ## Code of Conduct
 

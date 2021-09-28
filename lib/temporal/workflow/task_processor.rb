@@ -9,15 +9,15 @@ module Temporal
     class TaskProcessor
       MAX_FAILED_ATTEMPTS = 1
 
-      def initialize(task, namespace, workflow_lookup, client, middleware_chain)
+      def initialize(task, namespace, workflow_lookup, middleware_chain, config)
         @task = task
         @namespace = namespace
         @metadata = Metadata.generate_workflow_task_metadata(task, namespace)
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)
-        @client = client
         @middleware_chain = middleware_chain
+        @config = config
       end
 
       def process
@@ -32,7 +32,7 @@ module Temporal
 
         history = fetch_full_history
         # TODO: For sticky workflows we need to cache the Executor instance
-        executor = Workflow::Executor.new(workflow_class, history, @metadata)
+        executor = Workflow::Executor.new(workflow_class, history, config, @metadata)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
@@ -51,7 +51,12 @@ module Temporal
 
       private
 
-      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class, :client, :middleware_chain, :metadata
+      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class,
+        :middleware_chain, :metadata, :config
+
+      def connection
+        @connection ||= Temporal::Connection.generate(config.for_connection)
+      end
 
       def queue_time_ms
         scheduled = task.scheduled_time.to_f
@@ -64,7 +69,7 @@ module Temporal
         next_page_token = task.next_page_token
 
         while !next_page_token.empty? do
-          response = client.get_workflow_execution_history(
+          response = connection.get_workflow_execution_history(
             namespace: namespace,
             workflow_id: task.workflow_execution.workflow_id,
             run_id: task.workflow_execution.run_id,
@@ -81,7 +86,7 @@ module Temporal
       def complete_task(commands)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
-        client.respond_workflow_task_completed(task_token: task_token, commands: commands)
+        connection.respond_workflow_task_completed(task_token: task_token, commands: commands)
       end
 
       def fail_task(error)
@@ -93,7 +98,7 @@ module Temporal
         # yet exponentially backoff on retries.
         return if task.attempt > MAX_FAILED_ATTEMPTS
 
-        client.respond_workflow_task_failed(
+        connection.respond_workflow_task_failed(
           task_token: task_token,
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
           exception: error

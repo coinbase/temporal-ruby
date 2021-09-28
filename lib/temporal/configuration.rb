@@ -1,15 +1,18 @@
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
-require 'temporal/client/converter/payload/nil'
-require 'temporal/client/converter/payload/bytes'
-require 'temporal/client/converter/payload/json'
-require 'temporal/client/converter/composite'
+require 'temporal/connection/converter/payload/nil'
+require 'temporal/connection/converter/payload/bytes'
+require 'temporal/connection/converter/payload/json'
+require 'temporal/connection/converter/composite'
 
 module Temporal
   class Configuration
+    Connection = Struct.new(:type, :host, :port, keyword_init: true)
+    Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, keyword_init: true)
+
     attr_reader :timeouts, :error_handlers
     attr_writer :converter
-    attr_accessor :client_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
+    attr_accessor :connection_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
     # We choose an 10-year execution timeout because that's the maximum the cassandra DB supports,
@@ -28,16 +31,16 @@ module Temporal
     DEFAULT_HEADERS = {}.freeze
     DEFAULT_NAMESPACE = 'default-namespace'.freeze
     DEFAULT_TASK_QUEUE = 'default-task-queue'.freeze
-    DEFAULT_CONVERTER = Temporal::Client::Converter::Composite.new(
+    DEFAULT_CONVERTER = Temporal::Connection::Converter::Composite.new(
       payload_converters: [
-        Temporal::Client::Converter::Payload::Nil.new,
-        Temporal::Client::Converter::Payload::Bytes.new,
-        Temporal::Client::Converter::Payload::JSON.new,
+        Temporal::Connection::Converter::Payload::Nil.new,
+        Temporal::Connection::Converter::Payload::Bytes.new,
+        Temporal::Connection::Converter::Payload::JSON.new,
       ]
     ).freeze
 
     def initialize
-      @client_type = :grpc
+      @connection_type = :grpc
       @logger = Temporal::Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS
@@ -66,6 +69,23 @@ module Temporal
 
     def converter
       @converter
+    end
+
+    def for_connection
+      Connection.new(
+        type: connection_type,
+        host: host,
+        port: port
+      ).freeze
+    end
+
+    def default_execution_options
+      Execution.new(
+        namespace: namespace,
+        task_queue: task_list,
+        timeouts: timeouts,
+        headers: headers
+      ).freeze
     end
   end
 end

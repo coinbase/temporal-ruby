@@ -1,5 +1,5 @@
-describe Temporal::Client::GRPCClient do
-  subject { Temporal::Client::GRPCClient.new(nil, nil, nil) }
+describe Temporal::Connection::GRPC do
+  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
@@ -75,7 +75,7 @@ describe Temporal::Client::GRPCClient do
           workflow_id: workflow_id,
           run_id: run_id,
           wait_for_new_event: true,
-          timeout_s: timeout
+          timeout: timeout
         )
 
         expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request, deadline:|
@@ -104,7 +104,7 @@ describe Temporal::Client::GRPCClient do
             workflow_id: workflow_id,
             run_id: run_id,
             wait_for_new_event: true,
-            timeout_s: 60
+            timeout: 60
           )
         end.to raise_error(Temporal::ClientError) do |e|
           expect(e.message).to eq("You may not specify a timeout of more than 30 seconds, got: 60.")

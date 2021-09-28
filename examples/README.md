@@ -1,6 +1,6 @@
 # Ruby Temporal Examples
 
-This directory contains examples demonstraiting different features or this library and Temporal.
+This directory contains examples demonstrating different features or this library and Temporal.
 
 To try these out you need to have a running Temporal service ([setup instructions](https://github.com/coinbase/temporal-ruby#installing-dependencies)).
 

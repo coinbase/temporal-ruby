@@ -1,22 +1,24 @@
 require 'temporal/workflow/poller'
 require 'temporal/middleware/entry'
+require 'temporal/configuration'
 
 describe Temporal::Workflow::Poller do
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-task-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup') }
+  let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
   let(:busy_wait_delay) {0.01}
 
-  subject { described_class.new(namespace, task_queue, lookup, middleware) }
+  subject { described_class.new(namespace, task_queue, lookup, config, middleware) }
 
   # poller will receive task times times, and nil thereafter.  
   # poller will be shut down after that
-  def poll(poller, client, task, times: 1)
+  def poll(poller, connection, task, times: 1)
     polled_times = 0
-    allow(client).to receive(:poll_workflow_task_queue) do
+    allow(connection).to receive(:poll_workflow_task_queue) do
       polled_times += 1
       if polled_times <= times
         task
@@ -36,7 +38,7 @@ describe Temporal::Workflow::Poller do
   end
 
   before do
-    allow(Temporal::Client).to receive(:generate).and_return(client)
+    allow(Temporal::Connection).to receive(:generate).and_return(connection)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
   end
@@ -44,12 +46,12 @@ describe Temporal::Workflow::Poller do
   describe '#start' do
     it 'polls for workflow tasks' do
       subject.start
-      times = poll(subject, client, nil, times: 2)
+      times = poll(subject, connection, nil, times: 2)
       expect(times).to be >=(2)
     end
 
     it 'reports time since last poll' do
-      poll(subject, client, nil)
+      poll(subject, connection, nil)
 
       expect(Temporal.metrics)
         .to have_received(:timing)
@@ -73,11 +75,11 @@ describe Temporal::Workflow::Poller do
       end
 
       it 'uses TaskProcessor to process tasks' do
-        poll(subject, client, task)
+        poll(subject, connection, task)
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, client, middleware_chain)
+          .with(task, namespace, lookup, middleware_chain, config)
         expect(task_processor).to have_received(:process)
       end
 
@@ -92,22 +94,22 @@ describe Temporal::Workflow::Poller do
         let(:entry_2) { Temporal::Middleware::Entry.new(TestPollerMiddleware, '2') }
 
         it 'initializes middleware chain and passes it down to TaskProcessor' do
-          poll(subject, client, task)
+          poll(subject, connection, task)
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, client, middleware_chain)
+            .with(task, namespace, lookup, middleware_chain, config)
         end
       end
     end
 
-    context 'when client is unable to poll' do
+    context 'when connection is unable to poll' do
       it 'logs' do
         allow(Temporal.logger).to receive(:error)
 
         polled = false
-        allow(client).to receive(:poll_workflow_task_queue) do 
+        allow(connection).to receive(:poll_workflow_task_queue) do 
           if !polled
             polled = true
             raise StandardError
