@@ -1,5 +1,3 @@
-require 'activities/long_running_activity'
-
 class SignalWithStartWorkflow < Temporal::Workflow
 
   def execute(expected_signal, sleep_for)

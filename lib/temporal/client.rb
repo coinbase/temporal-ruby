@@ -64,9 +64,10 @@ module Temporal
       response.run_id
     end
 
-    def signal_with_start_workflow(workflow, signal_name, signal_input, *input, **args)
+    def signal_with_start_workflow(workflow, workflow_input:, signal_name:, signal_input: nil, **args)
       options = args.delete(:options) || {}
-      input << args unless args.empty?
+      workflow_input = Array(workflow_input) # does nothing if workflow_input is already an array
+      workflow_input << args unless args.empty?
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
@@ -76,7 +77,7 @@ module Temporal
         workflow_id: workflow_id,
         workflow_name: execution_options.name,
         task_queue: execution_options.task_queue,
-        input: input,
+        input: workflow_input,
         execution_timeout: execution_options.timeouts[:execution],
         run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
@@ -87,10 +88,6 @@ module Temporal
       )
 
       response.run_id
-    end
-
-    def compute_run_timeout(execution_options)
-      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def register_namespace(name, description = nil)
@@ -253,6 +250,10 @@ module Temporal
 
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
+    end
+
+    def compute_run_timeout(execution_options)
+      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def find_workflow_task(namespace, workflow_id, run_id, strategy)

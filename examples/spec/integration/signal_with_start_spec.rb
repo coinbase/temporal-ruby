@@ -6,10 +6,9 @@ describe 'signal with start' do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
-      'signal_name', # the actual signal name
-      'expected value',
-      'signal_name', # the expected signal name, which the workflow takes as an arg
-      0.1, # how long to sleep for
+      signal_name: 'signal_name',
+      signal_input: 'expected value',
+      workflow_input: ['signal_name', 0.1],
       options: { workflow_id: workflow_id }
     )
 
@@ -26,24 +25,21 @@ describe 'signal with start' do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
-      'signal_name', # the actual signal name
-      'expected value',
-      'signal_name', # the expected signal name, which the workflow takes as an arg
-      10, # how long to sleep for
+      signal_name: 'signal_name',
+      signal_input: 'expected value',
+      workflow_input: ['signal_name', 10],
       options: { workflow_id: workflow_id }
     )
 
     second_run_id = Temporal.signal_with_start_workflow(
       SignalWithStartWorkflow,
-      'signal_name', # the actual signal name
-      'expected value',
-      'signal_name', # the expected signal name, which the workflow takes as an arg
-      0.1, # how long to sleep for
+      signal_name: 'signal_name',
+      signal_input: 'expected value',
+      workflow_input: ['signal_name', 0.1],
       options: { workflow_id: workflow_id }
     )
 
     # If the run ids are the same, then we didn't start a new workflow
     expect(second_run_id).to eq(run_id)
   end
-
 end
