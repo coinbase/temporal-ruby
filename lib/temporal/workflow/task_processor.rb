@@ -100,7 +100,7 @@ module Temporal
 
         connection.respond_workflow_task_failed(
           task_token: task_token,
-          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
+          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
           exception: error
         )
       rescue StandardError => error

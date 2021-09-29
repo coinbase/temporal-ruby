@@ -134,7 +134,7 @@ describe Temporal::Workflow::TaskProcessor do
             .to have_received(:respond_workflow_task_failed)
             .with(
               task_token: task.task_token,
-              cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
+              cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
               exception: exception
             )
         end
