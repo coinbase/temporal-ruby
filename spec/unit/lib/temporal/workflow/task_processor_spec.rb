@@ -7,12 +7,8 @@ describe Temporal::Workflow::TaskProcessor do
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
-  let(:task) do
-    Fabricate(
-      :api_workflow_task,
-      workflow_type: Fabricate(:api_workflow_type, name: workflow_name)
-    )
-  end
+  let(:task) { Fabricate(:api_workflow_task, workflow_type: api_workflow_type) }
+  let(:api_workflow_type) { Fabricate(:api_workflow_type, name: workflow_name) }
   let(:workflow_name) { 'TestWorkflow' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
@@ -67,7 +63,6 @@ describe Temporal::Workflow::TaskProcessor do
 
       before do
         allow(lookup).to receive(:find).with(workflow_name).and_return(workflow_class)
-        allow(subject).to receive(:fetch_full_history)
         allow(Temporal::Workflow::Executor).to receive(:new).and_return(executor)
         allow(executor).to receive(:run) { workflow_class.execute_in_context(context, input); commands }
       end
@@ -134,7 +129,7 @@ describe Temporal::Workflow::TaskProcessor do
             .to have_received(:respond_workflow_task_failed)
             .with(
               task_token: task.task_token,
-              cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
+              cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
               exception: exception
             )
         end
@@ -184,6 +179,48 @@ describe Temporal::Workflow::TaskProcessor do
           expect(Temporal.metrics)
             .to have_received(:timing)
             .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name)
+        end
+      end
+
+      context 'when history is paginated' do
+        let(:task) { Fabricate(:api_paginated_workflow_task, workflow_type: api_workflow_type) }
+        let(:event) { Fabricate(:api_workflow_execution_started_event) }
+        let(:history_response) { Fabricate(:workflow_execution_history, events: [event]) }
+
+        before do
+          allow(connection)
+            .to receive(:get_workflow_execution_history)
+            .and_return(history_response)
+        end
+
+        it 'fetches additional pages' do
+          subject.process
+
+          expect(connection)
+            .to have_received(:get_workflow_execution_history)
+            .with(
+              namespace: namespace,
+              workflow_id: task.workflow_execution.workflow_id,
+              run_id: task.workflow_execution.run_id,
+              next_page_token: task.next_page_token
+            )
+            .once
+        end
+
+        context 'when a page has no events' do
+          let(:history_response) { Fabricate(:workflow_execution_history, events: []) }
+
+          it 'fails a workflow task' do
+            subject.process
+
+            expect(connection)
+              .to have_received(:respond_workflow_task_failed)
+              .with(
+                task_token: task.task_token,
+                cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+                exception: an_instance_of(Temporal::UnexpectedResponse)
+              )
+          end
         end
       end
     end

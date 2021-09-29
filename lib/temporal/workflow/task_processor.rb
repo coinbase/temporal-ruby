@@ -76,6 +76,10 @@ module Temporal
             next_page_token: next_page_token
           )
 
+          if response.history.events.empty?
+            raise Temporal::UnexpectedResponse, 'Received empty history page'
+          end
+
           events += response.history.events.to_a
           next_page_token = response.next_page_token
         end
@@ -100,7 +104,7 @@ module Temporal
 
         connection.respond_workflow_task_failed(
           task_token: task_token,
-          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND,
+          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
           exception: error
         )
       rescue StandardError => error
