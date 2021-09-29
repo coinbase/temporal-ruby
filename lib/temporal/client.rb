@@ -68,11 +68,11 @@ module Temporal
       connection.register_namespace(name: name, description: description)
     end
 
-    def signal_workflow(workflow, signal, workflow_id, run_id, input = nil)
+    def signal_workflow(workflow, signal, workflow_id, run_id, input = nil, namespace: nil)
       execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
       connection.signal_workflow_execution(
-        namespace: execution_options.namespace, # TODO: allow passing namespace instead
+        namespace: namespace || execution_options.namespace,
         workflow_id: workflow_id,
         run_id: run_id,
         signal: signal,
