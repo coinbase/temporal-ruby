@@ -26,7 +26,7 @@ describe Temporal do
     end    
 
     describe '.signal_with_start' do
-      it_behaves_like 'a forwarded method', :signal_with_start_workflow, signal_name: 'the question', signal_input: 'what do you get if you multiply six by 9?', workflow_input: 42
+      it_behaves_like 'a forwarded method', :signal_with_start_workflow, 'TestWorkflow', { signal_name: 'the question', signal_input: 'what do you get if you multiply six by 9?', workflow_input: 42 }
     end
     
     describe '.register_namespace' do
