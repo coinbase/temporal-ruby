@@ -55,7 +55,7 @@ describe Temporal::Workflow::Errors do
     end
 
 
-    it "falls back to StandardError when the client doesn't have the error class" do 
+    it "falls back to StandardError when the client can't initialize the error class" do 
       allow(Temporal.logger).to receive(:error)
 
       message = "An error message"
