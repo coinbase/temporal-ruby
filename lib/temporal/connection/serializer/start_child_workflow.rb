@@ -22,6 +22,7 @@ module Temporal
                 workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],
                 retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
+                parent_close_policy: Temporal::Connection::Serializer::ParentClosePolicy.new(object.parent_close_policy).to_proto,
                 header: serialize_headers(object.headers)
               )
           )

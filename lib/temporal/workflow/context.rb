@@ -110,6 +110,7 @@ module Temporal
           namespace: execution_options.namespace,
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
+          parent_close_policy: execution_options.parent_close_policy,
           timeouts: execution_options.timeouts,
           headers: execution_options.headers
         )

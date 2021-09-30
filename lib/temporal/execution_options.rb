@@ -3,7 +3,7 @@ require 'temporal/retry_policy'
 
 module Temporal
   class ExecutionOptions
-    attr_reader :name, :namespace, :task_queue, :retry_policy, :timeouts, :headers
+    attr_reader :name, :namespace, :task_queue, :retry_policy, :parent_close_policy, :timeouts, :headers
 
     def initialize(object, options, defaults = nil)
       # Options are treated as overrides and take precedence
@@ -11,6 +11,7 @@ module Temporal
       @namespace = options[:namespace]
       @task_queue = options[:task_queue] || options[:task_list]
       @retry_policy = options[:retry_policy] || {}
+      @parent_close_policy = options[:parent_close_policy] || {}
       @timeouts = options[:timeouts] || {}
       @headers = options[:headers] || {}
 
@@ -36,6 +37,13 @@ module Temporal
       else
         @retry_policy = Temporal::RetryPolicy.new(@retry_policy)
         @retry_policy.validate!
+      end
+
+      if @parent_close_policy.empty?
+        @parent_close_policy = nil
+      else
+        @parent_close_policy = Temporal::ParentClosePolicy.new(@parent_close_policy)
+        @parent_close_policy.validate!
       end
 
       freeze
