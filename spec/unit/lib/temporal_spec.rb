@@ -32,6 +32,10 @@ describe Temporal do
     describe '.register_namespace' do
       it_behaves_like 'a forwarded method', :register_namespace, 'test-namespace', 'This is a test namespace'
     end
+
+    describe '.describe_namespace' do
+      it_behaves_like 'a forwarded method', :describe_namespace, 'test-namespace'
+    end
     
     describe '.signal_workflow' do
       it_behaves_like 'a forwarded method', :signal_workflow, 'TestWorkflow', 'TST_SIGNAL', 'x', 'y'

@@ -262,6 +262,18 @@ describe Temporal::Client do
     end
   end
 
+  describe '#describe_namespace' do
+    before { allow(connection).to receive(:describe_namespace).and_return(Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse.new) }
+    
+    it 'passes the namespace to the connection' do
+      result = subject.describe_namespace('new-namespace')
+
+      expect(connection)
+        .to have_received(:describe_namespace)
+        .with(name: 'new-namespace')
+      expect(result).to be_an_instance_of(Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse)
+    end
+  end
 
   describe '#signal_workflow' do
     before { allow(connection).to receive(:signal_workflow_execution).and_return(nil) }
