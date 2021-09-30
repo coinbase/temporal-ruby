@@ -81,7 +81,7 @@ describe Temporal::Testing::LocalWorkflowContext do
         expect(f.finished?).to be false
         expect(f.ready?).to be false
 
-        execution.complete_activity(async_token, 'async_ok')
+        execution.complete_future(async_token, 'async_ok')
 
         expect(f.failed?).to be false
         expect(f.finished?).to be true
@@ -98,7 +98,7 @@ describe Temporal::Testing::LocalWorkflowContext do
         expect(f.ready?).to be false
 
         error = StandardError.new('crash')
-        execution.fail_activity(async_token, error)
+        execution.fail_future(async_token, error)
 
         expect(f.failed?).to be true
         expect(f.finished?).to be true

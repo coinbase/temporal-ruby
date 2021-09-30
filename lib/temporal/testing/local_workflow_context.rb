@@ -70,12 +70,14 @@ module Temporal
           # instead of raising immediately in order to match the behavior of
           # running against a Temporal server.
           future.fail(e)
+          future.failure_callbacks.each { |callback| callback.call(result) }
         else
           if context.async?
             execution.register_future(context.async_token, future)
           else
             # Fulfill the future straight away for non-async activities
             future.set(result)
+            future.failure_callbacks.each { |callback| callback.call(result) }
           end
         end
 
@@ -142,11 +144,17 @@ module Temporal
       end
 
       def start_timer(timeout, timer_id = nil)
-        raise NotImplementedError, 'not yet available for testing'
+        event_id = next_event_id
+        timer_id ||= event_id
+
+        target = Workflow::History::EventTarget.new(event_id, Workflow::History::EventTarget::TIMER_TYPE)
+        future = Workflow::Future.new(target, self, cancelation_id: timer_id)
+
+        execution.register_future(timer_id, future)
       end
 
       def cancel_timer(timer_id)
-        raise NotImplementedError, 'not yet available for testing'
+        execution.fail_future(timer_id, RuntimeError.new('timer canceled'))
       end
 
       def complete(result = nil)
@@ -183,7 +191,14 @@ module Temporal
       end
 
       def cancel(target, cancelation_id)
-        raise NotImplementedError, 'not yet available for testing'
+        case target.type
+        when Workflow::History::EventTarget::ACTIVITY_TYPE
+          cancel_activity(cancelation_id)
+        when Workflow::History::EventTarget::TIMER_TYPE
+          cancel_timer(cancelation_id)
+        else
+          raise "#{target} can not be canceled"
+        end
       end
 
       private

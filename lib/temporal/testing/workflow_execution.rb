@@ -22,17 +22,17 @@ module Temporal
         @status = Workflow::ExecutionInfo::FAILED_STATUS
       end
 
-      def register_future(token, future)
-        futures.register(token, future)
+      def register_future(id, future)
+        futures.register(id, future)
       end
 
-      def complete_activity(token, result)
-        futures.complete(token, result)
+      def complete_future(id, result)
+        futures.complete(id, result)
         resume
       end
 
-      def fail_activity(token, exception)
-        futures.fail(token, exception)
+      def fail_future(id, exception)
+        futures.fail(id, exception)
         resume
       end
 

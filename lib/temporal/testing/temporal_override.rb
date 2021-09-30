@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'temporal/thread_local_context'
 require 'temporal/activity/async_token'
 require 'temporal/workflow/execution_info'
 require 'temporal/testing/workflow_execution'
@@ -7,6 +8,10 @@ require 'temporal/testing/local_workflow_context'
 module Temporal
   module Testing
     module TemporalOverride
+      def self.prepended(_mod)
+        # Allow firing timers in testing mode via Temporal API
+        Temporal.def_delegators(:default_client, :fire_timer)
+      end
 
       def start_workflow(workflow, *input, **args)
         return super if Temporal::Testing.disabled?
@@ -51,7 +56,7 @@ module Temporal
         details = Activity::AsyncToken.decode(async_token)
         execution = executions[[details.workflow_id, details.run_id]]
 
-        execution.complete_activity(async_token, result)
+        execution.complete_future(details.activity_id, result)
       end
 
       def fail_activity(async_token, exception)
@@ -60,7 +65,14 @@ module Temporal
         details = Activity::AsyncToken.decode(async_token)
         execution = executions[[details.workflow_id, details.run_id]]
 
-        execution.fail_activity(async_token, exception)
+        execution.fail_future(details.activity_id, exception)
+      end
+
+      # This method is only available in testing mode
+      def fire_timer(workflow_id, run_id, timer_id)
+        execution = executions[[workflow_id, run_id]]
+
+        execution.complete_future(timer_id)
       end
 
       private
@@ -94,6 +106,8 @@ module Temporal
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow.disabled_releases, metadata
         )
+
+        Temporal::ThreadLocalContext.set(context)
 
         if schedule.nil?
           execution.run do
