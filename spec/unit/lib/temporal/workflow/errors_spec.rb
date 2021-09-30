@@ -1,9 +1,5 @@
 require 'temporal/workflow/errors'
 
-class TestDeserializer
-  include Temporal::Concerns::Payloads
-end
-
 class ErrorWithTwoArgs < StandardError
   def initialize(message, another_argument); end
 end
@@ -16,7 +12,7 @@ describe Temporal::Workflow::Errors do
       message = "An error message"
       stack_trace = ["a fake backtrace"]
       failure = Fabricate(
-        :application_failure,
+        :api_application_failure,
         message: message,
         backtrace: stack_trace,
         error_class: SomeError.to_s
@@ -35,7 +31,7 @@ describe Temporal::Workflow::Errors do
       message = "An error message"
       stack_trace = ["a fake backtrace"]
       failure = Fabricate(
-        :application_failure,
+        :api_application_failure,
         message: message,
         backtrace: stack_trace,
         error_class: 'NonexistentError',
@@ -49,7 +45,7 @@ describe Temporal::Workflow::Errors do
         .to have_received(:error)
         .with(
           'Could not find original error class. Defaulting to StandardError.',
-          {:original_error=>"NonexistentError"},
+          {original_error: "NonexistentError"},
         )
 
     end
@@ -61,7 +57,7 @@ describe Temporal::Workflow::Errors do
       message = "An error message"
       stack_trace = ["a fake backtrace"]
       failure = Fabricate(
-        :application_failure,
+        :api_application_failure,
         message: message,
         backtrace: stack_trace,
         error_class: ErrorWithTwoArgs.to_s,
@@ -76,8 +72,8 @@ describe Temporal::Workflow::Errors do
         .with(
           'Could not instantiate original error. Defaulting to StandardError.',
           {
-            :original_error=>"ErrorWithTwoArgs",
-            :instantiation_error_message=> "wrong number of arguments (given 1, expected 2)",
+            original_error: "ErrorWithTwoArgs",
+            instantiation_error_message: "wrong number of arguments (given 1, expected 2)",
           },
         )
     end
