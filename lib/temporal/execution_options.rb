@@ -1,5 +1,6 @@
 require 'temporal/concerns/executable'
 require 'temporal/retry_policy'
+require 'temporal/parent_close_policy'
 
 module Temporal
   class ExecutionOptions

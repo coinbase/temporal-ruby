@@ -1,5 +1,6 @@
 require 'temporal/connection/serializer/base'
 require 'temporal/connection/serializer/retry_policy'
+require 'temporal/connection/serializer/parent_close_policy'
 require 'temporal/concerns/payloads'
 
 module Temporal
