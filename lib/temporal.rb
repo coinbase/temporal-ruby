@@ -17,6 +17,7 @@ module Temporal
                  :start_workflow,
                  :schedule_workflow,
                  :register_namespace,
+                 :describe_namespace,
                  :signal_workflow,
                  :await_workflow_result,
                  :reset_workflow,

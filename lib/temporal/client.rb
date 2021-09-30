@@ -68,6 +68,10 @@ module Temporal
       connection.register_namespace(name: name, description: description)
     end
 
+    def describe_namespace(name)
+      connection.describe_namespace(name: name)
+    end
+
     def signal_workflow(workflow, signal, workflow_id, run_id, input = nil, namespace: nil)
       execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
