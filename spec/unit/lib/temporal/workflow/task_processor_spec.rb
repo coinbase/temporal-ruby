@@ -44,7 +44,7 @@ describe Temporal::Workflow::TaskProcessor do
         reported_error = nil
         reported_metadata = nil
 
-        Temporal.configuration.on_error do |error, metadata: nil|
+        config.on_error do |error, metadata: nil|
           reported_error = error
           reported_metadata = metadata
         end
@@ -154,7 +154,7 @@ describe Temporal::Workflow::TaskProcessor do
           reported_error = nil
           reported_metadata = nil
 
-          Temporal.configuration.on_error do |error, metadata: nil|
+          config.on_error do |error, metadata: nil|
             reported_error = error
             reported_metadata = metadata
           end
