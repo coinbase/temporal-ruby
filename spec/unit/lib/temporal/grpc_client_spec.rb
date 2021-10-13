@@ -27,7 +27,8 @@ describe Temporal::Connection::GRPC do
           task_queue: 'test',
           execution_timeout: 0,
           run_timeout: 0,
-          task_timeout: 0
+          task_timeout: 0,
+          memo: {}
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
         expect(e.run_id).to eql('baaf1d86-4459-4ecd-a288-47aeae55245d')

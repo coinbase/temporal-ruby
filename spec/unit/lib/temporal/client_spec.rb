@@ -244,6 +244,7 @@ describe Temporal::Client do
           execution_timeout: Temporal.configuration.timeouts[:execution],
           workflow_id_reuse_policy: nil,
           headers: {},
+          memo: {},
           signal_name: 'the question',
           signal_input: 'what do you get if you multiply six by nine?',
         )
