@@ -40,6 +40,10 @@ module Temporal
         metadata.headers
       end
 
+      def memo
+        metadata.memo
+      end
+
       def has_release?(release_name)
         state_manager.release?(release_name.to_s)
       end
