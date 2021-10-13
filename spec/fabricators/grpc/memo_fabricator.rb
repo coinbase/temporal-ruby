@@ -1,4 +1,7 @@
 Fabricator(:memo, from: Temporal::Api::Common::V1::Memo) do
-  fields { Google::Protobuf::Map.new(:string, :message, Temporal::Api::Common::V1::Payload) }
+  fields do
+    Google::Protobuf::Map.new(:string, :message, Temporal::Api::Common::V1::Payload).tap do |m|
+      m['foo'] = Temporal.configuration.converter.to_payload('bar')
+    end
+  end
 end
-  
