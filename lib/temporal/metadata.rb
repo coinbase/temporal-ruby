@@ -46,6 +46,7 @@ module Temporal
           run_id: event.original_execution_run_id,
           attempt: event.attempt,
           namespace: task_metadata.namespace,
+          task_queue: event.task_queue.name,
           headers: headers(event.header&.fields),
         )
       end

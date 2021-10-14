@@ -99,6 +99,7 @@ module Temporal
           name: execution_options.name,
           run_id: run_id,
           attempt: 1,
+          task_queue: execution_options.task_queue,
           headers: execution_options.headers
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
