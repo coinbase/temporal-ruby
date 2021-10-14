@@ -32,6 +32,7 @@ describe Temporal::Metadata::Workflow do
         'workflow_name' => subject.name,
         'run_id' => subject.run_id,
         'namespace' => subject.namespace,
+        'task_queue' => subject.task_queue,
       })
     end
   end
