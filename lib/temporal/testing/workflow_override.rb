@@ -34,6 +34,8 @@ module Temporal
           run_id: run_id,
           attempt: 1,
           task_queue: 'unit-test-task-queue',
+          headers: {},
+          run_started_at: Time.now,
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, disabled_releases, metadata

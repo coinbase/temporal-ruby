@@ -38,16 +38,18 @@ module Temporal
       end
 
       # @param event [Temporal::Workflow::History::Event] Workflow started history event
+      # @param event [WorkflowExecutionStartedEventAttributes] :attributes
       # @param task_metadata [Temporal::Metadata::WorkflowTask] workflow task metadata
       def generate_workflow_metadata(event, task_metadata)
         Metadata::Workflow.new(
-          name: event.workflow_type.name,
+          name: event.attributes.workflow_type.name,
           id: task_metadata.workflow_id,
-          run_id: event.original_execution_run_id,
-          attempt: event.attempt,
+          run_id: event.attributes.original_execution_run_id,
+          attempt: event.attributes.attempt,
           namespace: task_metadata.namespace,
-          task_queue: event.task_queue.name,
-          headers: headers(event.header&.fields),
+          task_queue: event.attributes.task_queue.name,
+          headers: headers(event.attributes.header&.fields),
+          run_started_at: event.timestamp,
         )
       end
 

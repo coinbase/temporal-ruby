@@ -20,6 +20,8 @@ describe Temporal::Testing::LocalWorkflowContext do
         run_id: run_id,
         attempt: 1,
         task_queue: task_queue,
+        headers: {},
+        run_started_at: Time.now,
       )
     )
   end
