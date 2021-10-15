@@ -94,6 +94,7 @@ module Temporal
           run_id: run_id, 
           attempt: 1, 
           namespace: execution_options.namespace, 
+          memo: options[:memo] || {},
           headers: execution_options.headers,
           task_queue: execution_options.task_queue,
         )

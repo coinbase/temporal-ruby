@@ -5,7 +5,7 @@ module Temporal
     class Workflow < Base
       attr_reader :name, :workflow_id, :run_id, :attempt, :headers, :namespace, :task_queue, :memo
 
-      def initialize(name:, workflow_id:, run_id:, attempt:, namespace:, task_queue:, headers: {}, memo: {})
+      def initialize(name:, workflow_id:, run_id:, attempt:, headers:, namespace:, task_queue:, memo:)
         @name = name
         @workflow_id = workflow_id
         @run_id = run_id

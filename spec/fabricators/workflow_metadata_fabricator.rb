@@ -8,4 +8,5 @@ Fabricator(:workflow_metadata, from: :open_struct) do
   headers { {} }
   namespace { 'ruby_samples' }
   task_queue { Fabricate(:api_task_queue) }
+  memo { {} }
 end
