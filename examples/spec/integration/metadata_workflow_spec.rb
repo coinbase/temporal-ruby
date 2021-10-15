@@ -50,5 +50,8 @@ describe MetadataWorkflow do
       run_id: run_id,
     )
     expect(actual_result.memo).to eq({})
+    expect(Temporal.fetch_workflow_execution_info(
+      'ruby-samples', workflow_id, nil
+    ).memo).to eq({})
   end
 end
