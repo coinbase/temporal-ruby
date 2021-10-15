@@ -107,7 +107,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            Metadata.generate_workflow_metadata(event.attributes, task_metadata),
+            Metadata.generate_workflow_metadata(event, task_metadata),
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'

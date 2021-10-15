@@ -37,18 +37,20 @@ module Temporal
         )
       end
 
-      # event: WorkflowExecutionStartedEventAttributes
+      # event: Temporal::Workflow::History::Event
+      # event.attributes: WorkflowExecutionStartedEventAttributes
       # task_metadata: Temporal::Metadata::WorkflowTask
       def generate_workflow_metadata(event, task_metadata)
         Metadata::Workflow.new(
-          name: event.workflow_type.name,
+          name: event.attributes.workflow_type.name,
           workflow_id: task_metadata.workflow_id,
-          run_id: event.original_execution_run_id,
-          attempt: event.attempt,
+          run_id: event.attributes.original_execution_run_id,
+          attempt: event.attributes.attempt,
           namespace: task_metadata.namespace,
-          headers: from_payload_map(event.header&.fields || {}),
-          task_queue: event.task_queue.name,
-          memo: from_payload_map(event.memo&.fields || {}),
+          headers: from_payload_map(event.attributes.header&.fields || {}),
+          task_queue: event.attributes.task_queue.name,
+          memo: from_payload_map(event.attributes.memo&.fields || {}),
+          run_started_at: event.timestamp,
         )
       end
     end

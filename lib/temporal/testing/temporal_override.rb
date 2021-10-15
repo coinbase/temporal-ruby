@@ -97,6 +97,7 @@ module Temporal
           memo: options[:memo] || {},
           headers: execution_options.headers,
           task_queue: execution_options.task_queue,
+          run_started_at: Time.now,
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow.disabled_releases, metadata
