@@ -19,6 +19,7 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
+      memo = options[:memo] || {}
 
       response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
@@ -31,7 +32,8 @@ module Temporal
         run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
-        headers: execution_options.headers
+        headers: execution_options.headers,
+        memo: memo
       )
 
       response.run_id
@@ -43,6 +45,7 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
+      memo = options[:memo] || {}
 
       response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
@@ -58,7 +61,8 @@ module Temporal
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
-        cron_schedule: cron_schedule
+        cron_schedule: cron_schedule,
+        memo: memo
       )
 
       response.run_id
@@ -70,6 +74,7 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
+      memo = options[:memo] || {}
 
       response = connection.signal_with_start_workflow_execution(
         namespace: execution_options.namespace,
@@ -82,6 +87,7 @@ module Temporal
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
+        memo: memo,
         signal_name: signal_name,
         signal_input: signal_input
       )
