@@ -47,6 +47,7 @@ module Temporal
           attempt: event.attempt,
           namespace: task_metadata.namespace,
           headers: headers(event.header&.fields),
+          task_queue: event.task_queue.name,
         )
       end
 

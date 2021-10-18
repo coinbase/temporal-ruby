@@ -9,6 +9,7 @@ Fabricator(
   workflow_type { Fabricate(:api_workflow_type) }
   original_execution_run_id { SecureRandom.uuid }
   attempt 1
+  task_queue { Fabricate(:api_task_queue) }
   header do |attrs|
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
       h[field] = Temporal.configuration.converter.to_payload(value)

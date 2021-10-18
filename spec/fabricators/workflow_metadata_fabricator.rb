@@ -6,5 +6,6 @@ Fabricator(:workflow_metadata, from: :open_struct) do
   run_id { SecureRandom.uuid }
   attempt 1
   headers { {} }
-  namespace { 'ruby_samples'}
+  namespace { 'ruby_samples' }
+  task_queue { Fabricate(:api_task_queue) }
 end

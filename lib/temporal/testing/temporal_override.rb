@@ -95,6 +95,7 @@ module Temporal
           attempt: 1, 
           namespace: execution_options.namespace, 
           headers: execution_options.headers,
+          task_queue: execution_options.task_queue,
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow.disabled_releases, metadata
