@@ -77,6 +77,7 @@ describe MetadataWorkflow do
   it 'workflow can retrieve its run started at' do
     workflow_id = 'started_at_test_wf-' + SecureRandom.uuid
 
+    before_start = Time.now
     run_id = Temporal.start_workflow(
       MetadataWorkflow,
       options: { workflow_id: workflow_id }
@@ -87,6 +88,11 @@ describe MetadataWorkflow do
       workflow_id: workflow_id,
       run_id: run_id,
     )
-    expect(Time.now - actual_result.run_started_at).to be_between(0, 30)
+    after_finished = Time.now
+
+    # run_started_at can't be exactly predicted since it depends on when Temporal server
+    # creates the first history record upon starting a workflow. However, it must be between
+    # the clock time of when we started the workflow and when it completes.
+    expect(actual_result.run_started_at).to be_between(before_start, after_finished)
   end
 end
