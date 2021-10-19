@@ -34,6 +34,7 @@ describe Temporal::Metadata::Workflow do
         'namespace' => subject.namespace,
         'task_queue' => subject.task_queue,
         'memo' => subject.memo,
+        'run_started_at' => subject.run_started_at.to_f,
       })
     end
   end

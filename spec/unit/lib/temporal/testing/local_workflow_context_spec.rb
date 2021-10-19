@@ -22,6 +22,7 @@ describe Temporal::Testing::LocalWorkflowContext do
         task_queue: task_queue,
         memo: {},
         headers: {},
+        run_started_at: Time.now,
       )
     )
   end
