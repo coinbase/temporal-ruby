@@ -40,7 +40,7 @@ module Temporal
 
         complete_task(commands)
       rescue StandardError => error
-        Temporal::ErrorHandler.handle(error, metadata: metadata)
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 
         fail_task(error)
       ensure
@@ -110,7 +110,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Workflow task", metadata.to_h.merge(error: error.inspect))
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata)
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
     end
   end

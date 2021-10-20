@@ -78,7 +78,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
 
-        Temporal::ErrorHandler.handle(error)
+        Temporal::ErrorHandler.handle(error, config)
 
         nil
       end

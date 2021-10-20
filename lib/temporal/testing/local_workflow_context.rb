@@ -9,7 +9,7 @@ require 'temporal/workflow/history/event_target'
 module Temporal
   module Testing
     class LocalWorkflowContext
-      attr_reader :metadata
+      attr_reader :metadata, :config
 
       def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.configuration)
         @last_event_id = 0
@@ -188,7 +188,7 @@ module Temporal
 
       private
 
-      attr_reader :execution, :run_id, :workflow_id, :disabled_releases, :config
+      attr_reader :execution, :run_id, :workflow_id, :disabled_releases
 
       def completed!
         @completed = true

@@ -20,7 +20,7 @@ module Temporal
       Temporal.logger.error("Workflow execution failed", context.metadata.to_h.merge(error: error.inspect))
       Temporal.logger.debug(error.backtrace.join("\n"))
 
-      Temporal::ErrorHandler.handle(error, metadata: context.metadata)
+      Temporal::ErrorHandler.handle(error, context.config, metadata: context.metadata)
 
       context.fail(error)
     ensure

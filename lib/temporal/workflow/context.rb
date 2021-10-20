@@ -15,7 +15,7 @@ require 'temporal/workflow/state_manager'
 module Temporal
   class Workflow
     class Context
-      attr_reader :metadata
+      attr_reader :metadata, :config
 
       def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager
@@ -258,7 +258,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class, :config
+      attr_reader :state_manager, :dispatcher, :workflow_class
 
       def completed!
         @completed = true

@@ -41,7 +41,7 @@ module Temporal
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
       rescue StandardError, ScriptError => error
-        Temporal::ErrorHandler.handle(error, metadata: metadata)
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 
         respond_failed(error)
       ensure
@@ -76,7 +76,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata)
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
 
       def respond_failed(error)
@@ -90,7 +90,7 @@ module Temporal
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
 
-        Temporal::ErrorHandler.handle(error, metadata: metadata)
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
     end
   end
