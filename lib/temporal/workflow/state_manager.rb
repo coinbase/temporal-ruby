@@ -3,7 +3,6 @@ require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
-require 'temporal/metadata'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
 
@@ -106,7 +105,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            Metadata.generate(Metadata::WORKFLOW_TYPE, event.attributes)
+            event.attributes
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'

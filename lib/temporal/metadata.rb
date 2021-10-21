@@ -8,19 +8,16 @@ module Temporal
   module Metadata
     ACTIVITY_TYPE = :activity
     WORKFLOW_TASK_TYPE = :workflow_task
-    WORKFLOW_TYPE = :workflow
 
     class << self
       include Concerns::Payloads
 
-      def generate(type, data, namespace = nil)
+      def generate(type, data, namespace)
         case type
         when ACTIVITY_TYPE
           activity_metadata_from(data, namespace)
         when WORKFLOW_TASK_TYPE
           workflow_task_metadata_from(data, namespace)
-        when WORKFLOW_TYPE
-          workflow_metadata_from(data)
         else
           raise InternalError, 'Unsupported metadata type'
         end
@@ -60,15 +57,6 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name
-        )
-      end
-
-      def workflow_metadata_from(event)
-        Metadata::Workflow.new(
-          name: event.workflow_type.name,
-          run_id: event.original_execution_run_id,
-          attempt: event.attempt,
-          headers: headers(event.header&.fields)
         )
       end
     end
