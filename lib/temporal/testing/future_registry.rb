@@ -5,18 +5,22 @@ module Temporal
         @store = {}
       end
 
-      def register(token, future)
-        raise 'already registered' if store.key?(token)
+      def register(id, future)
+        raise 'already registered' if store.key?(id.to_s)
 
-        store[token] = future
+        store[id.to_s] = future
       end
 
-      def complete(token, result)
-        store[token].set(result)
+      def complete(id, result)
+        future = store[id.to_s]
+        future.set(result)
+        future.success_callbacks.each { |callback| callback.call(result) }
       end
 
-      def fail(token, error)
-        store[token].fail(error)
+      def fail(id, error)
+        future = store[id.to_s]
+        future.fail(error)
+        future.failure_callbacks.each{ |callback| callback.call(result) }
       end
 
       private
