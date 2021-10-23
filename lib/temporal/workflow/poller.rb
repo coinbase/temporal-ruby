@@ -80,7 +80,7 @@ module Temporal
         connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
       rescue StandardError => error
         Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
-        Temporal::ErrorHandler.handle(error)
+        Temporal::ErrorHandler.handle(error, config)
 
         nil
       end

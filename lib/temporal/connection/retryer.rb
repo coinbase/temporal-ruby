@@ -1,3 +1,5 @@
+require 'grpc/errors'
+
 module Temporal
   module Connection
     module Retryer
@@ -11,15 +13,15 @@ module Temporal
       # No amount of retrying will help in these cases.
       def self.do_not_retry_errors
         [
-          GRPC::AlreadyExists,
-          GRPC::Cancelled,
-          GRPC::FailedPrecondition,
-          GRPC::InvalidArgument,
+          ::GRPC::AlreadyExists,
+          ::GRPC::Cancelled,
+          ::GRPC::FailedPrecondition,
+          ::GRPC::InvalidArgument,
           # If the activity has timed out, the server will return this and will never accept a retry
-          GRPC::NotFound,
-          GRPC::PermissionDenied,
-          GRPC::Unauthenticated,
-          GRPC::Unimplemented,
+          ::GRPC::NotFound,
+          ::GRPC::PermissionDenied,
+          ::GRPC::Unauthenticated,
+          ::GRPC::Unimplemented,
         ]
       end
 

@@ -11,7 +11,7 @@ describe Temporal::Activity::TaskProcessor do
     Fabricate(
       :api_activity_task,
       activity_name: activity_name,
-      input: Temporal.configuration.converter.to_payloads(input)
+      input: config.converter.to_payloads(input)
     )
   end
   let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace) }
@@ -70,7 +70,7 @@ describe Temporal::Activity::TaskProcessor do
         reported_error = nil
         reported_metadata = nil
 
-        Temporal.configuration.on_error do |error, metadata: nil|
+        config.on_error do |error, metadata: nil|
           reported_error = error
           reported_metadata = metadata.to_h
         end
@@ -187,7 +187,7 @@ describe Temporal::Activity::TaskProcessor do
           reported_error = nil
           reported_metadata = nil
 
-          Temporal.configuration.on_error do |error, metadata: nil|
+          config.on_error do |error, metadata: nil|
             reported_error = error
             reported_metadata = metadata
           end
