@@ -45,31 +45,33 @@ describe Temporal::Workflow::Executor do
 
       decision_id, decision = decisions.first
       expect(decision_id).to eq(history.events.length + 1)
-      expect(decision).to be_an_instance_of(Temporal::Workflow::Decision::CompleteWorkflow)
+      expect(decision).to be_an_instance_of(Temporal::Workflow::Command::CompleteWorkflow)
       expect(decision.result).to eq('test')
     end
 
     it 'generates workflow metadata' do
       allow(Temporal::Metadata::Workflow).to receive(:new).and_call_original
-      workflow_started_event.WorkflowExecutionStartedEventAttributes.header =
-        Fabricate(:header_thrift, fields: { 'Foo' => 'Bar' })
+      payload = Temporal::Api::Common::V1::Payload.new(
+        metadata: { 'encoding' => 'xyz' },
+        data: 'test'.b
+      )
+      header = 
+        Google::Protobuf::Map.new(:string, :message, Temporal::Api::Common::V1::Payload, { 'Foo' => payload })
+      workflow_started_event.workflow_execution_started_event_attributes.header = 
+        Fabricate(:api_header, fields: header)
 
       subject.run
 
-      event_attributes = workflow_started_event.workflowExecutionStartedEventAttributes
+      event_attributes = workflow_started_event.workflow_execution_started_event_attributes
       expect(Temporal::Metadata::Workflow)
         .to have_received(:new)
               .with(
                 namespace: workflow_metadata.namespace,
                 id: workflow_metadata.workflow_id,
-                name: event_attributes.workflowType.name,
-                run_id: event_attributes.originalExecutionRunId,
+                name: event_attributes.workflow_type.name,
+                run_id: event_attributes.original_execution_run_id,
                 attempt: event_attributes.attempt,
-                headers: { 'Foo' => 'Bar' },
-                timeouts: {
-                  execution: event_attributes.executionStartToCloseTimeoutSeconds,
-                  task: event_attributes.taskStartToCloseTimeoutSeconds
-                }
+                headers: header
               )
     end
   end

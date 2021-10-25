@@ -51,14 +51,10 @@ module Temporal
         Metadata::Workflow.new(
           namespace: metadata.namespace,
           id: metadata.workflow_id,
-          name: event_attributes.workflowType.name,
-          run_id: event_attributes.originalExecutionRunId,
+          name: event_attributes.workflow_type.name,
+          run_id: event_attributes.original_execution_run_id,
           attempt: event_attributes.attempt,
-          headers: event_attributes.header&.fields || {},
-          timeouts: {
-            execution: event_attributes.executionStartToCloseTimeoutSeconds,
-            task: event_attributes.taskStartToCloseTimeoutSeconds
-          }
+          headers: event_attributes.header&.fields || {}
         )
       end
     end
