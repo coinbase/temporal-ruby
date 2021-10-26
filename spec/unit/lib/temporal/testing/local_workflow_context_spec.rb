@@ -75,7 +75,7 @@ describe Temporal::Testing::LocalWorkflowContext do
         expect(f.get.message).to eq('oops')
 
         expect(Temporal::ErrorHandler).to have_received(:handle)
-          .with(f.get, hash_including(metadata: kind_of(Temporal::Metadata::Activity)))
+          .with(f.get, kind_of(Temporal::Configuration), hash_including(metadata: kind_of(Temporal::Metadata::Activity)))
       end
 
       it 'successful synchronous result' do
@@ -127,7 +127,7 @@ describe Temporal::Testing::LocalWorkflowContext do
   describe '#execute_activity!' do
     it 'immediate failure raises' do
       expect {
-        workflow_context.execute_activity!(TestFailedActivity)
+          workflow_context.execute_activity!(TestFailedActivity)
       }.to raise_error(RuntimeError, 'oops')
     end
 

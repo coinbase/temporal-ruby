@@ -9,7 +9,7 @@ require 'temporal/workflow/history/event_target'
 module Temporal
   module Testing
     class LocalWorkflowContext
-      attr_reader :metadata
+      attr_reader :metadata, :config
 
       def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.configuration)
         @last_event_id = 0
@@ -66,7 +66,7 @@ module Temporal
         begin
           result = activity_class.execute_in_context(context, input)
         rescue StandardError => e
-          Temporal::ErrorHandler.handle(e, metadata: metadata)
+          Temporal::ErrorHandler.handle(e, config, metadata: metadata)
 
           # Capture any failure from running the activity into the future
           # instead of raising immediately in order to match the behavior of
@@ -190,7 +190,7 @@ module Temporal
 
       private
 
-      attr_reader :execution, :run_id, :workflow_id, :disabled_releases, :config
+      attr_reader :execution, :run_id, :workflow_id, :disabled_releases
 
       def completed!
         @completed = true
