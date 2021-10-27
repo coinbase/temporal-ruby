@@ -221,36 +221,6 @@ describe Temporal::Client do
     end
   end
 
-  describe '#signal_with_start_workflow' do
-    let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
-    end
-
-    before { allow(connection).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
-
-    it 'starts a workflow using the default options with a signal' do
-      subject.signal_with_start_workflow(TestStartWorkflow, 'the question', 'what do you get if you multiply six by nine?', 42)
-
-      expect(connection)
-        .to have_received(:signal_with_start_workflow_execution)
-        .with(
-          namespace: 'default-test-namespace',
-          workflow_id: an_instance_of(String),
-          workflow_name: 'TestStartWorkflow',
-          task_queue: 'default-test-task-queue',
-          input: [42],
-          task_timeout: Temporal.configuration.timeouts[:task],
-          run_timeout: Temporal.configuration.timeouts[:run],
-          execution_timeout: Temporal.configuration.timeouts[:execution],
-          workflow_id_reuse_policy: nil,
-          headers: {},
-          memo: {},
-          signal_name: 'the question',
-          signal_input: 'what do you get if you multiply six by nine?',
-        )
-    end
-  end
-
   describe '#register_namespace' do
     before { allow(connection).to receive(:register_namespace).and_return(nil) }
 
