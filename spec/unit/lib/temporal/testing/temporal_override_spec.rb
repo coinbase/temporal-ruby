@@ -136,6 +136,14 @@ describe Temporal::Testing::TemporalOverride do
           .with(an_instance_of(Temporal::Testing::LocalWorkflowContext))
       end
 
+      it 'explicitly does not support staring a workflow with a signal' do
+        expect {
+          client.start_workflow(TestTemporalOverrideWorkflow, signal_name: 'breakme')
+        }.to raise_error(NotImplementedError) do |e| 
+          expect(e.message).to eql("Signals are not available when Temporal::Testing.local! is on")
+        end
+      end
+
       describe 'execution control' do
         subject do
           client.start_workflow(
