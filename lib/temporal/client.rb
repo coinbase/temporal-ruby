@@ -13,6 +13,18 @@ module Temporal
       @config = config
     end
 
+    # Starts a workflow with an optional signal.
+    #
+    # signal_name and signal_input are optional parameters that control Temporal's signal_with_start
+    # behavior.  signal_name corresponds to the 'signal' argument to signal_workflow, and signal_input
+    # corresponds to the 'input' argument to signal_workflow
+    #
+    # If signal_name is specified, Temporal will atomically do one of the following two things:
+    # A) start a new workflow and signal it
+    # B) if workflow_id is specified and the workflow already exists, signal the existing workflow.
+    #
+    # It is legal to specify signal_name without signal_input, but it is illegal to specify signal_input
+    # without signal_name.
     def start_workflow(workflow, *input, signal_name: nil, signal_input: nil, **args)
       options = args.delete(:options) || {}
       input << args unless args.empty?

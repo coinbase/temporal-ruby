@@ -240,43 +240,18 @@ describe Temporal::Client do
       expect_signal_with_start([42], signal_input)
     end
 
-    it 'starts a workflow with a signal and multiple scalar arguments' do
-      signal_input = 'what do you get if you multiply six by nine?'
+    it 'starts a workflow with a signal and multiple arguments and signal_inputs' do
+      signal_input = ['what do you get', 'if you multiply six by nine?']
       subject.start_workflow(
         TestStartWorkflow,
         42,
         43,
         signal_name: 'the question',
-        # signals can't have multiple scalar args, so this test uses a single scalar arg
+        # signals can't have multiple scalar args, but you can pass an array
         signal_input: signal_input
       )
 
       expect_signal_with_start([42, 43], signal_input)
-    end
-
-    it 'starts a workflow with a signal and one array argument' do
-      signal_input = ['what do you get', 'if you multiply six by nine?']
-      subject.start_workflow(
-        TestStartWorkflow, 
-        [42, 54],
-        signal_name: 'the question',
-        signal_input: signal_input,
-      )
-
-      expect_signal_with_start([[42, 54]], signal_input)
-    end
-
-    it 'starts a workflow with a signal and multiple array arguments' do
-      signal_arguments = [['what', 'do you get'], ['if', 'you multiply six by nine?']]
-      subject.start_workflow(
-        TestStartWorkflow, 
-        [42, 54],
-        [43, 55],
-        signal_name: 'the question',
-        signal_input: signal_arguments,
-      )
-
-      expect_signal_with_start([[42, 54], [43, 55]], signal_arguments)
     end
 
     it 'raises when signal_input is given but signal_name is not' do
