@@ -13,7 +13,19 @@ module Temporal
       @config = config
     end
 
-    def start_workflow(workflow, *input, **args)
+    # Starts a workflow with an optional signal.
+    #
+    # signal_name and signal_input are optional parameters that control Temporal's signal_with_start
+    # behavior.  signal_name corresponds to the 'signal' argument to signal_workflow, and signal_input
+    # corresponds to the 'input' argument to signal_workflow
+    #
+    # If signal_name is specified, Temporal will atomically do one of the following two things:
+    # A) start a new workflow and signal it
+    # B) if workflow_id is specified and the workflow already exists, signal the existing workflow.
+    #
+    # It is legal to specify signal_name without signal_input, but it is illegal to specify signal_input
+    # without signal_name.
+    def start_workflow(workflow, *input, signal_name: nil, signal_input: nil, **args)
       options = args.delete(:options) || {}
       input << args unless args.empty?
 
@@ -21,20 +33,40 @@ module Temporal
       workflow_id = options[:workflow_id] || SecureRandom.uuid
       memo = options[:memo] || {}
 
-      response = connection.start_workflow_execution(
-        namespace: execution_options.namespace,
-        workflow_id: workflow_id,
-        workflow_name: execution_options.name,
-        task_queue: execution_options.task_queue,
-        input: input,
-        execution_timeout: execution_options.timeouts[:execution],
-        # If unspecified, individual runs should have the full time for the execution (which includes retries).
-        run_timeout: compute_run_timeout(execution_options),
-        task_timeout: execution_options.timeouts[:task],
-        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
-        headers: execution_options.headers,
-        memo: memo
-      )
+      if signal_name.nil? && signal_input.nil?
+        response = connection.start_workflow_execution(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          workflow_name: execution_options.name,
+          task_queue: execution_options.task_queue,
+          input: input,
+          execution_timeout: execution_options.timeouts[:execution],
+          # If unspecified, individual runs should have the full time for the execution (which includes retries).
+          run_timeout: compute_run_timeout(execution_options),
+          task_timeout: execution_options.timeouts[:task],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          headers: execution_options.headers,
+          memo: memo
+        )
+      else
+        raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
+
+        response = connection.signal_with_start_workflow_execution(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          workflow_name: execution_options.name,
+          task_queue: execution_options.task_queue,
+          input: input,
+          execution_timeout: execution_options.timeouts[:execution],
+          run_timeout: compute_run_timeout(execution_options),
+          task_timeout: execution_options.timeouts[:task],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          headers: execution_options.headers,
+          memo: memo,
+          signal_name: signal_name,
+          signal_input: signal_input,
+        )
+      end
 
       response.run_id
     end
@@ -66,37 +98,6 @@ module Temporal
       )
 
       response.run_id
-    end
-
-    def signal_with_start_workflow(workflow, signal_name, signal_input, *input, **args)
-      options = args.delete(:options) || {}
-      input << args unless args.empty?
-
-      execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
-      workflow_id = options[:workflow_id] || SecureRandom.uuid
-      memo = options[:memo] || {}
-
-      response = connection.signal_with_start_workflow_execution(
-        namespace: execution_options.namespace,
-        workflow_id: workflow_id,
-        workflow_name: execution_options.name,
-        task_queue: execution_options.task_queue,
-        input: input,
-        execution_timeout: execution_options.timeouts[:execution],
-        run_timeout: compute_run_timeout(execution_options),
-        task_timeout: execution_options.timeouts[:task],
-        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
-        headers: execution_options.headers,
-        memo: memo,
-        signal_name: signal_name,
-        signal_input: signal_input
-      )
-
-      response.run_id
-    end
-
-    def compute_run_timeout(execution_options)
-      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def register_namespace(name, description = nil)
@@ -282,6 +283,10 @@ module Temporal
 
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
+    end
+
+    def compute_run_timeout(execution_options)
+      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def find_workflow_task(namespace, workflow_id, run_id, strategy)

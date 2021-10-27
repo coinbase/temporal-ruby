@@ -16,7 +16,6 @@ module Temporal
   def_delegators :default_client, #target
                  :start_workflow,
                  :schedule_workflow,
-                 :signal_with_start_workflow,
                  :register_namespace,
                  :describe_namespace,
                  :signal_workflow,
