@@ -296,10 +296,54 @@ module Temporal
         client.signal_workflow_execution(request)
       end
 
-      def signal_with_start_workflow_execution
-        raise NotImplementedError
+      def signal_with_start_workflow_execution(
+        namespace:,
+        workflow_id:,
+        workflow_name:,
+        task_queue:,
+        input: nil,
+        execution_timeout:,
+        run_timeout:,
+        task_timeout:,
+        workflow_id_reuse_policy: nil,
+        headers: nil,
+        cron_schedule: nil,
+        signal_name:,
+        signal_input:
+      )
+        request = Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest.new(
+          identity: identity,
+          namespace: namespace,
+          workflow_type: Temporal::Api::Common::V1::WorkflowType.new(
+            name: workflow_name
+          ),
+          workflow_id: workflow_id,
+          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
+          ),
+          input: to_payloads(input),
+          workflow_execution_timeout: execution_timeout,
+          workflow_run_timeout: run_timeout,
+          workflow_task_timeout: task_timeout,
+          request_id: SecureRandom.uuid,
+          header: Temporal::Api::Common::V1::Header.new(
+            fields: headers
+          ),
+          cron_schedule: cron_schedule,
+          signal_name: signal_name,
+          signal_input: to_signal_payloads(signal_input)
+        )
+
+        if workflow_id_reuse_policy
+          policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
+          raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
+
+          request.workflow_id_reuse_policy = policy
+        end
+
+        client.signal_with_start_workflow_execution(request)
       end
-      
+
       def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
         request = Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: namespace,
