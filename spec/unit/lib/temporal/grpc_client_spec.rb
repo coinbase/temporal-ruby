@@ -35,7 +35,7 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -54,7 +54,8 @@ describe Temporal::Connection::GRPC do
         run_timeout: 2,
         task_timeout: 3,
         signal_name: 'the question',
-        signal_input: 'what do you get if you multiply six by nine?'
+        signal_input: 'what do you get if you multiply six by nine?',
+        memo: {}
       )
 
       expect(grpc_stub).to have_received(:signal_with_start_workflow_execution) do |request|

@@ -50,8 +50,9 @@ module Temporal
           task_timeout: execution_options.timeouts[:task],
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
           headers: execution_options.headers,
+          memo: memo,
           signal_name: signal_name,
-          signal_input: signal_input
+          signal_input: signal_input,
         )
       end
 

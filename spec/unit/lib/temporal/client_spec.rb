@@ -215,6 +215,7 @@ describe Temporal::Client do
           headers: {},
           signal_name: 'the question',
           signal_input: expected_signal_argument,
+          memo: {},
         )
     end
 
