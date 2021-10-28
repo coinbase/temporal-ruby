@@ -13,7 +13,7 @@ module Temporal
 
         if Temporal::Testing.local?
           # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
-          raise NotImplementedError, "Signals are not available for testing" unless signal_name.nil? && signal_input.nil?
+          raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' unless signal_name.nil? && signal_input.nil?
           start_locally(workflow, nil, *input, **args)
         end
       end

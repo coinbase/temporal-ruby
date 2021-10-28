@@ -154,7 +154,7 @@ describe Temporal::Testing::TemporalOverride do
         expect {
           client.start_workflow(TestTemporalOverrideWorkflow, signal_name: 'breakme')
         }.to raise_error(NotImplementedError) do |e| 
-          expect(e.message).to eql("Signals are not available for testing")
+          expect(e.message).to eql("Signals are not available when Temporal::Testing.local! is on")
         end
       end
 
