@@ -177,15 +177,15 @@ module Temporal
       end
 
       def on_signal(&block)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
       end
 
       def cancel_activity(activity_id)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end
 
       def cancel(target, cancelation_id)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end
 
       private
