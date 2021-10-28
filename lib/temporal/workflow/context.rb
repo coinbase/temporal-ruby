@@ -231,7 +231,7 @@ module Temporal
         blocked = true
 
         if futures.any?
-          if futures.all?(&:finished?)
+          if futures.any?(&:finished?)
             blocked = false
           else
             should_yield = true
@@ -248,9 +248,10 @@ module Temporal
           end
         end
 
-        if unblock_condition
+        if blocked && unblock_condition
           if unblock_condition.call
             blocked = false
+            should_yield = false
           else
             should_yield = true
 

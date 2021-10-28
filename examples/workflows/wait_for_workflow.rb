@@ -25,6 +25,26 @@ class WaitForWorkflow < Temporal::Workflow
 
     timer_beat_activity = timeout_timer.finished? && !long_running_future.finished?
 
+    # This should not wait further. The first future has already finished, and therefore
+    # the second one should not be awaited upon.
+    long_timeout_timer = workflow.start_timer(15)
+    workflow.wait_for(timeout_timer, long_timeout_timer)
+    raise 'The workflow should not have waited for this timer to complete' if long_timeout_timer.finished?
+
+    block_called = false
+    workflow.wait_for(timeout_timer) do
+      # This should never be called because the timeout_timer future was already
+      # finished before the wait was even called.
+      block_called = true
+    end
+    raise 'Block should not have been called' if block_called
+
+    workflow.wait_for(long_timeout_timer) do
+      # This condition will immediately be true and not result in any waiting or dispatching
+      true
+    end
+    raise 'The workflow should not have waited for this timer to complete' if long_timeout_timer.finished?
+
     activity_futures = {}
     echos_completed = 0
 
@@ -49,11 +69,6 @@ class WaitForWorkflow < Temporal::Workflow
     workflow.wait_for do
       workflow.logger.info("Waiting for queue to drain, size: #{activity_futures.length}")
       activity_futures.empty?
-    end
-
-    workflow.wait_for do
-      # This condition will immediately be true and not result in any waiting or dispatching
-      true
     end
 
     {
