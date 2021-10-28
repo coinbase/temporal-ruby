@@ -141,4 +141,23 @@ describe Temporal::Testing::LocalWorkflowContext do
     # Heartbeat doesn't do anything in local mode, but at least it can be called.
     workflow_context.execute_activity!(TestHeartbeatingActivity)
   end
+
+  it 'can await with false condition' do
+    can_continue = false
+    exited = false
+    fiber = Fiber.new do
+      workflow_context.await do
+        can_continue
+      end
+
+      exited = true
+    end
+
+    fiber.resume # start running
+    expect(exited).to eq(false)
+
+    can_continue = true # change condition
+    fiber.resume # resume running after the Fiber.yield done in context.await
+    expect(exited).to eq(true)
+  end
 end

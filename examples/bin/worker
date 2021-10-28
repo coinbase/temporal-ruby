@@ -21,6 +21,7 @@ worker = Temporal::Worker.new
 
 worker.register_workflow(AsyncActivityWorkflow)
 worker.register_workflow(AsyncHelloWorldWorkflow)
+worker.register_workflow(AwaitWorkflow)
 worker.register_workflow(BranchingWorkflow)
 worker.register_workflow(CallFailingActivityWorkflow)
 worker.register_workflow(CancellingTimerWorkflow)

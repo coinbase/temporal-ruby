@@ -172,6 +172,10 @@ module Temporal
         Fiber.yield while !future.finished?
       end
 
+      def await(&unblock_condition)
+        Fiber.yield until unblock_condition.call
+      end
+
       def now
         Time.now
       end

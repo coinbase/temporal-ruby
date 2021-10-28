@@ -231,6 +231,26 @@ module Temporal
         return
       end
 
+      # Blocks workflow execution until the condition block evaluates to true
+      def await(&unblock_condition)
+        unless unblock_condition.call
+          fiber = Fiber.current
+          dispatcher.register_await_handler do |unset_me|
+            if unblock_condition.call
+              # Unset the handler before the fiber is resumed since the resumed
+              # fiber may include other unresolved await calls.
+              unset_me.call
+              fiber.resume
+            end
+          end
+
+          Fiber.yield
+        end
+
+        return
+
+      end
+
       def now
         state_manager.local_time
       end
