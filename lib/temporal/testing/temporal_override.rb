@@ -8,10 +8,12 @@ module Temporal
   module Testing
     module TemporalOverride
 
-      def start_workflow(workflow, *input, **args)
+      def start_workflow(workflow, *input, signal_name: nil, signal_input: nil, **args)
         return super if Temporal::Testing.disabled?
 
         if Temporal::Testing.local?
+          # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
+          raise NotImplementedError, "Signals are not available for testing" unless signal_name.nil? && signal_input.nil?
           start_locally(workflow, nil, *input, **args)
         end
       end
