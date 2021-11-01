@@ -46,28 +46,6 @@ describe Temporal::Metadata do
       end
     end
 
-    context 'with workflow type' do
-      let(:type) { described_class::WORKFLOW_TYPE }
-      let(:data) { Fabricate(:api_workflow_execution_started_event_attributes) }
-      let(:namespace) { nil }
-
-      it 'generates metadata' do
-        expect(subject.run_id).to eq(data.original_execution_run_id)
-        expect(subject.attempt).to eq(data.attempt)
-        expect(subject.headers).to eq({})
-      end
-
-      context 'with headers' do
-        let(:data) do
-          Fabricate(:api_workflow_execution_started_event_attributes, headers: { 'Foo' => 'Bar' })
-        end
-
-        it 'assigns headers' do
-          expect(subject.headers).to eq('Foo' => 'Bar')
-        end
-      end
-    end
-
     context 'with unknown type' do
       let(:type) { :unknown }
       let(:data) { nil }

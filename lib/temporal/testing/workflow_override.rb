@@ -28,7 +28,11 @@ module Temporal
         run_id = SecureRandom.uuid
         execution = WorkflowExecution.new
         metadata = Temporal::Metadata::Workflow.new(
-          name: workflow_id, run_id: run_id, attempt: 1
+          namespace: nil,
+          id: workflow_id,
+          name: name, # Workflow class name
+          run_id: run_id,
+          attempt: 1
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, disabled_releases, metadata
