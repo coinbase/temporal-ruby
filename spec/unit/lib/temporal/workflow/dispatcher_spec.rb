@@ -11,16 +11,6 @@ describe Temporal::Workflow::Dispatcher do
     end
   end
 
-  describe '#register_await_handler' do
-    it 'stores a given await handler' do
-      block = -> { 'handler body' }
-
-      subject.register_await_handler(&block)
-
-      expect(subject.send(:await_handler)).to eq(block)
-    end
-  end
-
   describe '#dispatch' do
     let(:handler_1) { -> { 'first block' } }
     let(:handler_2) { -> { 'second block' } }
@@ -72,35 +62,23 @@ describe Temporal::Workflow::Dispatcher do
 
         expect(handler_5).to have_received(:call)
       end
-
     end
 
-    context 'with await handler' do
-      let(:false_await_handler) { proc {} }
-      let(:true_await_handler) { proc { |delete_me| delete_me.call } }
+    context 'with WILDCARD target handler' do
+      let(:handler_6) { -> { 'sixth block' } }
+      before do
+        allow(handler_6).to receive(:call)
 
-      it 'calls the handler, returns false, remains' do
-        subject.register_await_handler(&false_await_handler)
-        subject.dispatch('target', 'completed')
-
-        # Handler remains when condition is false
-        expect(subject.send(:await_handler)).to_not eq(nil)
-
-        # Target handlers still invoked
-        expect(handler_1).to have_received(:call).ordered
-        expect(handler_4).to have_received(:call).ordered
+        subject.register_handler(described_class::WILDCARD, described_class::WILDCARD, &handler_6)
       end
 
-      it 'calls the handler, returns true, removes' do
-        subject.register_await_handler(&true_await_handler)
+      it 'calls the handler' do
         subject.dispatch('target', 'completed')
-
-        # Handler removed when condition is true
-        expect(subject.send(:await_handler)).to eq(nil)
 
         # Target handlers still invoked
         expect(handler_1).to have_received(:call).ordered
         expect(handler_4).to have_received(:call).ordered
+        expect(handler_6).to have_received(:call).ordered
       end
     end
   end

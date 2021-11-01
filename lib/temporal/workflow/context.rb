@@ -235,11 +235,12 @@ module Temporal
       def await(&unblock_condition)
         unless unblock_condition.call
           fiber = Fiber.current
-          dispatcher.register_await_handler do |unset_me|
-            if unblock_condition.call
-              # Unset the handler before the fiber is resumed since the resumed
-              # fiber may include other unresolved await calls.
-              unset_me.call
+          blocked = true
+          dispatcher.register_handler(Dispatcher::WILDCARD, Dispatcher::WILDCARD) do
+            if blocked && unblock_condition.call
+              # Because this block can run for any dispatch, ensure the fiber is only
+              # resumed one time by tracking when it is unblocked.
+              blocked = false
               fiber.resume
             end
           end
@@ -248,7 +249,6 @@ module Temporal
         end
 
         return
-
       end
 
       def now
