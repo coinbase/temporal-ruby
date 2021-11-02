@@ -142,11 +142,11 @@ describe Temporal::Testing::LocalWorkflowContext do
     workflow_context.execute_activity!(TestHeartbeatingActivity)
   end
 
-  it 'can await with false condition' do
+  it 'can await unblocks once condition changes' do
     can_continue = false
     exited = false
     fiber = Fiber.new do
-      workflow_context.await do
+      workflow_context.wait_for do
         can_continue
       end
 

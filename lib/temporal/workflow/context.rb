@@ -219,32 +219,45 @@ module Temporal
         return
       end
 
-      def wait_for(future)
-        fiber = Fiber.current
-
-        dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
-          fiber.resume if future.finished?
+      # Block workflow progress until any future is finished or any unblock_condition
+      # block evaluates to true.
+      def wait_for(*futures, &unblock_condition)
+        if futures.empty? && unblock_condition.nil?
+          raise 'You must pass either a future or an unblock condition block to wait_for'
         end
 
-        Fiber.yield
+        fiber = Fiber.current
+        should_yield = false
+        blocked = true
 
-        return
-      end
-
-      # Blocks workflow execution until the condition block evaluates to true
-      def await(&unblock_condition)
-        unless unblock_condition.call
-          fiber = Fiber.current
-          blocked = true
-          dispatcher.register_handler(Dispatcher::WILDCARD, Dispatcher::WILDCARD) do
-            if blocked && unblock_condition.call
-              # Because this block can run for any dispatch, ensure the fiber is only
-              # resumed one time by tracking when it is unblocked.
-              blocked = false
-              fiber.resume
+        if futures.any?
+          should_yield = true
+          futures.each do |future|
+            dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
+              if blocked && future.finished?
+                blocked = false
+                fiber.resume
+              end
             end
           end
+        end
 
+        if unblock_condition
+          unless unblock_condition.call
+            should_yield = true
+
+            dispatcher.register_handler(Dispatcher::WILDCARD, Dispatcher::WILDCARD) do
+              # Because this block can run for any dispatch, ensure the fiber is only
+              # resumed one time by checking if it's alive before resuming.
+              if blocked && unblock_condition.call
+                blocked = false
+                fiber.resume
+              end
+            end
+          end
+        end
+
+        if should_yield
           Fiber.yield
         end
 
