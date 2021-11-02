@@ -3,15 +3,15 @@ require 'activities/long_running_activity'
 
 # This example workflow exercises all three conditions that can change state that is being
 # awaited upon: activity completion, sleep completion, signal receieved.
-class AwaitWorkflow < Temporal::Workflow
-  def execute(expected_signal)
+class WaitForWorkflow < Temporal::Workflow
+  def execute(total_echos, max_echos_at_once, expected_signal)
     signals_received = {}
 
     workflow.on_signal do |signal, input|
       signals_received[signal] = input
     end
 
-    workflow.await do
+    workflow.wait_for do
       workflow.logger.info("Awaiting #{expected_signal}, signals received so far: #{signals_received}")
       signals_received.key?(expected_signal)
     end
@@ -21,19 +21,20 @@ class AwaitWorkflow < Temporal::Workflow
     # workflow is completed.
     long_running_future = LongRunningActivity.execute(15, 0.1)
     timeout_timer = workflow.start_timer(1)
-    workflow.await do
-      long_running_future.finished? || timeout_timer.finished?
-    end
+    workflow.wait_for(timeout_timer, long_running_future)
 
     timer_beat_activity = timeout_timer.finished? && !long_running_future.finished?
 
     activity_futures = {}
     echos_completed = 0
 
-    10.times do |i|
-      workflow.await do
+    total_echos.times do |i|
+      workflow.wait_for do
         workflow.logger.info("Activities in flight #{activity_futures.length}")
-        activity_futures.length < 2
+        # Pause workflow until the number of active activity futures is less than 2. This
+        # will throttle new activities from being started, guaranteeing that only two of these
+        # activities are running at once.
+        activity_futures.length < max_echos_at_once
       end
 
       future = EchoActivity.execute("hi #{i}")
@@ -45,12 +46,12 @@ class AwaitWorkflow < Temporal::Workflow
       end
     end
 
-    workflow.await do
+    workflow.wait_for do
       workflow.logger.info("Waiting for queue to drain, size: #{activity_futures.length}")
       activity_futures.empty?
     end
 
-    workflow.await do
+    workflow.wait_for do
       # This condition will immediately be true and not result in any waiting or dispatching
       true
     end
@@ -58,7 +59,7 @@ class AwaitWorkflow < Temporal::Workflow
     {
       signal: signals_received.key?(expected_signal),
       timer: timer_beat_activity,
-      activity: echos_completed == 10
+      activity: echos_completed == total_echos
     }
   end
 end
