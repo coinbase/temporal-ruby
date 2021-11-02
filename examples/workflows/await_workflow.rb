@@ -37,12 +37,12 @@ class AwaitWorkflow < Temporal::Workflow
       end
 
       future = EchoActivity.execute("hi #{i}")
+      activity_futures[i] = future
+
       future.done do
         activity_futures.delete(i)
         echos_completed += 1
       end
-
-      activity_futures[i] = future
     end
 
     workflow.await do
