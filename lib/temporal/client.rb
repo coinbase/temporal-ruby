@@ -19,15 +19,15 @@ module Temporal
     #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
     # @param input [any] arguments to be passed to workflow's #execute method
     # @param args [Hash] keyword arguments to be pass to workflow's #execute method
-    # @param options [Hash, nil] optional overrider
-    # @option workflow_id [String]
-    # @option workflow_id_reuse_policy [Symbol] check Temporal::Connection::GRPC::WORKFLOW_ID_REUSE_POLICY
-    # @option name [String] workflow name
-    # @option namespace [String]
-    # @option task_queue [String]
-    # @option retry_policy [Hash] check Temporal::RetryPolicy for available options
-    # @option timeouts [Hash] check Temporal::Configuration::DEFAULT_TIMEOUTS
-    # @option headers [Hash]
+    # @param options [Hash, nil] optional overrides
+    # @option options [String] :workflow_id
+    # @option options [Symbol] :workflow_id_reuse_policy check Temporal::Connection::GRPC::WORKFLOW_ID_REUSE_POLICY
+    # @option options [String] :name workflow name
+    # @option options [String] :namespace
+    # @option options [String] :task_queue
+    # @option options [Hash] :retry_policy check Temporal::RetryPolicy for available options
+    # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
+    # @option options [Hash] :headers
     #
     # @return [String] workflow's run ID
     def start_workflow(workflow, *input, **args)
@@ -61,15 +61,15 @@ module Temporal
     # @param cron_schedule [String] a cron-style schedule string
     # @param input [any] arguments to be passed to workflow's #execute method
     # @param args [Hash] keyword arguments to be pass to workflow's #execute method
-    # @param options [Hash, nil] optional overrider
-    # @option workflow_id [String]
-    # @option workflow_id_reuse_policy [Symbol] check Temporal::Connection::GRPC::WORKFLOW_ID_REUSE_POLICY
-    # @option name [String] workflow name
-    # @option namespace [String]
-    # @option task_queue [String]
-    # @option retry_policy [Hash] check Temporal::RetryPolicy for available options
-    # @option timeouts [Hash] check Temporal::Configuration::DEFAULT_TIMEOUTS
-    # @option headers [Hash]
+    # @param options [Hash, nil] optional overrides
+    # @option options [String] :workflow_id
+    # @option options [Symbol] :workflow_id_reuse_policy check Temporal::Connection::GRPC::WORKFLOW_ID_REUSE_POLICY
+    # @option options [String] :name workflow name
+    # @option options [String] :namespace
+    # @option options [String] :task_queue
+    # @option options [Hash] :retry_policy check Temporal::RetryPolicy for available options
+    # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
+    # @option options [Hash] :headers
     #
     # @return [String] workflow's run ID
     def schedule_workflow(workflow, cron_schedule, *input, **args)
