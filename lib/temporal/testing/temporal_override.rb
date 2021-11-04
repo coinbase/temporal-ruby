@@ -8,12 +8,10 @@ module Temporal
   module Testing
     module TemporalOverride
 
-      def start_workflow(workflow, *input, signal_name: nil, signal_input: nil, **args)
+      def start_workflow(workflow, *input, **args)
         return super if Temporal::Testing.disabled?
 
         if Temporal::Testing.local?
-          # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
-          raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' unless signal_name.nil? && signal_input.nil?
           start_locally(workflow, nil, *input, **args)
         end
       end
@@ -74,6 +72,11 @@ module Temporal
       def start_locally(workflow, schedule, *input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
+
+        # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
+        signal_name = options.delete(:signal_name)
+        signal_input = options.delete(:signal_input)
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' unless signal_name.nil? && signal_input.nil?
 
         reuse_policy = options[:workflow_id_reuse_policy] || :allow_failed
         workflow_id = options[:workflow_id] || SecureRandom.uuid

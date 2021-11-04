@@ -8,9 +8,11 @@ describe 'signal with start' do
       SignalWithStartWorkflow,
       'signal_name',
       0.1,
-      signal_name: 'signal_name',
-      signal_input: 'expected value',
-      options: { workflow_id: workflow_id }
+      options: {
+        workflow_id: workflow_id,
+        signal_name: 'signal_name',
+        signal_input: 'expected value',
+      }
     )
 
     result = Temporal.await_workflow_result(
@@ -28,8 +30,10 @@ describe 'signal with start' do
       SignalWithStartWorkflow,
       'signal_name',
       0.1,
-      signal_name: 'signal_name',
-      options: { workflow_id: workflow_id }
+      options: {
+        workflow_id: workflow_id,
+        signal_name: 'signal_name',
+      }
     )
 
     result = Temporal.await_workflow_result(
@@ -47,18 +51,22 @@ describe 'signal with start' do
       SignalWithStartWorkflow,
       'signal_name',
       10,
-      signal_name: 'signal_name',
-      signal_input: 'expected value',
-      options: { workflow_id: workflow_id }
+      options: {
+        workflow_id: workflow_id,
+        signal_name: 'signal_name',
+        signal_input: 'expected value',
+      }
     )
 
     second_run_id = Temporal.start_workflow(
       SignalWithStartWorkflow,
       'signal_name',
       0.1,
-      signal_name: 'signal_name',
-      signal_input: 'expected value',
-      options: { workflow_id: workflow_id }
+      options: {
+        workflow_id: workflow_id,
+        signal_name: 'signal_name',
+        signal_input: 'expected value',
+      }
     )
 
     # If the run ids are the same, then we didn't start a new workflow
