@@ -18,7 +18,7 @@ module Temporal
     # @param workflow [Temporal::Workflow, String] workflow class or name. When a workflow class
     #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
     # @param input [any] arguments to be passed to workflow's #execute method
-    # @param args [Hash] keyword arguments to be pass to workflow's #execute method
+    # @param args [Hash] keyword arguments to be passed to workflow's #execute method
     # @param options [Hash, nil] optional overrides
     # @option options [String] :workflow_id
     # @option options [Symbol] :workflow_id_reuse_policy check Temporal::Connection::GRPC::WORKFLOW_ID_REUSE_POLICY
