@@ -1,4 +1,4 @@
-# Ruby worker for Temporal
+# Ruby SDK for Temporal
 
 [![Coverage Status](https://coveralls.io/repos/github/coinbase/temporal-ruby/badge.svg?branch=master)](https://coveralls.io/github/coinbase/temporal-ruby?branch=master)
 
@@ -6,7 +6,7 @@
 
 A pure Ruby library for defining and running Temporal workflows and activities.
 
-To find more about Temporal please visit <https://temporal.io/>.
+To find more about Temporal itself please visit <https://temporal.io/>.
 
 
 ## Getting Started
