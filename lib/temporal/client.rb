@@ -13,6 +13,8 @@ module Temporal
       @config = config
     end
 
+    # Start a workflow with an optional signal
+    #
     # If options[:signal_name] is specified, Temporal will atomically do one of:
     # A) start a new workflow and signal it
     # B) if workflow_id is specified and the workflow already exists, signal the existing workflow.
