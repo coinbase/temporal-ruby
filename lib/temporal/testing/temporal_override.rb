@@ -76,7 +76,7 @@ module Temporal
         # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
         signal_name = options.delete(:signal_name)
         signal_input = options.delete(:signal_input)
-        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' unless signal_name.nil? && signal_input.nil?
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' if signal_name || signal_input
 
         reuse_policy = options[:workflow_id_reuse_policy] || :allow_failed
         workflow_id = options[:workflow_id] || SecureRandom.uuid
