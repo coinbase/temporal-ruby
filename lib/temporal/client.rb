@@ -13,7 +13,11 @@ module Temporal
       @config = config
     end
 
-    # Start a workflow
+    # Start a workflow with an optional signal
+    #
+    # If options[:signal_name] is specified, Temporal will atomically do one of:
+    # A) start a new workflow and signal it
+    # B) if workflow_id is specified and the workflow already exists, signal the existing workflow.
     #
     # @param workflow [Temporal::Workflow, String] workflow class or name. When a workflow class
     #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
@@ -25,6 +29,9 @@ module Temporal
     # @option options [String] :name workflow name
     # @option options [String] :namespace
     # @option options [String] :task_queue
+    # @option options [String] :signal_name corresponds to the 'signal' argument to signal_workflow. Required if
+    #   options[:signal_input] is specified.
+    # @option options [String, Array, nil] :signal_input corresponds to the 'input' argument to signal_workflow
     # @option options [Hash] :retry_policy check Temporal::RetryPolicy for available options
     # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
     # @option options [Hash] :headers
@@ -34,22 +41,44 @@ module Temporal
       options = args.delete(:options) || {}
       input << args unless args.empty?
 
+      signal_name = options.delete(:signal_name)
+      signal_input = options.delete(:signal_input)
+
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
 
-      response = connection.start_workflow_execution(
-        namespace: execution_options.namespace,
-        workflow_id: workflow_id,
-        workflow_name: execution_options.name,
-        task_queue: execution_options.task_queue,
-        input: input,
-        execution_timeout: execution_options.timeouts[:execution],
-        # If unspecified, individual runs should have the full time for the execution (which includes retries).
-        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
-        task_timeout: execution_options.timeouts[:task],
-        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
-        headers: execution_options.headers
-      )
+      if signal_name.nil? && signal_input.nil?
+        response = connection.start_workflow_execution(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          workflow_name: execution_options.name,
+          task_queue: execution_options.task_queue,
+          input: input,
+          execution_timeout: execution_options.timeouts[:execution],
+          # If unspecified, individual runs should have the full time for the execution (which includes retries).
+          run_timeout: compute_run_timeout(execution_options),
+          task_timeout: execution_options.timeouts[:task],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          headers: execution_options.headers
+        )
+      else
+        raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
+
+        response = connection.signal_with_start_workflow_execution(
+          namespace: execution_options.namespace,
+          workflow_id: workflow_id,
+          workflow_name: execution_options.name,
+          task_queue: execution_options.task_queue,
+          input: input,
+          execution_timeout: execution_options.timeouts[:execution],
+          run_timeout: compute_run_timeout(execution_options),
+          task_timeout: execution_options.timeouts[:task],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          headers: execution_options.headers,
+          signal_name: signal_name,
+          signal_input: signal_input
+        )
+      end
 
       response.run_id
     end
@@ -89,7 +118,7 @@ module Temporal
         # Execution timeout is across all scheduled jobs, whereas run is for an individual run.
         # This default is here for backward compatibility.  Certainly, the run timeout shouldn't be higher
         # than the execution timeout.
-        run_timeout: execution_options.timeouts[:run] || execution_options.timeouts[:execution],
+        run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
@@ -326,6 +355,10 @@ module Temporal
 
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
+    end
+
+    def compute_run_timeout(execution_options)
+      execution_options.timeouts[:run] || execution_options.timeouts[:execution]
     end
 
     def find_workflow_task(namespace, workflow_id, run_id, strategy)

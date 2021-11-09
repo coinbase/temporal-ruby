@@ -185,6 +185,83 @@ describe Temporal::Client do
     end
   end
 
+  describe '#start_workflow with a signal' do
+    let(:temporal_response) do
+      Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
+    end
+
+    before { allow(connection).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
+
+    def expect_signal_with_start(expected_arguments, expected_signal_argument)
+      expect(connection)
+        .to have_received(:signal_with_start_workflow_execution)
+        .with(
+          namespace: 'default-test-namespace',
+          workflow_id: an_instance_of(String),
+          workflow_name: 'TestStartWorkflow',
+          task_queue: 'default-test-task-queue',
+          input: expected_arguments,
+          task_timeout: Temporal.configuration.timeouts[:task],
+          run_timeout: Temporal.configuration.timeouts[:run],
+          execution_timeout: Temporal.configuration.timeouts[:execution],
+          workflow_id_reuse_policy: nil,
+          headers: {},
+          signal_name: 'the question',
+          signal_input: expected_signal_argument,
+        )
+    end
+
+    it 'starts a workflow with a signal and no arguments' do
+      subject.start_workflow(
+        TestStartWorkflow,
+        options: { signal_name: 'the question' }
+      )
+
+      expect_signal_with_start([], nil)
+    end
+
+    it 'starts a workflow with a signal and one scalar argument' do
+      signal_input = 'what do you get if you multiply six by nine?'
+      subject.start_workflow(
+        TestStartWorkflow,
+        42,
+        options: {
+          signal_name: 'the question',
+          signal_input: signal_input,
+        }
+      )
+
+      expect_signal_with_start([42], signal_input)
+    end
+
+    it 'starts a workflow with a signal and multiple arguments and signal_inputs' do
+      signal_input = ['what do you get', 'if you multiply six by nine?']
+      subject.start_workflow(
+        TestStartWorkflow,
+        42,
+        43,
+        options: {
+          signal_name: 'the question',
+          # signals can't have multiple scalar args, but you can pass an array
+          signal_input: signal_input
+        }
+      )
+
+      expect_signal_with_start([42, 43], signal_input)
+    end
+
+    it 'raises when signal_input is given but signal_name is not' do
+      expect do
+        subject.start_workflow(
+          TestStartWorkflow, 
+          [42, 54],
+          [43, 55],
+          options: { signal_input: 'what do you get if you multiply six by nine?', }
+        )
+      end.to raise_error(ArgumentError)
+    end
+  end
+
   describe '#schedule_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
