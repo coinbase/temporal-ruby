@@ -42,6 +42,7 @@ worker.register_workflow(SideEffectWorkflow)
 worker.register_workflow(SimpleTimerWorkflow)
 worker.register_workflow(TimeoutWorkflow)
 worker.register_workflow(TripBookingWorkflow)
+worker.register_workflow(WaitForWorkflow)
 
 worker.register_activity(AsyncActivity)
 worker.register_activity(EchoActivity)

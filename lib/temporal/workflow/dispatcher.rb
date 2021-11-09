@@ -23,6 +23,7 @@ module Temporal
 
       def handlers_for(target, event_name)
         handlers[target]
+          .concat(handlers[WILDCARD])
           .select { |(name, _)| name == event_name || name == WILDCARD }
           .map(&:last)
       end
