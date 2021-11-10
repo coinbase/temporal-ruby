@@ -62,7 +62,24 @@ describe Temporal::Workflow::Dispatcher do
 
         expect(handler_5).to have_received(:call)
       end
+    end
 
+    context 'with WILDCARD target handler' do
+      let(:handler_6) { -> { 'sixth block' } }
+      before do
+        allow(handler_6).to receive(:call)
+
+        subject.register_handler(described_class::WILDCARD, described_class::WILDCARD, &handler_6)
+      end
+
+      it 'calls the handler' do
+        subject.dispatch('target', 'completed')
+
+        # Target handlers still invoked
+        expect(handler_1).to have_received(:call).ordered
+        expect(handler_4).to have_received(:call).ordered
+        expect(handler_6).to have_received(:call).ordered
+      end
     end
   end
 end
