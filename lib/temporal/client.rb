@@ -156,7 +156,7 @@ module Temporal
 
     # Long polls for a workflow to be completed and returns workflow's return value.
     #
-    # @note This function times out after 30 seconds and throws `Temporal::TimeoutError`,
+    # @note This function times out after 30 seconds and throws Temporal::TimeoutError,
     #   not to be confused with `Temporal::WorkflowTimedOut` which reports that the workflow
     #   itself timed out.
     #
