@@ -15,9 +15,8 @@ module Temporal
 
     # Start a workflow with an optional signal
     #
-    # If options[:signal_name] is specified, Temporal will atomically do one of:
-    # A) start a new workflow and signal it
-    # B) if workflow_id is specified and the workflow already exists, signal the existing workflow.
+    # If options[:signal_name] is specified, Temporal will atomically start a new workflow and
+    # signal it or signal a running workflow (matching a specified options[:workflow_id])
     #
     # @param workflow [Temporal::Workflow, String] workflow class or name. When a workflow class
     #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
@@ -37,8 +36,7 @@ module Temporal
     # @option options [Hash] :headers
     #
     # @return [String] workflow's run ID
-    def start_workflow(workflow, *input, **args)
-      options = args.delete(:options) || {}
+    def start_workflow(workflow, *input, options: {}, **args)
       input << args unless args.empty?
 
       signal_name = options.delete(:signal_name)
@@ -101,8 +99,7 @@ module Temporal
     # @option options [Hash] :headers
     #
     # @return [String] workflow's run ID
-    def schedule_workflow(workflow, cron_schedule, *input, **args)
-      options = args.delete(:options) || {}
+    def schedule_workflow(workflow, cron_schedule, *input, options: {}, **args)
       input << args unless args.empty?
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
@@ -159,9 +156,9 @@ module Temporal
 
     # Long polls for a workflow to be completed and returns workflow's return value.
     #
-    # @note This function times out after 30 seconds and throws Temporal::TimeoutError,
-    # not to be confused with Temporal::WorkflowTimedOut which reports that the workflow
-    # itself timed out.
+    # @note This function times out after 30 seconds and throws `Temporal::TimeoutError`,
+    #   not to be confused with `Temporal::WorkflowTimedOut` which reports that the workflow
+    #   itself timed out.
     #
     # @param workflow [Temporal::Workflow, nil] workflow class or nil
     # @param workflow_id [String]
