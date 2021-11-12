@@ -251,7 +251,7 @@ module Temporal
           else
             should_yield = true
 
-            dispatcher.register_handler(Dispatcher::WILDCARD, Dispatcher::WILDCARD) do
+            dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
               # Because this block can run for any dispatch, ensure the fiber is only
               # resumed one time by checking if it's already been unblocked.
               if blocked && unblock_condition.call
