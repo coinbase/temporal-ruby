@@ -61,7 +61,7 @@ module Temporal
         end
 
         def ==(other)
-          id == other.id && type == other.type
+          self.class == other.class && id == other.id && type == other.type
         end
 
         def eql?(other)
