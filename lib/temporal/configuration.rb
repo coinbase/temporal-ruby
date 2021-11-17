@@ -14,6 +14,7 @@ module Temporal
     attr_writer :converter
     attr_accessor :connection_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
+    # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
     # We choose an 10-year execution timeout because that's the maximum the cassandra DB supports,
     # matching the go SDK, see https://github.com/temporalio/sdk-go/blob/d96130dad3d2bc189bc7626543bd5911cc07ff6d/internal/internal_workflow_testsuite.go#L68
@@ -21,9 +22,12 @@ module Temporal
       execution: 86_400 * 365 * 10, # End-to-end workflow time, including all recurrences if it's scheduled.
       # Time for a single run, excluding retries.  Server defaults to execution timeout; we default here as well to be explicit.
       run: 86_400 * 365 * 10,
-      task: 10,               # Workflow task processing time
+      # Workflow task processing time.  Workflows should not use the network and should execute very quickly.
+      task: 10,
       schedule_to_close: nil, # End-to-end activity time (default: schedule_to_start + start_to_close)
-      schedule_to_start: 10,  # Queue time for an activity
+      # Max queue time for an activity. Default: none.  This is dangerous; most teams don't use.
+      # See       # https://docs.temporal.io/blog/activity-timeouts/#schedule-to-start-timeout
+      schedule_to_start: nil,
       start_to_close: 30,     # Time spent processing an activity
       heartbeat: nil          # Max time between heartbeats (off by default)
     }.freeze
