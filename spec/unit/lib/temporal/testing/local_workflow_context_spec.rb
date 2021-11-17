@@ -12,7 +12,12 @@ describe Temporal::Testing::LocalWorkflowContext do
       workflow_id,
       run_id,
       [],
-      Temporal::Metadata::Workflow.new(namespace: 'ruby-samples', id: workflow_id, name: 'HelloWorldWorkflow', run_id: run_id, attempt: 1)
+      Temporal::Metadata::Workflow.new(
+        namespace: 'ruby-samples',
+        id: workflow_id,
+        name: 'HelloWorldWorkflow',
+        run_id: run_id,
+        attempt: 1)
     )
   end
   let(:async_token) do

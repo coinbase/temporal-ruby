@@ -26,7 +26,7 @@ module Temporal
           'workflow_id' => id,
           'workflow_name' => name,
           'workflow_run_id' => run_id,
-          'attempt' => attempt
+          'attempt' => attempt,
         }
       end
     end
