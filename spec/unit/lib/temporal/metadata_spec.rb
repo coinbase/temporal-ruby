@@ -27,7 +27,7 @@ describe Temporal::Metadata do
       end
     end
   end
-  
+
   describe '.generate_workflow_task_metadata' do
     subject { described_class.generate_workflow_task_metadata(data, namespace) }
 
@@ -53,7 +53,7 @@ describe Temporal::Metadata do
 
     it 'generates metadata' do
       expect(subject.run_id).to eq(event.attributes.original_execution_run_id)
-      expect(subject.workflow_id).to eq(task_metadata.workflow_id)
+      expect(subject.id).to eq(task_metadata.workflow_id)
       expect(subject.attempt).to eq(event.attributes.attempt)
       expect(subject.headers).to eq({})
       expect(subject.memo).to eq({})

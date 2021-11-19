@@ -4,12 +4,16 @@ require 'temporal/workflow/dispatcher'
 require 'temporal/workflow/state_manager'
 require 'temporal/workflow/context'
 require 'temporal/workflow/history/event_target'
+require 'temporal/metadata'
 
 module Temporal
   class Workflow
     class Executor
-      # metadata: Metadata::WorkflowTask
-      def initialize(workflow_class, history, config, task_metadata)
+      # @param workflow_class [Class]
+      # @param history [Workflow::History]
+      # @param task_metadata [Metadata::WorkflowTask]
+      # @param config [Configuration]
+      def initialize(workflow_class, history, task_metadata, config)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @state_manager = StateManager.new(dispatcher, task_metadata)
@@ -34,9 +38,10 @@ module Temporal
 
       private
 
-      attr_reader :workflow_class, :dispatcher, :state_manager, :history, :config
+      attr_reader :workflow_class, :dispatcher, :state_manager, :task_metadata, :history, :config
 
-      def execute_workflow(input, metadata)
+      def execute_workflow(input, workflow_started_event)
+        metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
         context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config)
 
         Fiber.new do

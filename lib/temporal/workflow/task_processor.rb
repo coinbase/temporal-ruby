@@ -32,7 +32,7 @@ module Temporal
 
         history = fetch_full_history
         # TODO: For sticky workflows we need to cache the Executor instance
-        executor = Workflow::Executor.new(workflow_class, history, config, @metadata)
+        executor = Workflow::Executor.new(workflow_class, history, metadata, config)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
