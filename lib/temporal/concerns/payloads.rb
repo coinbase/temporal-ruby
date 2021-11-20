@@ -46,7 +46,7 @@ module Temporal
       end
 
       def to_payload_map(data)
-        data.map { |key, value| [key, to_payload(value)] }.to_h
+        data.transform_values(&method(:to_payload))
       end
 
       private

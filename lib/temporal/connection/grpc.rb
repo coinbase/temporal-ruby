@@ -334,7 +334,7 @@ module Temporal
           signal_name: signal_name,
           signal_input: to_signal_payloads(signal_input),
           memo: Temporal::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo)
+            fields: to_payload_map(memo || {})
           ),
         )
 

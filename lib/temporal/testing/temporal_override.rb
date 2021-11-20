@@ -8,12 +8,10 @@ module Temporal
   module Testing
     module TemporalOverride
 
-      def start_workflow(workflow, *input, signal_name: nil, signal_input: nil, **args)
+      def start_workflow(workflow, *input, **args)
         return super if Temporal::Testing.disabled?
 
         if Temporal::Testing.local?
-          # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
-          raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' unless signal_name.nil? && signal_input.nil?
           start_locally(workflow, nil, *input, **args)
         end
       end
@@ -75,9 +73,15 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
+        # signals aren't supported at all, so let's prohibit start_workflow calls that try to signal
+        signal_name = options.delete(:signal_name)
+        signal_input = options.delete(:signal_input)
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on' if signal_name || signal_input
+
         reuse_policy = options[:workflow_id_reuse_policy] || :allow_failed
         workflow_id = options[:workflow_id] || SecureRandom.uuid
         run_id = SecureRandom.uuid
+        memo = options[:memo] || {}
 
         if !allowed?(workflow_id, reuse_policy)
           raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
@@ -91,15 +95,15 @@ module Temporal
 
         execution_options = ExecutionOptions.new(workflow, options)
         metadata = Metadata::Workflow.new(
-          name: workflow_id, 
-          workflow_id: workflow_id, 
-          run_id: run_id, 
-          attempt: 1, 
-          namespace: execution_options.namespace, 
-          memo: options[:memo] || {},
-          headers: execution_options.headers,
+          namespace: execution_options.namespace,
+          id: workflow_id,
+          name: execution_options.name,
+          run_id: run_id,
+          attempt: 1,
           task_queue: execution_options.task_queue,
           run_started_at: Time.now,
+          memo: memo,
+          headers: execution_options.headers
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
           execution, workflow_id, run_id, workflow.disabled_releases, metadata

@@ -3,18 +3,19 @@ require 'temporal/metadata/base'
 module Temporal
   module Metadata
     class Workflow < Base
-      attr_reader :name, :workflow_id, :run_id, :attempt, :headers, :namespace, :task_queue, :memo, :run_started_at
+      attr_reader :namespace, :id, :name, :run_id, :attempt, :task_queue, :headers, :run_started_at, :memo
 
-      def initialize(name:, workflow_id:, run_id:, attempt:, headers:, namespace:, task_queue:, memo:, run_started_at:)
+      def initialize(namespace:, id:, name:, run_id:, attempt:, task_queue:, headers:, run_started_at:, memo:)
+        @namespace = namespace
+        @id = id
         @name = name
-        @workflow_id = workflow_id
         @run_id = run_id
         @attempt = attempt
-        @namespace = namespace
         @task_queue = task_queue
         @headers = headers
-        @memo = memo
         @run_started_at = run_started_at
+        @memo = memo
+
         freeze
       end
 
@@ -24,14 +25,14 @@ module Temporal
 
       def to_h
         {
-          'workflow_name' => name,
-          'workflow_id' => workflow_id,
-          'run_id' => run_id,
-          'attempt' => attempt,
           'namespace' => namespace,
+          'workflow_id' => id,
+          'workflow_name' => name,
+          'workflow_run_id' => run_id,
+          'attempt' => attempt,
           'task_queue' => task_queue,
-          'memo' => memo,
           'run_started_at' => run_started_at.to_f,
+          'memo' => memo,
         }
       end
     end

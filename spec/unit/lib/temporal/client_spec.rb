@@ -213,16 +213,16 @@ describe Temporal::Client do
           execution_timeout: Temporal.configuration.timeouts[:execution],
           workflow_id_reuse_policy: nil,
           headers: {},
+          memo: {},
           signal_name: 'the question',
           signal_input: expected_signal_argument,
-          memo: {},
         )
     end
 
     it 'starts a workflow with a signal and no arguments' do
       subject.start_workflow(
         TestStartWorkflow,
-        signal_name: 'the question'
+        options: { signal_name: 'the question' }
       )
 
       expect_signal_with_start([], nil)
@@ -233,8 +233,10 @@ describe Temporal::Client do
       subject.start_workflow(
         TestStartWorkflow,
         42,
-        signal_name: 'the question',
-        signal_input: signal_input
+        options: {
+          signal_name: 'the question',
+          signal_input: signal_input,
+        }
       )
 
       expect_signal_with_start([42], signal_input)
@@ -246,9 +248,11 @@ describe Temporal::Client do
         TestStartWorkflow,
         42,
         43,
-        signal_name: 'the question',
-        # signals can't have multiple scalar args, but you can pass an array
-        signal_input: signal_input
+        options: {
+          signal_name: 'the question',
+          # signals can't have multiple scalar args, but you can pass an array
+          signal_input: signal_input
+        }
       )
 
       expect_signal_with_start([42, 43], signal_input)
@@ -260,7 +264,7 @@ describe Temporal::Client do
           TestStartWorkflow, 
           [42, 54],
           [43, 55],
-          signal_input: 'what do you get if you multiply six by nine?',
+          options: { signal_input: 'what do you get if you multiply six by nine?', }
         )
       end.to raise_error(ArgumentError)
     end
@@ -289,8 +293,8 @@ describe Temporal::Client do
           run_timeout: Temporal.configuration.timeouts[:run],
           execution_timeout: Temporal.configuration.timeouts[:execution],
           workflow_id_reuse_policy: nil,
+          memo: {},
           headers: {},
-          memo: {}
         )
     end
   end

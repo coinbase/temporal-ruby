@@ -14,15 +14,15 @@ describe Temporal::Testing::LocalWorkflowContext do
       run_id,
       [],
       Temporal::Metadata::Workflow.new(
-        name: workflow_id,
-        workflow_id: workflow_id,
+        namespace: 'ruby-samples',
+        id: workflow_id,
+        name: 'HelloWorldWorkflow',
         run_id: run_id,
         attempt: 1,
-        namespace: 'unit-test-local',
         task_queue: task_queue,
-        memo: {},
         headers: {},
         run_started_at: Time.now,
+        memo: {},
       )
     )
   end
