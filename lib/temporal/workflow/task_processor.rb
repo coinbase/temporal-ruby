@@ -12,7 +12,7 @@ module Temporal
       def initialize(task, namespace, workflow_lookup, middleware_chain, config)
         @task = task
         @namespace = namespace
-        @metadata = Metadata.generate(Metadata::WORKFLOW_TASK_TYPE, task, namespace)
+        @metadata = Metadata.generate_workflow_task_metadata(task, namespace)
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
         @workflow_class = workflow_lookup.find(workflow_name)

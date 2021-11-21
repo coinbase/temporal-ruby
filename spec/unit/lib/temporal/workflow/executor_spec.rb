@@ -52,8 +52,8 @@ describe Temporal::Workflow::Executor do
     it 'generates workflow metadata' do
       allow(Temporal::Metadata::Workflow).to receive(:new).and_call_original
       payload = Temporal::Api::Common::V1::Payload.new(
-        metadata: { 'encoding' => 'xyz' },
-        data: 'test'.b
+        metadata: { 'encoding' => 'json/plain' },
+        data: '"bar"'.b
       )
       header = 
         Google::Protobuf::Map.new(:string, :message, Temporal::Api::Common::V1::Payload, { 'Foo' => payload })
@@ -71,7 +71,9 @@ describe Temporal::Workflow::Executor do
                 name: event_attributes.workflow_type.name,
                 run_id: event_attributes.original_execution_run_id,
                 attempt: event_attributes.attempt,
-                headers: header
+                task_queue: event_attributes.task_queue.name,
+                run_started_at: workflow_started_event.event_time.to_time,
+                headers: {'Foo' => 'bar'}
               )
     end
   end

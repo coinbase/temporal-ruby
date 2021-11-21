@@ -29,10 +29,11 @@ describe Temporal::Metadata::Workflow do
       expect(subject.to_h).to eq({
         'namespace' => subject.namespace,
         'workflow_id' => subject.id,
-        'workflow_id' => subject.id,
         'attempt' => subject.attempt,
         'workflow_name' => subject.name,
-        'workflow_run_id' => subject.run_id
+        'workflow_run_id' => subject.run_id,
+        'task_queue' => subject.task_queue,
+        'run_started_at' => subject.run_started_at.to_f,
       })
     end
   end

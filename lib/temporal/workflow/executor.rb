@@ -9,12 +9,16 @@ require 'temporal/metadata'
 module Temporal
   class Workflow
     class Executor
-      def initialize(workflow_class, history, metadata, config)
+      # @param workflow_class [Class]
+      # @param history [Workflow::History]
+      # @param task_metadata [Metadata::WorkflowTask]
+      # @param config [Configuration]
+      def initialize(workflow_class, history, task_metadata, config)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @state_manager = StateManager.new(dispatcher)
-        @metadata = metadata
         @history = history
+        @task_metadata = task_metadata
         @config = config
       end
 
@@ -34,28 +38,15 @@ module Temporal
 
       private
 
-      attr_reader :workflow_class, :dispatcher, :state_manager, :metadata, :history, :config
+      attr_reader :workflow_class, :dispatcher, :state_manager, :task_metadata, :history, :config
 
-      def execute_workflow(input, workflow_started_event_attributes)
-        metadata = generate_workflow_metadata_from(workflow_started_event_attributes)
+      def execute_workflow(input, workflow_started_event)
+        metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
         context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config)
 
         Fiber.new do
           workflow_class.execute_in_context(context, input)
         end.resume
-      end
-
-      # workflow_id and domain are confusingly not available on the WorkflowExecutionStartedEvent,
-      # so we have to fetch these from the DecisionTask's metadata
-      def generate_workflow_metadata_from(event_attributes)
-        Metadata::Workflow.new(
-          namespace: metadata.namespace,
-          id: metadata.workflow_id,
-          name: event_attributes.workflow_type.name,
-          run_id: event_attributes.original_execution_run_id,
-          attempt: event_attributes.attempt,
-          headers: event_attributes.header&.fields || {}
-        )
       end
     end
   end

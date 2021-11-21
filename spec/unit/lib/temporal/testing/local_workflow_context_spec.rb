@@ -6,13 +6,23 @@ describe Temporal::Testing::LocalWorkflowContext do
   let(:workflow_id) { 'workflow_id_1' }
   let(:run_id) { 'run_id_1' }
   let(:execution) { Temporal::Testing::WorkflowExecution.new }
+  let(:task_queue) { 'my_test_queue' }
   let(:workflow_context) do
     Temporal::Testing::LocalWorkflowContext.new(
       execution,
       workflow_id,
       run_id,
       [],
-      Temporal::Metadata::Workflow.new(namespace: 'ruby-samples', id: workflow_id, name: 'HelloWorldWorkflow', run_id: run_id, attempt: 1)
+      Temporal::Metadata::Workflow.new(
+        namespace: 'ruby-samples',
+        id: workflow_id,
+        name: 'HelloWorldWorkflow',
+        run_id: run_id,
+        attempt: 1,
+        task_queue: task_queue,
+        headers: {},
+        run_started_at: Time.now,
+      )
     )
   end
   let(:async_token) do

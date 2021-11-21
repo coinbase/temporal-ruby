@@ -105,7 +105,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            event.attributes
+            event,
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'
