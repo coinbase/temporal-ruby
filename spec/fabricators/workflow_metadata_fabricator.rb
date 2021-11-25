@@ -8,5 +8,6 @@ Fabricator(:workflow_metadata, from: :open_struct) do
   attempt 1
   task_queue { Fabricate(:api_task_queue) }
   run_started_at { Time.now }
+  memo { {} }
   headers { {} }
 end

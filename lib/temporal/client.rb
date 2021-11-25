@@ -57,7 +57,8 @@ module Temporal
           run_timeout: compute_run_timeout(execution_options),
           task_timeout: execution_options.timeouts[:task],
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          memo: execution_options.memo,
         )
       else
         raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
@@ -73,6 +74,7 @@ module Temporal
           task_timeout: execution_options.timeouts[:task],
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
           headers: execution_options.headers,
+          memo: execution_options.memo,
           signal_name: signal_name,
           signal_input: signal_input
         )
@@ -119,7 +121,8 @@ module Temporal
         task_timeout: execution_options.timeouts[:task],
         workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
         headers: execution_options.headers,
-        cron_schedule: cron_schedule
+        cron_schedule: cron_schedule,
+        memo: execution_options.memo
       )
 
       response.run_id

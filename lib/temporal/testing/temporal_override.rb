@@ -81,6 +81,7 @@ module Temporal
         reuse_policy = options[:workflow_id_reuse_policy] || :allow_failed
         workflow_id = options[:workflow_id] || SecureRandom.uuid
         run_id = SecureRandom.uuid
+        memo = options[:memo] || {}
 
         if !allowed?(workflow_id, reuse_policy)
           raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
@@ -101,6 +102,7 @@ module Temporal
           attempt: 1,
           task_queue: execution_options.task_queue,
           run_started_at: Time.now,
+          memo: memo,
           headers: execution_options.headers
         )
         context = Temporal::Testing::LocalWorkflowContext.new(
