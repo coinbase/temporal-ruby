@@ -21,6 +21,10 @@ module Temporal
         from_payloads(payloads)&.first
       end
 
+      def from_payload_map(payload_map)
+        payload_map.map { |key, value| [key, from_payload(value)] }.to_h
+      end
+
       def to_payloads(data)
         payload_converter.to_payloads(data)
       end
@@ -39,6 +43,10 @@ module Temporal
 
       def to_signal_payloads(data)
         to_payloads([data])
+      end
+
+      def to_payload_map(data)
+        data.transform_values(&method(:to_payload))
       end
 
       private

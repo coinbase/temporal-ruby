@@ -81,7 +81,8 @@ module Temporal
         task_timeout:,
         workflow_id_reuse_policy: nil,
         headers: nil,
-        cron_schedule: nil
+        cron_schedule: nil,
+        memo: nil
       )
         request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
@@ -101,7 +102,10 @@ module Temporal
           header: Temporal::Api::Common::V1::Header.new(
             fields: headers
           ),
-          cron_schedule: cron_schedule
+          cron_schedule: cron_schedule,
+          memo: Temporal::Api::Common::V1::Memo.new(
+            fields: to_payload_map(memo || {})
+          )
         )
 
         if workflow_id_reuse_policy
@@ -305,7 +309,8 @@ module Temporal
         headers: nil,
         cron_schedule: nil,
         signal_name:,
-        signal_input:
+        signal_input:,
+        memo: nil
       )
         request = Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest.new(
           identity: identity,
@@ -327,7 +332,10 @@ module Temporal
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
-          signal_input: to_signal_payloads(signal_input)
+          signal_input: to_signal_payloads(signal_input),
+          memo: Temporal::Api::Common::V1::Memo.new(
+            fields: to_payload_map(memo || {})
+          ),
         )
 
         if workflow_id_reuse_policy

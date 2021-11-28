@@ -56,6 +56,7 @@ describe Temporal::Metadata do
       expect(subject.id).to eq(task_metadata.workflow_id)
       expect(subject.attempt).to eq(event.attributes.attempt)
       expect(subject.headers).to eq({})
+      expect(subject.memo).to eq({})
       expect(subject.namespace).to eq(task_metadata.namespace)
       expect(subject.task_queue).to eq(event.attributes.task_queue.name)
       expect(subject.run_started_at).to eq(event.timestamp)

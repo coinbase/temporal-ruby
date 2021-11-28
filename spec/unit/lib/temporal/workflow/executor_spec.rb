@@ -73,6 +73,7 @@ describe Temporal::Workflow::Executor do
                 attempt: event_attributes.attempt,
                 task_queue: event_attributes.task_queue.name,
                 run_started_at: workflow_started_event.event_time.to_time,
+                memo: {},
                 headers: {'Foo' => 'bar'}
               )
     end

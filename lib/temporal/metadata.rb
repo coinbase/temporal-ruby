@@ -20,7 +20,7 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
-          headers: headers(task.header&.fields),
+          headers: from_payload_map(task.header&.fields || {}),
           heartbeat_details: from_details_payloads(task.heartbeat_details)
         )
       end
@@ -48,19 +48,10 @@ module Temporal
           attempt: event.attributes.attempt,
           namespace: task_metadata.namespace,
           task_queue: event.attributes.task_queue.name,
-          headers: headers(event.attributes.header&.fields),
+          headers: from_payload_map(event.attributes.header&.fields || {}),
           run_started_at: event.timestamp,
+          memo: from_payload_map(event.attributes.memo&.fields || {}),
         )
-      end
-
-      private
-
-      def headers(fields)
-        result = {}
-        fields.each do |field, payload|
-          result[field] = from_payload(payload)
-        end
-        result
       end
     end
   end
