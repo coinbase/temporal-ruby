@@ -9,6 +9,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
         task_queue: 'my-task-queue',
         input: ['one', 'two'],
         timeouts: Temporal.configuration.timeouts,
+        headers: {'foo-header': 'bar'},
         memo: {'foo-memo': 'baz'},
       )
 
@@ -28,6 +29,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
       expect(attribs.input.payloads[0].data).to eq('"one"')
       expect(attribs.input.payloads[1].data).to eq('"two"')
 
+      expect(attribs.header.fields['foo-header'].data).to eq('"bar"')
       expect(attribs.memo.fields['foo-memo'].data).to eq('"baz"')
     end
   end

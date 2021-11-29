@@ -6,12 +6,16 @@ describe LoopWorkflow do
     memo = {
         'my-memo' => 'foo',
     }
+    headers = {
+        'my-header' => 'bar',
+    }
     run_id = Temporal.start_workflow(
       LoopWorkflow,
       2, # it continues as new if this arg is > 1
       options: {
         workflow_id: workflow_id,
         memo: memo,
+        headers: headers,
       },
     )
 
@@ -38,7 +42,8 @@ describe LoopWorkflow do
 
     expect(final_result[:count]).to eq(1)
 
-    # memo should be copied to the next run automatically
+    # memo and headers should be copied to the next run automatically
     expect(final_result[:memo]).to eq(memo)
+    expect(final_result[:headers]).to eq(headers)
   end
 end

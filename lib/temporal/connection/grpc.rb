@@ -100,7 +100,7 @@ module Temporal
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
-            fields: headers
+            fields: to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
           memo: Temporal::Api::Common::V1::Memo.new(
@@ -328,7 +328,7 @@ module Temporal
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
-            fields: headers
+            fields: to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
