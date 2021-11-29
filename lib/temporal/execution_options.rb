@@ -3,7 +3,7 @@ require 'temporal/retry_policy'
 
 module Temporal
   class ExecutionOptions
-    attr_reader :name, :namespace, :task_queue, :retry_policy, :timeouts, :headers
+    attr_reader :name, :namespace, :task_queue, :retry_policy, :timeouts, :headers, :memo
 
     def initialize(object, options, defaults = nil)
       # Options are treated as overrides and take precedence
@@ -13,6 +13,7 @@ module Temporal
       @retry_policy = options[:retry_policy] || {}
       @timeouts = options[:timeouts] || {}
       @headers = options[:headers] || {}
+      @memo = options[:memo] || {}
 
       # For Temporal::Workflow and Temporal::Activity use defined values as the next option
       if has_executable_concern?(object)

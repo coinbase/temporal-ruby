@@ -39,7 +39,7 @@ module Temporal
         def serialize_memo(memo)
           return unless memo
 
-          Temporal::Api::Common::V1::Memo.new(fields: object.memo)
+          Temporal::Api::Common::V1::Memo.new(fields: to_payload_map(memo))
         end
       end
     end

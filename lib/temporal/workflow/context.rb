@@ -199,6 +199,12 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
+        # If memo is not overridden, copy from current run
+        options_from_metadata = {
+          memo: metadata.memo,
+        }
+        options = options_from_metadata.merge(options)
+
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::ContinueAsNew.new(
@@ -207,7 +213,8 @@ module Temporal
           input: input,
           timeouts: execution_options.timeouts,
           retry_policy: execution_options.retry_policy,
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          memo: execution_options.memo,
         )
         schedule_command(command)
         completed!
