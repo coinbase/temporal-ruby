@@ -16,7 +16,7 @@ module Temporal
       def initialize(workflow_class, history, task_metadata, config)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
-        @state_manager = StateManager.new(dispatcher, task_metadata)
+        @state_manager = StateManager.new(dispatcher)
         @history = history
         @task_metadata = task_metadata
         @config = config

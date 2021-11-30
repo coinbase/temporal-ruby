@@ -95,7 +95,9 @@ describe 'Temporal.await_workflow_result' do
     run_id = Temporal.start_workflow(
       LoopWorkflow,
       2, # it continues as new if this arg is > 1
-      { options: { workflow_id: workflow_id } },
+      options: {
+        workflow_id: workflow_id,
+      },
     )
 
     expect do

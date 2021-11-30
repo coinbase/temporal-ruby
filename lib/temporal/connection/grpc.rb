@@ -104,7 +104,7 @@ module Temporal
           ),
           cron_schedule: cron_schedule,
           memo: Temporal::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo)
+            fields: to_payload_map(memo || {})
           )
         )
 

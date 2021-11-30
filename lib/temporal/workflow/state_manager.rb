@@ -19,9 +19,8 @@ module Temporal
 
       attr_reader :commands, :local_time
 
-      def initialize(dispatcher, task_metadata)
+      def initialize(dispatcher)
         @dispatcher = dispatcher
-        @task_metadata = task_metadata
         @commands = []
         @marker_ids = Set.new
         @releases = {}
@@ -89,7 +88,7 @@ module Temporal
 
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :task_metadata
+      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases
 
       def next_event_id
         @last_event_id += 1
