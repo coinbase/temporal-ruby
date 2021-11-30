@@ -6,6 +6,8 @@ describe Temporal::Metadata::Workflow do
     let(:args) { Fabricate(:workflow_metadata) }
 
     it 'sets the attributes' do
+      expect(subject.namespace).to eq(args.namespace)
+      expect(subject.id).to eq(args.id)
       expect(subject.name).to eq(args.name)
       expect(subject.run_id).to eq(args.run_id)
       expect(subject.attempt).to eq(args.attempt)
@@ -25,9 +27,14 @@ describe Temporal::Metadata::Workflow do
 
     it 'returns a hash' do
       expect(subject.to_h).to eq({
+        'namespace' => subject.namespace,
+        'workflow_id' => subject.id,
         'attempt' => subject.attempt,
         'workflow_name' => subject.name,
-        'workflow_run_id' => subject.run_id
+        'workflow_run_id' => subject.run_id,
+        'task_queue' => subject.task_queue,
+        'run_started_at' => subject.run_started_at.to_f,
+        'memo' => subject.memo,
       })
     end
   end

@@ -2,6 +2,7 @@ module Temporal
   class Workflow
     class Dispatcher
       WILDCARD = '*'.freeze
+      TARGET_WILDCARD = '*'.freeze
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
@@ -23,6 +24,7 @@ module Temporal
 
       def handlers_for(target, event_name)
         handlers[target]
+          .concat(handlers[TARGET_WILDCARD])
           .select { |(name, _)| name == event_name || name == WILDCARD }
           .map(&:last)
       end

@@ -195,6 +195,12 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
+        # If memo is not overridden, copy from current run
+        options_from_metadata = {
+          memo: metadata.memo,
+        }
+        options = options_from_metadata.merge(options)
+
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::ContinueAsNew.new(
@@ -203,7 +209,8 @@ module Temporal
           input: input,
           timeouts: execution_options.timeouts,
           retry_policy: execution_options.retry_policy,
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          memo: execution_options.memo,
         )
         schedule_command(command)
         completed!
@@ -215,14 +222,54 @@ module Temporal
         return
       end
 
-      def wait_for(future)
-        fiber = Fiber.current
-
-        dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
-          fiber.resume if future.finished?
+      # Block workflow progress until any future is finished or any unblock_condition
+      # block evaluates to true.
+      def wait_for(*futures, &unblock_condition)
+        if futures.empty? && unblock_condition.nil?
+          raise 'You must pass either a future or an unblock condition block to wait_for'
         end
 
-        Fiber.yield
+        fiber = Fiber.current
+        should_yield = false
+        blocked = true
+
+        if futures.any?
+          if futures.any?(&:finished?)
+            blocked = false
+          else
+            should_yield = true
+            futures.each do |future|
+              dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
+                if blocked && future.finished?
+                  # Because this block can run for any dispatch, ensure the fiber is only
+                  # resumed one time by checking if it's already been unblocked.
+                  blocked = false
+                  fiber.resume
+                end
+              end
+            end
+          end
+        end
+
+        if blocked && unblock_condition
+          if unblock_condition.call
+            blocked = false
+            should_yield = false
+          else
+            should_yield = true
+
+            dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
+              # Because this block can run for any dispatch, ensure the fiber is only
+              # resumed one time by checking if it's already been unblocked.
+              if blocked && unblock_condition.call
+                blocked = false
+                fiber.resume
+              end
+            end
+          end
+        end
+
+        Fiber.yield if should_yield
 
         return
       end

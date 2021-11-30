@@ -1,80 +1,76 @@
 require 'temporal/metadata'
 
 describe Temporal::Metadata do
-  describe '.generate' do
-    subject { described_class.generate(type, data, namespace) }
+  describe '.generate_activity_metadata' do
+    subject { described_class.generate_activity_metadata(data, namespace) }
 
-    context 'with activity type' do
-      let(:type) { described_class::ACTIVITY_TYPE }
-      let(:data) { Fabricate(:api_activity_task) }
-      let(:namespace) { 'test-namespace' }
+    let(:data) { Fabricate(:api_activity_task) }
+    let(:namespace) { 'test-namespace' }
 
-      it 'generates metadata' do
-        expect(subject.namespace).to eq(namespace)
-        expect(subject.id).to eq(data.activity_id)
-        expect(subject.name).to eq(data.activity_type.name)
-        expect(subject.task_token).to eq(data.task_token)
-        expect(subject.attempt).to eq(data.attempt)
-        expect(subject.workflow_run_id).to eq(data.workflow_execution.run_id)
-        expect(subject.workflow_id).to eq(data.workflow_execution.workflow_id)
-        expect(subject.workflow_name).to eq(data.workflow_type.name)
-        expect(subject.headers).to eq({})
-      end
-
-      context 'with headers' do
-        let(:data) { Fabricate(:api_activity_task, headers: { 'Foo' => 'Bar' }) }
-
-        it 'assigns headers' do
-          expect(subject.headers).to eq('Foo' => 'Bar')
-        end
-      end
+    it 'generates metadata' do
+      expect(subject.namespace).to eq(namespace)
+      expect(subject.id).to eq(data.activity_id)
+      expect(subject.name).to eq(data.activity_type.name)
+      expect(subject.task_token).to eq(data.task_token)
+      expect(subject.attempt).to eq(data.attempt)
+      expect(subject.workflow_run_id).to eq(data.workflow_execution.run_id)
+      expect(subject.workflow_id).to eq(data.workflow_execution.workflow_id)
+      expect(subject.workflow_name).to eq(data.workflow_type.name)
+      expect(subject.headers).to eq({})
     end
 
-    context 'with workflow task type' do
-      let(:type) { described_class::WORKFLOW_TASK_TYPE }
-      let(:data) { Fabricate(:api_workflow_task) }
-      let(:namespace) { 'test-namespace' }
+    context 'with headers' do
+      let(:data) { Fabricate(:api_activity_task, headers: { 'Foo' => 'Bar' }) }
 
-      it 'generates metadata' do
-        expect(subject.namespace).to eq(namespace)
-        expect(subject.id).to eq(data.started_event_id)
-        expect(subject.task_token).to eq(data.task_token)
-        expect(subject.attempt).to eq(data.attempt)
-        expect(subject.workflow_run_id).to eq(data.workflow_execution.run_id)
-        expect(subject.workflow_id).to eq(data.workflow_execution.workflow_id)
-        expect(subject.workflow_name).to eq(data.workflow_type.name)
+      it 'assigns headers' do
+        expect(subject.headers).to eq('Foo' => 'Bar')
       end
     end
+  end
 
-    context 'with workflow type' do
-      let(:type) { described_class::WORKFLOW_TYPE }
-      let(:data) { Fabricate(:api_workflow_execution_started_event_attributes) }
-      let(:namespace) { nil }
+  describe '.generate_workflow_task_metadata' do
+    subject { described_class.generate_workflow_task_metadata(data, namespace) }
 
-      it 'generates metadata' do
-        expect(subject.run_id).to eq(data.original_execution_run_id)
-        expect(subject.attempt).to eq(data.attempt)
-        expect(subject.headers).to eq({})
-      end
+    let(:data) { Fabricate(:api_workflow_task) }
+    let(:namespace) { 'test-namespace' }
 
-      context 'with headers' do
-        let(:data) do
-          Fabricate(:api_workflow_execution_started_event_attributes, headers: { 'Foo' => 'Bar' })
-        end
+    it 'generates metadata' do
+      expect(subject.namespace).to eq(namespace)
+      expect(subject.id).to eq(data.started_event_id)
+      expect(subject.task_token).to eq(data.task_token)
+      expect(subject.attempt).to eq(data.attempt)
+      expect(subject.workflow_run_id).to eq(data.workflow_execution.run_id)
+      expect(subject.workflow_id).to eq(data.workflow_execution.workflow_id)
+      expect(subject.workflow_name).to eq(data.workflow_type.name)
+    end
+  end
 
-        it 'assigns headers' do
-          expect(subject.headers).to eq('Foo' => 'Bar')
-        end
-      end
+  context '.generate_workflow_metadata' do
+    subject { described_class.generate_workflow_metadata(event, task_metadata) }
+    let(:event) { Temporal::Workflow::History::Event.new(Fabricate(:api_workflow_execution_started_event)) }
+    let(:task_metadata) { Fabricate(:workflow_task_metadata) }
+    let(:namespace) { nil }
+
+    it 'generates metadata' do
+      expect(subject.run_id).to eq(event.attributes.original_execution_run_id)
+      expect(subject.id).to eq(task_metadata.workflow_id)
+      expect(subject.attempt).to eq(event.attributes.attempt)
+      expect(subject.headers).to eq({})
+      expect(subject.memo).to eq({})
+      expect(subject.namespace).to eq(task_metadata.namespace)
+      expect(subject.task_queue).to eq(event.attributes.task_queue.name)
+      expect(subject.run_started_at).to eq(event.timestamp)
     end
 
-    context 'with unknown type' do
-      let(:type) { :unknown }
-      let(:data) { nil }
-      let(:namespace) { nil }
+    context 'with headers' do
+      let(:event) do
+        Temporal::Workflow::History::Event.new(
+          Fabricate(:api_workflow_execution_started_event, headers: { 'Foo' => 'Bar' })
+        )
+      end
 
-      it 'raises' do
-        expect { subject }.to raise_error(Temporal::InternalError, 'Unsupported metadata type')
+      it 'assigns headers' do
+        expect(subject.headers).to eq('Foo' => 'Bar')
       end
     end
   end

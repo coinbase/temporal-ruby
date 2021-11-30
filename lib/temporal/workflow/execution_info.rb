@@ -1,6 +1,10 @@
+require 'temporal/concerns/payloads'
+
 module Temporal
   class Workflow
-    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, keyword_init: true)
+    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, :memo, keyword_init: true)
+      extend Concerns::Payloads
+
       RUNNING_STATUS = :RUNNING
       COMPLETED_STATUS = :COMPLETED
       FAILED_STATUS = :FAILED
@@ -38,6 +42,7 @@ module Temporal
           close_time: response.close_time&.to_time,
           status: API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
+          memo: self.from_payload_map(response.memo.fields),
         ).freeze
       end
 

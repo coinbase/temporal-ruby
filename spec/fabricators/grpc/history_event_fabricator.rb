@@ -6,8 +6,15 @@ Fabricator(:api_history_event, from: Temporal::Api::History::V1::HistoryEvent) d
 end
 
 Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
+  transient :headers
   event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED }
-  workflow_execution_started_event_attributes do
+  event_time { Time.now }
+  workflow_execution_started_event_attributes do |attrs|
+    header_fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
+      h[field] = Temporal.configuration.converter.to_payload(value)
+    end
+    header = Temporal::Api::Common::V1::Header.new(fields: header_fields)
+
     Temporal::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),
       task_queue: Fabricate(:api_task_queue),
@@ -19,7 +26,7 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
       first_execution_run_id: SecureRandom.uuid,
       retry_policy: nil,
       attempt: 0,
-      header: Fabricate(:api_header)
+      header: header,
     )
   end
 end

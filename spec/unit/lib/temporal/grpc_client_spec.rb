@@ -27,10 +27,48 @@ describe Temporal::Connection::GRPC do
           task_queue: 'test',
           execution_timeout: 0,
           run_timeout: 0,
-          task_timeout: 0
+          task_timeout: 0,
+          memo: {}
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
         expect(e.run_id).to eql('baaf1d86-4459-4ecd-a288-47aeae55245d')
+      end
+    end
+  end
+  
+  describe '#signal_with_start_workflow' do
+    let(:temporal_response) do
+      Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
+    end
+
+    before { allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
+
+    it 'starts a workflow with a signal with scalar arguments' do
+      subject.signal_with_start_workflow_execution(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        workflow_name: 'workflow_name',
+        task_queue: 'task_queue',
+        input: ['foo'],
+        execution_timeout: 1,
+        run_timeout: 2,
+        task_timeout: 3,
+        signal_name: 'the question',
+        signal_input: 'what do you get if you multiply six by nine?'
+      )
+
+      expect(grpc_stub).to have_received(:signal_with_start_workflow_execution) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.workflow_id).to eq(workflow_id)
+        expect(request.workflow_type.name).to eq('workflow_name')
+        expect(request.task_queue.name).to eq('task_queue')
+        expect(request.input.payloads[0].data).to eq('"foo"')
+        expect(request.workflow_execution_timeout.seconds).to eq(1)
+        expect(request.workflow_run_timeout.seconds).to eq(2)
+        expect(request.workflow_task_timeout.seconds).to eq(3)
+        expect(request.signal_name).to eq('the question')
+        expect(request.signal_input.payloads[0].data).to eq('"what do you get if you multiply six by nine?"')
       end
     end
   end

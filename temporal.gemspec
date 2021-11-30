@@ -21,4 +21,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'fabrication'
   spec.add_development_dependency 'grpc-tools'
+  spec.add_development_dependency 'yard'
 end

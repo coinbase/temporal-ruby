@@ -165,9 +165,16 @@ module Temporal
         return
       end
 
-      def wait_for(future)
-        # Point of communication
-        Fiber.yield while !future.finished?
+      def wait_for(*futures, &unblock_condition)
+        if futures.empty? && unblock_condition.nil?
+          raise 'You must pass either a future or an unblock condition block to wait_for'
+        end
+
+        while (futures.empty? || futures.none?(&:finished?)) && (!unblock_condition || !unblock_condition.call)
+          Fiber.yield
+        end
+
+        return
       end
 
       def now
@@ -175,15 +182,15 @@ module Temporal
       end
 
       def on_signal(&block)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
       end
 
       def cancel_activity(activity_id)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end
 
       def cancel(target, cancelation_id)
-        raise NotImplementedError, 'not yet available for testing'
+        raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end
 
       private

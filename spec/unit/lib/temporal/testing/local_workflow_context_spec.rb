@@ -6,13 +6,24 @@ describe Temporal::Testing::LocalWorkflowContext do
   let(:workflow_id) { 'workflow_id_1' }
   let(:run_id) { 'run_id_1' }
   let(:execution) { Temporal::Testing::WorkflowExecution.new }
+  let(:task_queue) { 'my_test_queue' }
   let(:workflow_context) do
     Temporal::Testing::LocalWorkflowContext.new(
       execution,
       workflow_id,
       run_id,
       [],
-      Temporal::Metadata::Workflow.new(name: workflow_id, run_id: run_id, attempt: 1)
+      Temporal::Metadata::Workflow.new(
+        namespace: 'ruby-samples',
+        id: workflow_id,
+        name: 'HelloWorldWorkflow',
+        run_id: run_id,
+        attempt: 1,
+        task_queue: task_queue,
+        headers: {},
+        run_started_at: Time.now,
+        memo: {},
+      )
     )
   end
   let(:async_token) do
@@ -120,10 +131,69 @@ describe Temporal::Testing::LocalWorkflowContext do
       result = workflow_context.execute_activity!(TestActivity)
       expect(result).to eq('ok')
     end
+
+    it 'can heartbeat' do
+      # Heartbeat doesn't do anything in local mode, but at least it can be called.
+      workflow_context.execute_activity!(TestHeartbeatingActivity)
+    end
   end
 
-  it 'can heartbeat' do
-    # Heartbeat doesn't do anything in local mode, but at least it can be called.
-    workflow_context.execute_activity!(TestHeartbeatingActivity)
+  describe '#wait_for' do
+    it 'await unblocks once condition changes' do
+      can_continue = false
+      exited = false
+      fiber = Fiber.new do
+        workflow_context.wait_for do
+          can_continue
+        end
+
+        exited = true
+      end
+
+      fiber.resume # start running
+      expect(exited).to eq(false)
+
+      can_continue = true # change condition
+      fiber.resume # resume running after the Fiber.yield done in context.await
+      expect(exited).to eq(true)
+    end
+
+    it 'condition or future unblocks' do
+      exited = false
+
+      future = workflow_context.execute_activity(TestAsyncActivity)
+
+      fiber = Fiber.new do
+        workflow_context.wait_for(future) do
+          false
+        end
+
+        exited = true
+      end
+
+      fiber.resume # start running
+      expect(exited).to eq(false)
+
+      execution.complete_activity(async_token, 'async_ok')
+
+      fiber.resume # resume running after the Fiber.yield done in context.await
+      expect(exited).to eq(true)
+    end
+
+    it 'any future unblocks' do
+      exited = false
+
+      async_future = workflow_context.execute_activity(TestAsyncActivity)
+      future = workflow_context.execute_activity(TestActivity)
+      future.wait
+
+      fiber = Fiber.new do
+        workflow_context.wait_for(future, async_future)
+        exited = true
+      end
+
+      fiber.resume # start running
+      expect(exited).to eq(true)
+    end
   end
 end
