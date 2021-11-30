@@ -68,6 +68,9 @@ module Temporal
       connection.register_namespace(name: name, description: description)
     end
 
+    # Fetches metadata for a namespace.
+    # @param name [String] name of the namespace
+    # @return [Hash] info deserialized from Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse
     def describe_namespace(name)
       connection.describe_namespace(name: name)
     end

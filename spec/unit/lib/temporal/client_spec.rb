@@ -242,7 +242,6 @@ describe Temporal::Client do
       expect(connection)
         .to have_received(:describe_namespace)
         .with(name: 'new-namespace')
-      expect(result).to be_an_instance_of(Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse)
     end
   end
 
