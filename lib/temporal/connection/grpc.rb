@@ -312,6 +312,16 @@ module Temporal
         signal_input:,
         memo: nil
       )
+        proto_header_fields = if headers.nil?
+            to_payload_map({})
+        elsif headers.class == Hash
+            to_payload_map(headers)
+        else
+          # Preserve backward compatability for headers specified using proto objects
+          warn '[DEPRECATION] Specify headers using a hash rather than protobuf objects'
+          headers
+        end
+
         request = Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest.new(
           identity: identity,
           namespace: namespace,
@@ -328,7 +338,7 @@ module Temporal
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
-            fields: to_payload_map(headers || {})
+            fields: proto_header_fields,
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
