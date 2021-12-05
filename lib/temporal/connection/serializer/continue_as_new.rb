@@ -30,7 +30,7 @@ module Temporal
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Api::Common::V1::Header.new(fields: object.headers)
+          Temporal::Api::Common::V1::Header.new(fields: to_payload_map(headers))
         end
 
         def serialize_memo(memo)
