@@ -19,6 +19,9 @@ module Temporal
   # with the intent to propagate to a workflow
   class ActivityException < ClientError; end
 
+  # Represents cancellation of a non-started activity
+  class ActivityCanceled < ActivityException; end
+
   class ActivityNotRegistered < ClientError; end
   class WorkflowNotRegistered < ClientError; end
 

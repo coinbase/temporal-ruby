@@ -9,6 +9,6 @@ class LongWorkflow < Temporal::Workflow
       future.cancel
     end
 
-    future.wait
+    future.get
   end
 end
