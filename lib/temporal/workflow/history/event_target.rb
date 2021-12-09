@@ -19,7 +19,7 @@ module Temporal
 
         # NOTE: The order is important, first prefix match wins (will be a longer match)
         TARGET_TYPES = {
-          'ACTIVITY_TASK_CANCEL'                       => CANCEL_ACTIVITY_REQUEST_TYPE,
+          'ACTIVITY_TASK_CANCEL_REQUESTED'             => CANCEL_ACTIVITY_REQUEST_TYPE,
           'ACTIVITY_TASK'                              => ACTIVITY_TYPE,
           'REQUEST_CANCEL_ACTIVITY_TASK'               => CANCEL_ACTIVITY_REQUEST_TYPE,
           'TIMER_CANCELED'                             => CANCEL_TIMER_REQUEST_TYPE,

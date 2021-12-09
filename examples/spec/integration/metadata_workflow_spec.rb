@@ -26,7 +26,7 @@ describe MetadataWorkflow do
       MetadataWorkflow,
       options: {
           workflow_id: workflow_id,
-          headers: { 'foo' => Temporal.configuration.converter.to_payload('bar') },
+          headers: { 'foo' => 'bar' },
       }
     )
 

@@ -11,6 +11,7 @@ class LoopWorkflow < Temporal::Workflow
     return {
       count: count,
       memo: workflow.metadata.memo,
+      headers: workflow.metadata.headers,
     }
   end
 end
