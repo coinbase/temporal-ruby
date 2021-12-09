@@ -25,7 +25,7 @@ describe Temporal::Workflow::History::EventTarget do
     context 'when event is ACTIVITY_CANCELED' do
       let(:raw_event) { Fabricate(:api_activity_task_canceled_event) }
 
-      it 'sets type to timer' do
+      it 'sets type to activity' do
         expect(subject.type).to eq(described_class::ACTIVITY_TYPE)
       end
     end
@@ -33,7 +33,7 @@ describe Temporal::Workflow::History::EventTarget do
     context 'when event is ACTIVITY_TASK_CANCEL_REQUESTED' do
       let(:raw_event) { Fabricate(:api_activity_task_cancel_requested_event) }
 
-      it 'sets type to cancel_timer_request' do
+      it 'sets type to cancel_activity_request' do
         expect(subject.type).to eq(described_class::CANCEL_ACTIVITY_REQUEST_TYPE)
       end
     end
