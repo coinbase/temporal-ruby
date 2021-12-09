@@ -162,7 +162,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(target, 'failed', Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start

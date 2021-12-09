@@ -199,9 +199,10 @@ module Temporal
         options = args.delete(:options) || {}
         input << args unless args.empty?
 
-        # If memo is not overridden, copy from current run
+        # If memo or headers are not overridden, use those from the current run
         options_from_metadata = {
           memo: metadata.memo,
+          headers: metadata.headers,
         }
         options = options_from_metadata.merge(options)
 
