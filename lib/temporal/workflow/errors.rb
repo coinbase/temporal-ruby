@@ -25,7 +25,7 @@ module Temporal
 
           begin
             exception = exception_class.new(message)
-          rescue ArgumentError => deserialization_error
+          rescue => deserialization_error
             # We don't currently support serializing/deserializing exceptions with more than one argument.
             message = "#{exception_class}: #{message}"
             exception = default_exception_class.new(message)
@@ -33,6 +33,7 @@ module Temporal
               "Could not instantiate original error. Defaulting to StandardError.", 
               {
                 original_error: failure.application_failure_info.type,
+                instantiation_error_class: deserialization_error.class.to_s,
                 instantiation_error_message: deserialization_error.message,
               },
             ) 
