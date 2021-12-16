@@ -4,6 +4,14 @@ class ErrorWithTwoArgs < StandardError
   def initialize(message, another_argument); end
 end
 
+class ErrorThatRaisesInInitialize < StandardError
+  def initialize(message)
+    # This class simulates an error class that has bugs in its initialize method, or where
+    # the arg isn't a string. It raises TypeError (String can't be coerced into Integer)
+    1 + message
+  end
+end
+
 class SomeError < StandardError; end
 
 describe Temporal::Workflow::Errors do
@@ -51,7 +59,7 @@ describe Temporal::Workflow::Errors do
     end
 
 
-    it "falls back to StandardError when the client can't initialize the error class" do 
+    it "falls back to StandardError when the client can't initialize the error class due to arity" do 
       allow(Temporal.logger).to receive(:error)
 
       message = "An error message"
@@ -73,10 +81,38 @@ describe Temporal::Workflow::Errors do
           'Could not instantiate original error. Defaulting to StandardError.',
           {
             original_error: "ErrorWithTwoArgs",
+            instantiation_error_class: "ArgumentError",
             instantiation_error_message: "wrong number of arguments (given 1, expected 2)",
           },
         )
     end
 
+    it "falls back to StandardError when the client can't initialize the error class when initialize doesn't take a string" do 
+      allow(Temporal.logger).to receive(:error)
+
+      message = "An error message"
+      stack_trace = ["a fake backtrace"]
+      failure = Fabricate(
+        :api_application_failure,
+        message: message,
+        backtrace: stack_trace,
+        error_class: ErrorThatRaisesInInitialize.to_s,
+      )
+
+      e = Temporal::Workflow::Errors.generate_error(failure)
+      expect(e).to be_a(StandardError)
+      expect(e.message).to eq("ErrorThatRaisesInInitialize: An error message")
+      expect(e.backtrace).to eq(stack_trace)
+      expect(Temporal.logger)
+        .to have_received(:error)
+        .with(
+          'Could not instantiate original error. Defaulting to StandardError.',
+          {
+            original_error: "ErrorThatRaisesInInitialize",
+            instantiation_error_class: "TypeError",
+            instantiation_error_message: "String can't be coerced into Integer",
+          },
+        )
+    end
   end
 end
