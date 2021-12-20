@@ -23,6 +23,12 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
+      # Temporal's other clients have to override grpc's default client-side payload limit of 4mb.
+      # Java uses 25mb, go uses 64mb. Most temporal API responses aren't large, but
+      # PollWorkflowTaskQueueResponse contains a workflow's full history, which can be large. We
+      # match the golang sdk just because it's bigger.
+      MAX_RECEIVED_MESSAGE_LENGTH = 64 * 1024 * 1024
+
       def initialize(host, port, identity)
         @url = "#{host}:#{port}"
         @identity = identity
@@ -470,7 +476,8 @@ module Temporal
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           :this_channel_is_insecure,
-          timeout: 60
+          timeout: 60,
+          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH }
         )
       end
 
