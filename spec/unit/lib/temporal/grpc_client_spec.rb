@@ -12,6 +12,20 @@ describe Temporal::Connection::GRPC do
     allow(Time).to receive(:now).and_return(now)
   end
 
+  describe 'fetch big history' do
+    client = Temporal::Connection::GRPC.new("localhost", 7233, 'nagl-testing')
+    a = client.get_workflow_execution_history(
+      namespace: 'data-portability',
+      workflow_id: 'Opus::DataMigrations::WorkflowWorker::Workflows::Copies::CopyMigrationWorkflow-migreq_0K7Sga589O8KAxCGwGpMp7wF-migreq_1K7nyhJnQWoC6SedRFLnFrQB',
+      run_id: '08b99c17-636e-4539-97f1-fbdb59726b6f',
+      next_page_token: nil,
+      wait_for_new_event: false,
+      event_type: :all,
+      timeout: nil
+    )
+    puts(a.to_s.length)
+  end
+
   describe '#start_workflow_execution' do
     it 'provides the existing run_id when the workflow is already started' do
       allow(grpc_stub).to receive(:start_workflow_execution).and_raise(
