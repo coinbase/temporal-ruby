@@ -1,6 +1,6 @@
 require 'workflows/metadata_workflow'
 
-describe MetadataWorkflow do
+describe MetadataWorkflow, :integration do
   subject { described_class }
 
   it 'gets task queue from running workflow' do
@@ -66,7 +66,7 @@ describe MetadataWorkflow do
     expect(actual_result.memo['foo']).to eq('bar')
 
     expect(Temporal.fetch_workflow_execution_info(
-      'ruby-samples', workflow_id, nil
+      integration_spec_namespace, workflow_id, nil
     ).memo).to eq({ 'foo' => 'bar' })
   end
 
@@ -85,7 +85,7 @@ describe MetadataWorkflow do
     )
     expect(actual_result.memo).to eq({})
     expect(Temporal.fetch_workflow_execution_info(
-      'ruby-samples', workflow_id, nil
+      integration_spec_namespace, workflow_id, nil
     ).memo).to eq({})
   end
 end
