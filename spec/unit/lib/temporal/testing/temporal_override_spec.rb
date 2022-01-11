@@ -1,4 +1,3 @@
-require 'temporal/errors'
 require 'temporal/testing'
 require 'temporal/workflow'
 require 'temporal/api/errordetails/v1/message_pb'
@@ -158,6 +157,38 @@ describe Temporal::Testing::TemporalOverride do
         end
       end
 
+      class MetadataCapturingActivity < Temporal::Activity
+        def self.metadata
+          @@metadata
+        end
+
+        def execute
+          @@metadata = activity.metadata
+        end
+      end
+
+      class TestWorkflowWithActivity < Temporal::Workflow
+        namespace 'default-namespace'
+        task_queue 'default-task-queue'
+
+        def execute
+          workflow.execute_activity!(MetadataCapturingActivity)
+        end
+      end
+
+      it 'populates the activity context correctly' do
+        workflow_id = "test-workflow-id"
+        run_id = client.start_workflow(TestWorkflowWithActivity, options: { workflow_id: workflow_id })
+        metadata = MetadataCapturingActivity.metadata
+        expect(metadata.attempt).to eq(1)
+        expect(metadata.headers).to eq({})
+        expect(metadata.id).to eq(1)
+        expect(metadata.name).to eq('MetadataCapturingActivity')
+        expect(metadata.namespace).to eq('default-namespace')
+        expect(metadata.workflow_id).to eq(workflow_id)
+        expect(metadata.workflow_run_id).to eq(run_id)
+      end
+
       describe 'execution control' do
         subject do
           client.start_workflow(
@@ -274,6 +305,7 @@ describe Temporal::Testing::TemporalOverride do
           end
         end
       end
+
     end
   end
 end
