@@ -60,6 +60,14 @@ describe Temporal::Testing::LocalWorkflowContext do
     end
   end
 
+  class MetadataCapturingActivity < Temporal::Activity
+    def execute
+      # activity.metadata is private, which we work around in order to write unit tests that
+      # can observe activity metadata
+      activity.send :metadata
+    end
+  end
+
   describe '#execute_activity' do
     describe 'outcome is captured in the future' do
       it 'delay failure' do
@@ -135,6 +143,17 @@ describe Temporal::Testing::LocalWorkflowContext do
     it 'can heartbeat' do
       # Heartbeat doesn't do anything in local mode, but at least it can be called.
       workflow_context.execute_activity!(TestHeartbeatingActivity)
+    end
+
+    it 'has accurate metadata' do
+      result = workflow_context.execute_activity!(MetadataCapturingActivity)
+      expect(result.attempt).to eq(1)
+      expect(result.headers).to eq({})
+      expect(result.id).to eq(1)
+      expect(result.name).to eq('MetadataCapturingActivity')
+      expect(result.namespace).to eq('default-namespace')
+      expect(result.workflow_id).to eq(workflow_id)
+      expect(result.workflow_run_id).to eq(run_id)
     end
   end
 
