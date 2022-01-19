@@ -105,7 +105,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name)
+            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
         end
 
         it 'sends latency metric' do
@@ -113,7 +113,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name)
+            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
         end
       end
 
@@ -170,7 +170,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name)
+            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
         end
 
         it 'sends latency metric' do
@@ -178,7 +178,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name)
+            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
         end
       end
 
