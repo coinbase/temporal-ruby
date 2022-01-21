@@ -125,7 +125,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace)
         end
 
         it 'sends latency metric' do
@@ -133,7 +133,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace)
         end
 
         context 'with async activity' do
@@ -203,7 +203,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace)
         end
 
         it 'sends latency metric' do
@@ -211,7 +211,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace)
         end
 
         context 'with ScriptError exception' do
