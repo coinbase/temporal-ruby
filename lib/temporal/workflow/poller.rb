@@ -66,7 +66,7 @@ module Temporal
 
           time_diff_ms = ((Time.now - last_poll_time) * 1000).round
           Temporal.metrics.timing('workflow_poller.time_since_last_poll', time_diff_ms, metrics_tags)
-          Temporal.logger.debug("Polling Worklow task queue", { namespace: namespace, task_queue: task_queue })
+          Temporal.logger.debug("Polling workflow task queue", { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
           last_poll_time = Time.now
