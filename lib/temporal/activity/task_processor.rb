@@ -26,7 +26,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
-        Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name, namespace: namespace)
+        Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
 
         context = Activity::Context.new(connection, metadata)
 
@@ -46,7 +46,7 @@ module Temporal
         respond_failed(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name, namespace: namespace)
+        Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
         Temporal.logger.debug("Activity task processed", metadata.to_h.merge(execution_time: time_diff_ms))
       end
 
