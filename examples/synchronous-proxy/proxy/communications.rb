@@ -55,26 +55,26 @@ module SynchronousProxy
         end
       end
 
-      def wait_for_response
+      def wait_for_response(description)
         w_id = workflow.metadata.id
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
         workflow.wait_for do
-          logger.info("#{self.class.name}#wait_for_response, Awaiting #{ResponseSignalName} in #{w_id}")
+          logger.info("#{self.class.name}#wait_for_response, Awaiting #{ResponseSignalName} for #{description} in #{w_id}")
           wait_result = !!@response_signal
-          logger.info("#{self.class.name}#wait_for_response, response_signal [#{wait_result}] in #{w_id}")
+          logger.info("#{self.class.name}#wait_for_response, on [#{description}] response_signal [#{wait_result}] in #{w_id}")
           wait_result
         end
       end
 
-      def wait_for_request
+      def wait_for_request(description)
         w_id = workflow.metadata.id
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
         workflow.wait_for do
           logger.info("#{self.class.name}#wait_for_request, Awaiting #{RequestSignalName} in #{w_id}")
           wait_result = !!@request_signal
-          logger.info("#{self.class.name}#wait_for_request, request_signal [#{wait_result}] in #{w_id}")
+          logger.info("#{self.class.name}#wait_for_request, on [#{description}] request_signal [#{wait_result}] in #{w_id}")
           wait_result
         end
       end
@@ -108,21 +108,21 @@ module SynchronousProxy
         nil
       end
 
-      def receive_response
+      def receive_response(description="unknown")
         @response_signal = nil
         w_id = workflow.metadata.id
-        Temporal.logger.info("#{self.class.name}#receive_response, Waiting for response in workflow #{w_id}")
-        wait_for_response
-        Temporal.logger.info("#{self.class.name}#receive_response, Got response and returning, in workflow #{w_id}")
+        Temporal.logger.info("#{self.class.name}#receive_response, Waiting for response on [#{description}] in workflow #{w_id}")
+        wait_for_response(description)
+        Temporal.logger.info("#{self.class.name}#receive_response, Got response and returning, on [#{description}] in workflow #{w_id}")
         @response_signal
       end
 
-      def receive_request
+      def receive_request(description="unknown")
         @request_signal = nil
         w_id = workflow.metadata.id
-        Temporal.logger.info("#{self.class.name}#receive_request, Waiting for request in workflow #{w_id}")
-        wait_for_request
-        Temporal.logger.info("#{self.class.name}#receive_request, Got request and returning, in workflow #{w_id}")
+        Temporal.logger.info("#{self.class.name}#receive_request, Waiting for request on [#{description}] in workflow #{w_id}")
+        wait_for_request(description)
+        Temporal.logger.info("#{self.class.name}#receive_request, Got request and returning, on [#{description}] in workflow #{w_id}")
         @request_signal
       end
     end
