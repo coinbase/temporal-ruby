@@ -241,13 +241,21 @@ module Temporal
           # todo
 
         when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED'
-          # todo
+          # Temporal Server will try to Signal the targeted Workflow
+          # Contains the Signal name, as well as a Signal payload
+          state_machine.start
+          dispatch(target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
 
         when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED'
-          # todo
+          # Temporal Server cannot Signal the targeted Workflow
+          # Usually because the Workflow could not be found
+          state_machine.fail
+          dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
 
         when 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED'
-          # todo
+          # Temporal Server has successfully Signaled the targeted Workflow
+          # Fire & Forget, so no result is returned? Don't we have a Future we return elsewhere?
+          state_machine.complete
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
           # todo
