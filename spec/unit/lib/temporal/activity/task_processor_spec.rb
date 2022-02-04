@@ -15,6 +15,7 @@ describe Temporal::Activity::TaskProcessor do
     )
   end
   let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace) }
+  let(:workflow_name) { task.workflow_type.name }
   let(:activity_name) { 'TestActivity' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
@@ -125,7 +126,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
         end
 
         it 'sends latency metric' do
@@ -133,7 +134,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
         end
 
         context 'with async activity' do
@@ -203,7 +204,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace)
+            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
         end
 
         it 'sends latency metric' do
@@ -211,7 +212,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace)
+            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
         end
 
         context 'with ScriptError exception' do
