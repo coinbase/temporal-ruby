@@ -11,6 +11,7 @@ module Temporal
       CancelTimer = Struct.new(:timer_id, keyword_init: true)
       CompleteWorkflow = Struct.new(:result, keyword_init: true)
       FailWorkflow = Struct.new(:exception, keyword_init: true)
+      SignalExternalWorkflow = Struct.new(:namespace, :execution, :signal_name, :input, :control, :child_workflow_only, keyword_init: true)
 
       # only these commands are supported right now
       SCHEDULE_ACTIVITY_TYPE = :schedule_activity
@@ -21,6 +22,7 @@ module Temporal
       CANCEL_TIMER_TYPE = :cancel_timer
       COMPLETE_WORKFLOW_TYPE = :complete_workflow
       FAIL_WORKFLOW_TYPE = :fail_workflow
+      SIGNAL_EXTERNAL_WORKFLOW_TYPE = :signal_external_workflow
 
       COMMAND_CLASS_MAP = {
         SCHEDULE_ACTIVITY_TYPE => ScheduleActivity,
@@ -30,7 +32,8 @@ module Temporal
         START_TIMER_TYPE => StartTimer,
         CANCEL_TIMER_TYPE => CancelTimer,
         COMPLETE_WORKFLOW_TYPE => CompleteWorkflow,
-        FAIL_WORKFLOW_TYPE => FailWorkflow
+        FAIL_WORKFLOW_TYPE => FailWorkflow,
+        SIGNAL_EXTERNAL_WORKFLOW_TYPE => SignalExternalWorkflow
       }.freeze
 
       def self.generate(type, **args)

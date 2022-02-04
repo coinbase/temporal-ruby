@@ -304,6 +304,41 @@ module Temporal
         end
       end
 
+      # Send a signal from one workflow to another workflow. For signaling from the client,
+      # see Client#signal_workflow.
+      #
+      # @param workflow [Temporal::Workflow, String] workflow class or name. When a workflow class
+      #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
+      # @param signal_name [String] name of signal
+      # @param input [String, Array, nil] optional arguments for the signal
+      # @param args [Hash] keyword arguments to be pass to workflow's #execute method
+      # @param options [Hash, nil] optional overrides
+      # @option options [String] :workflow_id
+      # @option options [String] :run_id of the specific workflow or "" if none is passed
+      # @option options [String] :name workflow name
+      # @option options [String] :child_workflow_only indicates whether the signal should only be deliverd to a
+      # child workflow; defaults to false
+      #
+      # @return [Future] future
+      def signal_external_workflow(workflow_class, signal_name, *input, options: {})
+        options ||= {}
+
+        execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
+
+        command = Command::SignalExternalWorkflow.new(
+          namespace: execution_options.namespace,
+          execution: {
+            workflow_id: options[:workflow_id],
+            run_id: options[:run_id] || ""
+          },
+          signal_name: signal_name,
+          input: input,
+          control: "", # deprecated
+          child_workflow_only: !!options[:child_workflow_only]
+        )
+        schedule_command(command)
+      end
+
       private
 
       attr_reader :state_manager, :dispatcher, :workflow_class
