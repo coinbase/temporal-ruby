@@ -47,6 +47,10 @@ module Temporal
     end
   end
 
+  # Thrown when we can't complete a workflow due to operations occurring after the workflow
+  # is finished.  Could be due to signals, dangling asynchronous activities, or internal framework bug.
+  class TryingToCompleteWorkflowError < InternalError; end
+
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id
 
@@ -62,4 +66,5 @@ module Temporal
   class CancellationAlreadyRequestedFailure < ApiError; end
   class QueryFailedFailure < ApiError; end
   class UnexpectedResponse < ApiError; end
+
 end
