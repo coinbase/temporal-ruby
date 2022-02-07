@@ -311,7 +311,6 @@ module Temporal
       #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
       # @param signal_name [String] name of signal
       # @param input [String, Array, nil] optional arguments for the signal
-      # @param args [Hash] keyword arguments to be pass to workflow's #execute method
       # @param options [Hash, nil] optional overrides
       # @option options [String] :workflow_id
       # @option options [String] :run_id of the specific workflow or "" if none is passed
@@ -329,7 +328,7 @@ module Temporal
           namespace: execution_options.namespace,
           execution: {
             workflow_id: options[:workflow_id],
-            run_id: options[:run_id] || ""
+            run_id: options[:run_id]
           },
           signal_name: signal_name,
           input: input,
