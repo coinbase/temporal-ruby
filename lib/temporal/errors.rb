@@ -47,9 +47,12 @@ module Temporal
     end
   end
 
-  # Thrown when we can't complete a workflow due to operations occurring after the workflow
-  # is finished.  Could be due to signals, dangling asynchronous activities, or internal framework bug.
-  class TryingToCompleteWorkflowError < InternalError; end
+  # Once the workflow succeeds, fails, or continues as new, you can't issue any other commands such as
+  # scheduling an activity.  This error is thrown if you try, before we report completion back to the server.
+  # This could happen due to activity futures that aren't awaited before the workflow closes,
+  # calling workflow.continue_as_new, workflow.complete, or workflow.fail in the middle of your workflow code,
+  # or an internal framework bug.
+  class WorkflowAlreadyCompletingError < InternalError; end
 
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id

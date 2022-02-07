@@ -107,7 +107,7 @@ module Temporal
             when Command::ContinueAsNew
               "You called continue_as_new."
             end
-            raise Temporal::TryingToCompleteWorkflowError.new(
+            raise Temporal::WorkflowAlreadyCompletingError.new(
               "You cannot do anything in a Workflow after it completes. #{context_string} "\
               "But then we received a new command: #{command.class}.  This can happen, for example, if you've "\
               "not waited for all of your Activity futures before finishing the Workflow."

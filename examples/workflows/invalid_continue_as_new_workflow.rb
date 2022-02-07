@@ -1,6 +1,6 @@
 require 'activities/hello_world_activity'
 
-# If you run this, you'll get a TryingToCompleteWorkflowError because after the 
+# If you run this, you'll get a WorkflowAlreadyCompletingError because after the 
 # continue_as_new, we try to do something else.
 class InvalidContinueAsNewWorkflow < Temporal::Workflow
   timeouts execution: 20
