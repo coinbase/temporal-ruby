@@ -133,8 +133,8 @@ module Temporal
           name: execution_options.name, # Workflow class name
           run_id: run_id,
           attempt: 1,
-          task_queue: 'unit-test-task-queue',
-          headers: {},
+          task_queue: execution_options.task_queue,
+          headers: execution_options.headers,
           run_started_at: Time.now,
           memo: {},
         )
