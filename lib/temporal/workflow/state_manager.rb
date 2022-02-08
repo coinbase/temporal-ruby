@@ -96,23 +96,23 @@ module Temporal
       end
 
       def validate_append_command(command)
-        commands.each do |_, previous_command|
-          case previous_command
-          when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
-            context_string = case previous_command
-            when Command::CompleteWorkflow
-              "Attempting to complete workflow."
-            when Command::FailWorkflow
-              "Attempting to fail your workflow."
-            when Command::ContinueAsNew
-              "You called continue_as_new."
-            end
-            raise Temporal::WorkflowAlreadyCompletingError.new(
-              "You cannot do anything in a Workflow after it completes. #{context_string} "\
-              "But then we received a new command: #{command.class}.  This can happen, for example, if you've "\
-              "not waited for all of your Activity futures before finishing the Workflow."
-            )
+        return if commands.last.nil?
+        _, previous_command = commands.last
+        case previous_command
+        when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
+          context_string = case previous_command
+          when Command::CompleteWorkflow
+            "Attempting to complete workflow."
+          when Command::FailWorkflow
+            "Attempting to fail your workflow."
+          when Command::ContinueAsNew
+            "You called continue_as_new."
           end
+          raise Temporal::WorkflowAlreadyCompletingError.new(
+            "You cannot do anything in a Workflow after it completes. #{context_string} "\
+            "But then we received a new command: #{command.class}.  This can happen, for example, if you've "\
+            "not waited for all of your Activity futures before finishing the Workflow."
+          )
         end
       end
 
