@@ -102,15 +102,15 @@ module Temporal
         when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
           context_string = case previous_command
           when Command::CompleteWorkflow
-            "Attempting to complete workflow."
+            "The workflow completed"
           when Command::FailWorkflow
-            "Attempting to fail your workflow."
+            "The workflow failed"
           when Command::ContinueAsNew
-            "You called continue_as_new."
+            "The workflow continued as new"
           end
           raise Temporal::WorkflowAlreadyCompletingError.new(
-            "You cannot do anything in a Workflow after it completes. #{context_string} "\
-            "But then we received a new command: #{command.class}.  This can happen, for example, if you've "\
+            "You cannot do anything in a Workflow after it completes. #{context_string}, "\
+            "but then it sent a new command: #{command.class}.  This can happen, for example, if you've "\
             "not waited for all of your Activity futures before finishing the Workflow."
           )
         end
