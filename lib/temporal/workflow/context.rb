@@ -336,6 +336,21 @@ module Temporal
           child_workflow_only: !!options[:child_workflow_only]
         )
         schedule_command(command)
+
+        target, cancelation_id = schedule_command(command)
+        future = Future.new(target, self, cancelation_id: cancelation_id)
+
+        dispatcher.register_handler(target, 'completed') do |result|
+          future.set(result)
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+        end
+
+        dispatcher.register_handler(target, 'failed') do |exception|
+          future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+        end
+
+        future
       end
 
       private
