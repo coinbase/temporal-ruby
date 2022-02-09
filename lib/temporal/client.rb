@@ -143,6 +143,13 @@ module Temporal
       connection.describe_namespace(name: name)
     end
 
+    # Fetches all the namespaces.
+    #
+    # @param page_size [Integer] number of namespace results to return per page.
+    def list_namespaces(page_size:)
+      connection.list_namespaces(page_size: page_size)
+    end
+
     # Send a signal to a running workflow
     #
     # @param workflow [Temporal::Workflow, nil] workflow class or nil
