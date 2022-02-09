@@ -16,9 +16,6 @@ class WaitForExternalSignalWorkflow < Temporal::Workflow
       signals_received.key?(expected_signal)
     end
 
-    timeout_timer = workflow.start_timer(1)
-    workflow.wait_for(timeout_timer)
-
     { received: signals_received, counts: signal_counts }
   end
 end
