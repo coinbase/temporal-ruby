@@ -146,8 +146,9 @@ module Temporal
     # Fetches all the namespaces.
     #
     # @param page_size [Integer] number of namespace results to return per page.
-    def list_namespaces(page_size:)
-      connection.list_namespaces(page_size: page_size)
+    # @param next_page_token [String] page token to advancing the pagination (provide this )
+    def list_namespaces(page_size:, next_page_token: "")
+      connection.list_namespaces(page_size: page_size, next_page_token: next_page_token)
     end
 
     # Send a signal to a running workflow
