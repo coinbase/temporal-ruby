@@ -7,8 +7,6 @@ describe WaitForExternalSignalWorkflow do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.start_workflow(
       WaitForExternalSignalWorkflow,
-      10, # number of echo activities to run
-      2, # max activity parallelism
       signal_name,
       options: { workflow_id: workflow_id }
     )
@@ -21,8 +19,10 @@ describe WaitForExternalSignalWorkflow do
       run_id: run_id,
     )
 
-    expect(result.length).to eq(1)
-    expect(result.keys).to eq([signal_name])
-    expect(result.values).to eq(["arg1", "arg2"])
+    expect(result).to eq(
+      {
+        signal_name => ["arg1", "arg2"]
+      }
+    )
   end
 end

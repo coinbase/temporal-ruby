@@ -5,6 +5,7 @@ class WaitForExternalSignalWorkflow < Temporal::Workflow
     signals_received = {}
 
     workflow.on_signal do |signal, input|
+      workflow.logger.info("Received signal name #{signal}, with input #{input.inspect}")
       signals_received[signal] = input
     end
 
@@ -23,6 +24,7 @@ end
 class SendSignalToExternalWorkflow < Temporal::Workflow
   def execute(signal_name, target_workflow)
     logger.info("Send a signal to an external workflow")
-    workflow.signal_external_workflow(WaitForExternalSignalWorkflow, signal_name, "arg1", "arg2", options: {workflow_id: target_workflow} )
+    future = workflow.signal_external_workflow(WaitForExternalSignalWorkflow, signal_name, "arg1", "arg2", options: {workflow_id: target_workflow} )
+    future.get
   end
 end
