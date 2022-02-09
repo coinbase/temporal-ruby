@@ -3,10 +3,12 @@
 class WaitForExternalSignalWorkflow < Temporal::Workflow
   def execute(expected_signal)
     signals_received = {}
+    signal_counts = Hash.new { |h,k| h[k] = 0 }
 
     workflow.on_signal do |signal, input|
       workflow.logger.info("Received signal name #{signal}, with input #{input.inspect}")
       signals_received[signal] = input
+      signal_counts[signal] += 1
     end
 
     workflow.wait_for do
@@ -17,7 +19,7 @@ class WaitForExternalSignalWorkflow < Temporal::Workflow
     timeout_timer = workflow.start_timer(1)
     workflow.wait_for(timeout_timer)
 
-    signals_received
+    { received: signals_received, counts: signal_counts }
   end
 end
 

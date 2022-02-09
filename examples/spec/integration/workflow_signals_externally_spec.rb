@@ -21,7 +21,12 @@ describe WaitForExternalSignalWorkflow do
 
     expect(result).to eq(
       {
-        signal_name => ["arg1", "arg2"]
+        received: {
+          signal_name => ["arg1", "arg2"]
+        },
+        counts: {
+          signal_name => 1
+        }
       }
     )
   end

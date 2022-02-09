@@ -244,7 +244,7 @@ module Temporal
           # Temporal Server will try to Signal the targeted Workflow
           # Contains the Signal name, as well as a Signal payload
           # The workflow that sends the signal creates this event in its log; the
-          # receiving workflow has no related event (?)
+          # receiving workflow records WORKFLOW_EXECUTION_SIGNALED on reception
           state_machine.start
           discard_command(target)
 
@@ -252,6 +252,7 @@ module Temporal
           # Temporal Server cannot Signal the targeted Workflow
           # Usually because the Workflow could not be found
           state_machine.fail
+          discard_command(target)
           dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
 
         when 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED'
