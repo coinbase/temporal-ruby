@@ -10,7 +10,6 @@ module Temporal
           ACTIVITY_TASK_CANCELED
           TIMER_FIRED
           REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
-          SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
           EXTERNAL_WORKFLOW_EXECUTION_CANCEL_REQUESTED
           UPSERT_WORKFLOW_SEARCH_ATTRIBUTES
         ].freeze
@@ -47,7 +46,7 @@ module Temporal
             1 # fixed id for everything related to current workflow
           when *EVENT_TYPES
             attributes.scheduled_event_id
-          when *CHILD_WORKFLOW_EVENTS, 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED'
+          when *CHILD_WORKFLOW_EVENTS, 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED', 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED'
             attributes.initiated_event_id
           else
             id
