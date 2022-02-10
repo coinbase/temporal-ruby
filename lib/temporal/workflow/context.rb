@@ -335,7 +335,6 @@ module Temporal
           control: "", # deprecated
           child_workflow_only: !!options[:child_workflow_only]
         )
-        schedule_command(command)
 
         target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
