@@ -1,4 +1,5 @@
-# One workflow sends a signal to another workflow.
+# One workflow sends a signal to another workflow. Can be used to implement
+# the synchronous-proxy pattern (see Go samples)
 #
 class WaitForExternalSignalWorkflow < Temporal::Workflow
   def execute(expected_signal)
