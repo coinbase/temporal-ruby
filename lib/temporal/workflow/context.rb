@@ -304,6 +304,52 @@ module Temporal
         end
       end
 
+      # Send a signal from inside a workflow to another workflow. Not to be confused with
+      # Client#signal_workflow which sends a signal from outside a workflow to a workflow.
+      #
+      # @param workflow [Temporal::Workflow, nil] workflow class or nil
+      # @param signal [String] name of the signal to send
+      # @param workflow_id [String]
+      # @param run_id [String]
+      # @param input [String, Array, nil] optional arguments for the signal
+      # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
+      #   global default
+      # @param child_workflow_only [Boolean] indicates whether the signal should only be delivered to a
+      # child workflow; defaults to false
+      #
+      # @return [Future] future
+      def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
+        options ||= {}
+
+        execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
+
+        command = Command::SignalExternalWorkflow.new(
+          namespace: namespace || execution_options.namespace,
+          execution: {
+            workflow_id: workflow_id,
+            run_id: run_id
+          },
+          signal_name: signal,
+          input: input,
+          child_workflow_only: child_workflow_only
+        )
+
+        target, cancelation_id = schedule_command(command)
+        future = Future.new(target, self, cancelation_id: cancelation_id)
+
+        dispatcher.register_handler(target, 'completed') do |result|
+          future.set(result)
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+        end
+
+        dispatcher.register_handler(target, 'failed') do |exception|
+          future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+        end
+
+        future
+      end
+
       private
 
       attr_reader :state_manager, :dispatcher, :workflow_class
