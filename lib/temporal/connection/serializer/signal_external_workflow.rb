@@ -16,7 +16,7 @@ module Temporal
                 execution: serialize_execution(object.execution),
                 signal_name: object.signal_name,
                 input: to_signal_payloads(object.input),
-                control: object.control,
+                control: "", # deprecated
                 child_workflow_only: object.child_workflow_only
               )
           )

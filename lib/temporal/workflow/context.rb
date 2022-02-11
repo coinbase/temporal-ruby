@@ -304,36 +304,34 @@ module Temporal
         end
       end
 
-      # Send a signal from one workflow to another workflow. For signaling from the client,
-      # see Client#signal_workflow.
+      # Send a signal from inside a workflow to another workflow. Not to be confused with
+      # Client#signal_workflow which sends a signal from outside a workflow to a workflow.
       #
-      # @param workflow [Temporal::Workflow, String] workflow class or name. When a workflow class
-      #   is passed, its config (namespace, task_queue, timeouts, etc) will be used
-      # @param signal_name [String] name of signal
+      # @param workflow [Temporal::Workflow, nil] workflow class or nil
+      # @param signal [String] name of the signal to send
+      # @param workflow_id [String]
+      # @param run_id [String]
       # @param input [String, Array, nil] optional arguments for the signal
-      # @param options [Hash, nil] optional overrides
-      # @option options [String] :workflow_id
-      # @option options [String] :run_id of the specific workflow or "" if none is passed
-      # @option options [String] :name workflow name
-      # @option options [String] :child_workflow_only indicates whether the signal should only be deliverd to a
+      # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
+      #   global default
+      # @param child_workflow_only [Boolean] indicates whether the signal should only be delivered to a
       # child workflow; defaults to false
       #
       # @return [Future] future
-      def signal_external_workflow(workflow_class, signal_name, *input, options: {})
+      def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
         options ||= {}
 
-        execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
+        execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
         command = Command::SignalExternalWorkflow.new(
-          namespace: execution_options.namespace,
+          namespace: namespace || execution_options.namespace,
           execution: {
-            workflow_id: options[:workflow_id],
-            run_id: options[:run_id]
+            workflow_id: workflow_id,
+            run_id: run_id
           },
-          signal_name: signal_name,
+          signal_name: signal,
           input: input,
-          control: "", # deprecated
-          child_workflow_only: !!options[:child_workflow_only]
+          child_workflow_only: child_workflow_only
         )
 
         target, cancelation_id = schedule_command(command)

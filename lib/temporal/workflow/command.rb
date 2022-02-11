@@ -11,7 +11,7 @@ module Temporal
       CancelTimer = Struct.new(:timer_id, keyword_init: true)
       CompleteWorkflow = Struct.new(:result, keyword_init: true)
       FailWorkflow = Struct.new(:exception, keyword_init: true)
-      SignalExternalWorkflow = Struct.new(:namespace, :execution, :signal_name, :input, :control, :child_workflow_only, keyword_init: true)
+      SignalExternalWorkflow = Struct.new(:namespace, :execution, :signal_name, :input, :child_workflow_only, keyword_init: true)
 
       # only these commands are supported right now
       SCHEDULE_ACTIVITY_TYPE = :schedule_activity
