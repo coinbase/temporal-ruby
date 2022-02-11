@@ -2,7 +2,6 @@ module SynchronousProxy
   class RegisterEmailActivity < Temporal::Activity
     def execute(email)
       logger.info "activity: registered email #{email}"
-
       nil
     end
   end
@@ -10,7 +9,6 @@ module SynchronousProxy
   class ValidateSizeActivity < Temporal::Activity
     def execute(size)
       logger.info "activity: validate size #{size}"
-
       nil
     end
   end
@@ -18,7 +16,6 @@ module SynchronousProxy
   class ValidateColorActivity < Temporal::Activity
     def execute(color)
       logger.info "activity: validate color #{color}"
-
       nil
     end
   end

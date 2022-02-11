@@ -12,46 +12,44 @@ module SynchronousProxy
         puts "at top of run, status #{status.inspect}"
 
         sequence_no += 1
-        # loop do
+        loop do
           email = prompt_and_read_input("Please enter you email address:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::RegisterStage, value: email)
           puts "status #{status.inspect}"
-          # if err
-          #   puts "invalid email"
-          #   continue
-          # end
-
-          puts "about to break from loop, status #{status.inspect}"
-        #   break
-        # end
-
-        sequence_no += 1
-        # loop do
-          size = prompt_and_read_input("Please enter your requested size:")
-          status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
           if err
-            puts "invalid size"
+            STDERR.puts "invalid email"
             continue
           end
 
-        #   break
-        # end
+          break
+        end
 
         sequence_no += 1
-        # loop do
+        loop do
+          size = prompt_and_read_input("Please enter your requested size:")
+          status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
+          if err
+            STDERR.puts "invalid size"
+            continue
+          end
+
+          break
+        end
+
+        sequence_no += 1
+        loop do
           color = prompt_and_read_input("Please enter your required tshirt color:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::ColorStage, value: color)
-        #   if err
-        #     puts "invalid color"
-        #     continue
-        #   end
-        #
-        #   break
-        # end
+          if err
+            STDERR.puts "invalid color"
+            continue
+          end
+
+          break
+        end
 
         puts "Thanks for your order!"
         puts "You will receive an email with shipping details shortly"
-        sleep 30
         puts "Exiting at #{Time.now}"
       end
 
@@ -69,7 +67,6 @@ module SynchronousProxy
         workflow_options = {task_queue: "ui-driven", workflow_id: w_id}
         run_id = Temporal.start_workflow(SynchronousProxy::UpdateOrderWorkflow, order_id, stage, value, options: workflow_options)
         status, err = Temporal.await_workflow_result(SynchronousProxy::UpdateOrderWorkflow, workflow_id: w_id, run_id: run_id)
-        puts "update_order, status #{status.inspect}, err [#{err.inspect}]"
         status
       end
 

@@ -38,8 +38,7 @@ module SynchronousProxy
         logger.info("#{self.class.name}#setup_signal_handler, Setup signal handler for workflow #{w_id}")
 
         workflow.on_signal do |signal, input|
-          logger.info("#{self.class.name}#setup_signal_handler, Received signal for workflow #{w_id}")
-          logger.warn "#{self.class.name}#setup_signal_handler, Signal received", { signal: signal, input: input }
+          logger.info("#{self.class.name}#setup_signal_handler, Received signal for workflow #{w_id}, signal #{signal}, input #{input.inspect}")
           details = SignalDetails.from_input(input)
 
           case signal
@@ -60,9 +59,7 @@ module SynchronousProxy
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
         workflow.wait_for do
-          logger.info("#{self.class.name}#wait_for_response, Awaiting #{ResponseSignalName} for #{description} in #{w_id}")
           wait_result = !!@response_signal
-          logger.info("#{self.class.name}#wait_for_response, on [#{description}] response_signal [#{wait_result}] in #{w_id}")
           wait_result
         end
       end
@@ -72,9 +69,7 @@ module SynchronousProxy
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
         workflow.wait_for do
-          logger.info("#{self.class.name}#wait_for_request, Awaiting #{RequestSignalName} in #{w_id}")
           wait_result = !!@request_signal
-          logger.info("#{self.class.name}#wait_for_request, on [#{description}] request_signal [#{wait_result}] in #{w_id}")
           wait_result
         end
       end
@@ -84,7 +79,7 @@ module SynchronousProxy
 
         logger.info("#{self.class.name}#send_error_response, Sending error response from #{w_id} to #{target_workflow_id}")
         details = SignalDetails.new(key: "error", value: err, calling_workflow_id: w_id)
-        Temporal.signal_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
         nil
       end
 
@@ -93,18 +88,16 @@ module SynchronousProxy
 
         logger.info("#{self.class.name}#send_response, Sending response from #{w_id} to #{target_workflow_id}")
         details = SignalDetails.new(key: key, value: value, calling_workflow_id: w_id)
-        Temporal.signal_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
         nil
       end
 
       def send_request(target_workflow_id, key, value)
         w_id = workflow.metadata.id
 
-        logger.info("#{self.class.name}#send_request, Sending request from #{w_id} to #{target_workflow_id}")
-        logger.info "#{self.class.name}#send_request, key [#{key}], value [#{value}], calling_workflow_id [#{w_id}]"
+        logger.info("#{self.class.name}#send_request, Sending request from #{w_id} to #{target_workflow_id}, key #{key}, value #{value}, calling workflow #{w_id}")
         details = SignalDetails.new({key: key, value: value, calling_workflow_id: w_id})
-        logger.info "#{self.class.name}#send_request, RequestSignalName #{RequestSignalName}, target_workflow_id #{target_workflow_id}, details #{details.to_input.inspect}"
-        Temporal.signal_workflow(workflow, RequestSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, RequestSignalName, target_workflow_id, "", details.to_input)
         nil
       end
 
@@ -113,7 +106,6 @@ module SynchronousProxy
         w_id = workflow.metadata.id
         Temporal.logger.info("#{self.class.name}#receive_response, Waiting for response on [#{description}] in workflow #{w_id}")
         wait_for_response(description)
-        Temporal.logger.info("#{self.class.name}#receive_response, Got response and returning, on [#{description}] in workflow #{w_id}")
         @response_signal
       end
 
@@ -122,7 +114,6 @@ module SynchronousProxy
         w_id = workflow.metadata.id
         Temporal.logger.info("#{self.class.name}#receive_request, Waiting for request on [#{description}] in workflow #{w_id}")
         wait_for_request(description)
-        Temporal.logger.info("#{self.class.name}#receive_request, Got request and returning, on [#{description}] in workflow #{w_id}")
         @request_signal
       end
     end
