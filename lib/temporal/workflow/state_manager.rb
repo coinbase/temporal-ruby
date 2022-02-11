@@ -286,7 +286,7 @@ module Temporal
           when Command::StartChildWorkflow
             History::EventTarget::CHILD_WORKFLOW_TYPE
           when Command::SignalExternalWorkflow
-            History::EventTarget::SIGNAL_EXTERNAL_WORKFLOW_TYPE
+            History::EventTarget::EXTERNAL_WORKFLOW_TYPE
           end
 
         History::EventTarget.new(command_id, target_type)
