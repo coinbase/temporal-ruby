@@ -49,7 +49,9 @@ module Temporal
     private
 
     def has_executable_concern?(object)
-      object.singleton_class.included_modules.include?(Concerns::Executable)
+      # NOTE: When object is a String .dup is needed since Object#singleton_class mutates
+      #       it and screws up C extension class detection (used by Protobufs)
+      object.dup.singleton_class.included_modules.include?(Concerns::Executable)
     rescue TypeError
       false
     end

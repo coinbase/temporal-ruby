@@ -7,8 +7,9 @@ end
 class ErrorThatRaisesInInitialize < StandardError
   def initialize(message)
     # This class simulates an error class that has bugs in its initialize method, or where
-    # the arg isn't a string. It raises TypeError (String can't be coerced into Integer)
-    1 + message
+    # the arg isn't a string. It raises the sort of TypeError that would happen if you wrote
+    # 1 + message
+    raise TypeError.new("String can't be coerced into Integer")
   end
 end
 

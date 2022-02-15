@@ -33,4 +33,8 @@ module Helpers
       }.merge(options)
     )
   end
+
+  def integration_spec_namespace
+    ENV.fetch('TEMPORAL_NAMESPACE', 'ruby-samples')
+  end
 end
