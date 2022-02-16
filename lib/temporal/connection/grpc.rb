@@ -23,9 +23,10 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
-      def initialize(host, port, identity)
+      def initialize(host, port, identity, credentials)
         @url = "#{host}:#{port}"
         @identity = identity
+        @credentials = credentials
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -133,7 +134,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -464,12 +465,12 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :poll_mutex, :poll_request
+      attr_reader :url, :credentials, :identity, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          :this_channel_is_insecure,
+          credentials,
           timeout: 60
         )
       end

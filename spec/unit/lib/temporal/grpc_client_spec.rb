@@ -1,5 +1,5 @@
 describe Temporal::Connection::GRPC do
-  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
+  subject { Temporal::Connection::GRPC.new(nil, nil, nil, :this_channel_is_insecure) }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
@@ -8,7 +8,7 @@ describe Temporal::Connection::GRPC do
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
@@ -35,7 +35,7 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -122,7 +122,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -135,7 +135,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,

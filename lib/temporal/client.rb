@@ -195,7 +195,7 @@ module Temporal
           timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
-        message = if timeout 
+        message = if timeout
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
           "Timed out after #{max_timeout} seconds, which is the maximum supported amount."

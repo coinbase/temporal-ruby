@@ -59,6 +59,7 @@ Temporal.configure do |config|
   config.port = 7233
   config.namespace = 'ruby-samples'
   config.task_queue = 'hello-world'
+  config.credentials = :this_channel_is_insecure
 end
 
 begin
@@ -112,6 +113,24 @@ Run:
 curl -O https://raw.githubusercontent.com/temporalio/docker-compose/main/docker-compose.yml
 
 docker-compose up
+```
+
+### Connecting via SSL
+
+In many production deployments you will end up connecting to your Temporal Services via SSL. In which
+case you must read the public cert of the CA that issued your Temporal server's SSL cert and create
+an instance of [gRPC Channel Credentials](https://grpc.io/docs/guides/auth/#with-server-authentication-ssltls-1).
+
+Configure your Temporal connection:
+
+```ruby
+Temporal.configure do |config|
+  config.host = 'temporal-prod.mycompany.com'
+  config.port = 7233
+  config.namespace = 'ruby-samples'
+  config.task_queue = 'hello-world'
+  config.credentials = GRPC::Core::ChannelCredentials.new(root_cert, client_key, client_chain)
+end
 ```
 
 ## Workflows
