@@ -56,8 +56,8 @@ module Temporal
         client.describe_namespace(request)
       end
 
-      def list_namespaces(page_size:)
-        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(pageSize: page_size)
+      def list_namespaces(page_size:, next_page_token: "")
+        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(page_size: page_size, next_page_token: next_page_token)
         client.list_namespaces(request)
       end
 

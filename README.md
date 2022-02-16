@@ -14,7 +14,7 @@ To find more about Temporal itself please visit <https://temporal.io/>.
 Clone this repository:
 
 ```sh
-> git clone git@github.com:coinbase/temporal-ruby.git
+git clone git@github.com:coinbase/temporal-ruby.git
 ```
 
 Include this gem to your `Gemfile`:
@@ -26,6 +26,7 @@ gem 'temporal-ruby', github: 'coinbase/temporal-ruby'
 Define an activity:
 
 ```ruby
+require 'temporal-ruby'
 class HelloActivity < Temporal::Activity
   def execute(name)
     puts "Hello #{name}!"
@@ -49,37 +50,41 @@ class HelloWorldWorkflow < Temporal::Workflow
 end
 ```
 
-Configure your Temporal connection:
+Configure your Temporal connection and register the namespace with the Temporal service:
 
 ```ruby
+require 'temporal-ruby'
 Temporal.configure do |config|
   config.host = 'localhost'
   config.port = 7233
   config.namespace = 'ruby-samples'
   config.task_queue = 'hello-world'
 end
+
+begin
+  Temporal.register_namespace('ruby-samples', 'A safe space for playing with Temporal Ruby')
+rescue Temporal::NamespaceAlreadyExistsFailure
+  nil # service was already registered
+end
 ```
 
-Register namespace with the Temporal service:
+
+Configure and start your worker process in a terminal shell:
 
 ```ruby
-Temporal.register_namespace('ruby-samples', 'A safe space for playing with Temporal Ruby')
-```
-
-Configure and start your worker process:
-
-```ruby
+require 'path/to/configuration'
 require 'temporal/worker'
 
 worker = Temporal::Worker.new
 worker.register_workflow(HelloWorldWorkflow)
 worker.register_activity(HelloActivity)
-worker.start
+worker.start # runs forever
 ```
 
-And finally start your workflow:
+And finally start your workflow in another terminal shell:
 
 ```ruby
+require 'path/to/configuration'
 require 'path/to/hello_world_workflow'
 
 Temporal.start_workflow(HelloWorldWorkflow)
@@ -97,12 +102,16 @@ available, make sure to check them out.
 ## Installing dependencies
 
 Temporal service handles all the persistence, fault tolerance and coordination of your workflows and
-activities. To set it up locally, download and boot the Docker Compose file from the official repo:
+activities. To set it up locally, download and boot the Docker Compose file from the official repo.
+The Docker Compose file forwards all ports to your localhost so you can interact with
+the containers easily from your shells.
+
+Run:
 
 ```sh
-> curl -O https://raw.githubusercontent.com/temporalio/docker-compose/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/temporalio/docker-compose/main/docker-compose.yml
 
-> docker-compose up
+docker-compose up
 ```
 
 ## Workflows
