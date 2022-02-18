@@ -36,6 +36,10 @@ module Temporal
         return state_manager.commands
       end
 
+      def process_query(query, args)
+        dispatcher.process_query(History::EventTarget.workflow, query, args)
+      end
+
       private
 
       attr_reader :workflow_class, :dispatcher, :state_manager, :task_metadata, :history, :config

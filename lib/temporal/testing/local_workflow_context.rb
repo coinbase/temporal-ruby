@@ -190,6 +190,10 @@ module Temporal
         raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
       end
 
+      def on_query(&block)
+        raise NotImplementedError, 'Queries are not available when Temporal::Testing.local! is on'
+      end
+
       def cancel_activity(activity_id)
         raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end

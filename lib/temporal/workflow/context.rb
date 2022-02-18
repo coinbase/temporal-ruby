@@ -298,6 +298,14 @@ module Temporal
         end
       end
 
+      def on_query(query, &block)
+        target = History::EventTarget.workflow
+
+        dispatcher.register_query_handler(target, query) do |input|
+          block.call(input)
+        end
+      end
+
       def cancel_activity(activity_id)
         command = Command::RequestActivityCancellation.new(activity_id: activity_id)
 

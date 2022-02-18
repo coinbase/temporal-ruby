@@ -38,7 +38,37 @@ module Temporal
           executor.run
         end
 
-        complete_task(commands)
+        if metadata.query_type
+          # queryCompletedRequest := &workflowservice.RespondQueryTaskCompletedRequest{
+          # 	TaskToken: task.TaskToken,
+          # 	Namespace: wth.namespace,
+          # }
+          # var panicErr *PanicError
+          # if errors.As(workflowContext.err, &panicErr) {
+          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_FAILED
+          # 	queryCompletedRequest.ErrorMessage = "Workflow panic: " + panicErr.Error()
+          # 	return queryCompletedRequest
+          # }
+
+          # result, err := eventHandler.ProcessQuery(task.Query.GetQueryType(), task.Query.QueryArgs, task.Query.Header)
+          # if err != nil {
+          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_FAILED
+          # 	queryCompletedRequest.ErrorMessage = err.Error()
+          # } else {
+          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_ANSWERED
+          # 	queryCompletedRequest.QueryResult = result
+          # }
+          # return queryCompletedRequest
+          result = executor.process_query(metadata.query_type, metadata.query_args)
+          connection.respond_query_task_completed(
+            task_token: task_token,
+            namespace: namespace,
+            completed_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
+            result: result
+          )
+        else
+          complete_task(commands)
+        end
       rescue StandardError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 

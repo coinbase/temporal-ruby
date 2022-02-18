@@ -42,6 +42,8 @@ describe Temporal::Metadata do
       expect(subject.workflow_run_id).to eq(data.workflow_execution.run_id)
       expect(subject.workflow_id).to eq(data.workflow_execution.workflow_id)
       expect(subject.workflow_name).to eq(data.workflow_type.name)
+      expect(subject.query_type).to eq(data.query.query_type)
+      expect(subject.query_args).to eq('')
     end
   end
 

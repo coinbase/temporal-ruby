@@ -8,4 +8,6 @@ Fabricator(:workflow_task_metadata, from: :open_struct) do
   workflow_run_id { SecureRandom.uuid }
   workflow_id { SecureRandom.uuid }
   workflow_name 'TestWorkflow'
+  query_type 'state'
+  query_args nil
 end

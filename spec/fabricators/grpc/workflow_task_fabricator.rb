@@ -10,6 +10,7 @@ Fabricator(:api_workflow_task, from: Temporal::Api::WorkflowService::V1::PollWor
   scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   started_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   history { |attrs| Temporal::Api::History::V1::History.new(events: attrs[:events]) }
+  query { Fabricate(:api_workflow_query) }
 end
 
 Fabricator(:api_paginated_workflow_task, from: :api_workflow_task) do

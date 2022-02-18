@@ -142,7 +142,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -452,16 +452,66 @@ module Temporal
         raise NotImplementedError
       end
 
-      def respond_query_task_completed
-        raise NotImplementedError
+      def respond_query_task_completed(result:, **request_params)
+        request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
+          **request_params.merge(query_result: to_query_payloads(result))
+        )
+        client.respond_query_task_completed(request)
       end
 
       def reset_sticky_task_queue
         raise NotImplementedError
       end
 
-      def query_workflow
-        raise NotImplementedError
+      #     async _queryWorkflowHandler(input) {
+      #         let response;
+      #         try {
+      #             response = await this.service.queryWorkflow({
+      #                 queryRejectCondition: input.queryRejectCondition,
+      #                 namespace: this.options.namespace,
+      #                 execution: input.workflowExecution,
+      #                 query: {
+      #                     queryType: input.queryType,
+      #                     queryArgs: { payloads: await this.options.dataConverter.toPayloads(...input.args) },
+      #                 },
+      #             });
+      #         }
+      #         catch (err) {
+      #             this.rethrowGrpcError(err, input.workflowExecution, 'Failed to query Workflow');
+      #         }
+      #         if (response.queryRejected) {
+      #             if (response.queryRejected.status === undefined || response.queryRejected.status === null) {
+      #                 throw new TypeError('Received queryRejected from server with no status');
+      #             }
+      #             throw new QueryRejectedError(response.queryRejected.status);
+      #         }
+      #         if (!response.queryResult) {
+      #             throw new TypeError('Invalid response from server');
+      #         }
+      #         // We ignore anything but the first result
+      #         return this.options.dataConverter.fromPayloads(0, response.queryResult?.payloads);
+      #     }
+      def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil)
+        request = Temporal::Api::WorkflowService::V1::QueryWorkflowRequest.new(
+          # query_reject_condition: ,
+          namespace: namespace,
+          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+            workflow_id: workflow_id,
+            run_id: run_id
+          ),
+          query: Temporal::Api::Query::V1::WorkflowQuery.new(
+            query_type: query,
+            query_args: to_query_payloads(args)
+          )
+        )
+        response = client.query_workflow(request)
+        if response.query_rejected
+
+        elsif !response.query_result
+
+        else
+          from_query_payloads(response.query_result)
+        end
       end
 
       def describe_workflow_execution(namespace:, workflow_id:, run_id:)
