@@ -54,7 +54,7 @@ module Temporal
 
       attr_reader :task, :namespace, :task_token, :activity_name, :activity_class,
       :middleware_chain, :metadata, :config
-      
+
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
       end
@@ -71,7 +71,7 @@ module Temporal
           Temporal.logger.debug("Failed to report activity task completion, retrying", metadata.to_h)
         end
         Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
-          connection.respond_activity_task_completed(task_token: task_token, result: result)
+          connection.respond_activity_task_completed(namespace: namespace, task_token: task_token, result: result)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
@@ -85,7 +85,7 @@ module Temporal
           Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
         end
         Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
-          connection.respond_activity_task_failed(task_token: task_token, exception: error)
+          connection.respond_activity_task_failed(namespace: namespace, task_token: task_token, exception: error)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
