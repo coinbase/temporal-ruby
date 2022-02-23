@@ -45,6 +45,7 @@ module Temporal
 
     def initialize
       @connection_type = :grpc
+      @credentials = :this_channel_is_insecure
       @logger = Temporal::Logger.new(STDOUT, progname: 'temporal_client')
       @metrics_adapter = MetricsAdapters::Null.new
       @timeouts = DEFAULT_TIMEOUTS

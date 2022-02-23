@@ -4,7 +4,7 @@ describe Temporal::Connection::GRPC do
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
-  let(:now) { Time.now}
+  let(:now) { Time.now.utc }
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
