@@ -298,12 +298,11 @@ module Temporal
         end
       end
 
-      def on_query(query = Dispatcher::WILDCARD, &block)
+      def on_query(query = nil, &block)
+        query ||= Dispatcher::WILDCARD
         target = History::EventTarget.query
 
-        dispatcher.register_handler(target, query) do |input|
-          block.call(*input)
-        end
+        dispatcher.register_handler(target, query, &block)
       end
 
       def cancel_activity(activity_id)

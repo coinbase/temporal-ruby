@@ -23,7 +23,7 @@ module Temporal
         unless handler.nil?
           args = [args] unless args.is_a?(Array)
           args.unshift(event_name) if registered_name == WILDCARD
-          handler.call(args)
+          handler.call(*args)
         end
       end
 
