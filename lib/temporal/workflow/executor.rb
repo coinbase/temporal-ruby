@@ -36,8 +36,9 @@ module Temporal
         return state_manager.commands
       end
 
-      def process_query(query, args)
-        dispatcher.process_query(History::EventTarget.workflow, query, args)
+      # @param query [Temporal::Workflow::TaskProcessor::Query]
+      def process_query(query)
+        dispatcher.process(History::EventTarget.query, query.query_type, query.query_args)
       end
 
       private

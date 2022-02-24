@@ -37,9 +37,7 @@ module Temporal
           attempt: task.attempt,
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
-          workflow_name: task.workflow_type.name,
-          query_type: task.query&.query_type,
-          query_args: from_query_payloads(task.query&.query_args)
+          workflow_name: task.workflow_type.name
         )
       end
 

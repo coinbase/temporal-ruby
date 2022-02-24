@@ -183,12 +183,41 @@ module Temporal
         poll_request.execute
       end
 
-      def respond_workflow_task_completed(namespace:, task_token:, commands:)
+      def respond_query_task_completed(namespace:, task_token:, query_result: nil, error_message: nil)
+        request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
+          task_token: task_token,
+          namespace: namespace
+        )
+        if !error_message.nil?
+          request.error_message = error_message
+          request.completed_type = Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED
+        else
+          request.query_result = to_query_payloads(query_result)
+          request.completed_type = Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED
+        end
+        client.respond_query_task_completed(request)
+      end
+
+      def respond_workflow_task_completed(namespace:, task_token:, commands:, query_results:)
+        query_results&.transform_values! do |query_result|
+          if query_result.is_a?(StandardError)
+            {
+              result_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED,
+              error_message: query_result.message
+            }
+          else
+            {
+              result_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
+              answer: to_query_payloads(query_result)
+            }
+          end
+        end
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
+          query_results: query_results || {}
         )
         client.respond_workflow_task_completed(request)
       end
@@ -452,13 +481,6 @@ module Temporal
         raise NotImplementedError
       end
 
-      def respond_query_task_completed(result:, **request_params)
-        request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
-          **request_params.merge(query_result: to_query_payloads(result))
-        )
-        client.respond_query_task_completed(request)
-      end
-
       def reset_sticky_task_queue
         raise NotImplementedError
       end
@@ -488,7 +510,7 @@ module Temporal
       #         if (!response.queryResult) {
       #             throw new TypeError('Invalid response from server');
       #         }
-      #         // We ignore anything but the first result
+      #         // We ignore anything but the first query_result
       #         return this.options.dataConverter.fromPayloads(0, response.queryResult?.payloads);
       #     }
       def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil)
@@ -584,7 +606,7 @@ module Temporal
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
         status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
-        
+
         Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end

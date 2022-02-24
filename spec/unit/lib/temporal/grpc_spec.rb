@@ -8,7 +8,7 @@ describe Temporal::Connection::GRPC do
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
@@ -35,7 +35,7 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -148,7 +148,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -161,7 +161,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -344,5 +344,13 @@ describe Temporal::Connection::GRPC do
         end
       end
     end
+  end
+
+  describe '#query_workflow' do
+    # TODO after discussing error handling
+  end
+
+  describe '#respond_workflow_task_completed' do
+    # TODO testing the value transform after discussing
   end
 end

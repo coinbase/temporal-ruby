@@ -6,39 +6,36 @@ module Temporal
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
-        @query_handlers = Hash.new { |hash, key| hash[key] = {} }
       end
 
       def register_handler(target, event_name, &handler)
         handlers[target] << [event_name, handler]
       end
 
-      def register_query_handler(target, query, &handler)
-        query_handlers[target][query] = handler
-      end
-
       def dispatch(target, event_name, args = nil)
-        handlers_for(target, event_name).each do |handler|
+        handlers_for(target, event_name).each do |_, handler|
           handler.call(*args)
         end
       end
 
-      def process_query(target, query, args)
-        if query == '__cadence_web_list'
-          return query_handlers[target].keys + %w[__stack_trace]
+      def process(target, event_name, args = nil)
+        registered_name, handler = handlers_for(target, event_name).first
+        unless handler.nil?
+          args = [args] unless args.is_a?(Array)
+          args.unshift(event_name) if registered_name == WILDCARD
+          handler.call(args)
         end
-        query_handlers[target][query].call(*args)
       end
 
       private
 
-      attr_reader :handlers, :query_handlers
+      attr_reader :handlers
 
       def handlers_for(target, event_name)
         handlers[target]
           .concat(handlers[TARGET_WILDCARD])
           .select { |(name, _)| name == event_name || name == WILDCARD }
-          .map(&:last)
+          .sort_by { |(name, _)| name == WILDCARD ? 1 : 0 }
       end
     end
   end

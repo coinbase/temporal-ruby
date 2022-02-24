@@ -7,6 +7,18 @@ require 'temporal/errors'
 module Temporal
   class Workflow
     class TaskProcessor
+      Query = Struct.new(:query) do
+        include Concerns::Payloads
+
+        def query_type
+          query.query_type
+        end
+
+        def query_args
+          from_query_payloads(query.query_args)
+        end
+      end
+
       MAX_FAILED_ATTEMPTS = 1
 
       def initialize(task, namespace, workflow_lookup, middleware_chain, config)
@@ -38,41 +50,30 @@ module Temporal
           executor.run
         end
 
-        if metadata.query_type
-          # queryCompletedRequest := &workflowservice.RespondQueryTaskCompletedRequest{
-          # 	TaskToken: task.TaskToken,
-          # 	Namespace: wth.namespace,
-          # }
-          # var panicErr *PanicError
-          # if errors.As(workflowContext.err, &panicErr) {
-          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_FAILED
-          # 	queryCompletedRequest.ErrorMessage = "Workflow panic: " + panicErr.Error()
-          # 	return queryCompletedRequest
-          # }
-
-          # result, err := eventHandler.ProcessQuery(task.Query.GetQueryType(), task.Query.QueryArgs, task.Query.Header)
-          # if err != nil {
-          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_FAILED
-          # 	queryCompletedRequest.ErrorMessage = err.Error()
-          # } else {
-          # 	queryCompletedRequest.CompletedType = enumspb.QUERY_RESULT_TYPE_ANSWERED
-          # 	queryCompletedRequest.QueryResult = result
-          # }
-          # return queryCompletedRequest
-          result = executor.process_query(metadata.query_type, metadata.query_args)
-          connection.respond_query_task_completed(
-            task_token: task_token,
-            namespace: namespace,
-            completed_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
-            result: result
-          )
+        # Process deprecated style of query task
+        if !task.query.nil?
+          result = executor.process_query(Query.new(task.query))
+          complete_query(result)
         else
-          complete_task(commands)
+          query_results = if task.queries.any?
+            task.queries.each_with_object({}) do |(query_id, query), hash|
+              begin
+                hash[query_id] = executor.process_query(Query.new(query))
+              rescue StandardError => error
+                hash[query_id] = error
+              end
+            end
+          end
+          complete_task(commands, query_results)
         end
       rescue StandardError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 
-        fail_task(error)
+        if task.query.nil?
+          fail_task(error)
+        else
+          fail_query(error)
+        end
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name, namespace: namespace)
@@ -117,10 +118,35 @@ module Temporal
         Workflow::History.new(events)
       end
 
-      def complete_task(commands)
+      def complete_task(commands, query_results)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
-        connection.respond_workflow_task_completed(namespace: namespace, task_token: task_token, commands: commands)
+        connection.respond_workflow_task_completed(namespace: namespace, task_token: task_token, commands: commands, query_results: query_results)
+      end
+
+      def complete_query(result)
+        Temporal.logger.info("Workflow Query task completed", metadata.to_h)
+
+        connection.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: result
+        )
+      end
+
+      def fail_query(error)
+        Temporal.logger.error("Workflow Query task failed", metadata.to_h.merge(error: error.inspect))
+        Temporal.logger.debug(error.backtrace.join("\n"))
+
+        connection.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          error_message: error.message || "Encountered an error during query handling"
+        )
+      rescue StandardError => error
+        Temporal.logger.error("Unable to fail Workflow Query task", metadata.to_h.merge(error: error.inspect))
+
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
 
       def fail_task(error)

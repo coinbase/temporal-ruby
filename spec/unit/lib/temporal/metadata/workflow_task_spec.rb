@@ -13,8 +13,6 @@ describe Temporal::Metadata::WorkflowTask do
       expect(subject.workflow_run_id).to eq(args.workflow_run_id)
       expect(subject.workflow_id).to eq(args.workflow_id)
       expect(subject.workflow_name).to eq(args.workflow_name)
-      expect(subject.query_type).to eq(args.query_type)
-      expect(subject.query_args).to eq(args.query_args)
     end
 
     it { is_expected.to be_frozen }
@@ -34,9 +32,7 @@ describe Temporal::Metadata::WorkflowTask do
         'namespace' => subject.namespace,
         'workflow_id' => subject.workflow_id,
         'workflow_name' => subject.workflow_name,
-        'workflow_run_id' => subject.workflow_run_id,
-        'query_type' => subject.query_type,
-        'query_args' => subject.query_args,
+        'workflow_run_id' => subject.workflow_run_id
       })
     end
   end

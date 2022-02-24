@@ -185,7 +185,7 @@ module Temporal
     # @param args [String, Array, nil] optional arguments for the query
     # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
     #   global default
-    def query_workflow(workflow, query, workflow_id, run_id, args = nil, namespace: nil)
+    def query_workflow(workflow, query, workflow_id, run_id, *args, namespace: nil)
       execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
       connection.query_workflow(

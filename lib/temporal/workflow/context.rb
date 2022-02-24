@@ -298,11 +298,11 @@ module Temporal
         end
       end
 
-      def on_query(query, &block)
-        target = History::EventTarget.workflow
+      def on_query(query = Dispatcher::WILDCARD, &block)
+        target = History::EventTarget.query
 
-        dispatcher.register_query_handler(target, query) do |input|
-          block.call(input)
+        dispatcher.register_handler(target, query) do |input|
+          block.call(*input)
         end
       end
 
@@ -400,6 +400,11 @@ module Temporal
 
       def schedule_command(command)
         state_manager.schedule(command)
+      end
+
+      # @param query [Temporal::Api::Query::V1::WorkflowQuery]
+      def process_query(query)
+        dispatcher.dispatch(History::EventTarget.workflow, "queried:#{query.query_type}", query.query_args)
       end
 
       def call_in_fiber(block, *args)
