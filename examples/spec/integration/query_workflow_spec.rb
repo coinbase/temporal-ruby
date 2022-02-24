@@ -15,6 +15,10 @@ describe QueryWorkflow, :integration do
       'upcase', 'ignored', 'reverse'))
       .to eq 'DETRATS'
 
+    # Target query handler for "signal_count", no args
+    expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id))
+      .to eq 0
+
     # Target catch-all query handler, no args
     expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id))
       .to be nil
@@ -39,6 +43,9 @@ describe QueryWorkflow, :integration do
     expect(Temporal.query_workflow(described_class, 'state', workflow_id, run_id,
       'upcase', 'ignored', 'reverse'))
       .to eq 'DEHSINIF'
+
+    expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id))
+      .to eq 1
 
     expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id))
       .to eq 'finish'
