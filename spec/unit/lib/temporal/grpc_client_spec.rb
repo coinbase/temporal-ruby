@@ -49,9 +49,8 @@ describe Temporal::Connection::GRPC do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
-    before { allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
-
     it 'starts a workflow with a signal with scalar arguments' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response)
       subject.signal_with_start_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
@@ -77,6 +76,27 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_task_timeout.seconds).to eq(3)
         expect(request.signal_name).to eq('the question')
         expect(request.signal_input.payloads[0].data).to eq('"what do you get if you multiply six by nine?"')
+      end
+    end
+
+    it 'provides the existing run_id when the workflow is already started' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_raise(already_started_error)
+
+      expect do
+        subject.signal_with_start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'workflow_name',
+          task_queue: 'task_queue',
+          input: ['foo'],
+          execution_timeout: 1,
+          run_timeout: 2,
+          task_timeout: 3,
+          signal_name: 'the question',
+          signal_input: 'what do you get if you multiply six by nine?',
+        )
+      end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
+        expect(e.run_id).to eql(run_id)
       end
     end
   end
