@@ -8,6 +8,7 @@ require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
+require 'gen/temporal/api/errordetails/v1/message_pb'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -125,9 +126,13 @@ module Temporal
 
         client.start_workflow_execution(request)
       rescue ::GRPC::AlreadyExists => e
-        # Feel like there should be cleaner way to do this...
-        run_id = e.details[/RunId: ([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)/, 1]
-        raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
+        cast_error = e.to_rpc_status&.details&.map do |any_error|
+          next unless any_error.type_url == 'type.googleapis.com/temporal.api.errordetails.v1.WorkflowExecutionAlreadyStartedFailure'
+
+          any_error.unpack(Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure)
+        end&.compact&.first
+
+        raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, cast_error&.run_id)
       end
 
       SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL = 30
@@ -141,7 +146,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -533,7 +538,7 @@ module Temporal
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
         status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
-        
+
         Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end

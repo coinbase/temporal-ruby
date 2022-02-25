@@ -4,20 +4,28 @@ describe Temporal::Connection::GRPC do
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
-  let(:now) { Time.now}
+  let(:now) { Time.now.utc }
+  let(:already_started_error) do
+    detail_error = Google::Protobuf::Any.new.tap do |any|
+      any.pack(Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure.new(start_request_id: SecureRandom.uuid, run_id: run_id))
+    end
+    rpc_status = Google::Rpc::Status.new(
+      code: 6,
+      message: 'Workflow execution already finished successfully. WorkflowId: TestWorkflow-1, RunId: baaf1d86-4459-4ecd-a288-47aeae55245d. Workflow Id reuse policy: allow duplicate workflow Id if last run failed.',
+      details: [detail_error],
+    )
+    GRPC::AlreadyExists.new('details', { 'grpc-status-details-bin' => Google::Rpc::Status.encode(rpc_status) })
+  end
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
   describe '#start_workflow_execution' do
     it 'provides the existing run_id when the workflow is already started' do
-      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(
-        GRPC::AlreadyExists,
-        'Workflow execution already finished successfully. WorkflowId: TestWorkflow-1, RunId: baaf1d86-4459-4ecd-a288-47aeae55245d. Workflow Id reuse policy: allow duplicate workflow Id if last run failed.'
-      )
+      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(already_started_error)
 
       expect do
         subject.start_workflow_execution(
@@ -31,11 +39,11 @@ describe Temporal::Connection::GRPC do
           memo: {}
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
-        expect(e.run_id).to eql('baaf1d86-4459-4ecd-a288-47aeae55245d')
+        expect(e.run_id).to eql(run_id)
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -148,7 +156,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -161,7 +169,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
