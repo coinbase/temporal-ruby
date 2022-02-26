@@ -17,6 +17,24 @@ module Temporal
     class Context
       attr_reader :metadata, :config
 
+      module Private
+        # Shared with LocalWorkflowContext so we can do the same validations in test and production.
+        class Validators
+
+          def self.validate_search_attributes(search_attributes)
+            if search_attributes.nil?
+              raise ArgumentError, 'search_attributes cannot be nil'
+            end
+            if !search_attributes.is_a?(Hash)
+              raise ArgumentError, "for search_attributes, expecting a Hash, not #{search_attributes.class}" 
+            end
+            if search_attributes.empty?
+              raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
+            end
+          end
+        end
+      end
+      
       def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -348,6 +366,18 @@ module Temporal
         end
 
         future
+      end
+
+      # @param search_attributes [Hash]
+      # replaces or adds the values of your custom search attributes specified during a workflow's execution.  
+      # To use this your server must support ElasticSearch, and the attributes must be pre-configured
+      # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
+      def upsert_search_attributes(search_attributes)
+        Private::Validators.validate_search_attributes(search_attributes)
+        command = Command::UpsertSearchAttributes.new(
+          search_attributes: search_attributes
+        )
+        schedule_command(command)
       end
 
       private

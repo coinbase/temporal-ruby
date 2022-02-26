@@ -6,4 +6,5 @@ Fabricator(:api_workflow_execution_info, from: Temporal::Api::Workflow::V1::Work
   status { Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_COMPLETED }
   history_length { rand(100) }
   memo { Fabricate(:memo) }
+  search_attributes { Fabricate(:search_attributes) }
 end

@@ -16,6 +16,7 @@ module Temporal
         CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE = :cancel_external_workflow_request
         WORKFLOW_TYPE                         = :workflow
         CANCEL_WORKFLOW_REQUEST_TYPE          = :cancel_workflow_request
+        UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE = :upsert_search_attributes_request
 
         # NOTE: The order is important, first prefix match wins (will be a longer match)
         TARGET_TYPES = {
@@ -32,7 +33,7 @@ module Temporal
           'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION'         => EXTERNAL_WORKFLOW_TYPE,
           'EXTERNAL_WORKFLOW_EXECUTION_CANCEL'         => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
           'REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION' => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
-          'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'          => WORKFLOW_TYPE,
+          'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'          => UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE,
           'WORKFLOW_EXECUTION_CANCEL'                  => CANCEL_WORKFLOW_REQUEST_TYPE,
           'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
         }.freeze

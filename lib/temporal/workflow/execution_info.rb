@@ -2,7 +2,7 @@ require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
-    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, :memo, keyword_init: true)
+    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, :memo, :search_attributes, keyword_init: true)
       extend Concerns::Payloads
 
       RUNNING_STATUS = :RUNNING
@@ -43,6 +43,7 @@ module Temporal
           status: API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
           memo: self.from_payload_map(response.memo.fields),
+          search_attributes: self.from_payload_map(response.search_attributes.indexed_fields),
         ).freeze
       end
 
