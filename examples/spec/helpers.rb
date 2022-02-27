@@ -2,11 +2,10 @@ require 'securerandom'
 
 module Helpers
   def run_workflow(workflow, *input, **args)
-    workflow_id = SecureRandom.uuid
-    args[:options] = { workflow_id: workflow_id }.merge(args[:options] || {})
+    args[:options] = { workflow_id: SecureRandom.uuid }.merge(args[:options] || {})
     run_id = Temporal.start_workflow(workflow, *input, **args)
 
-    [workflow_id, run_id]
+    [args[:options][:workflow_id], run_id]
   end
 
   def wait_for_workflow_completion(workflow_id, run_id)
