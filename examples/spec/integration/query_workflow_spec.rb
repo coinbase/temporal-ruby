@@ -6,8 +6,8 @@ describe QueryWorkflow, :integration do
   it 'returns the correct result for the queries' do
     workflow_id, run_id = run_workflow(described_class)
 
-    # Target query handler for "state", no args
-    expect(Temporal.query_workflow(described_class, 'state', workflow_id, run_id))
+    # Target query handler for "state", no args, nil workflow class
+    expect(Temporal.query_workflow(nil, 'state', workflow_id, run_id))
       .to eq 'started'
 
     # Target query handler for "state", arbitrary args
@@ -37,7 +37,7 @@ describe QueryWorkflow, :integration do
     wait_for_workflow_completion(workflow_id, run_id)
 
     # Repeating query scenarios above, expecting updated state and signal results
-    expect(Temporal.query_workflow(described_class, 'state', workflow_id, run_id))
+    expect(Temporal.query_workflow(nil, 'state', workflow_id, run_id))
       .to eq 'finished'
 
     expect(Temporal.query_workflow(described_class, 'state', workflow_id, run_id,
