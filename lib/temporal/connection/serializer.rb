@@ -9,6 +9,7 @@ require 'temporal/connection/serializer/complete_workflow'
 require 'temporal/connection/serializer/continue_as_new'
 require 'temporal/connection/serializer/fail_workflow'
 require 'temporal/connection/serializer/signal_external_workflow'
+require 'temporal/connection/serializer/upsert_search_attributes'
 
 module Temporal
   module Connection
@@ -23,7 +24,8 @@ module Temporal
         Workflow::Command::CompleteWorkflow => Serializer::CompleteWorkflow,
         Workflow::Command::ContinueAsNew => Serializer::ContinueAsNew,
         Workflow::Command::FailWorkflow => Serializer::FailWorkflow,
-        Workflow::Command::SignalExternalWorkflow => Serializer::SignalExternalWorkflow
+        Workflow::Command::SignalExternalWorkflow => Serializer::SignalExternalWorkflow,
+        Workflow::Command::UpsertSearchAttributes => Serializer::UpsertSearchAttributes,
       }.freeze
 
       def self.serialize(object)
