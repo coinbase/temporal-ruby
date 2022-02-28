@@ -90,7 +90,7 @@ module Temporal
       def complete_task(commands)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
-        connection.respond_workflow_task_completed(task_token: task_token, commands: commands)
+        connection.respond_workflow_task_completed(namespace: namespace, task_token: task_token, commands: commands)
       end
 
       def fail_task(error)
@@ -103,6 +103,7 @@ module Temporal
         return if task.attempt > MAX_FAILED_ATTEMPTS
 
         connection.respond_workflow_task_failed(
+          namespace: namespace,
           task_token: task_token,
           cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
           exception: error

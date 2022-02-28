@@ -73,6 +73,32 @@ describe Temporal::Connection::GRPC do
     end
   end
 
+  describe "#list_namespaces" do
+    let (:response) do
+      Temporal::Api::WorkflowService::V1::ListNamespacesResponse.new(
+        namespaces: [Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse.new],
+        next_page_token: ""
+      )
+    end
+
+    before { allow(grpc_stub).to receive(:list_namespaces).and_return(response) }
+
+    it 'calls GRPC service with supplied arguments' do
+      next_page_token = "next-page-token-id"
+
+      subject.list_namespaces(
+        page_size: 10,
+        next_page_token: next_page_token,
+      )
+
+      expect(grpc_stub).to have_received(:list_namespaces) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListNamespacesRequest)
+        expect(request.page_size).to eq(10)
+        expect(request.next_page_token).to eq(next_page_token)
+      end
+    end
+  end
+
   describe '#get_workflow_execution_history' do
     let(:response) do
       Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(

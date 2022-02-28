@@ -56,6 +56,7 @@ module Temporal
         state_machine = command_tracker[command_id]
         state_machine.requested if state_machine.state == CommandStateMachine::NEW_STATE
 
+        validate_append_command(command)
         commands << [command_id, command]
 
         return [event_target_from(command_id, command), cancelation_id]
@@ -92,6 +93,27 @@ module Temporal
 
       def next_event_id
         @last_event_id += 1
+      end
+
+      def validate_append_command(command)
+        return if commands.last.nil?
+        _, previous_command = commands.last
+        case previous_command
+        when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
+          context_string = case previous_command
+          when Command::CompleteWorkflow
+            "The workflow completed"
+          when Command::FailWorkflow
+            "The workflow failed"
+          when Command::ContinueAsNew
+            "The workflow continued as new"
+          end
+          raise Temporal::WorkflowAlreadyCompletingError.new(
+            "You cannot do anything in a Workflow after it completes. #{context_string}, "\
+            "but then it sent a new command: #{command.class}.  This can happen, for example, if you've "\
+            "not waited for all of your Activity futures before finishing the Workflow."
+          )
+        end
       end
 
       def apply_event(event)

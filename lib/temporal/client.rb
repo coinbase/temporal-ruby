@@ -143,6 +143,14 @@ module Temporal
       connection.describe_namespace(name: name)
     end
 
+    # Fetches all the namespaces.
+    #
+    # @param page_size [Integer] number of namespace results to return per page.
+    # @param next_page_token [String] a optional pagination token returned by a previous list_namespaces call
+    def list_namespaces(page_size:, next_page_token: "")
+      connection.list_namespaces(page_size: page_size, next_page_token: next_page_token)
+    end
+
     # Send a signal to a running workflow
     #
     # @param workflow [Temporal::Workflow, nil] workflow class or nil

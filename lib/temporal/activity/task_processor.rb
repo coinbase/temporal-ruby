@@ -26,7 +26,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
-        Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name, namespace: namespace)
+        Temporal.metrics.timing('activity_task.queue_time', queue_time_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
 
         context = Activity::Context.new(connection, metadata)
 
@@ -46,7 +46,7 @@ module Temporal
         respond_failed(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name, namespace: namespace)
+        Temporal.metrics.timing('activity_task.latency', time_diff_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
         Temporal.logger.debug("Activity task processed", metadata.to_h.merge(execution_time: time_diff_ms))
       end
 
@@ -54,7 +54,7 @@ module Temporal
 
       attr_reader :task, :namespace, :task_token, :activity_name, :activity_class,
       :middleware_chain, :metadata, :config
-      
+
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
       end
@@ -71,7 +71,7 @@ module Temporal
           Temporal.logger.debug("Failed to report activity task completion, retrying", metadata.to_h)
         end
         Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
-          connection.respond_activity_task_completed(task_token: task_token, result: result)
+          connection.respond_activity_task_completed(namespace: namespace, task_token: task_token, result: result)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to complete Activity", metadata.to_h.merge(error: error.inspect))
@@ -85,7 +85,7 @@ module Temporal
           Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
         end
         Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
-          connection.respond_activity_task_failed(task_token: task_token, exception: error)
+          connection.respond_activity_task_failed(namespace: namespace, task_token: task_token, exception: error)
         end
       rescue StandardError => error
         Temporal.logger.error("Unable to fail Activity task", metadata.to_h.merge(error: error.inspect))
