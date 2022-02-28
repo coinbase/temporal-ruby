@@ -212,7 +212,12 @@ describe Temporal::Testing::LocalWorkflowContext do
           workflow_context.upsert_search_attributes(['array_not_supported'])
         end.to raise_error(ArgumentError, 'for search_attributes, expecting a Hash, not Array')
       end
-  
+
+      it 'requires a non-empty hash' do
+        expect do
+          workflow_context.upsert_search_attributes({})
+        end.to raise_error(ArgumentError, 'Cannot upsert an empty hash for search_attributes, as this would do nothing.')
+      end
     end
   end
 end

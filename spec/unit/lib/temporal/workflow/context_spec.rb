@@ -30,5 +30,11 @@ describe Temporal::Workflow::Context do
       end.to raise_error(ArgumentError, 'Cannot upsert an empty hash for search_attributes, as this would do nothing.')
     end
 
+    it 'creates a command to execute the request' do
+      allow(state_manager).to receive(:schedule)
+        .with an_instance_of(Temporal::Workflow::Command::UpsertSearchAttributes)
+      workflow_context.upsert_search_attributes({'CustomIntField' => 5})
+    end
+
   end
 end
