@@ -5,6 +5,7 @@ require 'temporal/errors'
 require 'temporal/thread_local_context'
 require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/command'
+require 'temporal/workflow/context_validators'
 require 'temporal/workflow/future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
@@ -16,24 +17,6 @@ module Temporal
   class Workflow
     class Context
       attr_reader :metadata, :config
-
-      module Private
-        # Shared with LocalWorkflowContext so we can do the same validations in test and production.
-        class Validators
-
-          def self.validate_search_attributes(search_attributes)
-            if search_attributes.nil?
-              raise ArgumentError, 'search_attributes cannot be nil'
-            end
-            if !search_attributes.is_a?(Hash)
-              raise ArgumentError, "for search_attributes, expecting a Hash, not #{search_attributes.class}" 
-            end
-            if search_attributes.empty?
-              raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
-            end
-          end
-        end
-      end
       
       def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager

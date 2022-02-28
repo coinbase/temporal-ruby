@@ -5,7 +5,7 @@ require 'temporal/execution_options'
 require 'temporal/metadata/activity'
 require 'temporal/workflow/future'
 require 'temporal/workflow/history/event_target'
-require 'temporal/workflow/context'
+require 'temporal/workflow/context_validators'
 
 module Temporal
   module Testing
