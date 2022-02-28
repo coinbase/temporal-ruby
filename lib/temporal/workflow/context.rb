@@ -17,7 +17,7 @@ module Temporal
   class Workflow
     class Context
       attr_reader :metadata, :config
-      
+
       def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -352,11 +352,11 @@ module Temporal
       end
 
       # @param search_attributes [Hash]
-      # replaces or adds the values of your custom search attributes specified during a workflow's execution.  
+      # replaces or adds the values of your custom search attributes specified during a workflow's execution.
       # To use this your server must support ElasticSearch, and the attributes must be pre-configured
       # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
       def upsert_search_attributes(search_attributes)
-        Private::Validators.validate_search_attributes(search_attributes)
+        Validators.validate_search_attributes(search_attributes)
         command = Command::UpsertSearchAttributes.new(
           search_attributes: search_attributes
         )
