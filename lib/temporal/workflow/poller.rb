@@ -29,7 +29,7 @@ module Temporal
 
       def stop_polling
         @shutting_down = true
-        Temporal.logger.info('Shutting down a workflow poller')
+        Temporal.logger.info('Shutting down a workflow poller', { namespace: namespace, task_queue: task_queue })
       end
 
       def cancel_pending_requests
