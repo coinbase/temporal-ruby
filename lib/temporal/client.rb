@@ -281,7 +281,7 @@ module Temporal
     #   for reference
     # @param details [String, Array, nil] optional details to be stored in history
     def terminate_workflow(workflow_id, namespace: nil, run_id: nil, reason: nil, details: nil)
-      namespace ||= Temporal.configuration.namespace
+      namespace ||= config.namespace
 
       connection.terminate_workflow_execution(
         namespace: namespace,
