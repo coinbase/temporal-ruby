@@ -1,4 +1,5 @@
 require 'workflows/upsert_search_attributes_workflow'
+require 'time'
 
 describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
   it 'can upsert a search attribute and then retrieve it' do
@@ -9,7 +10,7 @@ describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
       'CustomBoolField' => true,
       'CustomDoubleField' => 3.14,
       'CustomIntField' => 0,
-      'CustomDatetimeField' => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+      'CustomDatetimeField' => Time.now.utc.iso8601,
     }
 
     run_id = Temporal.start_workflow(
