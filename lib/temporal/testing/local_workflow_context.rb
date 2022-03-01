@@ -196,9 +196,7 @@ module Temporal
 
       def upsert_search_attributes(search_attributes)
         Temporal::Workflow::Context::Validators.validate_search_attributes(search_attributes)
-
-        # We no-op in local testing mode since there is no search functionality.  We don't fail because we 
-        # don't want to block workflows testing other aspects.
+        execution.upsert_search_attributes(search_attributes)
       end
 
       private

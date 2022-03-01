@@ -3,11 +3,12 @@ require 'temporal/testing/future_registry'
 module Temporal
   module Testing
     class WorkflowExecution
-      attr_reader :status
+      attr_reader :status, :search_attributes
 
       def initialize
         @status = Workflow::ExecutionInfo::RUNNING_STATUS
         @futures = FutureRegistry.new
+        @search_attributes = {}
       end
 
       def run(&block)
@@ -34,6 +35,10 @@ module Temporal
       def fail_activity(token, exception)
         futures.fail(token, exception)
         resume
+      end
+
+      def upsert_search_attributes(search_attributes)
+        @search_attributes.merge!(search_attributes)
       end
 
       private
