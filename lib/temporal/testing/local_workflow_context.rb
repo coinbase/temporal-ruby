@@ -5,6 +5,7 @@ require 'temporal/execution_options'
 require 'temporal/metadata/activity'
 require 'temporal/workflow/future'
 require 'temporal/workflow/history/event_target'
+require 'temporal/workflow/context_validators'
 
 module Temporal
   module Testing
@@ -205,6 +206,13 @@ module Temporal
 
       def cancel(target, cancelation_id)
         raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
+      end
+
+      def upsert_search_attributes(search_attributes)
+        Temporal::Workflow::Context::Validators.validate_search_attributes(search_attributes)
+
+        # We no-op in local testing mode since there is no search functionality.  We don't fail because we 
+        # don't want to block workflows testing other aspects.
       end
 
       private

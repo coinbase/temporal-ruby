@@ -180,8 +180,9 @@ module Temporal
         poll_request.execute
       end
 
-      def respond_workflow_task_completed(task_token:, commands:)
+      def respond_workflow_task_completed(namespace:, task_token:, commands:)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
@@ -189,8 +190,9 @@ module Temporal
         client.respond_workflow_task_completed(request)
       end
 
-      def respond_workflow_task_failed(task_token:, cause:, exception: nil)
+      def respond_workflow_task_failed(namespace:, task_token:, cause:, exception: nil)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           cause: cause,
@@ -216,8 +218,9 @@ module Temporal
         poll_request.execute
       end
 
-      def record_activity_task_heartbeat(task_token:, details: nil)
+      def record_activity_task_heartbeat(namespace:, task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
+          namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
           identity: identity
@@ -229,8 +232,9 @@ module Temporal
         raise NotImplementedError
       end
 
-      def respond_activity_task_completed(task_token:, result:)
+      def respond_activity_task_completed(namespace:, task_token:, result:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           result: to_result_payloads(result),
@@ -250,8 +254,9 @@ module Temporal
         client.respond_activity_task_completed_by_id(request)
       end
 
-      def respond_activity_task_failed(task_token:, exception:)
+      def respond_activity_task_failed(namespace:, task_token:, exception:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           failure: Serializer::Failure.new(exception).to_proto
@@ -271,8 +276,9 @@ module Temporal
         client.respond_activity_task_failed_by_id(request)
       end
 
-      def respond_activity_task_canceled(task_token:, details: nil)
+      def respond_activity_task_canceled(namespace:, task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
+          namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
           identity: identity

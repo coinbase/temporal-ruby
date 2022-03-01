@@ -54,6 +54,7 @@ describe Temporal::Activity::TaskProcessor do
         expect(connection)
           .to have_received(:respond_activity_task_failed)
           .with(
+            namespace: namespace,
             task_token: task.task_token,
             exception: an_instance_of(Temporal::ActivityNotRegistered)
           )
@@ -110,7 +111,7 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(connection)
             .to have_received(:respond_activity_task_completed)
-            .with(task_token: task.task_token, result: 'result')
+            .with(namespace: namespace, task_token: task.task_token, result: 'result')
         end
 
         it 'ignores connection exception' do
@@ -171,6 +172,7 @@ describe Temporal::Activity::TaskProcessor do
           expect(connection)
             .to have_received(:respond_activity_task_failed)
             .with(
+              namespace: namespace,
               task_token: task.task_token,
               exception: exception
             )
@@ -224,6 +226,7 @@ describe Temporal::Activity::TaskProcessor do
             expect(connection)
               .to have_received(:respond_activity_task_failed)
               .with(
+                namespace: namespace,
                 task_token: task.task_token,
                 exception: exception
               )
@@ -248,7 +251,11 @@ describe Temporal::Activity::TaskProcessor do
 
             expect(connection)
               .to have_received(:respond_activity_task_failed)
-              .with(task_token: task.task_token, exception: exception)
+              .with(
+                namespace: namespace,
+                task_token: task.task_token,
+                exception: exception
+              )
           end
         end
       end

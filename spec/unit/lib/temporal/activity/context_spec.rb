@@ -17,7 +17,7 @@ describe Temporal::Activity::Context do
 
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
-        .with(task_token: metadata.task_token, details: nil)
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
     end
 
     it 'records heartbeat with details' do
@@ -25,7 +25,7 @@ describe Temporal::Activity::Context do
 
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
-        .with(task_token: metadata.task_token, details: { foo: :bar })
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
     end
   end
 
