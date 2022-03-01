@@ -352,9 +352,14 @@ module Temporal
       end
 
       # @param search_attributes [Hash]
-      # replaces or adds the values of your custom search attributes specified during a workflow's execution.
+      #   If an attribute is registered as a Datetime, you must pass it in this format, for example if you're getting
+      #   the current time:
+      #     workflow.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+      #
+      # Replaces or adds the values of your custom search attributes specified during a workflow's execution.
       # To use this your server must support ElasticSearch, and the attributes must be pre-configured
       # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
+
       def upsert_search_attributes(search_attributes)
         Validators.validate_search_attributes(search_attributes)
         command = Command::UpsertSearchAttributes.new(

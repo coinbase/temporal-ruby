@@ -1,7 +1,7 @@
 require 'workflows/upsert_search_attributes_workflow'
 
-describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do 
-  it 'can upsert a search attribute and then retrieve it' do 
+describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
+  it 'can upsert a search attribute and then retrieve it' do
     workflow_id = 'upsert_search_attributes_test_wf-' + SecureRandom.uuid
 
     expected_attributes = {
@@ -9,6 +9,7 @@ describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
       'CustomBoolField' => true,
       'CustomDoubleField' => 3.14,
       'CustomIntField' => 0,
+      'CustomDatetimeField' => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
     run_id = Temporal.start_workflow(
@@ -27,8 +28,8 @@ describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
     expect(added_attributes).to eq(expected_attributes)
 
     execution_info = Temporal.fetch_workflow_execution_info(
-      integration_spec_namespace, 
-      workflow_id, 
+      integration_spec_namespace,
+      workflow_id,
       nil
     )
     expect(execution_info.search_attributes).to eq(expected_attributes)
