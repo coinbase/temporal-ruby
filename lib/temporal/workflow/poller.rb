@@ -1,3 +1,4 @@
+require 'grpc/errors'
 require 'temporal/connection'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
@@ -75,6 +76,9 @@ module Temporal
 
       def poll_for_task
         connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue)
+      rescue ::GRPC::Cancelled
+        # We're shutting down and we've already reported that in the logs
+        nil
       rescue StandardError => error
         Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
         Temporal::ErrorHandler.handle(error, config)
