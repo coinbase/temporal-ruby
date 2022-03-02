@@ -7,16 +7,36 @@ module SynchronousProxy
   end
 
   class ValidateSizeActivity < Temporal::Activity
+    InvalidSize = Class.new(StandardError)
+
+    retry_policy(
+      interval: 1,
+      backoff: 1,
+      max_attempts: 3,
+      non_retriable_errors: [InvalidSize])
+
     def execute(size)
       logger.info "activity: validate size #{size}"
-      nil
+      return nil if TShirtSizes.include?(size)
+
+      raise InvalidSize.new("#{size} is not a valid size choice.")
     end
   end
 
   class ValidateColorActivity < Temporal::Activity
+    InvalidColor = Class.new(StandardError)
+
+    retry_policy(
+      interval: 1,
+      backoff: 1,
+      max_attempts: 3,
+      non_retriable_errors: [InvalidColor])
+
     def execute(color)
       logger.info "activity: validate color #{color}"
-      nil
+      return nil if TShirtColors.include?(color)
+
+      raise InvalidColor.new("#{color} is not a valid color choice.")
     end
   end
 
