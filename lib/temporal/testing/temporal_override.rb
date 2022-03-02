@@ -31,7 +31,6 @@ module Temporal
 
       def fetch_workflow_execution_info(_namespace, workflow_id, run_id)
         return super if Temporal::Testing.disabled?
-
         execution = executions[[workflow_id, run_id]]
 
         Workflow::ExecutionInfo.new(
@@ -42,6 +41,7 @@ module Temporal
           close_time: nil,
           status: execution.status,
           history_length: nil,
+          search_attributes: execution.search_attributes,
         ).freeze
       end
 
