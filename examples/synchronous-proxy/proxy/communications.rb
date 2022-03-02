@@ -21,15 +21,15 @@ module SynchronousProxy
         keyword_init: true
       ) do
         def error?
-          !!error
+          key == "error"
         end
 
         def to_input
-          [calling_workflow_id, name, key, value, error]
+          [calling_workflow_id, name, key, value]
         end
 
         def self.from_input(input)
-          new({name: input[1], key: input[2], value: input[3], error: input[4], calling_workflow_id: input[0]})
+          new({name: input[1], key: input[2], value: input[3], calling_workflow_id: input[0]})
         end
       end
 
@@ -78,6 +78,7 @@ module SynchronousProxy
         w_id = workflow.metadata.id
 
         logger.info("#{self.class.name}#send_error_response, Sending error response from #{w_id} to #{target_workflow_id}")
+        logger.info("#{self.class.name}#send_error_response, err is #{err.inspect}")
         details = SignalDetails.new(key: "error", value: err, calling_workflow_id: w_id)
         workflow.signal_external_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
         nil
