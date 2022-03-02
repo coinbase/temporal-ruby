@@ -16,7 +16,7 @@ describe 'Temporal.register_namespace' do
     next_page_token = ''
 
     while found_namespace.nil?
-      result = Temporal.list_namespaces(page_size: 5, next_page_token: next_page_token)
+      result = Temporal.list_namespaces(page_size: 100, next_page_token: next_page_token)
       result.namespaces.each do |namespace|
         if namespace.namespace_info.name == name
           found_namespace = namespace
@@ -37,10 +37,10 @@ describe 'Temporal.register_namespace' do
     expect(found_namespace.config.workflow_execution_retention_ttl.seconds).to eq(retention_period * 24 * 60 * 60)
   end
 
-#   it 'errors if attempting to register a namespace with the same name' do
-#     name = "test_namespace_#{SecureRandom.uuid}"
-#     Temporal.register_namespace(name)
+  it 'errors if attempting to register a namespace with the same name' do
+    name = "test_namespace_#{SecureRandom.uuid}"
+    Temporal.register_namespace(name)
     
-#     expect {Temporal.register_namespace(name)}.to raise_error(Temporal::NamespaceAlreadyExistsFailure, 'Namespace already exists.')
-#   end
+    expect {Temporal.register_namespace(name)}.to raise_error(Temporal::NamespaceAlreadyExistsFailure, 'Namespace already exists.')
+  end
 end
