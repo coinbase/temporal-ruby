@@ -132,9 +132,13 @@ module Temporal
     #
     # @param name [String] name of the new namespace
     # @param description [String] optional namespace description
-    def register_namespace(name, description = nil)
-      connection.register_namespace(name: name, description: description)
+    # @param global [Boolean] flag to set if the namespace is a global namespace or not
+    # @param retention_period [Int] optional retention period in days
+    # @param namespace_data [Hash] A key-value map for any customized purpose
+    def register_namespace(name, description = nil, global: false, retention_period:  10, namespace_data: nil)
+      connection.register_namespace(name: name, description: description, global: global, retention_period: retention_period, namespace_data: namespace_data)
     end
+
 
     # Fetches metadata for a namespace.
     # @param name [String] name of the namespace
