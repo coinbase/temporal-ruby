@@ -7,6 +7,9 @@ module SynchronousProxy
   ColorStage = "color".freeze
   ShippingStage = "shipping".freeze
 
+  TShirtSizes = ["small", "medium", "large"]
+  TShirtColors = ["red", "blue", "black"]
+
   OrderStatus = Struct.new(:order_id, :stage, keyword_init: true)
   TShirtOrder = Struct.new(:email, :size, :color) do
     def to_s
@@ -27,53 +30,62 @@ module SynchronousProxy
       loop do
         signal_detail = receive_request("email_payload")
         source_id, email = signal_detail.calling_workflow_id, signal_detail.value
-        value, err = RegisterEmailActivity.execute!(email)
+        value, err = RegisterEmailActivity.execute(email)
         if err
           send_error_response(source_id, err)
-          logger.warn "RegisterEmailActivity returned an error, loop back to top for #{workflow.id}"
-          continue
+          logger.warn "RegisterEmailActivity returned an error, loop back to top"
+        else
+          order.email = email
+
+          send_response(source_id, SizeStage, "")
+          break
         end
-
-        order.email = email
-
-        send_response(source_id, SizeStage, "")
-        break
       end
 
       # Loop until we receive a valid size
       loop do
         signal_detail = receive_request("size_payload")
         source_id, size = signal_detail.calling_workflow_id, signal_detail.value
-        value, err = ValidateSizeActivity.execute!(size)
-        if err
-          send_error_response(source_id, err)
-          continue
+        future = ValidateSizeActivity.execute(size)
+
+        future.failed do |exception|
+          send_error_response(source_id, exception)
+          logger.warn "ValidateSizeActivity returned an error, loop back to top"
         end
 
-        order.size = size
+        future.done do
+          order.size = size
+          logger.info "ValidateSizeActivity succeeded, progress to next stage"
+          send_response(source_id, ColorStage, "")
+        end
 
-        send_response(source_id, ColorStage, "")
-        break
+        future.get # block waiting for response
+        break unless future.failed?
       end
 
       # Loop until we receive a valid color
       loop do
         signal_detail = receive_request("color_payload")
         source_id, color = signal_detail.calling_workflow_id, signal_detail.value
-        value, err = ValidateColorActivity.execute!(color)
-        if err
-          send_error_response(source_id, err)
-          continue
+        future = ValidateColorActivity.execute(color)
+
+        future.failed do |exception|
+          send_error_response(source_id, exception)
+          logger.warn "ValidateColorActivity returned an error, loop back to top"
         end
 
-        order.color = color
+        future.done do
+          order.color = color
+          logger.info "ValidateColorActivity succeeded, progress to next stage"
+          send_response(source_id, ShippingStage, "")
+        end
 
-        send_response(source_id, ShippingStage, "")
-        break
+        future.get # block waiting for response
+        break unless future.failed?
       end
 
       # #execute_workflow! blocks until child workflow exits with a result
-      result = workflow.execute_workflow!(SynchronousProxy::ShippingWorkflow, order)
+      result = workflow.execute_workflow!(SynchronousProxy::ShippingWorkflow, workflow.metadata.id)
     end
   end
 
@@ -88,7 +100,8 @@ module SynchronousProxy
       signal_workflow_execution_response = send_request(order_workflow_id, stage, value)
 
       signal_details = receive_response("#{stage}_stage_payload")
-      return [status, signal_details.error] if signal_details.error?
+      logger.warn "UpdateOrderWorkflow received signal_details #{signal_details.inspect}, error? #{signal_details.error?}"
+      return [status, signal_details.value] if signal_details.error?
 
       status.stage = signal_details.key # next stage
       [status, nil]
@@ -99,12 +112,11 @@ module SynchronousProxy
     # 5s timeout on Activities
     timeouts run: 60
 
-    def execute(order_workflow_id, stage, value)
-      delivery_date, err = ScheduleDeliveryActivity.execute!(order)
+    def execute(order_workflow_id)
+      delivery_date, err = ScheduleDeliveryActivity.execute!(order_workflow_id)
       return err if err
 
-      err = SendDeliveryEmailActivity.execute!(order, delivery_date)
-      err
+      SendDeliveryEmailActivity.execute!(order_workflow_id, delivery_date)
     end
   end
 end

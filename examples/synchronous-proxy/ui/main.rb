@@ -15,37 +15,36 @@ module SynchronousProxy
         loop do
           email = prompt_and_read_input("Please enter you email address:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::RegisterStage, value: email)
-          puts "status #{status.inspect}"
+          puts "status #{status.inspect}, err #{err.inspect}"
           if err
             STDERR.puts "invalid email"
-            continue
+          else
+            break
           end
-
-          break
         end
 
         sequence_no += 1
         loop do
           size = prompt_and_read_input("Please enter your requested size:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
+          puts "status #{status.inspect}, err #{err.inspect}"
           if err
             STDERR.puts "invalid size"
-            continue
+          else
+            break
           end
-
-          break
         end
 
         sequence_no += 1
         loop do
           color = prompt_and_read_input("Please enter your required tshirt color:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::ColorStage, value: color)
+          puts "status #{status.inspect}, err #{err.inspect}"
           if err
             STDERR.puts "invalid color"
-            continue
+          else
+            break
           end
-
-          break
         end
 
         puts "Thanks for your order!"
@@ -67,7 +66,7 @@ module SynchronousProxy
         workflow_options = {task_queue: "ui-driven", workflow_id: w_id}
         run_id = Temporal.start_workflow(SynchronousProxy::UpdateOrderWorkflow, order_id, stage, value, options: workflow_options)
         status, err = Temporal.await_workflow_result(SynchronousProxy::UpdateOrderWorkflow, workflow_id: w_id, run_id: run_id)
-        status
+        [status, err]
       end
 
       def prompt_and_read_input(prompt)
