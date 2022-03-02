@@ -10,26 +10,20 @@ module Temporal
     METADATA_ENCODING_KEY = 'encoding'.freeze
     METADATA_ENCODING = 'binary/encrypted'.freeze
 
-    def to_payloads(data)
+    def to_payload(data)
       key_id = get_key_id
       key = get_key(key_id)
+      payload = super(data)
 
-      payloads = super(data)
-
-      Temporal::Api::Common::V1::Payloads.new(
-        payloads: payloads.payloads.map { |payload| encrypt_payload(payload, key_id, key) }
-      )
+      encrypt_payload(payload, key_id, key)
     end
 
-    def from_payloads(payloads)
-      return nil if payloads.nil?
-
-      payloads.payloads.map do |payload|
-        if payload.metadata[METADATA_ENCODING_KEY] == METADATA_ENCODING
-          payload = decrypt_payload(payload)
-        end
-        from_payload(payload)
+    def from_payload(payload)
+      if payload.metadata[METADATA_ENCODING_KEY] == METADATA_ENCODING
+        payload = decrypt_payload(payload)
       end
+
+      super(payload)
     end
 
     private
