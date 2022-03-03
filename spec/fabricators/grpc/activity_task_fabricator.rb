@@ -6,15 +6,12 @@ Fabricator(:api_activity_task, from: Temporal::Api::WorkflowService::V1::PollAct
   activity_id { SecureRandom.uuid }
   task_token { |attrs| attrs[:task_token] || SecureRandom.uuid }
   activity_type { Fabricate(:api_activity_type) }
-  input { Temporal.configuration.converter.to_payloads(nil) }
+  input { $converter.to_payloads(nil) }
   workflow_type { Fabricate(:api_workflow_type) }
   workflow_execution { Fabricate(:api_workflow_execution) }
   current_attempt_scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   started_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   header do |attrs|
-    fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
-      h[field] = Temporal.configuration.converter.to_payload(value)
-    end
-    Temporal::Api::Common::V1::Header.new(fields: fields)
+    Temporal::Api::Common::V1::Header.new(fields: $converter.to_payload_map(attrs[:headers] || {}))
   end
 end

@@ -60,8 +60,6 @@ describe 'Converter', :integration do
     completion_event = events[:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED].first
     result = completion_event.workflow_execution_completed_event_attributes.result
 
-    converter = Temporal.configuration.converter
-
-    expect(converter.from_payloads(result)&.first).to eq('Hello World, Tom')
+    expect($converter.from_payloads(result)&.first).to eq('Hello World, Tom')
   end
 end
