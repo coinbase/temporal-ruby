@@ -4,7 +4,6 @@ require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/history/size'
-require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
 require 'temporal/workflow/sdk_flags'
 require 'temporal/workflow/signal'
@@ -12,8 +11,6 @@ require 'temporal/workflow/signal'
 module Temporal
   class Workflow
     class StateManager
-      include Concerns::Payloads
-
       SIDE_EFFECT_MARKER = 'SIDE_EFFECT'.freeze
       RELEASE_MARKER = 'RELEASE'.freeze
 
@@ -24,6 +21,7 @@ module Temporal
 
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
+        @converter = config.converter
         @commands = []
         @marker_ids = Set.new
         @releases = {}
@@ -257,7 +255,7 @@ module Temporal
           dispatch(
             History::EventTarget.workflow,
             'started',
-            from_payloads(event.attributes.input),
+            converter.from_payloads(event.attributes.input),
             event
           )
 
@@ -294,7 +292,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', converter.from_result_payloads(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -317,7 +315,7 @@ module Temporal
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
           dispatch(history_target, 'failed',
-                   Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
+                   Temporal::ActivityCanceled.new(converter.from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -354,13 +352,13 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
+          handle_marker(event.id, event.attributes.marker_name, converter.from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
           # relies on Signal#== for matching in Dispatcher
           signal_target = Signal.new(event.attributes.signal_name)
           dispatch(signal_target, 'signaled', event.attributes.signal_name,
-                   from_signal_payloads(event.attributes.input))
+                    converter.from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -385,7 +383,7 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', converter.from_result_payloads(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail

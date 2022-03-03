@@ -1,7 +1,8 @@
 require 'temporal/workflow/execution_info'
 
 describe Temporal::Workflow::ExecutionInfo do
-  subject { described_class.generate_from(api_info) }
+  subject { described_class.generate_from(api_info, config.converter) }
+  let(:config) { Temporal::Configuration.new }
   let(:api_info) { Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '') }
 
   describe '.generate_for' do

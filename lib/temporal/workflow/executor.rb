@@ -71,7 +71,7 @@ module Temporal
       end
 
       def execute_workflow(input, workflow_started_event)
-        metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
+        metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata, config.converter)
         context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config, query_registry,
                                         track_stack_trace)
 
