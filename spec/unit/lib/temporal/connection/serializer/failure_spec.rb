@@ -6,9 +6,11 @@ class TestDeserializer
 end
 
 describe Temporal::Connection::Serializer::Failure do
+  let(:config) { Temporal::Configuration.new }
+
   describe 'to_proto' do
     it 'produces a protobuf' do
-      result = described_class.new(StandardError.new('test')).to_proto
+      result = described_class.new(StandardError.new('test'), config.converter).to_proto
 
       expect(result).to be_an_instance_of(Temporalio::Api::Failure::V1::Failure)
     end

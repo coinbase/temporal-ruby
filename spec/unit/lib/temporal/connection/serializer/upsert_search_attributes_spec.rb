@@ -3,11 +3,9 @@ require 'time'
 require 'temporal/connection/serializer/upsert_search_attributes'
 require 'temporal/workflow/command'
 
-class TestDeserializer
-  extend Temporal::Concerns::Payloads
-end
-
 describe Temporal::Connection::Serializer::UpsertSearchAttributes do
+  let(:config) { Temporal::Configuration.new }
+
   it 'produces a protobuf that round-trips' do
     expected_attributes = {
       'CustomStringField' => 'moo',
@@ -22,14 +20,14 @@ describe Temporal::Connection::Serializer::UpsertSearchAttributes do
       search_attributes: expected_attributes
     )
 
-    result = described_class.new(command).to_proto
+    result = described_class.new(command config.converter).to_proto
     expect(result).to be_an_instance_of(Temporalio::Api::Command::V1::Command)
     expect(result.command_type).to eql(
       :COMMAND_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES
     )
     command_attributes = result.upsert_workflow_search_attributes_command_attributes
     expect(command_attributes).not_to be_nil
-    actual_attributes = TestDeserializer.from_payload_map_without_codec(command_attributes&.search_attributes&.indexed_fields)
+    actual_attributes = config.converter.from_payload_map_without_codec(command_attributes&.search_attributes&.indexed_fields)
     expect(actual_attributes).to eql(expected_attributes)
 
   end

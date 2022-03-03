@@ -19,7 +19,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
         search_attributes: {'foo-search-attribute': 'qux'},
       )
 
-      result = described_class.new(command).to_proto
+      result = described_class.new(command, config.converter).to_proto
 
       expect(result).to be_an_instance_of(Temporalio::Api::Command::V1::Command)
       expect(result.command_type).to eql(
