@@ -24,7 +24,6 @@ describe 'Temporal.register_namespace' do
       break if result.next_page_token == ''
 
       next_page_token = result.next_page_token
-      end
     end
 
     expect(found_namespace).to_not eq(nil)
