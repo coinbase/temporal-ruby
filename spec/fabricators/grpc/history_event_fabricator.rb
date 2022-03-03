@@ -1,9 +1,6 @@
 require 'securerandom'
-require 'temporal/configuration'
 
-include Temporal::Concerns::Payloads
-
-Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
+Fabricator(:api_history_event, from: Temporal::Api::History::V1::HistoryEvent) do
   event_id { 1 }
   event_time { Time.now }
 end
@@ -13,9 +10,10 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED }
   event_time { Time.now }
   workflow_execution_started_event_attributes do |attrs|
-    header_fields = to_payload_map(attrs[:headers] || {})
-    header = Temporalio::Api::Common::V1::Header.new(fields: header_fields)
-    indexed_fields = attrs[:search_attributes] ? to_payload_map(attrs[:search_attributes]) : nil
+    header = Temporal::Api::Common::V1::Header.new(
+      fields: $converter.to_payload_map(attrs[:headers] || {})
+    )
+    indexed_fields = attrs[:search_attributes] ? $converter.to_payload_map(attrs[:search_attributes]) : nil
 
     Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),

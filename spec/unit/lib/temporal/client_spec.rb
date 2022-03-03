@@ -480,11 +480,7 @@ describe Temporal::Client do
       ['string', 'a result'],
     ].each do |(type, expected_result)|
       it "completes and returns a #{type}" do
-        payload = Temporalio::Api::Common::V1::Payloads.new(
-          payloads: [
-            Temporal.configuration.converter.to_payload(expected_result)
-          ],
-        )
+        payload = $converter.to_result_payloads(expected_result)
         completed_event = Fabricate(:workflow_completed_event, result: payload)
         response = Fabricate(:workflow_execution_history, events: [completed_event])
         expect(connection)
