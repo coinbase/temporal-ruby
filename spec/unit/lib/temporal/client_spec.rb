@@ -697,7 +697,7 @@ describe Temporal::Client do
         workflow_execution_info: api_info
       )
     end
-    let(:api_info) { Fabricate(:api_workflow_execution_info) }
+    let(:api_info) { Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '') }
 
     before { allow(connection).to receive(:describe_workflow_execution).and_return(response) }
 

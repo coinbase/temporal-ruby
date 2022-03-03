@@ -2,7 +2,7 @@ require 'temporal/workflow/execution_info'
 
 describe Temporal::Workflow::ExecutionInfo do
   subject { described_class.generate_from(api_info) }
-  let(:api_info) { Fabricate(:api_workflow_execution_info) }
+  let(:api_info) { Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '') }
 
   describe '.generate_for' do
 
@@ -26,6 +26,8 @@ describe Temporal::Workflow::ExecutionInfo do
     let(:api_info) do
       Fabricate(
         :api_workflow_execution_info,
+        workflow: 'TestWorkflow',
+        workflow_id: '',
         status: Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_TERMINATED
       )
     end
