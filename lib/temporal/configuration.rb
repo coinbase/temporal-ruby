@@ -8,7 +8,7 @@ require 'temporal/converter_wrapper'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :converter, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
@@ -84,7 +84,8 @@ module Temporal
       Connection.new(
         type: connection_type,
         host: host,
-        port: port
+        port: port,
+        converter: converter
       ).freeze
     end
 

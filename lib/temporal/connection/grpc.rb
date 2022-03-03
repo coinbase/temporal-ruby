@@ -8,13 +8,10 @@ require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
     class GRPC
-      include Concerns::Payloads
-
       WORKFLOW_ID_REUSE_POLICY = {
         allow_failed: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
         allow: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
@@ -30,9 +27,10 @@ module Temporal
         max_page_size: 100
       }.freeze
 
-      def initialize(host, port, identity, options = {})
+      def initialize(host, port, identity, converter, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
+        @converter = converter
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -102,17 +100,17 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporal::Api::Common::V1::Header.new(
-            fields: to_payload_map(headers || {})
+            fields: converter.to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
           memo: Temporal::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           )
         )
 
@@ -141,7 +139,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -224,7 +222,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -239,7 +237,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          result: to_result_payloads(result),
+          result: converter.to_result_payloads(result),
         )
         client.respond_activity_task_completed(request)
       end
@@ -251,7 +249,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: to_result_payloads(result)
+          result: converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -282,7 +280,7 @@ module Temporal
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -304,7 +302,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: to_signal_payloads(input),
+          input: converter.to_signal_payloads(input),
           identity: identity
         )
         client.signal_workflow_execution(request)
@@ -327,9 +325,9 @@ module Temporal
         memo: nil
       )
         proto_header_fields = if headers.nil?
-            to_payload_map({})
+            converter.to_payload_map({})
         elsif headers.class == Hash
-            to_payload_map(headers)
+            converter.to_payload_map(headers)
         else
           # Preserve backward compatability for headers specified using proto objects
           warn '[DEPRECATION] Specify headers using a hash rather than protobuf objects'
@@ -346,7 +344,7 @@ module Temporal
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
@@ -356,9 +354,9 @@ module Temporal
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
-          signal_input: to_signal_payloads(signal_input),
+          signal_input: converter.to_signal_payloads(signal_input),
           memo: Temporal::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
         )
 
@@ -400,7 +398,7 @@ module Temporal
             run_id: run_id,
           ),
           reason: reason,
-          details: to_details_payloads(details)
+          details: converter.to_details_payloads(details)
         )
 
         client.terminate_workflow_execution(request)
@@ -495,7 +493,7 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :converter, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
