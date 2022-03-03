@@ -26,4 +26,30 @@ describe Temporal::Configuration do
       expect(timeouts[:heartbeat]).to be(nil)
     end
   end
+
+  describe '#converter' do
+    it 'wraps the provided converter' do
+      converter_wrapper = subject.converter
+
+      expect(converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(converter_wrapper.send(:converter)).to eq(described_class::DEFAULT_CONVERTER)
+    end
+  end
+
+  describe '#converter=' do
+    let(:converter) { instance_double(Temporal::Connection::Converter::Composite) }
+
+    it 'resets the wrapper when converter has changed' do
+      old_converter_wrapper = subject.converter
+
+      expect(old_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(old_converter_wrapper.send(:converter)).to eq(described_class::DEFAULT_CONVERTER)
+
+      subject.converter = converter
+      new_converter_wrapper = subject.converter
+
+      expect(new_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(new_converter_wrapper.send(:converter)).to eq(converter)
+    end
+  end
 end

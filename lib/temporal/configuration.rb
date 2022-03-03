@@ -4,6 +4,7 @@ require 'temporal/connection/converter/payload/nil'
 require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
 require 'temporal/connection/converter/composite'
+require 'temporal/converter_wrapper'
 
 module Temporal
   class Configuration
@@ -11,7 +12,6 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_writer :converter
     attr_accessor :connection_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
@@ -72,7 +72,12 @@ module Temporal
     end
 
     def converter
-      @converter
+      @converter_wrapper ||= ConverterWrapper.new(@converter)
+    end
+
+    def converter=(new_converter)
+      @converter = new_converter
+      @converter_wrapper = nil
     end
 
     def for_connection
