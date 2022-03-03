@@ -17,17 +17,13 @@ describe 'Temporal.register_namespace' do
 
     while found_namespace.nil?
       result = Temporal.list_namespaces(page_size: 100, next_page_token: next_page_token)
-      result.namespaces.each do |namespace|
-        if namespace.namespace_info.name == name
-          found_namespace = namespace
-          break
-        end
+      found_namespace = result.namespaces.find do |namespace|
+        namespace.namespace_info.name == name
       end
 
-      if result.next_page_token == ''
-        break
-      else
-        next_page_token = result.next_page_token
+      break if result.next_page_token == ''
+
+      next_page_token = result.next_page_token
       end
     end
 
