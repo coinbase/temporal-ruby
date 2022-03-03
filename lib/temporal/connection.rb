@@ -13,7 +13,7 @@ module Temporal
       credentials = configuration.credentials
       identity = configuration.identity
 
-      connection_class.new(host, port, identity, credentials)
+      connection_class.new(host, port, identity, credentials, configuration.converter)
     end
   end
 end

@@ -13,7 +13,7 @@ require 'temporal/converter_wrapper'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :converter, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers, :capabilities
@@ -130,7 +130,8 @@ module Temporal
         host: host,
         port: port,
         credentials: credentials,
-        identity: identity || default_identity
+        identity: identity || default_identity,
+        converter: converter
       ).freeze
     end
 
