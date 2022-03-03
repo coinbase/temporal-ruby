@@ -1,17 +1,14 @@
 require 'temporal/errors'
-require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
     class Errors
-      extend Concerns::Payloads
-
       # Convert a failure returned from the server to an Error to raise to the client
       # failure: Temporal::Api::Failure::V1::Failure
-      def self.generate_error(failure, default_exception_class = StandardError)
+      def self.generate_error(failure, converter, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
-          message = from_details_payloads(failure.application_failure_info.details)
+          message = converter.from_details_payloads(failure.application_failure_info.details)
 
           exception_class = safe_constantize(failure.application_failure_info.type)
           if exception_class.nil?
@@ -47,7 +44,7 @@ module Temporal
           TimeoutError.new("Timeout type: #{failure.timeout_failure_info.timeout_type.to_s}")
         when :canceled_failure_info
           # TODO: Distinguish between different entity cancellations
-          StandardError.new(from_payloads(failure.canceled_failure_info.details))
+          StandardError.new(converter.from_payloads(failure.canceled_failure_info.details))
         else
           StandardError.new(failure.message)
         end

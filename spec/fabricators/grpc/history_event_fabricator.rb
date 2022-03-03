@@ -1,8 +1,5 @@
 require 'securerandom'
-
-class TestSerializer
-  extend Temporal::Concerns::Payloads
-end
+require 'temporal/configuration'
 
 Fabricator(:api_history_event, from: Temporal::Api::History::V1::HistoryEvent) do
   event_id { 1 }
@@ -130,7 +127,7 @@ Fabricator(:api_activity_task_canceled_event, from: :api_history_event) do
   event_type { Temporal::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_CANCELED }
   activity_task_canceled_event_attributes do |attrs|
     Temporal::Api::History::V1::ActivityTaskCanceledEventAttributes.new(
-      details: TestSerializer.to_details_payloads('ACTIVITY_ID_NOT_STARTED'),
+      details: Temporal::Configuration.new.converter.to_details_payloads('ACTIVITY_ID_NOT_STARTED'),
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: nil,
       identity: 'test-worker@test-host'
