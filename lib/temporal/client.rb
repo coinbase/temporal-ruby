@@ -216,7 +216,7 @@ module Temporal
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        return ResultConverter.from_result_payloads(payloads)
+        return config.converter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -306,7 +306,7 @@ module Temporal
         run_id: run_id
       )
 
-      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info)
+      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info, config.converter)
     end
 
     # Manually complete an activity
@@ -371,11 +371,6 @@ module Temporal
 
       fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
     end
-
-    class ResultConverter
-      extend Concerns::Payloads
-    end
-    private_constant :ResultConverter
 
     private
 

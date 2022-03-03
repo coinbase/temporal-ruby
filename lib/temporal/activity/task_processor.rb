@@ -2,19 +2,16 @@ require 'temporal/metadata'
 require 'temporal/error_handler'
 require 'temporal/errors'
 require 'temporal/activity/context'
-require 'temporal/concerns/payloads'
 require 'temporal/connection/retryer'
 require 'temporal/connection'
 
 module Temporal
   class Activity
     class TaskProcessor
-      include Concerns::Payloads
-
       def initialize(task, namespace, activity_lookup, middleware_chain, config)
         @task = task
         @namespace = namespace
-        @metadata = Metadata.generate_activity_metadata(task, namespace)
+        @metadata = Metadata.generate_activity_metadata(task, namespace, config.converter)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
@@ -35,7 +32,7 @@ module Temporal
         end
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, from_payloads(task.input))
+          activity_class.execute_in_context(context, config.converter.from_payloads(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually

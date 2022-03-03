@@ -1,4 +1,3 @@
-require 'temporal/concerns/payloads'
 require 'temporal/workflow/status'
 
 module Temporal
@@ -16,7 +15,7 @@ module Temporal
         Temporal::Workflow::Status::TIMED_OUT,
       ]
 
-      def self.generate_from(response)
+      def self.generate_from(response, converter)
         new(
           workflow: response.type.name,
           workflow_id: response.execution.workflow_id,
@@ -25,8 +24,8 @@ module Temporal
           close_time: response.close_time&.to_time,
           status: Temporal::Workflow::Status::API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
-          memo: self.from_payload_map(response.memo.fields),
-          search_attributes: self.from_payload_map(response.search_attributes.indexed_fields),
+          memo: converter.from_payload_map(response.memo.fields),
+          search_attributes: converter.from_payload_map(response.search_attributes.indexed_fields),
         ).freeze
       end
 

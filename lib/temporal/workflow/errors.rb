@@ -1,4 +1,5 @@
 require 'temporal/errors'
+require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
