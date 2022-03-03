@@ -1,13 +1,10 @@
 require 'temporal/connection/serializer/base'
 require 'temporal/connection/serializer/retry_policy'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
     module Serializer
       class StartChildWorkflow < Base
-        include Concerns::Payloads
-
         def to_proto
           Temporal::Api::Command::V1::Command.new(
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
@@ -17,11 +14,11 @@ module Temporal
                 workflow_id: object.workflow_id.to_s,
                 workflow_type: Temporal::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
                 task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
-                input: to_payloads(object.input),
+                input: converter.to_payloads(object.input),
                 workflow_execution_timeout: object.timeouts[:execution],
                 workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],
-                retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
+                retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy, converter).to_proto,
                 header: serialize_headers(object.headers),
                 memo: serialize_memo(object.memo),
               )
@@ -33,13 +30,13 @@ module Temporal
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Api::Common::V1::Header.new(fields: to_payload_map(headers))
+          Temporal::Api::Common::V1::Header.new(fields: converter.to_payload_map(headers))
         end
 
         def serialize_memo(memo)
           return unless memo
 
-          Temporal::Api::Common::V1::Memo.new(fields: to_payload_map(memo))
+          Temporal::Api::Common::V1::Memo.new(fields: converter.to_payload_map(memo))
         end
       end
     end

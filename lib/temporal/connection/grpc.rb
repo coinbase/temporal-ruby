@@ -196,7 +196,7 @@ module Temporal
           identity: identity,
           task_token: task_token,
           cause: cause,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, converter).to_proto
         )
         client.respond_workflow_task_failed(request)
       end
@@ -259,7 +259,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, converter).to_proto
         )
         client.respond_activity_task_failed(request)
       end
@@ -271,7 +271,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, converter).to_proto
         )
         client.respond_activity_task_failed_by_id(request)
       end

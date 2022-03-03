@@ -2,18 +2,20 @@ require 'temporal/connection/serializer/continue_as_new'
 require 'temporal/workflow/command'
 
 describe Temporal::Connection::Serializer::ContinueAsNew do
+  let(:config) { Temporal::Configuration.new }
+
   describe 'to_proto' do
     it 'produces a protobuf' do
       command = Temporal::Workflow::Command::ContinueAsNew.new(
         workflow_type: 'my-workflow-type',
         task_queue: 'my-task-queue',
         input: ['one', 'two'],
-        timeouts: Temporal.configuration.timeouts,
+        timeouts: config.timeouts,
         headers: {'foo-header': 'bar'},
         memo: {'foo-memo': 'baz'},
       )
 
-      result = described_class.new(command).to_proto
+      result = described_class.new(command, config.converter).to_proto
 
       expect(result).to be_an_instance_of(Temporal::Api::Command::V1::Command)
       expect(result.command_type).to eql(
