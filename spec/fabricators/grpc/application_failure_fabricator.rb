@@ -1,7 +1,5 @@
-require 'temporal/concerns/payloads'
-class TestDeserializer
-  include Temporal::Concerns::Payloads
-end
+require 'temporal/configuration'
+
 # Simulates Temporal::Connection::Serializer::Failure
 Fabricator(:api_application_failure, from: Temporalio::Api::Failure::V1::Failure) do
   transient :error_class, :backtrace
@@ -10,7 +8,7 @@ Fabricator(:api_application_failure, from: Temporalio::Api::Failure::V1::Failure
   application_failure_info do |attrs|
     Temporalio::Api::Failure::V1::ApplicationFailureInfo.new(
       type: attrs[:error_class],
-      details: TestDeserializer.new.to_details_payloads(attrs[:message]),
+      details: Temporal::Configuration.new.converter.to_details_payloads(attrs[:message]),
     )
   end
 end

@@ -257,7 +257,7 @@ module Temporal
       when 'WORKFLOW_EXECUTION_CANCELED'
         raise Temporal::WorkflowCanceled
       when 'WORKFLOW_EXECUTION_FAILED'
-        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure)
+        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure, config.converter)
       when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
         new_run_id = closed_event.attributes.new_execution_run_id
         # Throw to let the caller know they're not getting the result
