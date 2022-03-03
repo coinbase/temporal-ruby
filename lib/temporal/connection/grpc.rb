@@ -37,7 +37,7 @@ module Temporal
           description: description,
           is_global_namespace: global,
           workflow_execution_retention_period: Google::Protobuf::Duration.new(
-            seconds: retention_period * 24 * 60 * 60
+            seconds: (retention_period * 24 * 60 * 60).to_i
           ),
           data: namespace_data,
         )
