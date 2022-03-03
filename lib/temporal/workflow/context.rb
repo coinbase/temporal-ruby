@@ -155,6 +155,10 @@ module Temporal
         result
       end
 
+      def replay?
+        state_manager.replay?
+      end
+
       def sleep(timeout)
         start_timer(timeout).wait
       end

@@ -240,5 +240,11 @@ describe Temporal::Testing::LocalWorkflowContext do
         end.to raise_error(ArgumentError, 'Cannot upsert an empty hash for search_attributes, as this would do nothing.')
       end
     end
+
+    describe '#replay?' do
+      it 'is always false' do
+        expect(workflow_context.replay?).to be(false)
+      end
+    end
   end
 end
