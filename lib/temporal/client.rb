@@ -132,7 +132,7 @@ module Temporal
     #
     # @param name [String] name of the new namespace
     # @param description [String] optional namespace description
-    # @param is_global [Boolean] used to distinguish local namespaces from global namespaces
+    # @param is_global [Boolean] used to distinguish local namespaces from global namespaces (https://docs.temporal.io/docs/server/namespaces/#global-namespaces)
     # @param retention_period_days [Int] optional  value which specifies how long Temporal will keep workflows after completing
     # @param namespace_data [Hash] optional key-value map for any customized purpose that can be retreived with describe_namespace
     def register_namespace(name, description = nil, is_global: false, retention_period_days:  10, data: nil)
