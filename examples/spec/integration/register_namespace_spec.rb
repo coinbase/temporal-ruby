@@ -6,30 +6,27 @@ describe 'Temporal.register_namespace' do
     name = "test_namespace_#{SecureRandom.uuid}"
     description = 'this is the description'
     retention_period = 30
-    namespace_data = { test: 'value' }
+    data = { test: 'value' }
 
-    result = Temporal.register_namespace(name, description, retention_period: retention_period, namespace_data: namespace_data)
-    expect(result).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RegisterNamespaceResponse)
+    Temporal.register_namespace(name, description, retention_period: retention_period, data: data)
 
-    # fetch the namespace from Temporal and check it exists and has the correct settings
-    found_namespace = nil
-    next_page_token = ''
-
-    while found_namespace.nil?
-      result = Temporal.list_namespaces(page_size: 100, next_page_token: next_page_token)
-      found_namespace = result.namespaces.find do |namespace|
-        namespace.namespace_info.name == name
+    # fetch the namespace from Temporal and check it exists and has the correct settings 
+    # (need to wait a few seconds for temporal to catch up so try a few times)
+    attempts = 0
+    while attempts < 25 do
+      attempts += 1
+      
+      begin
+        result = Temporal.describe_namespace(name)
+         
+        expect(result.namespace_info.name).to eq(name)
+        expect(result.namespace_info.data).to eq(data)
+        expect(result.config.workflow_execution_retention_ttl.seconds).to eq(retention_period * 24 * 60 * 60)
+        break
+      rescue GRPC::NotFound
+        sleep 2
       end
-
-      break if result.next_page_token == ''
-
-      next_page_token = result.next_page_token
     end
-
-    expect(found_namespace).to_not eq(nil)
-    expect(found_namespace.namespace_info.name).to eq(name)
-    expect(found_namespace.namespace_info.data).to eq(namespace_data)
-    expect(found_namespace.config.workflow_execution_retention_ttl.seconds).to eq(retention_period * 24 * 60 * 60)
   end
 
   it 'errors if attempting to register a namespace with the same name' do

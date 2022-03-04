@@ -31,7 +31,7 @@ module Temporal
         @poll_request = nil
       end
 
-      def register_namespace(name:, description: nil, global: false, retention_period: 10, namespace_data: nil)
+      def register_namespace(name:, description: nil, global: false, retention_period: 10, data: nil)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           namespace: name,
           description: description,
@@ -39,7 +39,7 @@ module Temporal
           workflow_execution_retention_period: Google::Protobuf::Duration.new(
             seconds: (retention_period * 24 * 60 * 60).to_i
           ),
-          data: namespace_data,
+          data: data,
         )
         client.register_namespace(request)
       rescue ::GRPC::AlreadyExists => e
