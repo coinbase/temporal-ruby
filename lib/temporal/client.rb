@@ -442,7 +442,7 @@ module Temporal
       end
 
       executions.map do |raw_execution|
-        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
+        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution, config.converter)
       end
     end
   end
