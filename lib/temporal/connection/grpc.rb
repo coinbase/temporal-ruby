@@ -185,7 +185,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command, converter) }
         )
         client.respond_workflow_task_completed(request)
       end

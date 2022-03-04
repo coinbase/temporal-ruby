@@ -10,7 +10,7 @@ module Temporal
             command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_FAIL_WORKFLOW_EXECUTION,
             fail_workflow_execution_command_attributes:
               Temporal::Api::Command::V1::FailWorkflowExecutionCommandAttributes.new(
-                failure: Failure.new(object.exception).to_proto
+                failure: Failure.new(object.exception, converter).to_proto
               )
           )
         end
