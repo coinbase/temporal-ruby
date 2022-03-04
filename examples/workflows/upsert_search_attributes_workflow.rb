@@ -1,3 +1,4 @@
+require 'activities/hello_world_activity'
 class UpsertSearchAttributesWorkflow < Temporal::Workflow
   # time_value example: use this format: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
   def execute(string_value, bool_value, float_value, int_value, time_value)
@@ -13,6 +14,8 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
       'CustomDatetimeField' => time_value,
     }
     workflow.upsert_search_attributes(attributes)
+
+    HelloWorldActivity.execute!("Moon")
     attributes
   end
 end
