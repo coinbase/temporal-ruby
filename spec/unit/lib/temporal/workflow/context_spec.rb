@@ -37,15 +37,15 @@ describe Temporal::Workflow::Context do
     end
   end
 
-  describe '#replay?' do
+  describe '#history_replaying?' do
     it 'when true' do
       expect(state_manager).to receive(:replay?).and_return(true)
-      expect(workflow_context.replay?).to be(true)
+      expect(workflow_context.history_replaying?).to be(true)
     end
 
     it 'when false' do
       expect(state_manager).to receive(:replay?).and_return(false)
-      expect(workflow_context.replay?).to be(false)
+      expect(workflow_context.history_replaying?).to be(false)
     end
   end
 end

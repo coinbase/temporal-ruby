@@ -241,9 +241,9 @@ describe Temporal::Testing::LocalWorkflowContext do
       end
     end
 
-    describe '#replay?' do
+    describe '#history_replaying?' do
       it 'is always false' do
-        expect(workflow_context.replay?).to be(false)
+        expect(workflow_context.history_replaying?).to be(false)
       end
     end
   end

@@ -155,7 +155,9 @@ module Temporal
         result
       end
 
-      def replay?
+      # Returns true if workflow execution is currently in the history replay phase. No new
+      # commands will be issued to start activities or timers, or to create history entries.
+      def history_replaying?
         state_manager.replay?
       end
 

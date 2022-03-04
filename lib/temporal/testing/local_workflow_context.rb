@@ -152,7 +152,7 @@ module Temporal
         block.call
       end
 
-      def replay?
+      def history_replaying?
         # Unit tests don't ever replay
         false
       end
