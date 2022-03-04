@@ -284,6 +284,7 @@ module Temporal
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
           # no need to track state; this is just a synchronous API call.
+          discard_command(target)
 
         else
           raise UnsupportedEvent, event.type
