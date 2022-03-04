@@ -227,8 +227,8 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
-          query_results: query_results.transform_values { |value| Serializer.serialize(value) },
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command, converter) },
+          query_results: query_results.transform_values { |value| Serializer.serialize(value, converter) },
           binary_checksum: binary_checksum,
           sdk_metadata: if new_sdk_flags_used.any?
                           Temporalio::Api::Sdk::V1::WorkflowTaskCompletedMetadata.new(
