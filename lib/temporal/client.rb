@@ -592,5 +592,32 @@ module Temporal
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
 
+    def fetch_executions(status, request_options)
+      api_method =
+        if status == :open
+          :list_open_workflow_executions
+        else
+          :list_closed_workflow_executions
+        end
+
+      executions = []
+      next_page_token = nil
+
+      loop do
+        response = connection.public_send(
+          api_method,
+          **request_options.merge(next_page_token: next_page_token)
+        )
+
+        executions += Array(response.executions)
+        next_page_token = response.next_page_token
+
+        break if next_page_token.to_s.empty?
+      end
+
+      executions.map do |raw_execution|
+        Temporalio::Workflow::ExecutionInfo.generate_from(raw_execution, config.converter)
+      end
+    end
   end
 end
