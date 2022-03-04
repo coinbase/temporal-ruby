@@ -13,7 +13,7 @@ describe 'Temporal.register_namespace' do
     # fetch the namespace from Temporal and check it exists and has the correct settings 
     # (need to wait a few seconds for temporal to catch up so try a few times)
     attempts = 0
-    while attempts < 25 do
+    while attempts < 30 do
       attempts += 1
       
       begin
@@ -24,7 +24,7 @@ describe 'Temporal.register_namespace' do
         expect(result.config.workflow_execution_retention_ttl.seconds).to eq(retention_period * 24 * 60 * 60)
         break
       rescue GRPC::NotFound
-        sleep 2
+        sleep 0.5
       end
     end
   end
