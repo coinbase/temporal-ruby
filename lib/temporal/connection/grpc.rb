@@ -1,10 +1,13 @@
 require 'grpc'
+require 'time'
 require 'google/protobuf/well_known_types'
 require 'securerandom'
+require 'gen/temporal/api/filter/v1/message_pb'
+require 'gen/temporal/api/workflowservice/v1/service_services_pb'
+require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
-require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -23,12 +26,17 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
-      def initialize(host, port, identity)
+      DEFAULT_OPTIONS = {
+        max_page_size: 100
+      }.freeze
+
+      def initialize(host, port, identity, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
+        @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def register_namespace(name:, description: nil, global: false, retention_period: 10)
@@ -398,12 +406,29 @@ module Temporal
         client.terminate_workflow_execution(request)
       end
 
-      def list_open_workflow_executions
-        raise NotImplementedError
+      def list_open_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil)
+        request = Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          maximum_page_size: options[:max_page_size],
+          next_page_token: next_page_token,
+          start_time_filter: serialize_time_filter(from, to),
+          execution_filter: serialize_execution_filter(workflow_id),
+          type_filter: serialize_type_filter(workflow)
+        )
+        client.list_open_workflow_executions(request)
       end
 
-      def list_closed_workflow_executions
-        raise NotImplementedError
+      def list_closed_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, status: nil)
+        request = Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          maximum_page_size: options[:max_page_size],
+          next_page_token: next_page_token,
+          start_time_filter: serialize_time_filter(from, to),
+          execution_filter: serialize_execution_filter(workflow_id),
+          type_filter: serialize_type_filter(workflow),
+          status_filter: serialize_status_filter(status)
+        )
+        client.list_closed_workflow_executions(request)
       end
 
       def list_workflow_executions
@@ -470,7 +495,7 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
@@ -482,6 +507,34 @@ module Temporal
 
       def can_poll?
         @poll
+      end
+
+      def serialize_time_filter(from, to)
+        Temporal::Api::Filter::V1::StartTimeFilter.new(
+          earliest_time: from&.to_time,
+          latest_time: to&.to_time
+        )
+      end
+
+      def serialize_execution_filter(value)
+        return unless value
+
+        Temporal::Api::Filter::V1::WorkflowExecutionFilter.new(workflow_id: value)
+      end
+
+      def serialize_type_filter(value)
+        return unless value
+
+        Temporal::Api::Filter::V1::WorkflowTypeFilter.new(name: value)
+      end
+
+      def serialize_status_filter(value)
+        return unless value
+
+        sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
+        status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
+        
+        Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end
   end

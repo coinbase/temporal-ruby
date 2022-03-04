@@ -1,4 +1,5 @@
 require 'temporal/testing/future_registry'
+require 'temporal/workflow/status'
 
 module Temporal
   module Testing
@@ -6,7 +7,7 @@ module Temporal
       attr_reader :status, :search_attributes
 
       def initialize
-        @status = Workflow::ExecutionInfo::RUNNING_STATUS
+        @status = Workflow::Status::RUNNING
         @futures = FutureRegistry.new
         @search_attributes = {}
       end
@@ -18,9 +19,9 @@ module Temporal
 
       def resume
         fiber.resume
-        @status = Workflow::ExecutionInfo::COMPLETED_STATUS unless fiber.alive?
+        @status = Workflow::Status::COMPLETED unless fiber.alive?
       rescue StandardError
-        @status = Workflow::ExecutionInfo::FAILED_STATUS
+        @status = Workflow::Status::FAILED
       end
 
       def register_future(token, future)

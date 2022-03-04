@@ -183,7 +183,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -191,7 +191,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -199,7 +199,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it { is_expected.to be_a(String) }
           end
@@ -215,7 +215,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -223,13 +223,13 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it { is_expected.to be_a(String) }
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it { is_expected.to be_a(String) }
           end
@@ -245,7 +245,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -253,7 +253,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -261,7 +261,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
