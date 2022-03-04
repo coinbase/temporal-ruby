@@ -5,7 +5,7 @@ orbs:
 jobs:
   test_gem:
     docker:
-      - image: circleci/ruby:3.1.1-stretch-node
+      - image: cimg/ruby:3.0.3
     executor: ruby/default
     steps:
       - checkout
@@ -16,7 +16,7 @@ jobs:
 
   test_examples:
     docker:
-      - image: circleci/ruby:3.1.1-stretch-node
+      - image: cimg/ruby:3.0.3
       - image: circleci/postgres:alpine
         name: postgres
         environment:
