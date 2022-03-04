@@ -1,6 +1,7 @@
 require 'temporal/testing'
 require 'temporal/workflow'
 require 'temporal/api/errordetails/v1/message_pb'
+require 'time'
 
 describe Temporal::Testing::LocalWorkflowContext do
   let(:workflow_id) { 'workflow_id_1' }
@@ -194,6 +195,37 @@ describe Temporal::Testing::LocalWorkflowContext do
 
       fiber.resume # start running
       expect(exited).to eq(true)
+    end
+
+    describe '#upsert_search_attributes' do
+      it 'can be run' do
+        workflow_context.upsert_search_attributes({'CustomKeywordField' => 'moo'})
+      end
+
+      it 'does not accept nil' do
+        expect do
+          workflow_context.upsert_search_attributes(nil)
+        end.to raise_error(ArgumentError, 'search_attributes cannot be nil')
+      end
+
+      it 'requires a hash' do
+        expect do
+          workflow_context.upsert_search_attributes(['array_not_supported'])
+        end.to raise_error(ArgumentError, 'for search_attributes, expecting a Hash, not Array')
+      end
+
+      it 'requires a non-empty hash' do
+        expect do
+          workflow_context.upsert_search_attributes({})
+        end.to raise_error(ArgumentError, 'Cannot upsert an empty hash for search_attributes, as this would do nothing.')
+      end
+
+      it 'converts a Time to the ISO8601 UTC format expected by the Temporal server' do
+        time = Time.now
+        expect(
+          workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
+        ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
+      end
     end
   end
 end

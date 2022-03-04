@@ -283,7 +283,7 @@ module Temporal
           dispatch(target, 'completed')
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
-          # todo
+          # no need to track state; this is just a synchronous API call.
 
         else
           raise UnsupportedEvent, event.type
@@ -307,6 +307,8 @@ module Temporal
             History::EventTarget::WORKFLOW_TYPE
           when Command::StartChildWorkflow
             History::EventTarget::CHILD_WORKFLOW_TYPE
+          when Command::UpsertSearchAttributes
+            History::EventTarget::UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE
           when Command::SignalExternalWorkflow
             History::EventTarget::EXTERNAL_WORKFLOW_TYPE
           end
