@@ -1,5 +1,6 @@
 require 'workflows/hello_world_workflow'
 require 'lib/cryptconverter'
+require 'grpc/errors'
 
 describe 'Converter', :integration do
   around(:each) do |example|
@@ -23,7 +24,11 @@ describe 'Converter', :integration do
   it 'can encrypt payloads' do
     workflow_id, run_id = run_workflow(HelloWorldWorkflow, 'Tom')
 
-    wait_for_workflow_completion(workflow_id, run_id)
+    begin
+      wait_for_workflow_completion(workflow_id, run_id)
+    rescue GRPC::DeadlineExceeded
+      raise "Encrypted-payload workflow didn't run.  Make sure you run USE_ENCRYPTION=1 ./bin/worker and try again."
+    end
 
     result = fetch_history(workflow_id, run_id)
 
