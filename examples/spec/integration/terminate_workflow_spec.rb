@@ -7,7 +7,7 @@ describe 'Temporal.terminate_workflow' do
       TimeoutWorkflow,
       1, # sleep long enough to be sure I can cancel in time.
       1,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
 
     Temporal.terminate_workflow(workflow_id)
