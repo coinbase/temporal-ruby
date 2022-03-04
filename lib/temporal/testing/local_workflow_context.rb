@@ -152,6 +152,11 @@ module Temporal
         block.call
       end
 
+      def history_replaying?
+        # Unit tests don't ever replay
+        false
+      end
+
       def sleep(timeout)
         ::Kernel.sleep timeout
       end

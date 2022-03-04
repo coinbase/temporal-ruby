@@ -35,6 +35,17 @@ describe Temporal::Workflow::Context do
         .with an_instance_of(Temporal::Workflow::Command::UpsertSearchAttributes)
       workflow_context.upsert_search_attributes({'CustomIntField' => 5})
     end
+  end
 
+  describe '#history_replaying?' do
+    it 'when true' do
+      expect(state_manager).to receive(:replay?).and_return(true)
+      expect(workflow_context.history_replaying?).to be(true)
+    end
+
+    it 'when false' do
+      expect(state_manager).to receive(:replay?).and_return(false)
+      expect(workflow_context.history_replaying?).to be(false)
+    end
   end
 end
