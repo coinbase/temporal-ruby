@@ -307,7 +307,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:register_namespace)
-        .with(name: 'new-namespace', description: nil, global: false, data: nil, retention_period: 10)
+        .with(name: 'new-namespace', description: nil, is_global: false, data: nil, retention_period_days: 10)
     end
 
     it 'registers namespace with the specified name and description' do
@@ -315,7 +315,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:register_namespace)
-        .with(name: 'new-namespace', description: 'namespace description', global: false, data: nil, retention_period: 10)
+        .with(name: 'new-namespace', description: 'namespace description', is_global: false, data: nil, retention_period_days: 10)
     end
   end
 
