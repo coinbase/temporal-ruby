@@ -35,6 +35,10 @@ module Temporal
           self.status == status
         end
       end
+
+      def closed?
+        !running?
+      end
     end
   end
 end

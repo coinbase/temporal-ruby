@@ -53,4 +53,33 @@ describe Temporal::Workflow::ExecutionInfo do
       expect(subject).not_to be_timed_out
     end
   end
+
+  describe '#closed?' do
+    Temporal::Workflow::Status::API_STATUS_MAP.keys.select { |x| x != :WORKFLOW_EXECUTION_STATUS_RUNNING }.each do |status|
+      context "when status is #{status}" do
+          let(:api_info) do
+            Fabricate(
+              :api_workflow_execution_info,
+              workflow: 'TestWorkflow',
+              workflow_id: '',
+              status: Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(status)
+            )
+          end
+          it { is_expected.to be_closed }
+        end
+      end
+
+    context "when status is RUNNING" do
+      let(:api_info) do
+        Fabricate(
+          :api_workflow_execution_info,
+          workflow: 'TestWorkflow',
+          workflow_id: '',
+          status: Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(:WORKFLOW_EXECUTION_STATUS_RUNNING)
+        )
+      end
+
+      it { is_expected.not_to be_closed }
+    end
+  end
 end
