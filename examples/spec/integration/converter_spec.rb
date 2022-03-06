@@ -67,8 +67,6 @@ describe 'Converter', :integration do
     completion_event = events[:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED].first
     result = completion_event.workflow_execution_completed_event_attributes.result
 
-    payload_codec = Temporal.configuration.payload_codec
-
-    expect(payload_codec.decodes(result).payloads.first.data).to eq('"Hello World, Tom"')
+    expect(Temporal.configuration.converter.from_payloads(result)&.first).to eq('Hello World, Tom')
   end
 end
