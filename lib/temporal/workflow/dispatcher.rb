@@ -16,13 +16,19 @@ module Temporal
       TARGET_WILDCARD = '*'.freeze
 
       EventStruct = Struct.new(:event_name, :handler, :handler_name)
+      DuplicateNamedHandlerRegistrationError = Class.new(StandardError)
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
       end
 
       def register_handler(target, event_name, handler_name: nil, &handler)
+        if handler_name && find_named_handler(target, event_name, handler_name)
+          raise DuplicateNamedHandlerRegistrationError.new("Duplicate registration for handler_name #{handler_name}")
+        end
+
         handlers[target] << EventStruct.new(event_name, handler, handler_name)
+        self
       end
 
       def dispatch(target, event_name, args = nil, handler_name: nil)
@@ -37,9 +43,7 @@ module Temporal
 
       def handlers_for(target, event_name, handler_name)
         if handler_name
-          struct = handlers[target]
-            .find { |event_struct| event_struct.event_name == event_name && event_struct.handler_name == handler_name }
-
+          struct = find_named_handler(target, event_name, handler_name)
           return [struct.handler] if struct
         end
 
@@ -50,6 +54,11 @@ module Temporal
           .concat(handlers[TARGET_WILDCARD])
           .select { |event_struct| event_struct.event_name == event_name || event_struct.event_name == WILDCARD }
           .map(&:handler)
+      end
+
+      def find_named_handler(target, event_name, handler_name)
+        handlers[target]
+          .find { |event_struct| event_struct.event_name == event_name && event_struct.handler_name == handler_name }
       end
     end
   end
