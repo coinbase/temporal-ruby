@@ -280,11 +280,23 @@ module Temporal
         state_manager.local_time
       end
 
-      def on_signal(&block)
+      # Define a signal handler to receive signals onto the workflow. When
+      # +name+ is defined, this creates a named signal handler which will be
+      # invoked whenever a signal named +name+ is received. A handler without
+      # a set name (defaults to nil) will be the default handler and will receive
+      # all signals that do not match a named signal handler.
+      #
+      # @param name [String, Symbol, nil] an optional signal name; converted to a String
+      def on_signal(handler_name=nil, &block)
         target = History::EventTarget.workflow
 
-        dispatcher.register_handler(target, 'signaled') do |signal, input|
-          call_in_fiber(block, signal, input)
+        dispatcher.register_handler(target, 'signaled', handler_name: handler_name) do |signal, input|
+          if handler_name
+            # do not pass signal name when triggering a named handler
+            call_in_fiber(block, input)
+          else
+            call_in_fiber(block, signal, input)
+          end
         end
       end
 

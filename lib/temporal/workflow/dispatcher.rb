@@ -1,19 +1,32 @@
 module Temporal
   class Workflow
+    # This provides a generic event dispatcher mechanism. There are two main entry
+    # points to this class, #register_handler and #dispatch.
+    #
+    # A handler may be associated with a specific event name so when that event occurs
+    # elsewhere in the system we may dispatch the event and execute the handler. By default
+    # we do a simple name <=> handler association.
+    #
+    # Optionally, we may register a named handler that is triggered when an event _and
+    # an optional handler_name key_ are provided. When this more specific match
+    # fails, we fall back to matching just against +event_name+.
+    #
     class Dispatcher
       WILDCARD = '*'.freeze
       TARGET_WILDCARD = '*'.freeze
+
+      EventStruct = Struct.new(:event_name, :handler, :handler_name)
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
       end
 
-      def register_handler(target, event_name, &handler)
-        handlers[target] << [event_name, handler]
+      def register_handler(target, event_name, handler_name: nil, &handler)
+        handlers[target] << EventStruct.new(event_name, handler, handler_name)
       end
 
-      def dispatch(target, event_name, args = nil)
-        handlers_for(target, event_name).each do |handler|
+      def dispatch(target, event_name, args = nil, handler_name: nil)
+        handlers_for(target, event_name, handler_name).each do |handler|
           handler.call(*args)
         end
       end
@@ -22,11 +35,21 @@ module Temporal
 
       attr_reader :handlers
 
-      def handlers_for(target, event_name)
+      def handlers_for(target, event_name, handler_name)
+        if handler_name
+          struct = handlers[target]
+            .find { |event_struct| event_struct.event_name == event_name && event_struct.handler_name == handler_name }
+
+          return [struct.handler] if struct
+        end
+
+        # specific match failed or was not provided, fall back to default behavior
+        # and filter out named handlers
         handlers[target]
+          .select { |event_struct| event_struct.handler_name.nil? }
           .concat(handlers[TARGET_WILDCARD])
-          .select { |(name, _)| name == event_name || name == WILDCARD }
-          .map(&:last)
+          .select { |event_struct| event_struct.event_name == event_name || event_struct.event_name == WILDCARD }
+          .map(&:handler)
       end
     end
   end

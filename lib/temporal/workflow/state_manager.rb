@@ -224,7 +224,7 @@ module Temporal
           handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
+          dispatch(target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input), handler_name: event.attributes.signal_name)
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -317,8 +317,8 @@ module Temporal
         History::EventTarget.new(command_id, target_type)
       end
 
-      def dispatch(target, name, *attributes)
-        dispatcher.dispatch(target, name, attributes)
+      def dispatch(target, name, *attributes, handler_name: nil)
+        dispatcher.dispatch(target, name, attributes, handler_name: handler_name)
       end
 
       def discard_command(target)
