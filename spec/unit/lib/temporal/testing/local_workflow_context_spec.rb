@@ -61,9 +61,16 @@ describe Temporal::Testing::LocalWorkflowContext do
     end
   end
 
+  class MetadataCapturingActivity < Temporal::Activity
+    def execute
+      activity.metadata
+    end
+  end
+
   describe '#execute_activity' do
     describe 'outcome is captured in the future' do
       it 'delay failure' do
+        allow(Temporal::ErrorHandler).to receive(:handle)
         f = workflow_context.execute_activity(TestFailedActivity)
         f.wait
 
@@ -73,6 +80,9 @@ describe Temporal::Testing::LocalWorkflowContext do
 
         expect(f.get).to be_a(RuntimeError)
         expect(f.get.message).to eq('oops')
+
+        expect(Temporal::ErrorHandler).to have_received(:handle)
+          .with(f.get, kind_of(Temporal::Configuration), hash_including(metadata: kind_of(Temporal::Metadata::Activity)))
       end
 
       it 'successful synchronous result' do
@@ -124,7 +134,7 @@ describe Temporal::Testing::LocalWorkflowContext do
   describe '#execute_activity!' do
     it 'immediate failure raises' do
       expect {
-        workflow_context.execute_activity!(TestFailedActivity)
+          workflow_context.execute_activity!(TestFailedActivity)
       }.to raise_error(RuntimeError, 'oops')
     end
 
@@ -136,6 +146,17 @@ describe Temporal::Testing::LocalWorkflowContext do
     it 'can heartbeat' do
       # Heartbeat doesn't do anything in local mode, but at least it can be called.
       workflow_context.execute_activity!(TestHeartbeatingActivity)
+    end
+
+    it 'has accurate metadata' do
+      result = workflow_context.execute_activity!(MetadataCapturingActivity)
+      expect(result.attempt).to eq(1)
+      expect(result.headers).to eq({})
+      expect(result.id).to eq(1)
+      expect(result.name).to eq('MetadataCapturingActivity')
+      expect(result.namespace).to eq('default-namespace')
+      expect(result.workflow_id).to eq(workflow_id)
+      expect(result.workflow_run_id).to eq(run_id)
     end
   end
 
@@ -225,6 +246,12 @@ describe Temporal::Testing::LocalWorkflowContext do
         expect(
           workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
         ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
+      end
+    end
+
+    describe '#history_replaying?' do
+      it 'is always false' do
+        expect(workflow_context.history_replaying?).to be(false)
       end
     end
   end

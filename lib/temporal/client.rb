@@ -77,7 +77,7 @@ module Temporal
           headers: execution_options.headers,
           memo: execution_options.memo,
           signal_name: signal_name,
-          signal_input: signal_input
+          signal_input: signal_input,
         )
       end
 
@@ -107,6 +107,7 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
+      memo = options[:memo] || {}
 
       response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
@@ -133,8 +134,11 @@ module Temporal
     #
     # @param name [String] name of the new namespace
     # @param description [String] optional namespace description
-    def register_namespace(name, description = nil)
-      connection.register_namespace(name: name, description: description)
+    # @param is_global [Boolean] used to distinguish local namespaces from global namespaces (https://docs.temporal.io/docs/server/namespaces/#global-namespaces)
+    # @param retention_period_days [Int] optional  value which specifies how long Temporal will keep workflows after completing
+    # @param namespace_data [Hash] optional key-value map for any customized purpose that can be retreived with describe_namespace
+    def register_namespace(name, description = nil, is_global: false, retention_period_days:  10, data: nil)
+      connection.register_namespace(name: name, description: description, is_global: is_global, retention_period_days: retention_period_days, data: data)
     end
 
     # Fetches metadata for a namespace.
@@ -204,6 +208,15 @@ module Temporal
           timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
+        # client timed out
+        closed_event = nil
+      else
+        history = Workflow::History.new(history_response.history.events)
+        closed_event = history.events.first
+        # If this is nil, the server timed out
+      end
+
+      if closed_event.nil?
         message = if timeout 
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
@@ -211,8 +224,6 @@ module Temporal
         end
         raise TimeoutError.new(message)
       end
-      history = Workflow::History.new(history_response.history.events)
-      closed_event = history.events.first
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
@@ -370,6 +381,18 @@ module Temporal
       validate_filter(filter, :status, :workflow, :workflow_id)
 
       fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
+    end
+  
+    def get_cron_schedule(namespace, workflow_id, run_id: nil)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      cron_schedule = history.first_workflow_event.attributes.cron_schedule
+      
+      cron_schedule != '' ? cron_schedule : nil
     end
 
     class ResultConverter

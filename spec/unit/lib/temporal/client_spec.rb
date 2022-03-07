@@ -307,7 +307,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:register_namespace)
-        .with(name: 'new-namespace', description: nil)
+        .with(name: 'new-namespace', description: nil, is_global: false, data: nil, retention_period_days: 10)
     end
 
     it 'registers namespace with the specified name and description' do
@@ -315,7 +315,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:register_namespace)
-        .with(name: 'new-namespace', description: 'namespace description')
+        .with(name: 'new-namespace', description: 'namespace description', is_global: false, data: nil, retention_period_days: 10)
     end
   end
 
@@ -470,8 +470,8 @@ describe Temporal::Client do
     # Unit test, rather than integration test, because we don't support cancellation via the SDK yet.
     # See integration test for other failure conditions.
     it 'raises when the workflow was canceled' do
-      completed_event = Fabricate(:workflow_canceled_event)
-      response = Fabricate(:workflow_execution_history, events: [completed_event])
+      canceled_event = Fabricate(:workflow_canceled_event)
+      response = Fabricate(:workflow_execution_history, events: [canceled_event])
 
       expect(connection)
         .to receive(:get_workflow_execution_history)
@@ -494,8 +494,7 @@ describe Temporal::Client do
       end.to raise_error(Temporal::WorkflowCanceled)
     end
 
-    it 'raises TimeoutError when the server times out' do 
-      response = Fabricate(:workflow_execution_history, events: [])
+    it 'raises TimeoutError when the client times out' do 
       expect(connection)
         .to receive(:get_workflow_execution_history)
         .with(
@@ -513,6 +512,31 @@ describe Temporal::Client do
             workflow_id: workflow_id,
             run_id: run_id,
             timeout: 3,
+          )
+        end.to raise_error(Temporal::TimeoutError)
+    end
+
+    it 'raises TimeoutError when the server times out' do 
+      # empty events list implies the server gave up before getting a closed event
+      empty_response = Fabricate(:workflow_execution_history, events: [])
+      expect(connection)
+        .to receive(:get_workflow_execution_history)
+        .with(
+          namespace: 'default-test-namespace',
+          workflow_id: workflow_id,
+          run_id: run_id,
+          wait_for_new_event: true,
+          event_type: :close,
+          timeout: 30,
+        )
+        .and_return(empty_response)
+
+        expect do
+          subject.await_workflow_result(
+            TestStartWorkflow,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            timeout: 30,
           )
         end.to raise_error(Temporal::TimeoutError)
     end

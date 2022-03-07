@@ -16,6 +16,15 @@ module Temporal
       result = workflow.execute(*input)
 
       context.complete(result) unless context.completed?
+    rescue FailWorkflowTaskError => error
+      Temporal.logger.error("Workflow requested to fail the workflow task: #{error.inspect}")
+      Temporal::ErrorHandler.handle(error, context.config, metadata: context.metadata)
+
+      # Rethrowing the exception fails the workflow task as opposed to failing the entire
+      # workflow. Temporal will then retry this task until it succeeds or a timeout limit is reached.
+      # This stands in contrast to the next rescue block that will cause the entire workflow to
+      # be failed for all other kinds of StandardErrors.
+      raise
     rescue StandardError, ScriptError => error
       Temporal.logger.error("Workflow execution failed", context.metadata.to_h.merge(error: error.inspect))
       Temporal.logger.debug(error.backtrace.join("\n"))

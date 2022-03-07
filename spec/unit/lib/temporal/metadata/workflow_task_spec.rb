@@ -32,7 +32,7 @@ describe Temporal::Metadata::WorkflowTask do
         'namespace' => subject.namespace,
         'workflow_id' => subject.workflow_id,
         'workflow_name' => subject.workflow_name,
-        'workflow_run_id' => subject.workflow_run_id,
+        'run_id' => subject.workflow_run_id,
       })
     end
   end

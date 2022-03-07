@@ -11,6 +11,7 @@ describe Temporal::Metadata::Workflow do
       expect(subject.name).to eq(args.name)
       expect(subject.run_id).to eq(args.run_id)
       expect(subject.attempt).to eq(args.attempt)
+      expect(subject.namespace).to eq(args.namespace)
       expect(subject.headers).to eq(args.headers)
     end
 
