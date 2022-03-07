@@ -20,14 +20,13 @@ module Helpers
 
   def fetch_history(workflow_id, run_id, options = {})
     connection = Temporal.send(:default_client).send(:connection)
+    options = {
+      namespace: Temporal.configuration.namespace,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    }.merge(options)
 
-    connection.get_workflow_execution_history(
-      {
-        namespace: Temporal.configuration.namespace,
-        workflow_id: workflow_id,
-        run_id: run_id,
-      }.merge(options)
-    )
+    connection.get_workflow_execution_history(**options)
   end
 
   def integration_spec_namespace

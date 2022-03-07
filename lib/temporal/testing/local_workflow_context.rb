@@ -5,7 +5,7 @@ require 'temporal/execution_options'
 require 'temporal/metadata/activity'
 require 'temporal/workflow/future'
 require 'temporal/workflow/history/event_target'
-require 'temporal/workflow/context_validators'
+require 'temporal/workflow/context_helpers'
 
 module Temporal
   module Testing
@@ -213,11 +213,13 @@ module Temporal
         raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
       end
 
-      def upsert_search_attributes(search_attributes)
-        Temporal::Workflow::Context::Validators.validate_search_attributes(search_attributes)
+      def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
+      end
 
-        # We no-op in local testing mode since there is no search functionality.  We don't fail because we 
-        # don't want to block workflows testing other aspects.
+      def upsert_search_attributes(search_attributes)
+        search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(search_attributes)
+        execution.upsert_search_attributes(search_attributes)
       end
 
       private

@@ -79,6 +79,9 @@ module Temporal
 
       def poll_for_task
         connection.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
+      rescue ::GRPC::Cancelled
+        # We're shutting down and we've already reported that in the logs
+        nil
       rescue StandardError => error
         Temporal.logger.error("Unable to poll activity task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
 

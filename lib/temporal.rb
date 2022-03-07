@@ -26,7 +26,9 @@ module Temporal
                  :fetch_workflow_execution_info,
                  :complete_activity,
                  :fail_activity,
-                 :get_cron_schedule
+                 :get_cron_schedule,
+                 :list_open_workflow_executions,
+                 :list_closed_workflow_executions
 
   class << self
     def configure(&block)
@@ -51,11 +53,11 @@ module Temporal
     private_constant :ResultConverter
 
     private
-    
+
     def default_client
       @default_client ||= Client.new(config)
     end
-    
+
     def config
       @config ||= Configuration.new
     end

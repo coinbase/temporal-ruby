@@ -721,7 +721,7 @@ describe Temporal::Client do
         workflow_execution_info: api_info
       )
     end
-    let(:api_info) { Fabricate(:api_workflow_execution_info) }
+    let(:api_info) { Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '') }
 
     before { allow(connection).to receive(:describe_workflow_execution).and_return(response) }
 
@@ -797,6 +797,151 @@ describe Temporal::Client do
             run_id: run_id,
             exception: exception
           )
+      end
+    end
+  end
+
+  describe '#list_open_workflow_executions' do
+    let(:from) { Time.now - 600 }
+    let(:now) { Time.now }
+    let(:api_execution_info) do
+      Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '')
+    end
+    let(:response) do
+      Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+        executions: [api_execution_info],
+        next_page_token: ''
+      )
+    end
+
+    before do
+      allow(Time).to receive(:now).and_return(now)
+      allow(connection)
+        .to receive(:list_open_workflow_executions)
+        .and_return(response)
+    end
+
+    it 'returns a list of executions' do
+      executions = subject.list_open_workflow_executions(namespace, from)
+
+      expect(executions.length).to eq(1)
+      expect(executions.first).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
+    end
+
+    context 'when history is paginated' do
+      let(:response_1) do
+        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: 'a'
+        )
+      end
+      let(:response_2) do
+        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: 'b'
+        )
+      end
+      let(:response_3) do
+        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: ''
+        )
+      end
+
+      before do
+        allow(connection)
+          .to receive(:list_open_workflow_executions)
+          .and_return(response_1, response_2, response_3)
+      end
+
+      it 'calls the API 3 times' do
+        subject.list_open_workflow_executions(namespace, from)
+
+        expect(connection).to have_received(:list_open_workflow_executions).exactly(3).times
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: nil)
+          .once
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: 'a')
+          .once
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: 'b')
+          .once
+      end
+
+      it 'returns a list of executions' do
+        executions = subject.list_open_workflow_executions(namespace, from)
+
+        expect(executions.length).to eq(3)
+        executions.each do |execution|
+          expect(execution).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
+        end
+      end
+    end
+
+    context 'when given unsupported filter' do
+      let(:filter) { { foo: :bar } }
+
+      it 'raises ArgumentError' do
+        expect do
+          subject.list_open_workflow_executions(namespace, from, filter: filter)
+        end.to raise_error(ArgumentError, 'Allowed filters are: [:workflow, :workflow_id]')
+      end
+    end
+
+    context 'when given multiple filters' do
+      let(:filter) { { workflow: 'TestWorkflow', workflow_id: 'xxx' } }
+
+      it 'raises ArgumentError' do
+        expect do
+          subject.list_open_workflow_executions(namespace, from, filter: filter)
+        end.to raise_error(ArgumentError, 'Only one filter is allowed')
+      end
+    end
+
+    context 'when called without filters' do
+      it 'makes a request' do
+        subject.list_open_workflow_executions(namespace, from)
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: nil)
+      end
+    end
+
+    context 'when called with :to' do
+      it 'makes a request' do
+        subject.list_open_workflow_executions(namespace, from, now - 10)
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now - 10, next_page_token: nil)
+      end
+    end
+
+    context 'when called with a :workflow filter' do
+      it 'makes a request' do
+        subject.list_open_workflow_executions(namespace, from, filter: { workflow: 'TestWorkflow' })
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: nil, workflow: 'TestWorkflow')
+      end
+    end
+
+    context 'when called with a :workflow_id filter' do
+      it 'makes a request' do
+        subject.list_open_workflow_executions(namespace, from, filter: { workflow_id: 'xxx' })
+
+        expect(connection)
+          .to have_received(:list_open_workflow_executions)
+          .with(namespace: namespace, from: from, to: now, next_page_token: nil, workflow_id: 'xxx')
       end
     end
   end

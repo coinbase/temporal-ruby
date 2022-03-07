@@ -1,5 +1,6 @@
 require 'temporal/workflow'
 require 'temporal/workflow/context'
+require 'time'
 
 class MyTestWorkflow < Temporal::Workflow; end
 
@@ -33,7 +34,7 @@ describe Temporal::Workflow::Context do
     it 'creates a command to execute the request' do
       expect(state_manager).to receive(:schedule)
         .with an_instance_of(Temporal::Workflow::Command::UpsertSearchAttributes)
-      workflow_context.upsert_search_attributes({'CustomIntField' => 5})
+      workflow_context.upsert_search_attributes({ 'CustomIntField' => 5 })
     end
   end
 
@@ -47,5 +48,16 @@ describe Temporal::Workflow::Context do
       expect(state_manager).to receive(:replay?).and_return(false)
       expect(workflow_context.history_replaying?).to be(false)
     end
+
+    it 'converts a Time to the ISO8601 UTC format expected by the Temporal server' do
+      time = Time.now
+      allow(state_manager).to receive(:schedule)
+        .with an_instance_of(Temporal::Workflow::Command::UpsertSearchAttributes)
+
+      expect(
+        workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
+      ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
+    end
+    
   end
 end
