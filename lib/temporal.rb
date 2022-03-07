@@ -21,12 +21,12 @@ module Temporal
                  :list_namespaces,
                  :signal_workflow,
                  :await_workflow_result,
-                 :get_cron_schedule
                  :reset_workflow,
                  :terminate_workflow,
                  :fetch_workflow_execution_info,
                  :complete_activity,
                  :fail_activity,
+                 :get_cron_schedule,
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions
 
@@ -53,11 +53,11 @@ module Temporal
     private_constant :ResultConverter
 
     private
-    
+
     def default_client
       @default_client ||= Client.new(config)
     end
-    
+
     def config
       @config ||= Configuration.new
     end
