@@ -921,4 +921,50 @@ describe Temporal::Client do
       end
     end
   end
+
+  describe '#get_cron_schedule' do
+    it 'returns its schedule' do
+      expected_schedule = '0 0 * * *'
+
+      completed_event = Fabricate(
+        :workflow_started_with_cron_history_event,
+        cron_schedule: expected_schedule
+      )
+      response = Fabricate(:workflow_execution_history, events: [completed_event])
+
+      expect(connection)
+        .to receive(:get_workflow_execution_history)
+        .with(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          run_id: run_id,
+        )
+        .and_return(response)
+
+      schedule = subject.get_cron_schedule(namespace, workflow_id, run_id: run_id)
+
+      expect(schedule).to eq(expected_schedule)
+    end
+
+    it 'returns nil when there is no schedule' do
+      completed_event = Fabricate(
+        :workflow_started_with_cron_history_event,
+        cron_schedule: ''
+      )
+      response = Fabricate(:workflow_execution_history, events: [completed_event])
+
+      expect(connection)
+        .to receive(:get_workflow_execution_history)
+        .with(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          run_id: run_id,
+        )
+        .and_return(response)
+
+      schedule = subject.get_cron_schedule(namespace, workflow_id, run_id: run_id)
+
+      expect(schedule).to be(nil)
+    end
+  end
 end
