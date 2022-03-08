@@ -25,7 +25,7 @@ describe Temporal::Workflow::ExecutionInfo do
       api_info.search_attributes = nil
 
       result = described_class.generate_from(api_info)
-      expect(result).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
+      expect(result.search_attributes).to be_nil
     end
   end
 
