@@ -20,6 +20,13 @@ describe Temporal::Workflow::ExecutionInfo do
     it 'freezes the info' do
       expect(subject).to be_frozen
     end
+
+    it 'deserializes if search_attributes is nil' do
+      api_info.search_attributes = nil
+
+      result = described_class.generate_from(api_info)
+      expect(result.search_attributes).to be_nil
+    end
   end
 
   describe 'statuses' do
