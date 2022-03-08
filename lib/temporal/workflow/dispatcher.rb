@@ -57,8 +57,13 @@ module Temporal
       end
 
       def find_named_handler(target, event_name, handler_name)
+        # to succeed then +handler_name+ must be non-nil
         handlers[target]
-          .find { |event_struct| event_struct.event_name == event_name && event_struct.handler_name == handler_name }
+          .find do |event_struct|
+          handler_name &&
+            event_struct.event_name == event_name &&
+            event_struct.handler_name == handler_name
+        end
       end
     end
   end
