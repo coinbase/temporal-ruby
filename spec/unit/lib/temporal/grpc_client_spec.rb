@@ -17,6 +17,18 @@ describe Temporal::Connection::GRPC do
     GRPC::AlreadyExists.new('details', { 'grpc-status-details-bin' => Google::Rpc::Status.encode(rpc_status) })
   end
 
+  let(:invalid_already_exists_error) do
+    detail_error = Google::Protobuf::Any.new.tap do |any|
+      any.pack(Temporal::Api::ErrorDetails::V1::NotFoundFailure.new())
+    end
+    rpc_status = Google::Rpc::Status.new(
+      code: 6,
+      message: 'some error message',
+      details: [detail_error],
+    )
+    GRPC::AlreadyExists.new('details', { 'grpc-status-details-bin' => Google::Rpc::Status.encode(rpc_status) })
+  end
+
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
 
@@ -41,6 +53,23 @@ describe Temporal::Connection::GRPC do
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
         expect(e.run_id).to eql(run_id)
       end
+    end
+
+    it 'handles unexpected already exists error' do
+      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(invalid_already_exists_error)
+
+      expect do
+        subject.start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'Test',
+          task_queue: 'test',
+          execution_timeout: 0,
+          run_timeout: 0,
+          task_timeout: 0,
+          memo: {}
+        )
+      end.to raise_error(Temporal::ApiError)
     end
   end
 
@@ -98,6 +127,25 @@ describe Temporal::Connection::GRPC do
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
         expect(e.run_id).to eql(run_id)
       end
+    end
+
+    it 'handles invalid already exists errors' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_raise(invalid_already_exists_error)
+
+      expect do
+        subject.signal_with_start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'workflow_name',
+          task_queue: 'task_queue',
+          input: ['foo'],
+          execution_timeout: 1,
+          run_timeout: 2,
+          task_timeout: 3,
+          signal_name: 'the question',
+          signal_input: 'what do you get if you multiply six by nine?',
+        )
+      end.to raise_error(Temporal::ApiError)
     end
   end
 
@@ -289,7 +337,7 @@ describe Temporal::Connection::GRPC do
         end
       end
     end
-    
+
     describe '#list_closed_workflow_executions' do
       let(:namespace) { 'test-namespace' }
       let(:from) { Time.now - 600 }
