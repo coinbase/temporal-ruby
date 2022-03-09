@@ -73,6 +73,32 @@ describe Temporal::Connection::GRPC do
     end
   end
 
+  describe "#list_namespaces" do
+    let (:response) do
+      Temporal::Api::WorkflowService::V1::ListNamespacesResponse.new(
+        namespaces: [Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse.new],
+        next_page_token: ""
+      )
+    end
+
+    before { allow(grpc_stub).to receive(:list_namespaces).and_return(response) }
+
+    it 'calls GRPC service with supplied arguments' do
+      next_page_token = "next-page-token-id"
+
+      subject.list_namespaces(
+        page_size: 10,
+        next_page_token: next_page_token,
+      )
+
+      expect(grpc_stub).to have_received(:list_namespaces) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListNamespacesRequest)
+        expect(request.page_size).to eq(10)
+        expect(request.next_page_token).to eq(next_page_token)
+      end
+    end
+  end
+
   describe '#get_workflow_execution_history' do
     let(:response) do
       Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
@@ -165,6 +191,156 @@ describe Temporal::Connection::GRPC do
               Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT
             )
           )
+        end
+      end
+    end
+
+    describe '#list_open_workflow_executions' do
+      let(:namespace) { 'test-namespace' }
+      let(:from) { Time.now - 600 }
+      let(:to) { Time.now }
+      let(:args) { { namespace: namespace, from: from, to: to } }
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+      end
+
+      before do
+        allow(grpc_stub).to receive(:list_open_workflow_executions).and_return(temporal_response)
+      end
+
+      it 'makes an API request' do
+        subject.list_open_workflow_executions(**args)
+
+        expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+          expect(request.maximum_page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
+          expect(request.next_page_token).to eq('')
+          expect(request.start_time_filter).to be_an_instance_of(Temporal::Api::Filter::V1::StartTimeFilter)
+          expect(request.start_time_filter.earliest_time.to_time)
+            .to eq(from)
+          expect(request.start_time_filter.latest_time.to_time)
+            .to eq(to)
+          expect(request.execution_filter).to eq(nil)
+          expect(request.type_filter).to eq(nil)
+        end
+      end
+
+      context 'when next_page_token is supplied' do
+        it 'makes an API request' do
+          subject.list_open_workflow_executions(**args.merge(next_page_token: 'x'))
+
+          expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request.next_page_token).to eq('x')
+          end
+        end
+      end
+
+      context 'when workflow_id is supplied' do
+        it 'makes an API request' do
+          subject.list_open_workflow_executions(**args.merge(workflow_id: 'xxx'))
+
+          expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request.execution_filter)
+              .to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowExecutionFilter)
+            expect(request.execution_filter.workflow_id).to eq('xxx')
+          end
+        end
+      end
+
+      context 'when workflow is supplied' do
+        it 'makes an API request' do
+          subject.list_open_workflow_executions(**args.merge(workflow: 'TestWorkflow'))
+
+          expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request.type_filter).to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowTypeFilter)
+            expect(request.type_filter.name).to eq('TestWorkflow')
+          end
+        end
+      end
+    end
+    
+    describe '#list_closed_workflow_executions' do
+      let(:namespace) { 'test-namespace' }
+      let(:from) { Time.now - 600 }
+      let(:to) { Time.now }
+      let(:args) { { namespace: namespace, from: from, to: to } }
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+      end
+
+      before do
+        allow(grpc_stub).to receive(:list_closed_workflow_executions).and_return(temporal_response)
+      end
+
+      it 'makes an API request' do
+        subject.list_closed_workflow_executions(**args)
+
+        expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+          expect(request.maximum_page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
+          expect(request.next_page_token).to eq('')
+          expect(request.start_time_filter).to be_an_instance_of(Temporal::Api::Filter::V1::StartTimeFilter)
+          expect(request.start_time_filter.earliest_time.to_time)
+            .to eq(from)
+          expect(request.start_time_filter.latest_time.to_time)
+            .to eq(to)
+          expect(request.execution_filter).to eq(nil)
+          expect(request.type_filter).to eq(nil)
+          expect(request.status_filter).to eq(nil)
+        end
+      end
+
+      context 'when next_page_token is supplied' do
+        it 'makes an API request' do
+          subject.list_closed_workflow_executions(**args.merge(next_page_token: 'x'))
+
+          expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.next_page_token).to eq('x')
+          end
+        end
+      end
+
+      context 'when status is supplied' do
+        let(:api_completed_status) { Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_COMPLETED }
+
+        it 'makes an API request' do
+          subject.list_closed_workflow_executions(
+            **args.merge(status: Temporal::Workflow::Status::COMPLETED)
+          )
+
+          expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.status_filter).to eq(Temporal::Api::Filter::V1::StatusFilter.new(status: api_completed_status))
+          end
+        end
+      end
+
+      context 'when workflow_id is supplied' do
+        it 'makes an API request' do
+          subject.list_closed_workflow_executions(**args.merge(workflow_id: 'xxx'))
+
+          expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.execution_filter)
+              .to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowExecutionFilter)
+            expect(request.execution_filter.workflow_id).to eq('xxx')
+          end
+        end
+      end
+
+      context 'when workflow is supplied' do
+        it 'makes an API request' do
+          subject.list_closed_workflow_executions(**args.merge(workflow: 'TestWorkflow'))
+
+          expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.type_filter).to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowTypeFilter)
+            expect(request.type_filter.name).to eq('TestWorkflow')
+          end
         end
       end
     end

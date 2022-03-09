@@ -13,6 +13,15 @@ describe Temporal::Testing::TemporalOverride do
     def execute; end
   end
 
+  class UpsertSearchAttributesWorkflow < Temporal::Workflow
+    namespace 'default-namespace'
+    task_queue 'default-task-queue'
+
+    def execute
+      workflow.upsert_search_attributes('CustomIntField' => 5)
+    end
+  end
+
   context 'when testing mode is disabled' do
     describe 'Temporal.start_workflow' do
       let(:connection) { instance_double('Temporal::Connection::GRPC') }
@@ -139,7 +148,7 @@ describe Temporal::Testing::TemporalOverride do
       it 'explicitly does not support staring a workflow with a signal' do
         expect {
           client.start_workflow(TestTemporalOverrideWorkflow, options: { signal_name: 'breakme' })
-        }.to raise_error(NotImplementedError) do |e| 
+        }.to raise_error(NotImplementedError) do |e|
           expect(e.message).to eql("Signals are not available when Temporal::Testing.local! is on")
         end
       end
@@ -174,7 +183,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -182,7 +191,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -190,7 +199,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it { is_expected.to be_a(String) }
           end
@@ -206,7 +215,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -214,13 +223,13 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it { is_expected.to be_a(String) }
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it { is_expected.to be_a(String) }
           end
@@ -236,7 +245,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow is started' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::RUNNING_STATUS }
+            let(:status) { Temporal::Workflow::Status::RUNNING }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -244,7 +253,7 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has completed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::COMPLETED_STATUS }
+            let(:status) { Temporal::Workflow::Status::COMPLETED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
@@ -252,13 +261,30 @@ describe Temporal::Testing::TemporalOverride do
           end
 
           context 'when workflow has failed' do
-            let(:status) { Temporal::Workflow::ExecutionInfo::FAILED_STATUS }
+            let(:status) { Temporal::Workflow::Status::FAILED }
 
             it 'raises error' do
               expect { subject }.to raise_error(error_class) { |e| expect(e.run_id).to eql(run_id) }
             end
           end
         end
+      end
+
+      describe 'Temporal.fetch_workflow_execution_info' do
+        it 'retrieves search attributes' do
+          workflow_id = 'upsert_search_attributes_test_wf-' + SecureRandom.uuid
+
+          run_id = client.start_workflow(
+            UpsertSearchAttributesWorkflow,
+            options: {
+              workflow_id: workflow_id,
+            },
+          )
+
+          info = client.fetch_workflow_execution_info('default-namespace', workflow_id, run_id)
+          expect(info.search_attributes).to eq({'CustomIntField' => 5})
+        end
+
       end
     end
   end

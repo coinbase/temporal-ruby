@@ -10,7 +10,7 @@ describe 'Temporal.await_workflow_result' do
     run_id = Temporal.start_workflow(
       ResultWorkflow,
       expected_result,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
     actual_result = Temporal.await_workflow_result(
       ResultWorkflow,
@@ -26,7 +26,7 @@ describe 'Temporal.await_workflow_result' do
     first_run_id = Temporal.start_workflow(
       ResultWorkflow,
       expected_first_result,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
     actual_first_result = Temporal.await_workflow_result(
       ResultWorkflow,
@@ -38,7 +38,7 @@ describe 'Temporal.await_workflow_result' do
     Temporal.start_workflow(
       ResultWorkflow,
       expected_second_result,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
     actual_second_result = Temporal.await_workflow_result(
       ResultWorkflow,
@@ -59,7 +59,7 @@ describe 'Temporal.await_workflow_result' do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.start_workflow(
       FailingWorkflow,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
 
     expect do
@@ -78,7 +78,7 @@ describe 'Temporal.await_workflow_result' do
     workflow_id = SecureRandom.uuid
     run_id = Temporal.start_workflow(
       QuickTimeoutWorkflow,
-      { options: { workflow_id: workflow_id } },
+      options: { workflow_id: workflow_id },
     )
 
     expect do

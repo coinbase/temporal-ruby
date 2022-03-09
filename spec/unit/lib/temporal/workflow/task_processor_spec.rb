@@ -89,7 +89,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(connection)
             .to have_received(:respond_workflow_task_completed)
-            .with(task_token: task.task_token, commands: commands)
+            .with(namespace: namespace, task_token: task.task_token, commands: commands)
         end
 
         it 'ignores connection exception' do
@@ -128,6 +128,7 @@ describe Temporal::Workflow::TaskProcessor do
           expect(connection)
             .to have_received(:respond_workflow_task_failed)
             .with(
+              namespace: namespace,
               task_token: task.task_token,
               cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
               exception: exception
@@ -216,6 +217,7 @@ describe Temporal::Workflow::TaskProcessor do
             expect(connection)
               .to have_received(:respond_workflow_task_failed)
               .with(
+                namespace: namespace,
                 task_token: task.task_token,
                 cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
                 exception: an_instance_of(Temporal::UnexpectedResponse)

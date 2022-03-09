@@ -2,14 +2,10 @@ require 'securerandom'
 
 module Helpers
   def run_workflow(workflow, *input, **args)
-    workflow_id = SecureRandom.uuid
-    run_id = Temporal.start_workflow(
-      workflow,
-      *input,
-      **args.merge(options: { workflow_id: workflow_id })
-    )
+    args[:options] = { workflow_id: SecureRandom.uuid }.merge(args[:options] || {})
+    run_id = Temporal.start_workflow(workflow, *input, **args)
 
-    return workflow_id, run_id
+    [args[:options][:workflow_id], run_id]
   end
 
   def wait_for_workflow_completion(workflow_id, run_id)
@@ -24,14 +20,13 @@ module Helpers
 
   def fetch_history(workflow_id, run_id, options = {})
     connection = Temporal.send(:default_client).send(:connection)
+    options = {
+      namespace: Temporal.configuration.namespace,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    }.merge(options)
 
-    result = connection.get_workflow_execution_history(
-      {
-        namespace: Temporal.configuration.namespace,
-        workflow_id: workflow_id,
-        run_id: run_id,
-      }.merge(options)
-    )
+    connection.get_workflow_execution_history(**options)
   end
 
   def integration_spec_namespace

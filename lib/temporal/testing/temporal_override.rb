@@ -1,6 +1,7 @@
 require 'securerandom'
 require 'temporal/activity/async_token'
 require 'temporal/workflow/execution_info'
+require 'temporal/workflow/status'
 require 'temporal/testing/workflow_execution'
 require 'temporal/testing/local_workflow_context'
 
@@ -31,7 +32,6 @@ module Temporal
 
       def fetch_workflow_execution_info(_namespace, workflow_id, run_id)
         return super if Temporal::Testing.disabled?
-
         execution = executions[[workflow_id, run_id]]
 
         Workflow::ExecutionInfo.new(
@@ -42,6 +42,7 @@ module Temporal
           close_time: nil,
           status: execution.status,
           history_length: nil,
+          search_attributes: execution.search_attributes,
         ).freeze
       end
 
@@ -147,14 +148,14 @@ module Temporal
       def disallowed_statuses_for(reuse_policy)
         case reuse_policy
         when :allow_failed
-          [Workflow::ExecutionInfo::RUNNING_STATUS, Workflow::ExecutionInfo::COMPLETED_STATUS]
+          [Workflow::Status::RUNNING, Workflow::Status::COMPLETED]
         when :allow
-          [Workflow::ExecutionInfo::RUNNING_STATUS]
+          [Workflow::Status::RUNNING]
         when :reject
           [
-            Workflow::ExecutionInfo::RUNNING_STATUS,
-            Workflow::ExecutionInfo::FAILED_STATUS,
-            Workflow::ExecutionInfo::COMPLETED_STATUS
+            Workflow::Status::RUNNING,
+            Workflow::Status::FAILED,
+            Workflow::Status::COMPLETED
           ]
         end
       end

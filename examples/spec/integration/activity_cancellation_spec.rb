@@ -1,10 +1,8 @@
 require 'workflows/long_workflow'
 
-describe 'Activity cancellation' do
-  let(:workflow_id) { SecureRandom.uuid }
-
+describe 'Activity cancellation', :integration do
   it 'cancels a running activity' do
-    run_id = Temporal.start_workflow(LongWorkflow, options: { workflow_id: workflow_id })
+    workflow_id, run_id = run_workflow(LongWorkflow)
 
     # Signal workflow after starting, allowing it to schedule the first activity
     sleep 0.5
@@ -22,8 +20,7 @@ describe 'Activity cancellation' do
 
   it 'cancels a non-started activity' do
     # Workflow is started with a signal which will cancel an activity before it has started
-    run_id = Temporal.start_workflow(LongWorkflow, options: {
-      workflow_id: workflow_id,
+    workflow_id, run_id = run_workflow(LongWorkflow, options: {
       signal_name: :CANCEL
     })
 

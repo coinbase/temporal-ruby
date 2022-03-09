@@ -5,6 +5,7 @@ require 'temporal/execution_options'
 require 'temporal/metadata/activity'
 require 'temporal/workflow/future'
 require 'temporal/workflow/history/event_target'
+require 'temporal/workflow/context_helpers'
 
 module Temporal
   module Testing
@@ -191,6 +192,15 @@ module Temporal
 
       def cancel(target, cancelation_id)
         raise NotImplementedError, 'Cancel is not available when Temporal::Testing.local! is on'
+      end
+
+      def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
+        raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
+      end
+
+      def upsert_search_attributes(search_attributes)
+        search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(search_attributes)
+        execution.upsert_search_attributes(search_attributes)
       end
 
       private

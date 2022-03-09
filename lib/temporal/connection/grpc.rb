@@ -1,10 +1,13 @@
 require 'grpc'
+require 'time'
 require 'google/protobuf/well_known_types'
 require 'securerandom'
+require 'gen/temporal/api/filter/v1/message_pb'
+require 'gen/temporal/api/workflowservice/v1/service_services_pb'
+require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
-require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -23,13 +26,18 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
-      def initialize(host, port, identity, credentials)
+      DEFAULT_OPTIONS = {
+        max_page_size: 100
+      }.freeze
+
+      def initialize(host, port, identity, credentials, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
         @credentials = credentials
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
+        @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def register_namespace(name:, description: nil, global: false, retention_period: 10)
@@ -51,8 +59,8 @@ module Temporal
         client.describe_namespace(request)
       end
 
-      def list_namespaces(page_size:)
-        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(pageSize: page_size)
+      def list_namespaces(page_size:, next_page_token: "")
+        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(page_size: page_size, next_page_token: next_page_token)
         client.list_namespaces(request)
       end
 
@@ -175,8 +183,9 @@ module Temporal
         poll_request.execute
       end
 
-      def respond_workflow_task_completed(task_token:, commands:)
+      def respond_workflow_task_completed(namespace:, task_token:, commands:)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
@@ -184,8 +193,9 @@ module Temporal
         client.respond_workflow_task_completed(request)
       end
 
-      def respond_workflow_task_failed(task_token:, cause:, exception: nil)
+      def respond_workflow_task_failed(namespace:, task_token:, cause:, exception: nil)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           cause: cause,
@@ -211,8 +221,9 @@ module Temporal
         poll_request.execute
       end
 
-      def record_activity_task_heartbeat(task_token:, details: nil)
+      def record_activity_task_heartbeat(namespace:, task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
+          namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
           identity: identity
@@ -224,8 +235,9 @@ module Temporal
         raise NotImplementedError
       end
 
-      def respond_activity_task_completed(task_token:, result:)
+      def respond_activity_task_completed(namespace:, task_token:, result:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           result: to_result_payloads(result),
@@ -245,8 +257,9 @@ module Temporal
         client.respond_activity_task_completed_by_id(request)
       end
 
-      def respond_activity_task_failed(task_token:, exception:)
+      def respond_activity_task_failed(namespace:, task_token:, exception:)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
+          namespace: namespace,
           identity: identity,
           task_token: task_token,
           failure: Serializer::Failure.new(exception).to_proto
@@ -266,8 +279,9 @@ module Temporal
         client.respond_activity_task_failed_by_id(request)
       end
 
-      def respond_activity_task_canceled(task_token:, details: nil)
+      def respond_activity_task_canceled(namespace:, task_token:, details: nil)
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
+          namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
           identity: identity
@@ -393,12 +407,29 @@ module Temporal
         client.terminate_workflow_execution(request)
       end
 
-      def list_open_workflow_executions
-        raise NotImplementedError
+      def list_open_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil)
+        request = Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          maximum_page_size: options[:max_page_size],
+          next_page_token: next_page_token,
+          start_time_filter: serialize_time_filter(from, to),
+          execution_filter: serialize_execution_filter(workflow_id),
+          type_filter: serialize_type_filter(workflow)
+        )
+        client.list_open_workflow_executions(request)
       end
 
-      def list_closed_workflow_executions
-        raise NotImplementedError
+      def list_closed_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, status: nil)
+        request = Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          maximum_page_size: options[:max_page_size],
+          next_page_token: next_page_token,
+          start_time_filter: serialize_time_filter(from, to),
+          execution_filter: serialize_execution_filter(workflow_id),
+          type_filter: serialize_type_filter(workflow),
+          status_filter: serialize_status_filter(status)
+        )
+        client.list_closed_workflow_executions(request)
       end
 
       def list_workflow_executions
@@ -465,7 +496,7 @@ module Temporal
 
       private
 
-      attr_reader :url, :credentials, :identity, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
@@ -477,6 +508,34 @@ module Temporal
 
       def can_poll?
         @poll
+      end
+
+      def serialize_time_filter(from, to)
+        Temporal::Api::Filter::V1::StartTimeFilter.new(
+          earliest_time: from&.to_time,
+          latest_time: to&.to_time
+        )
+      end
+
+      def serialize_execution_filter(value)
+        return unless value
+
+        Temporal::Api::Filter::V1::WorkflowExecutionFilter.new(workflow_id: value)
+      end
+
+      def serialize_type_filter(value)
+        return unless value
+
+        Temporal::Api::Filter::V1::WorkflowTypeFilter.new(name: value)
+      end
+
+      def serialize_status_filter(value)
+        return unless value
+
+        sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
+        status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
+        
+        Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end
   end

@@ -5,6 +5,7 @@ require 'temporal/errors'
 require 'temporal/thread_local_context'
 require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/command'
+require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
@@ -111,7 +112,8 @@ module Temporal
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
           timeouts: execution_options.timeouts,
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          memo: execution_options.memo,
         )
 
         target, cancelation_id = schedule_command(command)
@@ -302,6 +304,73 @@ module Temporal
         else
           raise "#{target} can not be canceled"
         end
+      end
+
+      # Send a signal from inside a workflow to another workflow. Not to be confused with
+      # Client#signal_workflow which sends a signal from outside a workflow to a workflow.
+      #
+      # @param workflow [Temporal::Workflow, nil] workflow class or nil
+      # @param signal [String] name of the signal to send
+      # @param workflow_id [String]
+      # @param run_id [String]
+      # @param input [String, Array, nil] optional arguments for the signal
+      # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
+      #   global default
+      # @param child_workflow_only [Boolean] indicates whether the signal should only be delivered to a
+      # child workflow; defaults to false
+      #
+      # @return [Future] future
+      def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
+        options ||= {}
+
+        execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
+
+        command = Command::SignalExternalWorkflow.new(
+          namespace: namespace || execution_options.namespace,
+          execution: {
+            workflow_id: workflow_id,
+            run_id: run_id
+          },
+          signal_name: signal,
+          input: input,
+          child_workflow_only: child_workflow_only
+        )
+
+        target, cancelation_id = schedule_command(command)
+        future = Future.new(target, self, cancelation_id: cancelation_id)
+
+        dispatcher.register_handler(target, 'completed') do |result|
+          future.set(result)
+          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+        end
+
+        dispatcher.register_handler(target, 'failed') do |exception|
+          future.fail(exception)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+        end
+
+        future
+      end
+
+      # Replaces or adds the values of your custom search attributes specified during a workflow's execution.
+      # To use this your server must support Elasticsearch, and the attributes must be pre-configured
+      # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
+      #
+      # @param search_attributes [Hash]
+      #   If an attribute is registered as a Datetime, you can pass in a Time: e.g.
+      #     workflow.now
+      #   or as a string in UTC ISO-8601 format:
+      #     workflow.now.utc.iso8601
+      #   It would look like: "2022-03-01T17:39:06Z"
+      # @return [Hash] the search attributes after any preprocessing.
+      #
+      def upsert_search_attributes(search_attributes)
+        search_attributes = Helpers.process_search_attributes(search_attributes)
+        command = Command::UpsertSearchAttributes.new(
+          search_attributes: search_attributes
+        )
+        schedule_command(command)
+        search_attributes
       end
 
       private

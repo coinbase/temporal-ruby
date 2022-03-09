@@ -18,13 +18,16 @@ module Temporal
                  :schedule_workflow,
                  :register_namespace,
                  :describe_namespace,
+                 :list_namespaces,
                  :signal_workflow,
                  :await_workflow_result,
                  :reset_workflow,
                  :terminate_workflow,
                  :fetch_workflow_execution_info,
                  :complete_activity,
-                 :fail_activity
+                 :fail_activity,
+                 :list_open_workflow_executions,
+                 :list_closed_workflow_executions
 
   class << self
     def configure(&block)
