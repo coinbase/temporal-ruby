@@ -196,6 +196,8 @@ describe Temporal::Testing::TemporalOverride do
         expect(metadata.namespace).to eq('default-namespace')
         expect(metadata.workflow_id).to eq(workflow_id)
         expect(metadata.workflow_run_id).to eq(run_id)
+        expect(metadata.scheduled_time).to be > 0
+        expect(metadata.current_attempt_scheduled_time).to be > 0
       end
 
       describe 'execution control' do

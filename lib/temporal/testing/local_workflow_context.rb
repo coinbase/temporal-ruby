@@ -60,7 +60,9 @@ module Temporal
           workflow_id: workflow_id,
           workflow_name: self.metadata.name,
           headers: execution_options.headers,
-          heartbeat_details: nil
+          heartbeat_details: nil,
+          scheduled_time: Time.now.to_i,
+          current_attempt_scheduled_time: Time.now.to_i,
         )
         context = LocalActivityContext.new(metadata)
 
@@ -110,7 +112,9 @@ module Temporal
           workflow_id: workflow_id,
           workflow_name: self.metadata.name,
           headers: execution_options.headers,
-          heartbeat_details: nil
+          heartbeat_details: nil,
+          scheduled_time: Time.now.to_i,
+          current_attempt_scheduled_time: Time.now.to_i,
         )
         context = LocalActivityContext.new(metadata)
 

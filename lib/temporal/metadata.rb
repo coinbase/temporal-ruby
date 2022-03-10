@@ -21,7 +21,10 @@ module Temporal
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
           headers: from_payload_map(task.header&.fields || {}),
-          heartbeat_details: from_details_payloads(task.heartbeat_details)
+          heartbeat_details: from_details_payloads(task.heartbeat_details),
+          # temporal doesn't render sub-second times, so we ignore the nanos field
+          scheduled_time: task.scheduled_time.seconds,
+          current_attempt_scheduled_time: task.current_attempt_scheduled_time.seconds
         )
       end
 
