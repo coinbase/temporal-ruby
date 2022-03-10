@@ -31,13 +31,13 @@ module Temporal
         @poll_request = nil
       end
 
-      def register_namespace(name:, description: nil, is_global: false, retention_period_days: 10, data: nil)
+      def register_namespace(name:, description: nil, is_global: false, retention_period: 10, data: nil)
         request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           namespace: name,
           description: description,
           is_global_namespace: is_global,
           workflow_execution_retention_period: Google::Protobuf::Duration.new(
-            seconds: (retention_period_days * 24 * 60 * 60).to_i
+            seconds: (retention_period * 24 * 60 * 60).to_i
           ),
           data: data,
         )
