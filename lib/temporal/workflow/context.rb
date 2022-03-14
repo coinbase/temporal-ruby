@@ -116,7 +116,8 @@ module Temporal
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
           timeouts: execution_options.timeouts,
-          headers: execution_options.headers
+          headers: execution_options.headers,
+          memo: execution_options.memo,
         )
 
         target, cancelation_id = schedule_command(command)
