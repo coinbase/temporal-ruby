@@ -18,12 +18,6 @@ module Temporal
     class Context
       attr_reader :metadata, :config
 
-      PARENT_CLOSE_POLICY = {
-        terminate: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_TERMINATE,
-        abandon: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_ABANDON,
-        request_cancel: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_REQUEST_CANCEL,
-      }.freeze
-
       def initialize(state_manager, dispatcher, workflow_class, metadata, config)
         @state_manager = state_manager
         @dispatcher = dispatcher
@@ -118,17 +112,11 @@ module Temporal
           namespace: execution_options.namespace,
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
+          parent_close_policy: parent_close_policy,
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
         )
-
-        if parent_close_policy
-          policy = PARENT_CLOSE_POLICY[parent_close_policy]
-          raise Client::ArgumentError, 'Unknown parent_close_policy specified' unless policy
-
-          command.parent_close_policy = policy
-        end
 
         target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
