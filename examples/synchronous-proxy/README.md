@@ -22,7 +22,7 @@ The flow of calls is outlined in the diagram below.
 # Explanation
 
 The primary use-case for this pattern is for a non-workflow process to *send and receive* data
-to and from a workflow. Note that a Temporal client may sent a signal to a workflow but the
+to and from a workflow. Note that a Temporal client may send a signal to a workflow but the
 information transfer is one-way (i.e. fire and forget). There is no mechanism for a workflow
 to send a signal to a non-workflow. A keen observer would note that a Query can be used to
 ask for information, however a Query is supposed to be idempotent and *should not cause any
