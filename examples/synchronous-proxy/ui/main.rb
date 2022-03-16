@@ -7,20 +7,16 @@ module SynchronousProxy
       def run
         random_id = rand(999_999_999)
         sequence_no = 0
-        puts "T-Shirt Order #{random_id}"
         status = create_order(random_id, sequence_no)
-        puts "at top of run, status #{status.inspect}"
 
         sequence_no += 1
         loop do
           email = prompt_and_read_input("Please enter you email address:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::RegisterStage, value: email)
           puts "status #{status.inspect}, err #{err.inspect}"
-          if err
-            STDERR.puts "invalid email"
-          else
-            break
-          end
+          break unless err
+
+          STDERR.puts "invalid email"
         end
 
         sequence_no += 1
@@ -28,11 +24,9 @@ module SynchronousProxy
           size = prompt_and_read_input("Please enter your requested size:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
           puts "status #{status.inspect}, err #{err.inspect}"
-          if err
-            STDERR.puts "invalid size"
-          else
-            break
-          end
+          break unless err
+
+          STDERR.puts "invalid size"
         end
 
         sequence_no += 1
@@ -40,11 +34,9 @@ module SynchronousProxy
           color = prompt_and_read_input("Please enter your required tshirt color:")
           status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::ColorStage, value: color)
           puts "status #{status.inspect}, err #{err.inspect}"
-          if err
-            STDERR.puts "invalid color"
-          else
-            break
-          end
+          break unless err
+
+          STDERR.puts "invalid color"
         end
 
         puts "Thanks for your order!"
