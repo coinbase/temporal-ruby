@@ -100,6 +100,8 @@ module Temporal
           id: workflow_id,
           name: execution_options.name,
           run_id: run_id,
+          parent_id: nil,
+          parent_run_id: nil,
           attempt: 1,
           task_queue: execution_options.task_queue,
           run_started_at: Time.now,

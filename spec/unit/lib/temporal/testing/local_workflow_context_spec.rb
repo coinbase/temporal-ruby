@@ -19,6 +19,8 @@ describe Temporal::Testing::LocalWorkflowContext do
         id: workflow_id,
         name: 'HelloWorldWorkflow',
         run_id: run_id,
+        parent_id: nil,
+        parent_run_id: nil,
         attempt: 1,
         task_queue: task_queue,
         headers: {},
