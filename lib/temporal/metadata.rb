@@ -22,9 +22,8 @@ module Temporal
           workflow_name: task.workflow_type.name,
           headers: from_payload_map(task.header&.fields || {}),
           heartbeat_details: from_details_payloads(task.heartbeat_details),
-          # temporal doesn't render sub-second times, so we ignore the nanos field
           scheduled_at: task.scheduled_time.to_time,
-          current_attempt_scheduled_at: task.current_attempt_scheduled_time
+          current_attempt_scheduled_at: task.current_attempt_scheduled_time.to_time
         )
       end
 
