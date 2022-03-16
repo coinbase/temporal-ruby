@@ -107,6 +107,7 @@ module Temporal
         input << args unless args.empty?
 
         parent_close_policy = options.delete(:parent_close_policy)
+        wait_for_start = options.delete(:wait_for_start)
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::StartChildWorkflow.new(
@@ -133,6 +134,14 @@ module Temporal
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+        end
+
+        if wait_for_start
+          child_workflow_started = false
+          dispatcher.register_handler(target, 'started') do
+            child_workflow_started = true
+          end
+          wait_for { child_workflow_started }
         end
 
         future
