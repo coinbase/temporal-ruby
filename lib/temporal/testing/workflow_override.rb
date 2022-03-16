@@ -32,6 +32,8 @@ module Temporal
           id: workflow_id,
           name: name, # Workflow class name
           run_id: run_id,
+          parent_id: nil,
+          parent_run_id: nil,
           attempt: 1,
           task_queue: 'unit-test-task-queue',
           headers: {},

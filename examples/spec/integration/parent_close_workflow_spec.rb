@@ -50,6 +50,6 @@ describe ParentCloseWorkflow, :integration do
       workflow_id: child_workflow_id,
     )
 
-    expect(result).to eq('slow child ran')
+    expect(result).to eq({ parent_workflow_id: workflow_id })
   end
 end
