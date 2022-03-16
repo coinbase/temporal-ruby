@@ -139,6 +139,8 @@ module Temporal
           id: workflow_id,
           name: execution_options.name, # Workflow class name
           run_id: run_id,
+          parent_id: metadata.id,
+          parent_run_id: metadata.run_id,
           attempt: 1,
           task_queue: 'unit-test-task-queue',
           headers: {},
