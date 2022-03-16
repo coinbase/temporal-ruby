@@ -29,7 +29,7 @@ module SynchronousProxy
         end
 
         def self.from_input(input)
-          new({name: input[1], key: input[2], value: input[3], calling_workflow_id: input[0]})
+          new(name: input[1], key: input[2], value: input[3], calling_workflow_id: input[0])
         end
       end
 
@@ -54,24 +54,14 @@ module SynchronousProxy
         end
       end
 
-      def wait_for_response(description)
-        w_id = workflow.metadata.id
+      def wait_for_response(_)
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
-        workflow.wait_for do
-          wait_result = !!@response_signal
-          wait_result
-        end
+        workflow.wait_for { !!@response_signal }
       end
 
-      def wait_for_request(description)
-        w_id = workflow.metadata.id
-        # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
-        # any methods inside the class plus methods that are included from a Module like this one
-        workflow.wait_for do
-          wait_result = !!@request_signal
-          wait_result
-        end
+      def wait_for_request(_)
+        workflow.wait_for { !!@request_signal }
       end
 
       def send_error_response(target_workflow_id, err)
@@ -97,7 +87,7 @@ module SynchronousProxy
         w_id = workflow.metadata.id
 
         logger.info("#{self.class.name}#send_request, Sending request from #{w_id} to #{target_workflow_id}, key #{key}, value #{value}, calling workflow #{w_id}")
-        details = SignalDetails.new({key: key, value: value, calling_workflow_id: w_id})
+        details = SignalDetails.new(key: key, value: value, calling_workflow_id: w_id)
         workflow.signal_external_workflow(workflow, RequestSignalName, target_workflow_id, "", details.to_input)
         nil
       end

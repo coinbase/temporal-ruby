@@ -30,16 +30,20 @@ module SynchronousProxy
       loop do
         signal_detail = receive_request("email_payload")
         source_id, email = signal_detail.calling_workflow_id, signal_detail.value
-        value, err = RegisterEmailActivity.execute(email)
-        if err
-          send_error_response(source_id, err)
-          logger.warn "RegisterEmailActivity returned an error, loop back to top"
-        else
-          order.email = email
+        future = RegisterEmailActivity.execute(email)
 
-          send_response(source_id, SizeStage, "")
-          break
+        future.failed do |exception|
+          send_error_response(source_id, exception)
+          logger.warn "RegisterEmailActivity returned an error, loop back to top"
         end
+
+        future.done do
+          order.email = email
+          send_response(source_id, SizeStage, "")
+        end
+
+        future.get
+        break unless future.failed?
       end
 
       # Loop until we receive a valid size
@@ -85,7 +89,8 @@ module SynchronousProxy
       end
 
       # #execute_workflow! blocks until child workflow exits with a result
-      result = workflow.execute_workflow!(SynchronousProxy::ShippingWorkflow, workflow.metadata.id)
+      workflow.execute_workflow!(SynchronousProxy::ShippingWorkflow, order, workflow.metadata.id)
+      nil
     end
   end
 
@@ -96,7 +101,7 @@ module SynchronousProxy
     def execute(order_workflow_id, stage, value)
       w_id = workflow.metadata.id
       setup_signal_handler
-      status = OrderStatus.new({order_id: order_workflow_id, stage: stage})
+      status = OrderStatus.new(order_id: order_workflow_id, stage: stage)
       signal_workflow_execution_response = send_request(order_workflow_id, stage, value)
 
       signal_details = receive_response("#{stage}_stage_payload")
@@ -109,14 +114,20 @@ module SynchronousProxy
   end
 
   class ShippingWorkflow < Temporal::Workflow
-    # 5s timeout on Activities
     timeouts run: 60
 
-    def execute(order_workflow_id)
-      delivery_date, err = ScheduleDeliveryActivity.execute!(order_workflow_id)
-      return err if err
+    def execute(order, order_workflow_id)
+      future = ScheduleDeliveryActivity.execute(order_workflow_id)
 
-      SendDeliveryEmailActivity.execute!(order_workflow_id, delivery_date)
+      future.failed do |exception|
+        logger.warn "ShippingWorkflow, ScheduleDelivery failed"
+      end
+
+      future.done do |delivery_date|
+        SendDeliveryEmailActivity.execute!(order, order_workflow_id, delivery_date)
+      end
+
+      future.get
     end
   end
 end

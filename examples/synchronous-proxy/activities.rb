@@ -44,12 +44,12 @@ module SynchronousProxy
     def execute(order)
       delivery_date = Time.now + (2 * 60 * 60 * 24)
       logger.info "activity: scheduled delivery for order #{order} at #{delivery_date}"
-      [delivery_date, nil]
+      delivery_date
     end
   end
 
   class SendDeliveryEmailActivity < Temporal::Activity
-    def execute(order, delivery_date)
+    def execute(order, order_id, delivery_date)
       logger.info "email to: #{order.email}, order: #{order}, scheduled delivery: #{delivery_date}"
       nil
     end
