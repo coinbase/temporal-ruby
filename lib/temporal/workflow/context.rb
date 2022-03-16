@@ -136,11 +136,13 @@ module Temporal
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
-        dispatcher.register_handler(target, 'started') do |execution|
-          future.start_workflow(execution.workflow_id, execution.run_id)
+        if wait_for_start
+          child_workflow_started = false
+          dispatcher.register_handler(target, 'started') do
+            child_workflow_started = true
+          end
+          wait_for { child_workflow_started }
         end
-
-        wait_for { future.workflow_id } if wait_for_start
 
         future
       end

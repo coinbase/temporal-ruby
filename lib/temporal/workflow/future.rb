@@ -3,7 +3,7 @@ require 'fiber'
 module Temporal
   class Workflow
     class Future
-      attr_reader :target, :success_callbacks, :failure_callbacks, :workflow_id, :run_id
+      attr_reader :target, :success_callbacks, :failure_callbacks
 
       def initialize(target, context, cancelation_id: nil)
         @target = target
@@ -15,10 +15,6 @@ module Temporal
         @failed = false
         @result = nil
         @exception = nil
-
-        # These fields are only set if this is a child workflow future that has started.
-        @workflow_id = nil
-        @run_id = nil
       end
 
       def finished?
@@ -41,14 +37,6 @@ module Temporal
       def get
         wait
         exception || result
-      end
-
-      def start_workflow(workflow_id, run_id)
-        raise 'can not start a failed future' if failed?
-        raise 'can not start a fulfilled future' if ready?
-
-        @workflow_id = workflow_id
-        @run_id = run_id
       end
 
       def set(result)
