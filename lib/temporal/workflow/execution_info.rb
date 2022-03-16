@@ -14,6 +14,8 @@ module Temporal
       ]
 
       def self.generate_from(response, converter)
+        search_attributes = response.search_attributes.nil? ? {} : self.from_payload_map(response.search_attributes.indexed_fields)
+
         new(
           workflow: response.type.name,
           workflow_id: response.execution.workflow_id,
@@ -23,7 +25,7 @@ module Temporal
           status: Temporal::Workflow::Status::API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
           memo: converter.from_payload_map(response.memo.fields),
-          search_attributes: converter.from_payload_map(response.search_attributes.indexed_fields),
+          search_attributes: search_attributes,
         ).freeze
       end
 
