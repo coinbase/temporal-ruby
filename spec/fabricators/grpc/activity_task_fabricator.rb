@@ -11,6 +11,8 @@ Fabricator(:api_activity_task, from: Temporal::Api::WorkflowService::V1::PollAct
   workflow_execution { Fabricate(:api_workflow_execution) }
   current_attempt_scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   started_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
+  scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
+  current_attempt_scheduled_time { Google::Protobuf::Timestamp.new.tap { |t| t.from_time(Time.now) } }
   header do |attrs|
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
       h[field] = Temporal.configuration.converter.to_payload(value)
