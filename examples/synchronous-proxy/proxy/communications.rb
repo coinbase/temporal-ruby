@@ -54,13 +54,13 @@ module SynchronousProxy
         end
       end
 
-      def wait_for_response(_)
+      def wait_for_response
         # #workflow is defined as part of the Temporal::Workflow class and is therefore available to
         # any methods inside the class plus methods that are included from a Module like this one
         workflow.wait_for { !!@response_signal }
       end
 
-      def wait_for_request(_)
+      def wait_for_request
         workflow.wait_for { !!@request_signal }
       end
 
@@ -96,7 +96,7 @@ module SynchronousProxy
         @response_signal = nil
         w_id = workflow.metadata.id
         Temporal.logger.info("#{self.class.name}#receive_response, Waiting for response on [#{description}] in workflow #{w_id}")
-        wait_for_response(description)
+        wait_for_response
         @response_signal
       end
 
@@ -104,7 +104,7 @@ module SynchronousProxy
         @request_signal = nil
         w_id = workflow.metadata.id
         Temporal.logger.info("#{self.class.name}#receive_request, Waiting for request on [#{description}] in workflow #{w_id}")
-        wait_for_request(description)
+        wait_for_request
         @request_signal
       end
     end
