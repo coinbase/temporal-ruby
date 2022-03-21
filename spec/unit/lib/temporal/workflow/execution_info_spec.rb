@@ -26,7 +26,7 @@ describe Temporal::Workflow::ExecutionInfo do
     it 'deserializes if search_attributes is nil' do
       api_info.search_attributes = nil
 
-      result = described_class.generate_from(api_info)
+      result = described_class.generate_from(api_info, config.converter)
       expect(result.search_attributes).to eq({})
     end
   end
