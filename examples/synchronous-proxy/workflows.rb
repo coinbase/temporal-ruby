@@ -106,10 +106,10 @@ module SynchronousProxy
 
       signal_details = receive_response("#{stage}_stage_payload")
       logger.warn "UpdateOrderWorkflow received signal_details #{signal_details.inspect}, error? #{signal_details.error?}"
-      return [status, signal_details.value] if signal_details.error?
+      raise signal_details.value.class, signal_details.value.message if signal_details.error?
 
       status.stage = signal_details.key # next stage
-      [status, nil]
+      status
     end
   end
 
