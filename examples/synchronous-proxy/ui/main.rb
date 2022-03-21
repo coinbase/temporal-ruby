@@ -10,33 +10,28 @@ module SynchronousProxy
         status = create_order(random_id, sequence_no)
 
         sequence_no += 1
-        loop do
           email = prompt_and_read_input("Please enter you email address:")
-          status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::RegisterStage, value: email)
-          puts "status #{status.inspect}, err #{err.inspect}"
-          break unless err
-
-          STDERR.puts "invalid email"
-        end
+          status = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::RegisterStage, value: email)
+          puts "status #{status.inspect}"
 
         sequence_no += 1
-        loop do
+        begin
           size = prompt_and_read_input("Please enter your requested size:")
-          status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
-          puts "status #{status.inspect}, err #{err.inspect}"
-          break unless err
-
-          STDERR.puts "invalid size"
+          status = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::SizeStage, value: size)
+          puts "status #{status.inspect}"
+        rescue SynchronousProxy::ValidateSizeActivity::InvalidSize => e
+          STDERR.puts e.message
+          retry
         end
 
         sequence_no += 1
-        loop do
+        begin
           color = prompt_and_read_input("Please enter your required tshirt color:")
-          status, err = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::ColorStage, value: color)
-          puts "status #{status.inspect}, err #{err.inspect}"
-          break unless err
-
-          STDERR.puts "invalid color"
+          status = update_order(random_id: random_id, sequence_no: sequence_no, order_id: status.order_id, stage: SynchronousProxy::ColorStage, value: color)
+          puts "status #{status.inspect}"
+        rescue SynchronousProxy::ValidateColorActivity::InvalidColor => e
+          STDERR.puts e.message
+          retry
         end
 
         puts "Thanks for your order!"
@@ -57,8 +52,7 @@ module SynchronousProxy
         w_id = "update_#{stage}_#{random_id}-#{sequence_no}"
         workflow_options = {workflow_id: w_id}
         run_id = Temporal.start_workflow(SynchronousProxy::UpdateOrderWorkflow, order_id, stage, value, options: workflow_options)
-        status, err = Temporal.await_workflow_result(SynchronousProxy::UpdateOrderWorkflow, workflow_id: w_id, run_id: run_id)
-        [status, err]
+        Temporal.await_workflow_result(SynchronousProxy::UpdateOrderWorkflow, workflow_id: w_id, run_id: run_id)
       end
 
       def prompt_and_read_input(prompt)
