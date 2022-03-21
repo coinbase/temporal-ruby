@@ -13,8 +13,8 @@ module SynchronousProxy
     # returns true and unblocks.
     #
     module Communications
-      RequestSignalName = "proxy-request-signal".freeze
-      ResponseSignalName = "proxy-response-signal".freeze
+      REQUEST_SIGNAL_NAME = "proxy-request-signal".freeze
+      RESPONSE_SIGNAL_NAME = "proxy-response-signal".freeze
 
       SignalDetails = Struct.new(
         :name, :key, :value, :error, :calling_workflow_id,
@@ -42,10 +42,10 @@ module SynchronousProxy
           details = SignalDetails.from_input(input)
 
           case signal
-          when RequestSignalName
+          when REQUEST_SIGNAL_NAME
             @request_signal = details
 
-          when ResponseSignalName
+          when RESPONSE_SIGNAL_NAME
             @response_signal = details
 
           else
@@ -70,7 +70,7 @@ module SynchronousProxy
         logger.info("#{self.class.name}#send_error_response, Sending error response from #{w_id} to #{target_workflow_id}")
         logger.info("#{self.class.name}#send_error_response, err is #{err.inspect}")
         details = SignalDetails.new(key: "error", value: err, calling_workflow_id: w_id)
-        workflow.signal_external_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, RESPONSE_SIGNAL_NAME, target_workflow_id, "", details.to_input)
         nil
       end
 
@@ -79,7 +79,7 @@ module SynchronousProxy
 
         logger.info("#{self.class.name}#send_response, Sending response from #{w_id} to #{target_workflow_id}")
         details = SignalDetails.new(key: key, value: value, calling_workflow_id: w_id)
-        workflow.signal_external_workflow(workflow, ResponseSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, RESPONSE_SIGNAL_NAME, target_workflow_id, "", details.to_input)
         nil
       end
 
@@ -88,7 +88,7 @@ module SynchronousProxy
 
         logger.info("#{self.class.name}#send_request, Sending request from #{w_id} to #{target_workflow_id}, key #{key}, value #{value}, calling workflow #{w_id}")
         details = SignalDetails.new(key: key, value: value, calling_workflow_id: w_id)
-        workflow.signal_external_workflow(workflow, RequestSignalName, target_workflow_id, "", details.to_input)
+        workflow.signal_external_workflow(workflow, REQUEST_SIGNAL_NAME, target_workflow_id, "", details.to_input)
         nil
       end
 
