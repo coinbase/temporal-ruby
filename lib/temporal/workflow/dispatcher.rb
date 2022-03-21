@@ -5,17 +5,18 @@ module Temporal
     #
     # A handler may be associated with a specific event name so when that event occurs
     # elsewhere in the system we may dispatch the event and execute the handler. By default
-    # we do a simple name <=> handler association.
+    # we *always* execute the handler associated with the event_name.
     #
     # Optionally, we may register a named handler that is triggered when an event _and
-    # an optional handler_name key_ are provided. When this more specific match
-    # fails, we fall back to matching just against +event_name+.
+    # an optional handler_name key_ are provided. In this situation, we dispatch to both
+    # the handler associated to event_name+handler_name and to the handler associated with
+    # the event_name. The order of this dispatch is not guaranteed.
     #
     class Dispatcher
       WILDCARD = '*'.freeze
       TARGET_WILDCARD = '*'.freeze
 
-      EventStruct = Struct.new(:event_name, :handler, :handler_name)
+      EventStruct = Struct.new(:event_name, :handler)
       DuplicateNamedHandlerRegistrationError = Class.new(StandardError)
 
       def initialize
@@ -23,11 +24,7 @@ module Temporal
       end
 
       def register_handler(target, event_name, handler_name: nil, &handler)
-        if handler_name && find_named_handler(target, event_name, handler_name)
-          raise DuplicateNamedHandlerRegistrationError.new("Duplicate registration for handler_name #{handler_name}")
-        end
-
-        handlers[target] << EventStruct.new(event_name, handler, handler_name)
+        handlers[target] << EventStruct.new(combine(event_name, handler_name), handler)
         self
       end
 
@@ -42,28 +39,23 @@ module Temporal
       attr_reader :handlers
 
       def handlers_for(target, event_name, handler_name)
-        if handler_name
-          struct = find_named_handler(target, event_name, handler_name)
-          return [struct.handler] if struct
-        end
+        named_handler = combine(event_name, handler_name)
 
-        # specific match failed or was not provided, fall back to default behavior
-        # and filter out named handlers
         handlers[target]
-          .select { |event_struct| event_struct.handler_name.nil? }
           .concat(handlers[TARGET_WILDCARD])
-          .select { |event_struct| event_struct.event_name == event_name || event_struct.event_name == WILDCARD }
+          .select { |event_struct| match?(event_struct, event_name, named_handler) }
           .map(&:handler)
       end
 
-      def find_named_handler(target, event_name, handler_name)
-        # to succeed then +handler_name+ must be non-nil
-        handlers[target]
-          .find do |event_struct|
-          handler_name &&
-            event_struct.event_name == event_name &&
-            event_struct.handler_name == handler_name
-        end
+      def match?(event_struct, event_name, named_handler)
+        event_struct.event_name == event_name ||
+          event_struct.event_name == named_handler ||
+          event_struct.event_name == WILDCARD
+      end
+
+      def combine(event_name, handler_name)
+        return event_name unless handler_name
+        "#{event_name}:#{handler_name}"
       end
     end
   end
