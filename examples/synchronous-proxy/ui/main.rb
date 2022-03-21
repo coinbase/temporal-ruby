@@ -46,7 +46,7 @@ module SynchronousProxy
 
       def create_order(random_id, sequence_no)
         w_id = "new-tshirt-order-#{random_id}-#{sequence_no}"
-        workflow_options = {task_queue: "ui-driven", workflow_id: w_id}
+        workflow_options = {workflow_id: w_id}
         Temporal.start_workflow(SynchronousProxy::OrderWorkflow, options: workflow_options)
         status = SynchronousProxy::OrderStatus.new
         status.order_id = w_id
@@ -55,7 +55,7 @@ module SynchronousProxy
 
       def update_order(random_id:, sequence_no:, order_id:, stage:, value:)
         w_id = "update_#{stage}_#{random_id}-#{sequence_no}"
-        workflow_options = {task_queue: "ui-driven", workflow_id: w_id}
+        workflow_options = {workflow_id: w_id}
         run_id = Temporal.start_workflow(SynchronousProxy::UpdateOrderWorkflow, order_id, stage, value, options: workflow_options)
         status, err = Temporal.await_workflow_result(SynchronousProxy::UpdateOrderWorkflow, workflow_id: w_id, run_id: run_id)
         [status, err]
