@@ -131,6 +131,13 @@ module Temporal
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
+        # Temporal docs say that we *must* wait for the child to get spawned:
+        child_workflow_started = false
+        dispatcher.register_handler(target, 'started') do
+          child_workflow_started = true
+        end
+        wait_for { child_workflow_started }
+
         future
       end
 

@@ -241,6 +241,7 @@ module Temporal
           dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
+          dispatch(target, 'started')
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
