@@ -21,19 +21,11 @@ describe WaitForNamedSignalWorkflow, :integration do
           run_id: run_id,
         )
 
-        expect(result).to eq(
-          {
-            received: {
-              signal_name => [arg1, arg2]
-            },
-            counts: {
-              signal_name => 1
-            }
-          }
-        )
+        expect(result[:received]).to include({signal_name => [arg1, arg2]})
+        expect(result[:counts]).to include({signal_name => 1})
       end
 
-      it 'does NOT receive the signal in its catch-all signal handler' do
+      it 'receives the signal in its catch-all signal handler' do
         _, run_id = run_workflow(WaitForNamedSignalWorkflow, signal_name, options: { workflow_id: receiver_workflow_id})
 
         Temporal.signal_workflow(WaitForNamedSignalWorkflow, signal_name, receiver_workflow_id, run_id, [arg1, arg2])
@@ -44,7 +36,8 @@ describe WaitForNamedSignalWorkflow, :integration do
           run_id: run_id,
         )
 
-        expect(result[:received].keys).to eq([signal_name])
+        expect(result[:received]).to include({"catch-all" => [arg1, arg2]})
+        expect(result[:counts]).to include({"catch-all" => 1})
       end
     end
 
