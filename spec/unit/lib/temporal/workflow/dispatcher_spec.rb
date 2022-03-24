@@ -32,11 +32,6 @@ describe Temporal::Workflow::Dispatcher do
         event = handlers[target].first
         expect(event.handler).to eq(block)
       end
-
-      it 'defaults to nil for handler_name' do
-        event = handlers[target].first
-        expect(event.handler_name).to be nil
-      end
     end
 
     context 'with a specific handler_name' do
@@ -51,28 +46,15 @@ describe Temporal::Workflow::Dispatcher do
         expect(handlers[target].count).to eq 1
       end
 
-      it 'associates the event name with the target' do
+      it 'associates the event name and handler name with the target' do
         event = handlers[target].first
-        expect(event.event_name).to eq(event_name)
+        name = "#{event_name}:#{handler_name}"
+        expect(event.event_name).to eq(name)
       end
 
       it 'associates the handler with the target' do
         event = handlers[target].first
         expect(event.handler).to eq(block)
-      end
-
-      it 'associates the handler name with the target' do
-        event = handlers[target].first
-        expect(event.handler_name).to eq(handler_name)
-      end
-
-      it 'raises an ArgumentError when named handler is registered twice' do
-        subject.register_handler(target, event_name, handler_name: handler_name, &block)
-
-        # second call!
-        expect do
-          subject.register_handler(target, event_name, handler_name: handler_name, &block)
-        end.to raise_error(described_class::DuplicateNamedHandlerRegistrationError, "Duplicate registration for handler_name #{handler_name}")
       end
     end
   end
@@ -161,15 +143,17 @@ describe Temporal::Workflow::Dispatcher do
         subject.register_handler(target, 'completed', handler_name: handler_name, &handler_7)
       end
 
-      it 'calls ONLY the named handler' do
+      it 'calls the named handler and the default' do
         subject.dispatch(target, 'completed', handler_name: handler_name)
 
+        # the parent context "before" block registers the handlers with the target
+        # so look there for why handlers 1 and 4 are also called
         expect(handler_7).to have_received(:call)
+        expect(handler_1).to have_received(:call)
+        expect(handler_4).to have_received(:call)
 
-        expect(handler_1).not_to have_received(:call)
         expect(handler_2).not_to have_received(:call)
         expect(handler_3).not_to have_received(:call)
-        expect(handler_4).not_to have_received(:call)
       end
     end
   end
