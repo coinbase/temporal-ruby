@@ -24,10 +24,16 @@ describe QueryWorkflow, :integration do
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
       .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
 
+    Temporal.signal_workflow(described_class, 'make_progress', workflow_id, run_id)
+
+    # Query for updated signal_count with an unsatisfied reject condition
+    expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id, query_reject_condition: :not_open))
+      .to eq 1
+
     Temporal.signal_workflow(described_class, 'finish', workflow_id, run_id)
     wait_for_workflow_completion(workflow_id, run_id)
 
-    # Repeating query scenarios above, expecting updated state and signal results
+    # Repeating original query scenarios above, expecting updated state and signal results
     expect(Temporal.query_workflow(nil, 'state', workflow_id, run_id))
       .to eq 'finished'
 
@@ -36,7 +42,7 @@ describe QueryWorkflow, :integration do
       .to eq 'DEHSINIF'
 
     expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id))
-      .to eq 1
+      .to eq 2
 
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
       .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
