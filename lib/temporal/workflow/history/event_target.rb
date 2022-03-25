@@ -16,7 +16,6 @@ module Temporal
         CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE = :cancel_external_workflow_request
         WORKFLOW_TYPE                         = :workflow
         CANCEL_WORKFLOW_REQUEST_TYPE          = :cancel_workflow_request
-        QUERY_TYPE                            = :query
         UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE = :upsert_search_attributes_request
 
         # NOTE: The order is important, first prefix match wins (will be a longer match)
@@ -43,10 +42,6 @@ module Temporal
 
         def self.workflow
           @workflow ||= new(1, WORKFLOW_TYPE)
-        end
-
-        def self.query
-          @query ||= new(1, QUERY_TYPE)
         end
 
         def self.from_event(event)

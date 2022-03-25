@@ -105,6 +105,7 @@ describe Temporal::Workflow::TaskProcessor do
             expect(connection)
               .to have_received(:respond_workflow_task_completed)
               .with(
+                namespace: namespace,
                 task_token: task.task_token,
                 commands: commands,
                 query_results: hash_including(query_id)

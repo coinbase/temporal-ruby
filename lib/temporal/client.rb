@@ -185,7 +185,8 @@ module Temporal
     # @param args [String, Array, nil] optional arguments for the query
     # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
     #   global default
-    def query_workflow(workflow, query, workflow_id, run_id, *args, namespace: nil)
+    # @param query_reject_condition [Symbol] check Temporal::Connection::GRPC::QUERY_REJECT_CONDITION
+    def query_workflow(workflow, query, workflow_id, run_id, *args, namespace: nil, query_reject_condition: nil)
       execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
       connection.query_workflow(
@@ -193,7 +194,8 @@ module Temporal
         workflow_id: workflow_id,
         run_id: run_id,
         query: query,
-        args: args
+        args: args,
+        query_reject_condition: query_reject_condition
       )
     end
 

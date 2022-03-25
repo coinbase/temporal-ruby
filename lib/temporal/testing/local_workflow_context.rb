@@ -190,7 +190,7 @@ module Temporal
         raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
       end
 
-      def on_query(query = nil, &block)
+      def on_query(query, &block)
         raise NotImplementedError, 'Queries are not available when Temporal::Testing.local! is on'
       end
 

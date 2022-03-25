@@ -1,4 +1,5 @@
 require 'workflows/query_workflow'
+require 'temporal/errors'
 
 describe QueryWorkflow, :integration do
   subject { described_class }
@@ -6,32 +7,22 @@ describe QueryWorkflow, :integration do
   it 'returns the correct result for the queries' do
     workflow_id, run_id = run_workflow(described_class)
 
-    # Target query handler for "state", no args, nil workflow class
+    # Query with nil workflow class
     expect(Temporal.query_workflow(nil, 'state', workflow_id, run_id))
       .to eq 'started'
 
-    # Target query handler for "state", arbitrary args
+    # Query with arbitrary args
     expect(Temporal.query_workflow(described_class, 'state', workflow_id, run_id,
       'upcase', 'ignored', 'reverse'))
       .to eq 'DETRATS'
 
-    # Target query handler for "signal_count", no args
+    # Query with no args
     expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id))
       .to eq 0
 
-    # Target catch-all query handler, no args
-    expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id))
-      .to be nil
-
-    # Target catch-all query handler, arbitrary args
-    expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id,
-      'reverse', 'many', 'extra', 'arguments', 'ignored'))
-      .to be nil
-
-    # Target catch-all query handler with unrecognized signal
-    # TODO this is meant to be an error handling expectation
-    expect(Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id))
-      .to be nil
+    # Query with unregistered handler
+    expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
+      .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
 
     Temporal.signal_workflow(described_class, 'finish', workflow_id, run_id)
     wait_for_workflow_completion(workflow_id, run_id)
@@ -47,15 +38,11 @@ describe QueryWorkflow, :integration do
     expect(Temporal.query_workflow(described_class, 'signal_count', workflow_id, run_id))
       .to eq 1
 
-    expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id))
-      .to eq 'finish'
+    expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
+      .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
 
-    expect(Temporal.query_workflow(described_class, 'last_signal', workflow_id, run_id,
-      'reverse', 'many', 'extra', 'arguments', 'ignored'))
-      .to eq 'hsinif'
-
-    # TODO this is meant to be an error handling expectation
-    expect(Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id))
-      .to be nil
+    # Now that the workflow is completed, test a query with a reject condition satisfied
+    expect { Temporal.query_workflow(described_class, 'state', workflow_id, run_id, query_reject_condition: :not_open) }
+      .to raise_error(Temporal::QueryFailedFailure, 'Query rejected: status WORKFLOW_EXECUTION_STATUS_COMPLETED')
   end
 end

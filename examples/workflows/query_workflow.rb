@@ -6,20 +6,6 @@ class QueryWorkflow < Temporal::Workflow
     @signal_count = 0
     @last_signal_received = nil
 
-    # Demonstrating catch-all query handler.
-    workflow.on_query do |query, *args|
-      case query
-      when "last_signal"
-        apply_transforms(last_signal_received, args)
-      else
-        nil
-        # TODO appropriate error handling?
-        # raise StandardError, "Unrecognized query type '#{query}'"
-      end
-    end
-
-    # Demonstrating targeted query handlers. Note that these specific query handlers
-    # are invoked instead of the more broad catch-all query handler above.
     workflow.on_query("state") { |*args| apply_transforms(state, args) }
     workflow.on_query("signal_count") { signal_count }
 

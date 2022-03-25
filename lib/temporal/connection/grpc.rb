@@ -26,6 +26,12 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
+      QUERY_REJECT_CONDITION = {
+        none: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NONE,
+        not_open: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_OPEN,
+        not_completed_cleanly: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_COMPLETED_CLEANLY
+      }.freeze
+
       DEFAULT_OPTIONS = {
         max_page_size: 100
       }.freeze
@@ -485,37 +491,8 @@ module Temporal
         raise NotImplementedError
       end
 
-      #     async _queryWorkflowHandler(input) {
-      #         let response;
-      #         try {
-      #             response = await this.service.queryWorkflow({
-      #                 queryRejectCondition: input.queryRejectCondition,
-      #                 namespace: this.options.namespace,
-      #                 execution: input.workflowExecution,
-      #                 query: {
-      #                     queryType: input.queryType,
-      #                     queryArgs: { payloads: await this.options.dataConverter.toPayloads(...input.args) },
-      #                 },
-      #             });
-      #         }
-      #         catch (err) {
-      #             this.rethrowGrpcError(err, input.workflowExecution, 'Failed to query Workflow');
-      #         }
-      #         if (response.queryRejected) {
-      #             if (response.queryRejected.status === undefined || response.queryRejected.status === null) {
-      #                 throw new TypeError('Received queryRejected from server with no status');
-      #             }
-      #             throw new QueryRejectedError(response.queryRejected.status);
-      #         }
-      #         if (!response.queryResult) {
-      #             throw new TypeError('Invalid response from server');
-      #         }
-      #         // We ignore anything but the first query_result
-      #         return this.options.dataConverter.fromPayloads(0, response.queryResult?.payloads);
-      #     }
-      def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil)
+      def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil, query_reject_condition: nil)
         request = Temporal::Api::WorkflowService::V1::QueryWorkflowRequest.new(
-          # query_reject_condition: ,
           namespace: namespace,
           execution: Temporal::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
@@ -526,11 +503,24 @@ module Temporal
             query_args: to_query_payloads(args)
           )
         )
-        response = client.query_workflow(request)
+        if query_reject_condition
+          condition = QUERY_REJECT_CONDITION[query_reject_condition]
+          raise Client::ArgumentError, 'Unknown query_reject_condition specified' unless condition
+
+          request.query_reject_condition = condition
+        end
+
+        begin
+          response = client.query_workflow(request)
+        rescue ::GRPC::InvalidArgument => e
+          raise Temporal::QueryFailedFailure, e.details
+        end
+
         if response.query_rejected
-
+          rejection_status = response.query_rejected.status || 'Received query rejection from server with no status'
+          raise Temporal::QueryFailedFailure.new("Query rejected: status #{rejection_status}")
         elsif !response.query_result
-
+          raise Temporal::QueryFailedFailure.new('Invalid response from server')
         else
           from_query_payloads(response.query_result)
         end

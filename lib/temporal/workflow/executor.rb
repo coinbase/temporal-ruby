@@ -38,16 +38,20 @@ module Temporal
 
       # @param query [Temporal::Workflow::TaskProcessor::Query]
       def process_query(query)
-        dispatcher.process(History::EventTarget.query, query.query_type, query.query_args)
+        unless context.query_handlers.key?(query.query_type)
+          raise Temporal::QueryFailedFailure, "Workflow did not register a handler for #{query.query_type}"
+        end
+
+        context.query_handlers[query.query_type].call(*query.query_args)
       end
 
       private
 
-      attr_reader :workflow_class, :dispatcher, :state_manager, :task_metadata, :history, :config
+      attr_reader :workflow_class, :dispatcher, :state_manager, :task_metadata, :history, :config, :context
 
       def execute_workflow(input, workflow_started_event)
         metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
-        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config)
+        @context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config)
 
         Fiber.new do
           workflow_class.execute_in_context(context, input)
