@@ -517,7 +517,7 @@ module Temporal
         end
 
         if response.query_rejected
-          rejection_status = response.query_rejected.status || 'Received query rejection from server with no status'
+          rejection_status = response.query_rejected.status || 'not specified by server'
           raise Temporal::QueryFailedFailure.new("Query rejected: status #{rejection_status}")
         elsif !response.query_result
           raise Temporal::QueryFailedFailure.new('Invalid response from server')
