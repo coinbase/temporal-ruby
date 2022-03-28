@@ -7,6 +7,7 @@ require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/command'
 require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
+require 'temporal/workflow/child_workflow_future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
 
@@ -107,7 +108,7 @@ module Temporal
         input << args unless args.empty?
 
         parent_close_policy = options.delete(:parent_close_policy)
-        wait_for_start = options.delete(:wait_for_start)
+        should_wait_for_start = options.fetch(:should_wait_for_start, true)
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::StartChildWorkflow.new(
@@ -124,7 +125,7 @@ module Temporal
         )
 
         target, cancelation_id = schedule_command(command)
-        future = Future.new(target, self, cancelation_id: cancelation_id)
+        future = ChildWorkflowFuture.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
@@ -136,13 +137,13 @@ module Temporal
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
-        if wait_for_start
-          child_workflow_started = false
-          dispatcher.register_handler(target, 'started') do
-            child_workflow_started = true
-          end
-          wait_for { child_workflow_started }
+        dispatcher.register_handler(target, 'started') do
+          future.start
         end
+
+        # If you opt out of should_wait_for_start, note that temporal requires that this future has
+        # started before the parent workflow execution terminates.
+        wait_for { future.started? } if should_wait_for_start
 
         future
       end
