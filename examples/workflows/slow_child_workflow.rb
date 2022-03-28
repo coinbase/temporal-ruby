@@ -4,6 +4,6 @@ class SlowChildWorkflow < Temporal::Workflow
       workflow.sleep(delay)
     end
 
-    return 'slow child ran'
+    return { parent_workflow_id: workflow.metadata.parent_id }
   end
 end
