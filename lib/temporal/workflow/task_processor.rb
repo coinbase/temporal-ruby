@@ -20,6 +20,7 @@ module Temporal
       end
 
       MAX_FAILED_ATTEMPTS = 1
+      LEGACY_QUERY_KEY = :legacy_query
 
       def initialize(task, namespace, workflow_lookup, middleware_chain, config)
         @task = task
@@ -50,30 +51,17 @@ module Temporal
           executor.run
         end
 
-        # Process deprecated style of query task
-        if !task.query.nil?
-          result = executor.process_query(Query.new(task.query))
-          complete_query(result)
+        query_results = executor.process_queries(parse_queries)
+
+        if legacy_query_task?
+          complete_query(query_results[LEGACY_QUERY_KEY])
         else
-          query_results = if task.queries.any?
-            task.queries.each_with_object({}) do |(query_id, query), hash|
-              begin
-                hash[query_id] = executor.process_query(Query.new(query))
-              rescue StandardError => error
-                hash[query_id] = error
-              end
-            end
-          end
           complete_task(commands, query_results)
         end
       rescue StandardError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 
-        if task.query.nil?
-          fail_task(error)
-        else
-          fail_query(error)
-        end
+        fail_task(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name, namespace: namespace)
@@ -118,10 +106,30 @@ module Temporal
         Workflow::History.new(events)
       end
 
+      def legacy_query_task?
+        !!task.query
+      end
+
+      def parse_queries
+        # Support for deprecated query style
+        if legacy_query_task?
+          { LEGACY_QUERY_KEY => Query.new(task.query) }
+        else
+          task.queries.each_with_object({}) do |(query_id, query), result|
+            result[query_id] = Query.new(query)
+          end
+        end
+      end
+
       def complete_task(commands, query_results)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
-        connection.respond_workflow_task_completed(namespace: namespace, task_token: task_token, commands: commands, query_results: query_results)
+        connection.respond_workflow_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          commands: commands,
+          query_results: query_results
+        )
       end
 
       def complete_query(result)
@@ -132,19 +140,8 @@ module Temporal
           task_token: task_token,
           query_result: result
         )
-      end
-
-      def fail_query(error)
-        Temporal.logger.error("Workflow Query task failed", metadata.to_h.merge(error: error.inspect))
-        Temporal.logger.debug(error.backtrace.join("\n"))
-
-        connection.respond_query_task_completed(
-          namespace: namespace,
-          task_token: task_token,
-          error_message: error.message || "Encountered an error during query handling"
-        )
       rescue StandardError => error
-        Temporal.logger.error("Unable to fail Workflow Query task", metadata.to_h.merge(error: error.inspect))
+        Temporal.logger.error("Unable to complete a query", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end

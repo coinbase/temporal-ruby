@@ -189,42 +189,28 @@ module Temporal
         poll_request.execute
       end
 
-      def respond_query_task_completed(namespace:, task_token:, query_result: nil, error_message: nil)
+      def respond_query_task_completed(namespace:, task_token:, query_result:)
+        query_result_proto = Serializer.serialize(query_result)
         request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
           task_token: task_token,
-          namespace: namespace
+          namespace: namespace,
+          completed_type: query_result_proto.result_type,
+          query_result: query_result_proto.answer,
+          error_message: query_result_proto.error_message,
         )
-        if !error_message.nil?
-          request.error_message = error_message
-          request.completed_type = Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED
-        else
-          request.query_result = to_query_payloads(query_result)
-          request.completed_type = Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED
-        end
+
         client.respond_query_task_completed(request)
       end
 
-      def respond_workflow_task_completed(namespace:, task_token:, commands:, query_results:)
-        query_results&.transform_values! do |query_result|
-          if query_result.is_a?(StandardError)
-            {
-              result_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED,
-              error_message: query_result.message
-            }
-          else
-            {
-              result_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
-              answer: to_query_payloads(query_result)
-            }
-          end
-        end
+      def respond_workflow_task_completed(namespace:, task_token:, commands:, query_results: {})
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
           commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
-          query_results: query_results || {}
+          query_results: query_results.transform_values { |value| Serializer.serialize(value) }
         )
+
         client.respond_workflow_task_completed(request)
       end
 
