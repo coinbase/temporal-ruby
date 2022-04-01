@@ -68,7 +68,7 @@ describe Temporal::Workflow::TaskProcessor do
         allow(lookup).to receive(:find).with(workflow_name).and_return(workflow_class)
         allow(Temporal::Workflow::Executor).to receive(:new).and_return(executor)
         allow(executor).to receive(:run) { workflow_class.execute_in_context(context, input); commands }
-        allow(executor).to receive(:process_query)
+        allow(executor).to receive(:process_queries)
       end
 
       context 'when workflow task completes' do
@@ -90,42 +90,48 @@ describe Temporal::Workflow::TaskProcessor do
 
         context 'when workflow task queries are included' do
           let(:query_id) { SecureRandom.uuid }
+          let(:query_result) { Temporal::Workflow::QueryResult.answer(42) }
           let(:queries) do
             Google::Protobuf::Map.new(:string, :message, Temporal::Api::Query::V1::WorkflowQuery).tap do |map|
               map[query_id] = Fabricate(:api_workflow_query)
             end
           end
 
+          before do
+            allow(executor).to receive(:process_queries).and_return(query_id => query_result)
+          end
+
           it 'completes the workflow task with query results' do
             subject.process
 
             expect(executor)
-              .to have_received(:process_query)
-              .with(an_instance_of(Temporal::Workflow::TaskProcessor::Query))
+              .to have_received(:process_queries)
+              .with(query_id => an_instance_of(Temporal::Workflow::TaskProcessor::Query))
             expect(connection)
               .to have_received(:respond_workflow_task_completed)
               .with(
                 namespace: namespace,
                 task_token: task.task_token,
                 commands: commands,
-                query_results: hash_including(query_id)
+                query_results: { query_id => query_result }
               )
           end
         end
 
         context 'when deprecated task query is present' do
           let(:query) { Fabricate(:api_workflow_query) }
-          let(:result) { double('result') }
+          let(:result) { Temporal::Workflow::QueryResult.answer(42) }
 
           before do
-            expect(executor).to receive(:process_query).with(
-              an_instance_of(Temporal::Workflow::TaskProcessor::Query)
-            ).and_return(result)
+            allow(executor).to receive(:process_queries).and_return(legacy_query: result)
           end
 
           it 'completes the workflow query task with the result' do
             subject.process
 
+            expect(executor).to have_received(:process_queries).with(
+              legacy_query: an_instance_of(Temporal::Workflow::TaskProcessor::Query)
+            )
             expect(connection).to_not have_received(:respond_workflow_task_completed)
             expect(connection)
               .to have_received(:respond_query_task_completed)
@@ -181,15 +187,16 @@ describe Temporal::Workflow::TaskProcessor do
         context 'when deprecated task query is present' do
           let(:query) { Fabricate(:api_workflow_query) }
 
-          it 'completes the workflow query task with an error message' do
+          it 'fails the workflow task' do
             subject.process
 
             expect(connection)
-              .to have_received(:respond_query_task_completed)
+              .to have_received(:respond_workflow_task_failed)
               .with(
-                task_token: task.task_token,
                 namespace: namespace,
-                error_message: exception.message
+                task_token: task.task_token,
+                cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+                exception: exception
               )
           end
         end
@@ -254,6 +261,30 @@ describe Temporal::Workflow::TaskProcessor do
           expect(Temporal.metrics)
             .to have_received(:timing)
             .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+        end
+      end
+
+      context 'when legacy query fails' do
+        let(:query) { Fabricate(:api_workflow_query) }
+        let(:exception) { StandardError.new('workflow task failed') }
+        let(:query_failure) { Temporal::Workflow::QueryResult.failure(exception) }
+
+        before do
+          allow(executor)
+            .to receive(:process_queries)
+            .and_return(legacy_query: query_failure)
+        end
+
+        it 'fails the workflow task' do
+          subject.process
+
+          expect(connection)
+            .to have_received(:respond_query_task_completed)
+            .with(
+              namespace: namespace,
+              task_token: task.task_token,
+              query_result: query_failure
+            )
         end
       end
 

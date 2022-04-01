@@ -1,6 +1,7 @@
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow'
+require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::Executor do
   subject { described_class.new(workflow, history, workflow_metadata, config) }
@@ -76,6 +77,38 @@ describe Temporal::Workflow::Executor do
                 memo: {},
                 headers: {'Foo' => 'bar'}
               )
+    end
+  end
+
+  describe '#process_queries' do
+    let(:context) { subject.send(:context) }
+    let(:query_1_result) { 42 }
+    let(:query_2_error) { StandardError.new('Test query failure') }
+    let(:queries) do
+      {
+        '1' => Temporal::Workflow::TaskProcessor::Query.new(Fabricate(:api_workflow_query, query_type: 'success')),
+        '2' => Temporal::Workflow::TaskProcessor::Query.new(Fabricate(:api_workflow_query, query_type: 'failure')),
+        '3' => Temporal::Workflow::TaskProcessor::Query.new(Fabricate(:api_workflow_query, query_type: 'unknown')),
+      }
+    end
+
+    before do
+      subject.run
+      context.on_query('success') { query_1_result }
+      context.on_query('failure') { raise query_2_error }
+    end
+
+    it 'returns query results' do
+      results = subject.process_queries(queries)
+
+      expect(results.length).to eq(3)
+      expect(results['1']).to be_a(Temporal::Workflow::QueryResult::Answer)
+      expect(results['1'].result).to eq(query_1_result)
+      expect(results['2']).to be_a(Temporal::Workflow::QueryResult::Failure)
+      expect(results['2'].error).to eq(query_2_error)
+      expect(results['3']).to be_a(Temporal::Workflow::QueryResult::Failure)
+      expect(results['3'].error).to be_a(Temporal::QueryFailedFailure)
+      expect(results['3'].error.message).to eq('Workflow did not register a handler for unknown')
     end
   end
 end
