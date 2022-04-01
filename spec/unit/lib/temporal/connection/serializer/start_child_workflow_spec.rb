@@ -3,6 +3,7 @@ require 'temporal/workflow/command'
 require 'temporal/connection/serializer/start_child_workflow'
 
 describe Temporal::Connection::Serializer::StartChildWorkflow do
+  let(:config) { Temporal::Configuration.new }
   let(:example_command) do
     Temporal::Workflow::Command::StartChildWorkflow.new(
       workflow_id: SecureRandom.uuid,
@@ -23,7 +24,7 @@ describe Temporal::Connection::Serializer::StartChildWorkflow do
       command.parent_close_policy = :invalid
 
       expect do
-        described_class.new(command).to_proto
+        described_class.new(command, config.converter).to_proto
       end.to raise_error(Temporal::Connection::ArgumentError) do |e|
         expect(e.message).to eq("Unknown parent_close_policy '#{command.parent_close_policy}' specified")
       end
@@ -39,7 +40,7 @@ describe Temporal::Connection::Serializer::StartChildWorkflow do
         command = example_command
         command.parent_close_policy = policy_name
 
-        result = described_class.new(command).to_proto
+        result = described_class.new(command, config.converter).to_proto
         attribs = result.start_child_workflow_execution_command_attributes
         expect(attribs.parent_close_policy).to eq(expected_parent_close_policy)
       end

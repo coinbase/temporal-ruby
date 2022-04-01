@@ -6,8 +6,9 @@ module Temporal
   module Connection
     module Serializer
       class Base
-        def initialize(object)
+        def initialize(object, converter)
           @object = object
+          @converter = converter
         end
 
         def to_proto
@@ -16,7 +17,7 @@ module Temporal
 
         private
 
-        attr_reader :object
+        attr_reader :object, :converter
       end
     end
   end

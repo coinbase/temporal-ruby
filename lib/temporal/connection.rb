@@ -15,7 +15,7 @@ module Temporal
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      connection_class.new(host, port, identity)
+      connection_class.new(host, port, identity, configuration.converter)
     end
   end
 end

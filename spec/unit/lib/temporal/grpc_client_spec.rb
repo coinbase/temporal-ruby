@@ -1,5 +1,6 @@
 describe Temporal::Connection::GRPC do
-  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
+  subject { Temporal::Connection::GRPC.new(nil, nil, nil, config.converter) }
+  let(:config) { Temporal::Configuration.new }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
