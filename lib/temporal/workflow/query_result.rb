@@ -5,11 +5,11 @@ module Temporal
       Failure = Struct.new(:error)
 
       def self.answer(result)
-        Answer.new(result)
+        Answer.new(result).freeze
       end
 
       def self.failure(error)
-        Failure.new(error)
+        Failure.new(error).freeze
       end
     end
   end
