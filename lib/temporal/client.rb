@@ -395,6 +395,17 @@ module Temporal
       end
     end
 
+    def list_workflow_executions(namespace, query, next_page_token: nil)
+      # make {namespace: namespace} a variable!
+      if block_given?
+        fetch_executions(:closed, { namespace: namespace, query: query }.merge(filter), next_page_token: next_page_token) do |*args|
+          yield args
+        end
+      else
+        fetch_executions(:closed, { namespace: namespace, query: query}.merge(filter))
+      end
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
@@ -450,8 +461,10 @@ module Temporal
       api_method =
         if status == :open
           :list_open_workflow_executions
-        else
+        elsif status == :closed
           :list_closed_workflow_executions
+        else
+          :list_workflow
         end
 
       executions = []
