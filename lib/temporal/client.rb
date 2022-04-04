@@ -383,7 +383,7 @@ module Temporal
       end
     end
 
-    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:,)
+    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
       if block_given? 
