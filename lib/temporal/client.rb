@@ -464,7 +464,7 @@ module Temporal
         elsif status == :closed
           :list_closed_workflow_executions
         else
-          :list_workflow
+          :list_workflow_executions
         end
 
       executions = []
