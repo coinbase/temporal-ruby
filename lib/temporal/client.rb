@@ -371,12 +371,12 @@ module Temporal
       Workflow::History.new(history_response.history.events)
     end
 
-    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:, &block)
+    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:)
       validate_filter(filter, :workflow, :workflow_id)
 
       if block_given? 
         fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter), next_page_token: next_page_token) do |*args|
-          block.call(args)
+          yield args
         end
       else
         fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
