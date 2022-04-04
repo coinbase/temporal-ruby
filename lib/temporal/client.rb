@@ -371,7 +371,7 @@ module Temporal
       Workflow::History.new(history_response.history.events)
     end
 
-    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:)
+    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil,)
       validate_filter(filter, :workflow, :workflow_id)
 
       if block_given? 
@@ -383,7 +383,7 @@ module Temporal
       end
     end
 
-    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:)
+    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
       if block_given? 
