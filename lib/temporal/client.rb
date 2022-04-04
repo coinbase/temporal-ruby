@@ -375,11 +375,11 @@ module Temporal
       validate_filter(filter, :workflow, :workflow_id)
 
       if block_given? 
-        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter), next_page_token: next_page_token) do |*args|
+        fetch_executions(:open, { namespace: namespace, from: from, to: to }.merge(filter), next_page_token: next_page_token) do |*args|
           yield args
         end
       else
-        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
+        fetch_executions(:open, { namespace: namespace, from: from, to: to }.merge(filter))
       end
     end
 
