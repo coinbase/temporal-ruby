@@ -455,9 +455,6 @@ module Temporal
         end
 
       executions = []
-      # default to nil or to the value provided!
-      next_page_token_value = next_page_token
-
       loop do
         response = connection.public_send(
           api_method,
@@ -468,14 +465,15 @@ module Temporal
           Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
         end
 
+        executions += paginated_executions
+        next_page_token = response.next_page_token
+
         if block_given?
+          # if block given, then return the paginated results instead of everything!
           yield paginated_executions, response.next_page_token
-        else
-          executions += paginated_executions
-          next_page_token_value = response.next_page_token
         end
 
-        break if next_page_token_value.to_s.empty?
+        break if next_page_token.to_s.empty?
       end
 
       executions
