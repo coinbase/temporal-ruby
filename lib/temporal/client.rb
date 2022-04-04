@@ -77,7 +77,7 @@ module Temporal
           headers: execution_options.headers,
           memo: execution_options.memo,
           signal_name: signal_name,
-          signal_input: signal_input,
+          signal_input: signal_input
         )
       end
 
@@ -107,7 +107,6 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
-      memo = options[:memo] || {}
 
       response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
@@ -135,10 +134,10 @@ module Temporal
     # @param name [String] name of the new namespace
     # @param description [String] optional namespace description
     # @param is_global [Boolean] used to distinguish local namespaces from global namespaces (https://docs.temporal.io/docs/server/namespaces/#global-namespaces)
-    # @param retention_period_days [Int] optional  value which specifies how long Temporal will keep workflows after completing
-    # @param namespace_data [Hash] optional key-value map for any customized purpose that can be retreived with describe_namespace
-    def register_namespace(name, description = nil, is_global: false, retention_period_days:  10, data: nil)
-      connection.register_namespace(name: name, description: description, is_global: is_global, retention_period_days: retention_period_days, data: data)
+    # @param retention_period [Int] optional value which specifies how long Temporal will keep workflows after completing
+    # @param data [Hash] optional key-value map for any customized purpose that can be retreived with describe_namespace
+    def register_namespace(name, description = nil, is_global: false, retention_period: 10, data: nil)
+      connection.register_namespace(name: name, description: description, is_global: is_global, retention_period: retention_period, data: data)
     end
 
     # Fetches metadata for a namespace.
@@ -208,15 +207,6 @@ module Temporal
           timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
-        # client timed out
-        closed_event = nil
-      else
-        history = Workflow::History.new(history_response.history.events)
-        closed_event = history.events.first
-        # If this is nil, the server timed out
-      end
-
-      if closed_event.nil?
         message = if timeout 
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
@@ -224,6 +214,8 @@ module Temporal
         end
         raise TimeoutError.new(message)
       end
+      history = Workflow::History.new(history_response.history.events)
+      closed_event = history.events.first
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
@@ -371,28 +363,28 @@ module Temporal
       Workflow::History.new(history_response.history.events)
     end
 
-    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {})
+    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:, &block)
       validate_filter(filter, :workflow, :workflow_id)
 
-      fetch_executions(:open, { namespace: namespace, from: from, to: to }.merge(filter))
+      if block_given? 
+        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter), next_page_token: next_page_token) do |*args|
+          block.call(args)
+        end
+      else
+        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
+      end
     end
 
-    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {})
+    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token:, &block)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
-      fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
-    end
-  
-    def get_cron_schedule(namespace, workflow_id, run_id: nil)
-      history_response = connection.get_workflow_execution_history(
-        namespace: namespace,
-        workflow_id: workflow_id,
-        run_id: run_id
-      )
-      history = Workflow::History.new(history_response.history.events)
-      cron_schedule = history.first_workflow_event.attributes.cron_schedule
-      
-      cron_schedule != '' ? cron_schedule : nil
+      if block_given? 
+        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter), next_page_token: next_page_token) do |*args|
+          block.call(args)
+        end
+      else
+        fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
+      end
     end
 
     class ResultConverter
@@ -446,7 +438,7 @@ module Temporal
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
 
-    def fetch_executions(status, request_options)
+    def fetch_executions(status, request_options, next_page_token:)
       api_method =
         if status == :open
           :list_open_workflow_executions
@@ -455,7 +447,8 @@ module Temporal
         end
 
       executions = []
-      next_page_token = nil
+      # default to nil or to the value provided!
+      next_page_token_value = next_page_token
 
       loop do
         response = connection.public_send(
@@ -463,15 +456,21 @@ module Temporal
           **request_options.merge(next_page_token: next_page_token)
         )
 
-        executions += Array(response.executions)
-        next_page_token = response.next_page_token
+        paginated_executions = Array(response.executions).map do |raw_execution|
+          Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
+        end
 
-        break if next_page_token.to_s.empty?
+        if block_given?
+          yield paginated_executions, response.next_page_token
+        else
+          executions += paginated_executions
+          next_page_token_value = response.next_page_token
+        end
+
+        break if next_page_token_value.to_s.empty?
       end
 
-      executions.map do |raw_execution|
-        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
-      end
+      executions
     end
   end
 end
