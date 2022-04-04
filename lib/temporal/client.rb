@@ -446,7 +446,7 @@ module Temporal
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
 
-    def fetch_executions(status, request_options, next_page_token:)
+    def fetch_executions(status, request_options, next_page_token: nil)
       api_method =
         if status == :open
           :list_open_workflow_executions
