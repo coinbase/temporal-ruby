@@ -118,7 +118,7 @@ module Temporal
 
       def apply_event(event)
         state_machine = command_tracker[event.originating_event_id]
-        target = History::EventTarget.from_event(event)
+        history_target = History::EventTarget.from_event(event)
 
         case event.type
         when 'WORKFLOW_EXECUTION_STARTED'
@@ -156,53 +156,53 @@ module Temporal
 
         when 'ACTIVITY_TASK_SCHEDULED'
           state_machine.schedule
-          discard_command(target)
+          discard_command(history_target)
 
         when 'ACTIVITY_TASK_STARTED'
           state_machine.start
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
-          discard_command(target)
+          discard_command(history_target)
 
         when 'REQUEST_CANCEL_ACTIVITY_TASK_FAILED'
           state_machine.fail
-          discard_command(target)
-          dispatch(target, 'failed', event.attributes.cause, nil)
+          discard_command(history_target)
+          dispatch(history_target, 'failed', event.attributes.cause, nil)
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
+          dispatch(history_target, 'failed', Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start
-          discard_command(target)
+          discard_command(history_target)
 
         when 'TIMER_FIRED'
           state_machine.complete
-          dispatch(target, 'fired')
+          dispatch(history_target, 'fired')
 
         when 'CANCEL_TIMER_FAILED'
           state_machine.failed
-          discard_command(target)
-          dispatch(target, 'failed', event.attributes.cause, nil)
+          discard_command(history_target)
+          dispatch(history_target, 'failed', event.attributes.cause, nil)
 
         when 'TIMER_CANCELED'
           state_machine.cancel
-          discard_command(target)
-          dispatch(target, 'canceled')
+          discard_command(history_target)
+          dispatch(history_target, 'canceled')
 
         when 'WORKFLOW_EXECUTION_CANCEL_REQUESTED'
           # todo
@@ -224,7 +224,7 @@ module Temporal
           handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          dispatch(target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
+          dispatch(history_target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -234,31 +234,31 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_INITIATED'
           state_machine.schedule
-          discard_command(target)
+          discard_command(history_target)
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
+          dispatch(history_target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
-          dispatch(target, 'started')
+          dispatch(history_target, 'started')
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_CANCELED'
           state_machine.cancel
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          dispatch(target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -269,23 +269,23 @@ module Temporal
           # The workflow that sends the signal creates this event in its log; the
           # receiving workflow records WORKFLOW_EXECUTION_SIGNALED on reception
           state_machine.start
-          discard_command(target)
+          discard_command(history_target)
 
         when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED'
           # Temporal Server cannot Signal the targeted Workflow
           # Usually because the Workflow could not be found
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', event.attributes.cause)
+          dispatch(history_target, 'failed', 'StandardError', event.attributes.cause)
 
         when 'EXTERNAL_WORKFLOW_EXECUTION_SIGNALED'
           # Temporal Server has successfully Signaled the targeted Workflow
           # Return the result to the Future waiting on this
           state_machine.complete
-          dispatch(target, 'completed')
+          dispatch(history_target, 'completed')
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
           # no need to track state; this is just a synchronous API call.
-          discard_command(target)
+          discard_command(history_target)
 
         else
           raise UnsupportedEvent, event.type
@@ -318,21 +318,21 @@ module Temporal
         History::EventTarget.new(command_id, target_type)
       end
 
-      def dispatch(target, name, *attributes)
-        dispatcher.dispatch(target, name, attributes)
+      def dispatch(history_target, name, *attributes)
+        dispatcher.dispatch(history_target, name, attributes)
       end
 
-      def discard_command(target)
+      def discard_command(history_target)
         # Pop the first command from the list, it is expected to match
-        existing_command_id, existing_command = commands.shift
+        code_command_id, code_command = commands.shift
 
-        if !existing_command_id
-          raise NonDeterministicWorkflowError, "A command #{target} was not scheduled upon replay"
+        if !code_command_id
+          raise NonDeterministicWorkflowError, "A command #{history_target} was not scheduled upon replay"
         end
 
-        existing_target = event_target_from(existing_command_id, existing_command)
-        if target != existing_target
-          raise NonDeterministicWorkflowError, "Unexpected command #{existing_target} (expected #{target})"
+        code_target = event_target_from(code_command_id, code_command)
+        if history_target != code_target
+          raise NonDeterministicWorkflowError, "Unexpected command.  The code issued: #{code_target}, but the history recorded: #{history_target})"
         end
       end
 
