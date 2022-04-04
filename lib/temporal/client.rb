@@ -398,11 +398,11 @@ module Temporal
     def list_workflow_executions(namespace, query, next_page_token: nil)
       # make {namespace: namespace} a variable!
       if block_given?
-        fetch_executions(:all, { namespace: namespace, query: query }.merge(filter), next_page_token: next_page_token) do |*args|
+        fetch_executions(:all, { namespace: namespace, query: query }, next_page_token: next_page_token) do |*args|
           yield args
         end
       else
-        fetch_executions(:all, { namespace: namespace, query: query}.merge(filter))
+        fetch_executions(:all, { namespace: namespace, query: query})
       end
     end
 
