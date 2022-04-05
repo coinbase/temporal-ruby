@@ -7,7 +7,7 @@ require 'temporal/connection/converter/composite'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :options, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers

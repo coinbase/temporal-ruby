@@ -416,6 +416,7 @@ module Temporal
     attr_reader :config
 
     def connection
+      puts "generating connection", config.for_connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end
 

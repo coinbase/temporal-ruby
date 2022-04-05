@@ -7,6 +7,7 @@ module Temporal
     }.freeze
 
     def self.generate(configuration)
+      puts "generating a new class with config", configuration
       connection_class = CLIENT_TYPES_MAP[configuration.type]
       host = configuration.host
       port = configuration.port
@@ -15,7 +16,7 @@ module Temporal
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      connection_class.new(host, port, identity, options: {max_page_size: configuration.max_page_size})
+      connection_class.new(host, port, identity, options: { max_page_size: configuration.max_page_size })
     end
   end
 end

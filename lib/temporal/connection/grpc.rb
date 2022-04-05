@@ -37,6 +37,7 @@ module Temporal
       MAX_RECEIVED_MESSAGE_LENGTH = 64 * 1024 * 1024
 
       def initialize(host, port, identity, options = {})
+        puts "init GRPC with options", options
         @url = "#{host}:#{port}"
         @identity = identity
         @poll = true
