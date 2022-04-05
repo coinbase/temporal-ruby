@@ -22,13 +22,13 @@ module Temporal
         @handlers = Hash.new { |hash, key| hash[key] = [] }
       end
 
-      def register_handler(target, event_name, handler_name: nil, &handler)
-        handlers[target] << EventStruct.new(sanitize_handler_name(event_name, handler_name), handler)
+      def register_handler(target, event_name, &handler)
+        handlers[target] << EventStruct.new(event_name, handler)
         self
       end
 
-      def dispatch(target, event_name, args = nil, handler_name: nil)
-        handlers_for(target, event_name, handler_name).each do |handler|
+      def dispatch(target, event_name, args = nil)
+        handlers_for(target, event_name).each do |handler|
           handler.call(*args)
         end
       end
@@ -37,24 +37,16 @@ module Temporal
 
       attr_reader :handlers
 
-      def handlers_for(target, event_name, handler_name)
-        named_handler = sanitize_handler_name(event_name, handler_name)
-
+      def handlers_for(target, event_name)
         handlers[target]
           .concat(handlers[TARGET_WILDCARD])
-          .select { |event_struct| match?(event_struct, event_name, named_handler) }
+          .select { |event_struct| match?(event_struct, event_name) }
           .map(&:handler)
       end
 
-      def match?(event_struct, event_name, named_handler)
+      def match?(event_struct, event_name)
         event_struct.event_name == event_name ||
-          event_struct.event_name == named_handler ||
           event_struct.event_name == WILDCARD
-      end
-
-      def sanitize_handler_name(event_name, handler_name)
-        return event_name unless handler_name
-        "#{event_name}:#{handler_name}"
       end
     end
   end
