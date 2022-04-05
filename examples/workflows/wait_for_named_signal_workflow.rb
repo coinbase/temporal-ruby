@@ -8,13 +8,13 @@ class WaitForNamedSignalWorkflow < Temporal::Workflow
 
     # catch-all handler
     workflow.on_signal do |signal, input|
-      workflow.logger.info("Received signal name #{signal}, with input #{input.inspect}")
+      workflow.logger.info("Received signal name as #{signal}, with input #{input.inspect}")
       signals_received['catch-all'] = input
       signal_counts['catch-all'] += 1
     end
 
     workflow.on_signal('NamedSignal') do |input|
-      workflow.logger.info("Received signal name NamedSignal, with input #{input.inspect}")
+      workflow.logger.info("Received signal name -NamedSignal-, with input #{input.inspect}")
       signals_received['NamedSignal'] = input
       signal_counts['NamedSignal'] += 1
     end
