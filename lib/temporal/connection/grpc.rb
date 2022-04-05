@@ -44,6 +44,7 @@ module Temporal
         @poll_mutex = Mutex.new
         @poll_request = nil
         @options = DEFAULT_OPTIONS.merge(options)
+        puts "new options", @options
       end
 
       def register_namespace(name:, description: nil, is_global: false, retention_period_days: 10, data: nil)
