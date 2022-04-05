@@ -440,6 +440,7 @@ module Temporal
       end
 
       def list_workflow_executions(namespace:, query:, next_page_token: nil)
+        puts "max page size is", options[:max_page_size]
         request = Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest.new(
           namespace: namespace,
           page_size: options[:max_page_size],

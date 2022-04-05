@@ -7,7 +7,6 @@ module Temporal
     }.freeze
 
     def self.generate(configuration)
-      puts "generating a new class with config", configuration
       connection_class = CLIENT_TYPES_MAP[configuration.type]
       host = configuration.host
       port = configuration.port
