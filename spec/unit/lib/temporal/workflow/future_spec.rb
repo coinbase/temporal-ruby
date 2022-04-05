@@ -46,8 +46,8 @@ describe Temporal::Workflow::Future do
       expect(subject.get).to be exception
     end
 
-    it 'calls context.wait_for if not finished' do
-      allow(workflow_context).to receive(:wait_for).with(subject)
+    it 'calls context.wait_for_any if not finished' do
+      allow(workflow_context).to receive(:wait_for_any).with(subject)
       subject.get
     end
   end
@@ -58,8 +58,8 @@ describe Temporal::Workflow::Future do
       subject.wait
     end
 
-    it 'calls context.wait_for if not already done' do
-      allow(workflow_context).to receive(:wait_for).with(subject)
+    it 'calls context.wait_for_any if not already done' do
+      allow(workflow_context).to receive(:wait_for_any).with(subject)
       subject.wait
     end
   end
