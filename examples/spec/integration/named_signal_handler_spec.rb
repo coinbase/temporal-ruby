@@ -23,6 +23,19 @@ describe WaitForNamedSignalWorkflow, :integration do
 
         expect(result[:received]).to include({signal_name => [arg1, arg2]})
         expect(result[:counts]).to include({signal_name => 1})
+        expect(result).to eq(
+          {
+            received: {
+              signal_name => [arg1, arg2],
+              'catch-all' => [arg1, arg2]
+            },
+            counts: {
+              signal_name => 1,
+              'catch-all' => 1
+            }
+          }
+        )
+
       end
 
       it 'receives the signal in its catch-all signal handler' do
