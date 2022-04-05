@@ -286,15 +286,18 @@ module Temporal
       # a set name (defaults to nil) will be the default handler and will receive
       # all signals that do not match a named signal handler.
       #
-      # @param name [String, Symbol, nil] an optional signal name; converted to a String
-      def on_signal(handler_name=nil, &block)
+      # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
+      def on_signal(signal_name=nil, &block)
         target = History::EventTarget.workflow
 
-        dispatcher.register_handler(target, 'signaled', handler_name: handler_name) do |signal, input|
-          if handler_name
+        if signal_name
+          event_name = "signaled:#{signal_name}"
+          dispatcher.register_handler(target, event_name) do |_, input|
             # do not pass signal name when triggering a named handler
             call_in_fiber(block, input)
-          else
+          end
+        else
+          dispatcher.register_handler(target, Dispatcher::WILDCARD) do |signal, input|
             call_in_fiber(block, signal, input)
           end
         end
