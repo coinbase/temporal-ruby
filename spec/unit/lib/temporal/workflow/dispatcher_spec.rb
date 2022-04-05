@@ -8,7 +8,7 @@ describe Temporal::Workflow::Dispatcher do
   describe '#register_handler' do
     let(:block) { -> { 'handler body' } }
     let(:event_name) { 'signaled' }
-    let(:dispatcher) { subject.register_handler(target, event_name, handler_name: handler_name, &block) }
+    let(:dispatcher) { subject.register_handler(target, event_name, &block) }
     let(:handlers) { dispatcher.send(:handlers) }
 
     context 'with default handler_name' do
@@ -36,6 +36,7 @@ describe Temporal::Workflow::Dispatcher do
 
     context 'with a specific handler_name' do
       let(:handler_name) { 'specific name' }
+      let(:event_name) { "signaled:#{handler_name}" }
 
       it 'stores the target' do
         expect(handlers.key?(target)).to be true
@@ -48,8 +49,7 @@ describe Temporal::Workflow::Dispatcher do
 
       it 'associates the event name and handler name with the target' do
         event = handlers[target].first
-        name = "#{event_name}:#{handler_name}"
-        expect(event.event_name).to eq(name)
+        expect(event.event_name).to eq(event_name)
       end
 
       it 'associates the handler with the target' do
@@ -140,7 +140,7 @@ describe Temporal::Workflow::Dispatcher do
       before do
         allow(handler_7).to receive(:call)
 
-        subject.register_handler(target, 'completed', handler_name: handler_name, &handler_7)
+        subject.register_handler(target, 'completed', &handler_7)
       end
 
       it 'calls the named handler and the default' do
