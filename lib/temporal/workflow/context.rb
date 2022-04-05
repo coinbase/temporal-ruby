@@ -297,7 +297,7 @@ module Temporal
             call_in_fiber(block, input)
           end
         else
-          dispatcher.register_handler(target, Dispatcher::WILDCARD) do |signal, input|
+          dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, 'signaled') do |signal, input|
             call_in_fiber(block, signal, input)
           end
         end

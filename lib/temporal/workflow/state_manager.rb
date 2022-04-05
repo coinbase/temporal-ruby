@@ -224,7 +224,9 @@ module Temporal
           handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          event_name = "signaled:#{event.attributes.signal_name}"
+          base_event_name = 'signaled'
+          event_name = "#{base_event_name}:#{event.attributes.signal_name}"
+          dispatch(target, base_event_name, event.attributes.signal_name, from_signal_payloads(event.attributes.input))
           dispatch(target, event_name, event.attributes.signal_name, from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
