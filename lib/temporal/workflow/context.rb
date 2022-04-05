@@ -141,7 +141,7 @@ module Temporal
           child_workflow_started = true
         end
 
-        wait_for { child_workflow_started || future.failed? }
+        wait_until { child_workflow_started || future.failed? }
 
         future
       end
@@ -233,60 +233,56 @@ module Temporal
         completed!
       end
 
+      # Block workflow progress until all futures finish
       def wait_for_all(*futures)
         futures.each(&:wait)
 
         return
       end
 
-      # Block workflow progress until any future is finished or any unblock_condition
-      # block evaluates to true.
-      def wait_for(*futures, &unblock_condition)
-        if futures.empty? && unblock_condition.nil?
-          raise 'You must pass either a future or an unblock condition block to wait_for'
-        end
+      # Block workflow progress until one of the futures completes. Passing
+      # in an empty array will immediately unblock.
+      def wait_for_any(*futures)
+        return if futures.empty? || futures.any?(&:finished?)
 
         fiber = Fiber.current
-        should_yield = false
         blocked = true
 
-        if futures.any?
-          if futures.any?(&:finished?)
-            blocked = false
-          else
-            should_yield = true
-            futures.each do |future|
-              dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
-                if blocked && future.finished?
-                  # Because this block can run for any dispatch, ensure the fiber is only
-                  # resumed one time by checking if it's already been unblocked.
-                  blocked = false
-                  fiber.resume
-                end
-              end
+        futures.each do |future|
+          dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
+            # Because any of the futures can resume the fiber, ignore any callbacks
+            # from other futures after unblocking has occurred
+            if blocked
+              blocked = false
+              fiber.resume
             end
           end
         end
 
-        if blocked && unblock_condition
-          if unblock_condition.call
-            blocked = false
-            should_yield = false
-          else
-            should_yield = true
+        Fiber.yield
 
-            dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
-              # Because this block can run for any dispatch, ensure the fiber is only
-              # resumed one time by checking if it's already been unblocked.
-              if blocked && unblock_condition.call
-                blocked = false
-                fiber.resume
-              end
-            end
+        return
+      end
+
+      # Block workflow progress until the specified block evaluates to true.
+      def wait_until(&unblock_condition)
+        raise 'You must pass a block to wait_until' if unblock_condition.nil?
+
+        return if unblock_condition.call
+
+        fiber = Fiber.current
+        blocked = true
+
+        dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
+          # Because this block can run for any dispatch, ensure the fiber is only
+          # resumed one time by checking if it's already been unblocked.
+          if blocked && unblock_condition.call
+            blocked = false
+            fiber.resume
           end
         end
 
-        Fiber.yield if should_yield
+        Fiber.yield
 
         return
       end
