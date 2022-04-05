@@ -482,7 +482,7 @@ module Temporal
         next_page_token = response.next_page_token
 
         if block_given?
-          # if block given, then return the paginated results instead of everything!
+          # if block given, then return the paginated results instead of everything
           yield paginated_executions, response.next_page_token
         end
 

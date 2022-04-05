@@ -12,7 +12,7 @@ module Temporal
 
     attr_reader :timeouts, :error_handlers
     attr_writer :converter
-    attr_accessor :connection_type, :host, :port, :logger, :metrics_adapter, :namespace, :task_queue, :headers
+    attr_accessor :connection_type, :host, :port, :max_page_size, :logger, :metrics_adapter, :namespace, :task_queue, :headers
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -79,7 +79,10 @@ module Temporal
       Connection.new(
         type: connection_type,
         host: host,
-        port: port
+        port: port,
+        options: {
+          max_page_size: max_page_size
+        },
       ).freeze
     end
 
