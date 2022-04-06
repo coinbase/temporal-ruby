@@ -6,12 +6,17 @@ module Temporal
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
-        @next_id = 1
+        @next_id = 0
       end
 
       def register_handler(target, event_name, &handler)
-        handlers[target] << [@next_id, event_name, handler]
         @next_id += 1
+        handlers[target] << [@next_id, event_name, handler]
+        @next_id
+      end
+
+      def remove_handler(target, id)
+        handlers[target] = handlers[target].reject { |(handler_id, _, _)| handler_id == id }
       end
 
       def dispatch(target, event_name, args = nil)
