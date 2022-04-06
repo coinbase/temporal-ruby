@@ -238,7 +238,7 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
+          dispatch(target, 'failed', StandardError.new("The child workflow could not be started. Reason: #{event.attributes.cause}"))
 
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           dispatch(target, 'started')

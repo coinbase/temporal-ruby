@@ -116,6 +116,7 @@ module Temporal
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy]
         )
 
         target, cancelation_id = schedule_command(command)
@@ -136,7 +137,8 @@ module Temporal
         dispatcher.register_handler(target, 'started') do
           child_workflow_started = true
         end
-        wait_for { child_workflow_started }
+
+        wait_for { child_workflow_started || future.failed? }
 
         future
       end

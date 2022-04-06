@@ -1,5 +1,6 @@
 require 'temporal/connection/serializer/base'
 require 'temporal/connection/serializer/retry_policy'
+require 'temporal/connection/serializer/workflow_id_reuse_policy'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -31,6 +32,7 @@ module Temporal
                 parent_close_policy: serialize_parent_close_policy(object.parent_close_policy),
                 header: serialize_headers(object.headers),
                 memo: serialize_memo(object.memo),
+                workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(object.workflow_id_reuse_policy)
               )
           )
         end
