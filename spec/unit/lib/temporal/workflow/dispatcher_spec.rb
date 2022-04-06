@@ -11,7 +11,7 @@ describe Temporal::Workflow::Dispatcher do
 
       subject.register_handler(target, 'signaled', &block)
 
-      expect(subject.send(:handlers)).to include(target => [['signaled', block]])
+      expect(subject.send(:handlers)).to include(target => [[1, 'signaled', block]])
     end
   end
 
@@ -70,10 +70,13 @@ describe Temporal::Workflow::Dispatcher do
 
     context 'with TARGET_WILDCARD target handler' do
       let(:handler_6) { -> { 'sixth block' } }
+      let(:handler_7) { -> { 'seventh block' } }
       before do
         allow(handler_6).to receive(:call)
+        allow(handler_7).to receive(:call)
 
         subject.register_handler(described_class::TARGET_WILDCARD, described_class::WILDCARD, &handler_6)
+        subject.register_handler(target, 'completed', &handler_7)
       end
 
       it 'calls the handler' do
@@ -83,6 +86,7 @@ describe Temporal::Workflow::Dispatcher do
         expect(handler_1).to have_received(:call).ordered
         expect(handler_4).to have_received(:call).ordered
         expect(handler_6).to have_received(:call).ordered
+        expect(handler_7).to have_received(:call).ordered
       end
 
       it 'TARGET_WILDCARD can be compared to an EventTarget object' do
