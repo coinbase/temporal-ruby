@@ -6,10 +6,12 @@ module Temporal
 
       def initialize
         @handlers = Hash.new { |hash, key| hash[key] = [] }
+        @next_id = 1
       end
 
       def register_handler(target, event_name, &handler)
-        handlers[target] << [event_name, handler]
+        handlers[target] << [@next_id, event_name, handler]
+        @next_id += 1
       end
 
       def dispatch(target, event_name, args = nil)
@@ -25,7 +27,8 @@ module Temporal
       def handlers_for(target, event_name)
         handlers[target]
           .concat(handlers[TARGET_WILDCARD])
-          .select { |(name, _)| name == event_name || name == WILDCARD }
+          .select { |(_, name, _)| name == event_name || name == WILDCARD }
+          .sort_by { |sequence, _, _| sequence }
           .map(&:last)
       end
     end
