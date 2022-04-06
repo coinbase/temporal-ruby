@@ -322,17 +322,24 @@ module Temporal
         dispatcher.dispatch(history_target, name, attributes)
       end
 
+      NONDETERMINISM_ERROR_SUGGESTION =
+        'Likely, either you have made a version-unsafe change to your workflow or have non-deterministic '\
+        'behavior in your workflow.  See https://docs.temporal.io/docs/java/versioning/#introduction-to-versioning.'.freeze
+
       def discard_command(history_target)
         # Pop the first command from the list, it is expected to match
         replay_command_id, replay_command = commands.shift
 
         if !replay_command_id
-          raise NonDeterministicWorkflowError, "A command #{history_target} was not scheduled upon replay"
+          raise NonDeterministicWorkflowError,
+            "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
         end
 
         replay_target = event_target_from(replay_command_id, replay_command)
         if history_target != replay_target
-          raise NonDeterministicWorkflowError, "Unexpected command.  The code issued: #{replay_target}, but the history recorded: #{history_target})"
+          raise NonDeterministicWorkflowError,
+            "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+            "but the history of previous executions recorded: #{history_target}). " + NONDETERMINISM_ERROR_SUGGESTION
         end
       end
 
