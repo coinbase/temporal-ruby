@@ -57,10 +57,11 @@ module Temporal
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id
 
-    def initialize(message, run_id)
+    def initialize(message, run_id = nil)
       super(message)
       @run_id = run_id
     end
+
   end
   class NamespaceNotActiveFailure < ApiError; end
   class ClientVersionNotSupportedFailure < ApiError; end

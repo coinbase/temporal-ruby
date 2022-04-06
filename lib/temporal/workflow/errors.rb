@@ -52,6 +52,17 @@ module Temporal
         end
       end
 
+      def self.generate_error_for_child_workflow_start(event)
+        if event.attributes.cause == :START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS
+          Temporal::WorkflowExecutionAlreadyStartedFailure.new(
+            "The child workflow could not be started because a workflow with its id already exists: #{event.attributes.workflow_id}",
+          )
+        else
+          # Right now, there's only one cause, but temporal may add more in the future
+          StandardError.new("The child workflow could not be started. Reason: #{event.attributes.cause}")
+        end
+      end
+
       private_class_method def self.safe_constantize(const)
         Object.const_get(const) if Object.const_defined?(const)
       rescue NameError
