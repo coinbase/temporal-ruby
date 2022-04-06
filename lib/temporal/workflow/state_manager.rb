@@ -324,15 +324,15 @@ module Temporal
 
       def discard_command(history_target)
         # Pop the first command from the list, it is expected to match
-        code_command_id, code_command = commands.shift
+        replay_command_id, replay_command = commands.shift
 
-        if !code_command_id
+        if !replay_command_id
           raise NonDeterministicWorkflowError, "A command #{history_target} was not scheduled upon replay"
         end
 
-        code_target = event_target_from(code_command_id, code_command)
-        if history_target != code_target
-          raise NonDeterministicWorkflowError, "Unexpected command.  The code issued: #{code_target}, but the history recorded: #{history_target})"
+        replay_target = event_target_from(replay_command_id, replay_command)
+        if history_target != replay_target
+          raise NonDeterministicWorkflowError, "Unexpected command.  The code issued: #{replay_target}, but the history recorded: #{history_target})"
         end
       end
 
