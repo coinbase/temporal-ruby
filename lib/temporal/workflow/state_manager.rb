@@ -5,6 +5,7 @@ require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
+require 'temporal/workflow/signal'
 
 module Temporal
   class Workflow
@@ -224,10 +225,9 @@ module Temporal
           handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
-          base_event_name = 'signaled'
-          event_name = "#{base_event_name}:#{event.attributes.signal_name}"
-          dispatch(target, base_event_name, event.attributes.signal_name, from_signal_payloads(event.attributes.input))
-          dispatch(target, event_name, event.attributes.signal_name, from_signal_payloads(event.attributes.input))
+          # relies on Signal#== for matching in Dispatcher
+          signal_target = Signal.new(event.attributes.signal_name)
+          dispatch(signal_target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo

@@ -9,6 +9,7 @@ require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
+require 'temporal/workflow/signal'
 
 # This context class is available in the workflow implementation
 # and provides context and methods for interacting with Temporal
@@ -288,11 +289,9 @@ module Temporal
       #
       # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
       def on_signal(signal_name=nil, &block)
-        target = History::EventTarget.workflow
-
         if signal_name
-          event_name = "signaled:#{signal_name}"
-          dispatcher.register_handler(target, event_name) do |_, input|
+          target = Signal.new(signal_name)
+          dispatcher.register_handler(target, 'signaled') do |_, input|
             # do not pass signal name when triggering a named handler
             call_in_fiber(block, input)
           end
