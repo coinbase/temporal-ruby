@@ -8,18 +8,13 @@ require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
+require 'temporal/connection/serializer/workflow_id_reuse_policy'
 require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
     class GRPC
       include Concerns::Payloads
-
-      WORKFLOW_ID_REUSE_POLICY = {
-        allow_failed: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-        allow: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-        reject: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
-      }.freeze
 
       HISTORY_EVENT_FILTER = {
         all: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
@@ -106,6 +101,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(workflow_id_reuse_policy),
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
@@ -122,13 +118,6 @@ module Temporal
             fields: to_payload_map(memo || {})
           )
         )
-
-        if workflow_id_reuse_policy
-          policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
-          raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
-
-          request.workflow_id_reuse_policy = policy
-        end
 
         client.start_workflow_execution(request)
       rescue ::GRPC::AlreadyExists => e
@@ -350,6 +339,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(workflow_id_reuse_policy),
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
@@ -368,13 +358,6 @@ module Temporal
             fields: to_payload_map(memo || {})
           ),
         )
-
-        if workflow_id_reuse_policy
-          policy = WORKFLOW_ID_REUSE_POLICY[workflow_id_reuse_policy]
-          raise Client::ArgumentError, 'Unknown workflow_id_reuse_policy specified' unless policy
-
-          request.workflow_id_reuse_policy = policy
-        end
 
         client.signal_with_start_workflow_execution(request)
       end
