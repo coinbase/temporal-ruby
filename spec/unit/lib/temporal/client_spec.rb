@@ -62,7 +62,7 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: nil,
             headers: {},
-            memo: {}
+            memo: {},
           )
       end
 
@@ -75,6 +75,7 @@ describe Temporal::Client do
             namespace: 'test-namespace',
             task_queue: 'test-task-queue',
             headers: { 'Foo' => 'Bar' },
+            workflow_id_reuse_policy: :reject,
             memo: { 'MemoKey1' => 'MemoValue1' }
           }
         )
@@ -90,7 +91,7 @@ describe Temporal::Client do
             task_timeout: Temporal.configuration.timeouts[:task],
             run_timeout: Temporal.configuration.timeouts[:run],
             execution_timeout: Temporal.configuration.timeouts[:execution],
-            workflow_id_reuse_policy: nil,
+            workflow_id_reuse_policy: :reject,
             headers: { 'Foo' => 'Bar' },
             memo: { 'MemoKey1' => 'MemoValue1' }
           )
