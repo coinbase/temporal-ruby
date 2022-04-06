@@ -339,7 +339,7 @@ module Temporal
         if history_target != replay_target
           raise NonDeterministicWorkflowError,
             "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
-            "but the history of previous executions recorded: #{history_target}). " + NONDETERMINISM_ERROR_SUGGESTION
+            "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
         end
       end
 
