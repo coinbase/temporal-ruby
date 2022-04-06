@@ -122,6 +122,7 @@ module Temporal
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy]
         )
 
         target, cancelation_id = schedule_command(command)
@@ -143,7 +144,20 @@ module Temporal
 
         # If you opt out of should_wait_for_start, note that temporal requires that this future has
         # started before the parent workflow execution terminates.
-        wait_for { future.started? } if should_wait_for_start
+        if should_wait_for_start
+          wait_for do
+            next true if future.started?
+
+            # The error case - this workflow got notified (via history) that the child workflow didn't
+            # start. This can happen due to the child workflow's workflow_id_reuse_policy. Note that
+            # we don't raise in this case - the returned future will contain an appropriate error. This
+            # lets the parent workflow use one pattern ('check the future') to handle 'child failed' and
+            # 'child failed to start'.
+            next true if future.failed?
+
+            false
+          end
+        end
 
         future
       end
