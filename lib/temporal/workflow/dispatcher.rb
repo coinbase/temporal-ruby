@@ -5,18 +5,18 @@ module Temporal
       TARGET_WILDCARD = '*'.freeze
 
       def initialize
-        @handlers = Hash.new { |hash, key| hash[key] = [] }
+        @handlers = Hash.new { |hash, key| hash[key] = {} }
         @next_id = 0
       end
 
       def register_handler(target, event_name, &handler)
         @next_id += 1
-        handlers[target] << [@next_id, event_name, handler]
+        handlers[target][@next_id] = [event_name, handler]
         @next_id
       end
 
       def remove_handler(target, id)
-        handlers[target] = handlers[target].reject { |(handler_id, _, _)| handler_id == id }
+        handlers[target].delete(id)
       end
 
       def dispatch(target, event_name, args = nil)
@@ -31,10 +31,10 @@ module Temporal
 
       def handlers_for(target, event_name)
         handlers[target]
-          .concat(handlers[TARGET_WILDCARD])
-          .select { |(_, name, _)| name == event_name || name == WILDCARD }
-          .sort_by { |sequence, _, _| sequence }
-          .map(&:last)
+          .merge(handlers[TARGET_WILDCARD])
+          .select { |_, (name, _)| name == event_name || name == WILDCARD }
+          .sort
+          .map { |_, (_, handler)| handler }
       end
     end
   end

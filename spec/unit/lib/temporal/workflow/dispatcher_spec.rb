@@ -11,7 +11,7 @@ describe Temporal::Workflow::Dispatcher do
 
       subject.register_handler(target, 'signaled', &block)
 
-      expect(subject.send(:handlers)).to include(target => [[1, 'signaled', block]])
+      expect(subject.send(:handlers)).to include(target => { 1 => ['signaled', block] })
     end
   end
 
@@ -25,12 +25,12 @@ describe Temporal::Workflow::Dispatcher do
       id2 = subject.register_handler(target, 'signaled', &block2)
       id3 = subject.register_handler(other_target, 'signaled', &block3)
 
-      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
-      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+      expect(subject.send(:handlers)).to include(target => { id1 => ['signaled', block1], id2 => ['signaled', block2] })
+      expect(subject.send(:handlers)).to include(other_target => { id3 => ['signaled', block3]})
 
       subject.remove_handler(target, id1)
-      expect(subject.send(:handlers)).to include(target => [[id2, 'signaled', block2]])
-      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+      expect(subject.send(:handlers)).to include(target => { id2 => ['signaled', block2] })
+      expect(subject.send(:handlers)).to include(other_target => { id3 => ['signaled', block3] })
     end
 
     it 'does not remove a handler from other targets' do
@@ -42,12 +42,12 @@ describe Temporal::Workflow::Dispatcher do
       id2 = subject.register_handler(target, 'signaled', &block2)
       id3 = subject.register_handler(other_target, 'signaled', &block3)
 
-      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
-      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+      expect(subject.send(:handlers)).to include(target => { id1 => ['signaled', block1], id2 => ['signaled', block2] })
+      expect(subject.send(:handlers)).to include(other_target => { id3 => ['signaled', block3] })
 
       subject.remove_handler(other_target, id1)
-      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
-      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+      expect(subject.send(:handlers)).to include(target => {id1 => ['signaled', block1], id2 => ['signaled', block2]})
+      expect(subject.send(:handlers)).to include(other_target => {id3 => ['signaled', block3] })
     end
   end
 
