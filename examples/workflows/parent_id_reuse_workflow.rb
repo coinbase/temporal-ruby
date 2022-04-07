@@ -7,14 +7,19 @@ class ParentIdReuseWorkflow < Temporal::Workflow
     execute_child(workflow_id_2, false, reuse_policy)
   end
 
+  private
+
   def execute_child(workflow_id, fail, reuse_policy)
     options = {
       workflow_id: workflow_id,
       workflow_id_reuse_policy: reuse_policy
     }
 
-    future = fail ? FailingWorkflow.execute(options: options) : HelloWorldWorkflow.execute(options: options)
-    future.wait
-    raise future.get if future.failed? && !fail
+    if fail
+      # wait for it, but don't raise when it fails
+      FailingWorkflow.execute(options: options).wait
+    else
+      HelloWorldWorkflow.execute!(options: options)
+    end
   end
 end

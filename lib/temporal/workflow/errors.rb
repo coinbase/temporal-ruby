@@ -52,14 +52,18 @@ module Temporal
         end
       end
 
-      def self.generate_error_for_child_workflow_start(event)
-        if event.attributes.cause == :START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS
+      WORKFLOW_ALREADY_EXISTS_SYM = Temporal::Api::Enums::V1::StartChildWorkflowExecutionFailedCause.lookup(
+        Temporal::Api::Enums::V1::StartChildWorkflowExecutionFailedCause::START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS
+      )
+
+      def self.generate_error_for_child_workflow_start(cause, workflow_id)
+        if cause == WORKFLOW_ALREADY_EXISTS_SYM
           Temporal::WorkflowExecutionAlreadyStartedFailure.new(
-            "The child workflow could not be started because a workflow with its id already exists: #{event.attributes.workflow_id}",
+            "The child workflow could not be started - per its workflow_id_reuse_policy, it conflicts with another workflow with the same id: #{workflow_id}",
           )
         else
           # Right now, there's only one cause, but temporal may add more in the future
-          StandardError.new("The child workflow could not be started. Reason: #{event.attributes.cause}")
+          StandardError.new("The child workflow could not be started. Reason: #{cause}")
         end
       end
 

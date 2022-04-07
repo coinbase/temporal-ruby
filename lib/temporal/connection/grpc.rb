@@ -101,7 +101,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(workflow_id_reuse_policy),
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
@@ -339,7 +339,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(workflow_id_reuse_policy),
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),

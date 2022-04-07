@@ -3,7 +3,7 @@ require 'temporal/connection'
 module Temporal
   module Connection
     module Serializer
-      class WorkflowIdReusePolicy
+      class WorkflowIdReusePolicy < Base
 
         WORKFLOW_ID_REUSE_POLICY = {
           allow_failed: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
@@ -11,11 +11,11 @@ module Temporal
           reject: Temporal::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
         }.freeze
 
-        def self.to_proto(reuse_policy_sym)
-          return nil if reuse_policy_sym.nil?
+        def to_proto
+          return unless object
 
-          policy = WORKFLOW_ID_REUSE_POLICY[reuse_policy_sym]
-          raise ArgumentError, "Unknown workflow_id_reuse_policy specified: #{reuse_policy_sym}" unless policy
+          policy = WORKFLOW_ID_REUSE_POLICY[object]
+          raise ArgumentError, "Unknown workflow_id_reuse_policy specified: #{object}" unless policy
 
           policy
         end
