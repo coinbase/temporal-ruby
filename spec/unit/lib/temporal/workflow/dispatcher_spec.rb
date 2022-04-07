@@ -15,6 +15,42 @@ describe Temporal::Workflow::Dispatcher do
     end
   end
 
+  describe '#remove_handler' do
+    it 'removes a given handler against the target' do
+      block1 = -> { 'handler body' }
+      block2 = -> { 'other handler body' }
+      block3 = -> { 'yet another handler body' }
+
+      id1 = subject.register_handler(target, 'signaled', &block1)
+      id2 = subject.register_handler(target, 'signaled', &block2)
+      id3 = subject.register_handler(other_target, 'signaled', &block3)
+
+      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
+      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+
+      subject.remove_handler(target, id1)
+      expect(subject.send(:handlers)).to include(target => [[id2, 'signaled', block2]])
+      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+    end
+
+    it 'does not remove a handler from other targets' do
+      block1 = -> { 'handler body' }
+      block2 = -> { 'other handler body' }
+      block3 = -> { 'yet another handler body' }
+
+      id1 = subject.register_handler(target, 'signaled', &block1)
+      id2 = subject.register_handler(target, 'signaled', &block2)
+      id3 = subject.register_handler(other_target, 'signaled', &block3)
+
+      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
+      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+
+      subject.remove_handler(other_target, id1)
+      expect(subject.send(:handlers)).to include(target => [[id1, 'signaled', block1], [id2, 'signaled', block2]])
+      expect(subject.send(:handlers)).to include(other_target => [[id3, 'signaled', block3]])
+    end
+  end
+
   describe '#dispatch' do
     let(:handler_1) { -> { 'first block' } }
     let(:handler_2) { -> { 'second block' } }
