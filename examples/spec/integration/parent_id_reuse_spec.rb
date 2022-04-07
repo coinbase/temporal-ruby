@@ -40,7 +40,9 @@ describe ParentIdReuseWorkflow, :integration do
         ParentIdReuseWorkflow,
         workflow_id: workflow_id,
       )
-    end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure, "The child workflow could not be started because a workflow with its id already exists: #{child_workflow_id}")
+    end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure,
+      "The child workflow could not be started - per its workflow_id_reuse_policy, it conflicts with another workflow with the same id: #{child_workflow_id}"
+    )
   end
 
   it 'with :reject, does not reject non-duplicates' do
@@ -100,6 +102,8 @@ describe ParentIdReuseWorkflow, :integration do
         ParentIdReuseWorkflow,
         workflow_id: workflow_id,
       )
-    end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure, "The child workflow could not be started because a workflow with its id already exists: #{child_workflow_id}")
+    end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure, 
+      "The child workflow could not be started - per its workflow_id_reuse_policy, it conflicts with another workflow with the same id: #{child_workflow_id}"
+    )
   end
 end
