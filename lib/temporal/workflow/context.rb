@@ -274,7 +274,7 @@ module Temporal
           id = dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
             # Because any of the futures can resume the fiber, ignore any callbacks
             # from other futures after unblocking has occurred
-            if blocked
+            if blocked && future.finished?
               blocked = false
               dispatcher.remove_handler(id, future.target)
               fiber.resume
