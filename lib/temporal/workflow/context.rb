@@ -276,7 +276,7 @@ module Temporal
             # from other futures after unblocking has occurred
             if blocked && future.finished?
               blocked = false
-              dispatcher.remove_handler(id, future.target)
+              dispatcher.remove_handler(future.target, id)
               fiber.resume
             end
           end
