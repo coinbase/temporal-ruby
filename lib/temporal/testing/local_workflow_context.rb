@@ -194,21 +194,15 @@ module Temporal
       def wait_for_any(*futures)
         return if futures.empty?
 
-        while futures.empty? || futures.none?(&:finished?)
-          Fiber.yield
-        end
+        Fiber.yield while futures.none?(&:finished?)
 
         return
       end
 
       def wait_until(&unblock_condition)
-        if unblock_condition.nil?
-          raise 'You must pass either an unblock condition block to wait_for'
-        end
+        raise 'You must pass an unblock condition block to wait_for' if unblock_condition.nil?
 
-        while !unblock_condition || !unblock_condition.call
-          Fiber.yield
-        end
+        Fiber.yield until unblock_condition.call
 
         return
       end
