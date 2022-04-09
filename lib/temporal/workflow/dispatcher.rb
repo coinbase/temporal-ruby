@@ -44,7 +44,7 @@ module Temporal
 
       def handlers_for(target, event_name)
         handlers[target]
-          .merge(handlers[TARGET_WILDCARD])
+          .merge(handlers[TARGET_WILDCARD]) { raise 'Cannot resolve duplicate dispatcher handler IDs'}
           .select { |_, (name, _)| name == event_name || name == WILDCARD }
           .sort
           .map { |_, (_, handler)| handler }
