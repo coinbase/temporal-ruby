@@ -31,7 +31,7 @@ module Temporal
 
       def wait
         return if finished?
-        context.wait_for(self)
+        context.wait_for_any(self)
       end
 
       def get

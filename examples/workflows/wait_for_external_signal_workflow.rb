@@ -12,7 +12,7 @@ class WaitForExternalSignalWorkflow < Temporal::Workflow
       signal_counts[signal] += 1
     end
 
-    workflow.wait_for do
+    workflow.wait_until do
       workflow.logger.info("Awaiting #{expected_signal}, signals received so far: #{signals_received}")
       signals_received.key?(expected_signal)
     end

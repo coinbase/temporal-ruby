@@ -167,7 +167,7 @@ describe Temporal::Testing::LocalWorkflowContext do
       can_continue = false
       exited = false
       fiber = Fiber.new do
-        workflow_context.wait_for do
+        workflow_context.wait_until do
           can_continue
         end
 
@@ -188,7 +188,7 @@ describe Temporal::Testing::LocalWorkflowContext do
       future = workflow_context.execute_activity(TestAsyncActivity)
 
       fiber = Fiber.new do
-        workflow_context.wait_for(future) do
+        workflow_context.wait_for_any(future) do
           false
         end
 
@@ -212,7 +212,7 @@ describe Temporal::Testing::LocalWorkflowContext do
       future.wait
 
       fiber = Fiber.new do
-        workflow_context.wait_for(future, async_future)
+        workflow_context.wait_for_any(future, async_future)
         exited = true
       end
 

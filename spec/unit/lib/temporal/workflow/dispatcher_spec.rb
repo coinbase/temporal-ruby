@@ -11,7 +11,24 @@ describe Temporal::Workflow::Dispatcher do
 
       subject.register_handler(target, 'signaled', &block)
 
-      expect(subject.send(:handlers)).to include(target => [['signaled', block]])
+      expect(subject.send(:handlers)).to include(target => { 1 => ['signaled', block] })
+    end
+
+    it 'removes a given handler against the target' do
+      block1 = -> { 'handler body' }
+      block2 = -> { 'other handler body' }
+      block3 = -> { 'yet another handler body' }
+
+      handle1 = subject.register_handler(target, 'signaled', &block1)
+      subject.register_handler(target, 'signaled', &block2)
+      subject.register_handler(other_target, 'signaled', &block3)
+
+      expect(subject.send(:handlers)).to include(target => { 1 => ['signaled', block1], 2 => ['signaled', block2] })
+      expect(subject.send(:handlers)).to include(other_target => { 3 => ['signaled', block3]})
+
+      handle1.unregister
+      expect(subject.send(:handlers)).to include(target => { 2 => ['signaled', block2] })
+      expect(subject.send(:handlers)).to include(other_target => { 3 => ['signaled', block3] })
     end
   end
 
@@ -70,10 +87,13 @@ describe Temporal::Workflow::Dispatcher do
 
     context 'with TARGET_WILDCARD target handler' do
       let(:handler_6) { -> { 'sixth block' } }
+      let(:handler_7) { -> { 'seventh block' } }
       before do
         allow(handler_6).to receive(:call)
+        allow(handler_7).to receive(:call)
 
         subject.register_handler(described_class::TARGET_WILDCARD, described_class::WILDCARD, &handler_6)
+        subject.register_handler(target, 'completed', &handler_7)
       end
 
       it 'calls the handler' do
@@ -83,6 +103,7 @@ describe Temporal::Workflow::Dispatcher do
         expect(handler_1).to have_received(:call).ordered
         expect(handler_4).to have_received(:call).ordered
         expect(handler_6).to have_received(:call).ordered
+        expect(handler_7).to have_received(:call).ordered
       end
 
       it 'TARGET_WILDCARD can be compared to an EventTarget object' do

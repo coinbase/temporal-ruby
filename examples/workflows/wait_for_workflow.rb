@@ -11,7 +11,7 @@ class WaitForWorkflow < Temporal::Workflow
       signals_received[signal] = input
     end
 
-    workflow.wait_for do
+    workflow.wait_until do
       workflow.logger.info("Awaiting #{expected_signal}, signals received so far: #{signals_received}")
       signals_received.key?(expected_signal)
     end
@@ -21,35 +21,21 @@ class WaitForWorkflow < Temporal::Workflow
     # workflow is completed.
     long_running_future = LongRunningActivity.execute(15, 0.1)
     timeout_timer = workflow.start_timer(1)
-    workflow.wait_for(timeout_timer, long_running_future)
+    workflow.wait_for_any(timeout_timer, long_running_future)
 
     timer_beat_activity = timeout_timer.finished? && !long_running_future.finished?
 
     # This should not wait further. The first future has already finished, and therefore
     # the second one should not be awaited upon.
     long_timeout_timer = workflow.start_timer(15)
-    workflow.wait_for(timeout_timer, long_timeout_timer)
-    raise 'The workflow should not have waited for this timer to complete' if long_timeout_timer.finished?
-
-    block_called = false
-    workflow.wait_for(timeout_timer) do
-      # This should never be called because the timeout_timer future was already
-      # finished before the wait was even called.
-      block_called = true
-    end
-    raise 'Block should not have been called' if block_called
-
-    workflow.wait_for(long_timeout_timer) do
-      # This condition will immediately be true and not result in any waiting or dispatching
-      true
-    end
+    workflow.wait_for_any(timeout_timer, long_timeout_timer)
     raise 'The workflow should not have waited for this timer to complete' if long_timeout_timer.finished?
 
     activity_futures = {}
     echos_completed = 0
 
     total_echos.times do |i|
-      workflow.wait_for do
+      workflow.wait_until do
         workflow.logger.info("Activities in flight #{activity_futures.length}")
         # Pause workflow until the number of active activity futures is less than 2. This
         # will throttle new activities from being started, guaranteeing that only two of these
@@ -66,7 +52,7 @@ class WaitForWorkflow < Temporal::Workflow
       end
     end
 
-    workflow.wait_for do
+    workflow.wait_until do
       workflow.logger.info("Waiting for queue to drain, size: #{activity_futures.length}")
       activity_futures.empty?
     end
