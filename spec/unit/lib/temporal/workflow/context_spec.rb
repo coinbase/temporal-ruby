@@ -7,10 +7,18 @@ class MyTestWorkflow < Temporal::Workflow; end
 describe Temporal::Workflow::Context do
   let(:state_manager) { instance_double('Temporal::Workflow::StateManager') }
   let(:dispatcher) { instance_double('Temporal::Workflow::Dispatcher') }
+  let(:query_registry) { instance_double('Temporal::Workflow::QueryRegistry') }
   let(:metadata) { instance_double('Temporal::Metadata::Workflow') }
-  let(:workflow_context) {
-    Temporal::Workflow::Context.new(state_manager, dispatcher, MyTestWorkflow, metadata, Temporal.configuration)
-  }
+  let(:workflow_context) do
+    Temporal::Workflow::Context.new(
+      state_manager,
+      dispatcher,
+      MyTestWorkflow,
+      metadata,
+      Temporal.configuration,
+      query_registry
+    )
+  end
 
   describe '#upsert_search_attributes' do
     it 'does not accept nil' do

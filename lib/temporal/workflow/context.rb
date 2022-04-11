@@ -16,12 +16,12 @@ require 'temporal/workflow/state_manager'
 module Temporal
   class Workflow
     class Context
-      attr_reader :metadata, :config, :query_handlers
+      attr_reader :metadata, :config
 
-      def initialize(state_manager, dispatcher, workflow_class, metadata, config)
+      def initialize(state_manager, dispatcher, workflow_class, metadata, config, query_registry)
         @state_manager = state_manager
         @dispatcher = dispatcher
-        @query_handlers = {}
+        @query_registry = query_registry
         @workflow_class = workflow_class
         @metadata = metadata
         @completed = false
@@ -300,7 +300,7 @@ module Temporal
       end
 
       def on_query(query, &block)
-        query_handlers[query] = block
+        query_registry.register(query, &block)
       end
 
       def cancel_activity(activity_id)
@@ -387,7 +387,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class
+      attr_reader :state_manager, :dispatcher, :workflow_class, :query_registry
 
       def completed!
         @completed = true

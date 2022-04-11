@@ -2,6 +2,7 @@ require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow'
 require 'temporal/workflow/task_processor'
+require 'temporal/workflow/query_registry'
 
 describe Temporal::Workflow::Executor do
   subject { described_class.new(workflow, history, workflow_metadata, config) }
@@ -81,7 +82,7 @@ describe Temporal::Workflow::Executor do
   end
 
   describe '#process_queries' do
-    let(:context) { subject.send(:context) }
+    let(:query_registry) { Temporal::Workflow::QueryRegistry.new }
     let(:query_1_result) { 42 }
     let(:query_2_error) { StandardError.new('Test query failure') }
     let(:queries) do
@@ -93,9 +94,9 @@ describe Temporal::Workflow::Executor do
     end
 
     before do
-      subject.run
-      context.on_query('success') { query_1_result }
-      context.on_query('failure') { raise query_2_error }
+      allow(Temporal::Workflow::QueryRegistry).to receive(:new).and_return(query_registry)
+      query_registry.register('success') { query_1_result }
+      query_registry.register('failure') { raise query_2_error }
     end
 
     it 'returns query results' do
