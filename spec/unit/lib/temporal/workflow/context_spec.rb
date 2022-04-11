@@ -20,6 +20,20 @@ describe Temporal::Workflow::Context do
     )
   end
 
+  describe '#on_query' do
+    let(:handler) { Proc.new {} }
+
+    before { allow(query_registry).to receive(:register) }
+
+    it 'registers a query with the query registry' do
+      workflow_context.on_query('test-query', &handler)
+
+      expect(query_registry).to have_received(:register).with('test-query') do |&block|
+        expect(block).to eq(handler)
+      end
+    end
+  end
+
   describe '#upsert_search_attributes' do
     it 'does not accept nil' do
       expect do
