@@ -67,7 +67,7 @@ module Temporal
   class FeatureVersionNotSupportedFailure < ApiError; end
   class NamespaceAlreadyExistsFailure < ApiError; end
   class CancellationAlreadyRequestedFailure < ApiError; end
-  class QueryFailedFailure < ApiError; end
+  class QueryFailed < ApiError; end
   class UnexpectedResponse < ApiError; end
 
 end

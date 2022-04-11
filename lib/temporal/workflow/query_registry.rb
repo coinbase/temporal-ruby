@@ -19,7 +19,7 @@ module Temporal
         handler = handlers[type]
 
         unless handler
-          raise Temporal::QueryFailedFailure, "Workflow did not register a handler for #{type}"
+          raise Temporal::QueryFailed, "Workflow did not register a handler for #{type}"
         end
 
         handler.call(*args)

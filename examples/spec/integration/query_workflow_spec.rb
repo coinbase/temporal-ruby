@@ -22,7 +22,7 @@ describe QueryWorkflow, :integration do
 
     # Query with unregistered handler
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
-      .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
+      .to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for unknown_query')
 
     Temporal.signal_workflow(described_class, 'make_progress', workflow_id, run_id)
 
@@ -45,10 +45,10 @@ describe QueryWorkflow, :integration do
       .to eq 2
 
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
-      .to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for unknown_query')
+      .to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for unknown_query')
 
     # Now that the workflow is completed, test a query with a reject condition satisfied
     expect { Temporal.query_workflow(described_class, 'state', workflow_id, run_id, query_reject_condition: :not_open) }
-      .to raise_error(Temporal::QueryFailedFailure, 'Query rejected: status WORKFLOW_EXECUTION_STATUS_COMPLETED')
+      .to raise_error(Temporal::QueryFailed, 'Query rejected: status WORKFLOW_EXECUTION_STATUS_COMPLETED')
   end
 end

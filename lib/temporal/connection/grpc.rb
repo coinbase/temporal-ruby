@@ -499,14 +499,14 @@ module Temporal
         begin
           response = client.query_workflow(request)
         rescue ::GRPC::InvalidArgument => e
-          raise Temporal::QueryFailedFailure, e.details
+          raise Temporal::QueryFailed, e.details
         end
 
         if response.query_rejected
           rejection_status = response.query_rejected.status || 'not specified by server'
-          raise Temporal::QueryFailedFailure, "Query rejected: status #{rejection_status}"
+          raise Temporal::QueryFailed, "Query rejected: status #{rejection_status}"
         elsif !response.query_result
-          raise Temporal::QueryFailedFailure, 'Invalid response from server'
+          raise Temporal::QueryFailed, 'Invalid response from server'
         else
           from_query_payloads(response.query_result)
         end

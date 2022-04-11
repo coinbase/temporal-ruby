@@ -60,7 +60,7 @@ describe Temporal::Workflow::QueryRegistry do
       it 'raises' do
         expect do
           subject.handle('test-query')
-        end.to raise_error(Temporal::QueryFailedFailure, 'Workflow did not register a handler for test-query')
+        end.to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for test-query')
       end
     end
   end

@@ -108,7 +108,7 @@ describe Temporal::Workflow::Executor do
       expect(results['2']).to be_a(Temporal::Workflow::QueryResult::Failure)
       expect(results['2'].error).to eq(query_2_error)
       expect(results['3']).to be_a(Temporal::Workflow::QueryResult::Failure)
-      expect(results['3'].error).to be_a(Temporal::QueryFailedFailure)
+      expect(results['3'].error).to be_a(Temporal::QueryFailed)
       expect(results['3'].error.message).to eq('Workflow did not register a handler for unknown')
     end
   end
