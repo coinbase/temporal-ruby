@@ -299,7 +299,7 @@ module Temporal
       # all signals that do not match a named signal handler.
       #
       # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
-      def on_signal(signal_name=nil, &block)
+      def on_signal(signal_name = nil, &block)
         if signal_name
           target = Signal.new(signal_name)
           dispatcher.register_handler(target, 'signaled') do |_, input|

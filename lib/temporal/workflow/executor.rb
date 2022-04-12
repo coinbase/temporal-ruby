@@ -43,7 +43,7 @@ module Temporal
       # @note this method is expected to be executed after the history has
       #   been fully replayed (by invoking the #run method)
       #
-      # @param query [Hash<String, Temporal::Workflow::TaskProcessor::Query>]
+      # @param queries [Hash<String, Temporal::Workflow::TaskProcessor::Query>]
       #
       # @return [Hash<String, Temporal::Workflow::QueryResult>]
       def process_queries(queries = {})

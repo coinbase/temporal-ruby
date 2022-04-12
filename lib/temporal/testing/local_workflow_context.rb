@@ -186,7 +186,7 @@ module Temporal
         Time.now
       end
 
-      def on_signal(&block)
+      def on_signal(signal_name = nil, &block)
         raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
       end
 
