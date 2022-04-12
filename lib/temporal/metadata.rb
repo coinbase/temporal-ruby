@@ -48,6 +48,8 @@ module Temporal
           name: event.attributes.workflow_type.name,
           id: task_metadata.workflow_id,
           run_id: event.attributes.original_execution_run_id,
+          parent_id: event.attributes.parent_workflow_execution&.workflow_id,
+          parent_run_id: event.attributes.parent_workflow_execution&.run_id,
           attempt: event.attributes.attempt,
           namespace: task_metadata.namespace,
           task_queue: event.attributes.task_queue.name,

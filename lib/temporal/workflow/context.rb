@@ -9,6 +9,7 @@ require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
+require 'temporal/workflow/signal'
 
 # This context class is available in the workflow implementation
 # and provides context and methods for interacting with Temporal
@@ -291,11 +292,24 @@ module Temporal
         state_manager.local_time
       end
 
-      def on_signal(&block)
-        target = History::EventTarget.workflow
-
-        dispatcher.register_handler(target, 'signaled') do |signal, input|
-          call_in_fiber(block, signal, input)
+      # Define a signal handler to receive signals onto the workflow. When
+      # +name+ is defined, this creates a named signal handler which will be
+      # invoked whenever a signal named +name+ is received. A handler without
+      # a set name (defaults to nil) will be the default handler and will receive
+      # all signals that do not match a named signal handler.
+      #
+      # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
+      def on_signal(signal_name=nil, &block)
+        if signal_name
+          target = Signal.new(signal_name)
+          dispatcher.register_handler(target, 'signaled') do |_, input|
+            # do not pass signal name when triggering a named handler
+            call_in_fiber(block, input)
+          end
+        else
+          dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, 'signaled') do |signal, input|
+            call_in_fiber(block, signal, input)
+          end
         end
       end
 

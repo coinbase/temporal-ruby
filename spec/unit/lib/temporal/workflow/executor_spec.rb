@@ -72,6 +72,8 @@ describe Temporal::Workflow::Executor do
                 id: workflow_metadata.workflow_id,
                 name: event_attributes.workflow_type.name,
                 run_id: event_attributes.original_execution_run_id,
+                parent_id: nil,
+                parent_run_id: nil,
                 attempt: event_attributes.attempt,
                 task_queue: event_attributes.task_queue.name,
                 run_started_at: workflow_started_event.event_time.to_time,
