@@ -946,4 +946,113 @@ describe Temporal::Client do
       end
     end
   end
+
+  describe '#list_workflow_executions' do
+    let(:query) { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
+
+    let(:api_execution_info) do
+      Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '')
+    end
+    let(:response) do
+      Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(
+        executions: [api_execution_info],
+        next_page_token: ''
+      )
+    end
+
+    before do
+      allow(connection)
+        .to receive(:list_workflow_executions)
+        .and_return(response)
+    end
+
+    it 'returns a list of executions' do
+      executions = subject.list_workflow_executions(namespace, query)
+
+      expect(executions.length).to eq(1)
+      expect(executions.first).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
+    end
+
+    context 'when history is paginated' do
+      let(:response_1) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: 'a'
+        )
+      end
+      let(:response_2) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: 'b'
+        )
+      end
+      let(:response_3) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(
+          executions: [api_execution_info],
+          next_page_token: ''
+        )
+      end
+
+      before do
+        allow(connection)
+          .to receive(:list_workflow_executions)
+          .and_return(response_1, response_2, response_3)
+      end
+
+      it 'call the API 3 times' do
+        result_1 = subject.list_workflow_executions(namespace, query)
+        result_2 = subject.list_workflow_executions(namespace, query, next_page_token: result_1.next_page_token)
+        result_3 = subject.list_workflow_executions(namespace, query, next_page_token: result_2.next_page_token)
+        expect(connection).to have_received(:list_workflow_executions).exactly(3).times
+
+        expect(connection)
+          .to have_received(:list_workflow_executions)
+          .with(namespace: namespace, query: query, next_page_token: nil)
+          .once
+
+        expect(connection)
+          .to have_received(:list_workflow_executions)
+          .with(namespace: namespace, query: query, next_page_token: 'a')
+          .once
+
+        expect(connection)
+          .to have_received(:list_workflow_executions)
+          .with(namespace: namespace, query: query, next_page_token: 'b')
+          .once
+      end
+
+      it 'returns a list of executions' do
+        executions = subject.list_workflow_executions(namespace, query)
+
+        expect(executions.length).to eq(3)
+        executions.each do |execution|
+          expect(execution).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
+        end
+      end
+
+      it 'supports pagination results' do
+        mock = double
+        mock.stub(:call)
+
+        subject.list_workflow_executions(namespace, query) do |executions, next_page_token|
+          mock.call(executions: executions, next_page_token: next_page_token)
+        end
+
+        expect(connection).to have_received(:list_workflow_executions).exactly(3).times
+        expect(mock).to have_received(:call).exactly(3).times
+
+
+        [response_1, response_2, response_3].map do |response|
+          expect(mock)
+            .to have_received(:call)
+            .with(
+              # need to convert to the ExecutionInfo because this is what is returned by list_workflow_executions
+              executions: response.executions.map {|execution| Temporal::Workflow::ExecutionInfo.generate_from(execution)}, 
+              next_page_token: response_1.next_page_token
+            )
+            .once
+        end
+      end
+    end
+  end
 end
