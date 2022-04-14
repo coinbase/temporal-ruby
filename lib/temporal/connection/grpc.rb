@@ -421,8 +421,14 @@ module Temporal
         client.list_closed_workflow_executions(request)
       end
 
-      def list_workflow_executions
-        raise NotImplementedError
+      def list_workflow_executions(namespace:, query:, next_page_token: nil)
+        request = Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          page_size: options[:max_page_size],
+          next_page_token: next_page_token,
+          query: query
+        )
+        client.list_workflow_executions(request)
       end
 
       def list_archived_workflow_executions
