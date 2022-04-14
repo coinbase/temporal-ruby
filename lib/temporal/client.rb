@@ -382,6 +382,20 @@ module Temporal
 
       fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
     end
+
+    # TODO: (calum, 2022-06-01) remove this once we have a better understanding of the how to do pagination on these temporal-ruby APIs
+    def list_workflow_executions_paginated(namespace, query, next_page_token: nil)
+      response = connection.list_workflow_executions(namespace: namespace, query: query, next_page_token: next_page_token)
+
+      executions = response.executions.map do |raw_execution|
+        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
+      end
+
+      {
+        executions: executions,
+        next_page_token: response.next_page_token
+      }
+    end
   
     def get_cron_schedule(namespace, workflow_id, run_id: nil)
       history_response = connection.get_workflow_execution_history(
