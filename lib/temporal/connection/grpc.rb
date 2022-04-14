@@ -8,6 +8,7 @@ require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
+require 'gen/temporal/api/errordetails/v1/message_pb'
 require 'temporal/concerns/payloads'
 
 module Temporal
@@ -126,9 +127,14 @@ module Temporal
 
         client.start_workflow_execution(request)
       rescue ::GRPC::AlreadyExists => e
-        # Feel like there should be cleaner way to do this...
-        run_id = e.details[/RunId: ([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)/, 1]
-        raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, run_id)
+        error_details_from(e).each do |error|
+          case error
+          when Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure
+            raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, error.run_id)
+          end
+        end
+
+        raise Temporal::ApiError, e.details # unhandled error type
       end
 
       SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL = 30
@@ -142,7 +148,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -370,7 +376,17 @@ module Temporal
           request.workflow_id_reuse_policy = policy
         end
 
+
         client.signal_with_start_workflow_execution(request)
+      rescue ::GRPC::AlreadyExists => e
+        error_details_from(e).each do |error|
+          case error
+          when Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure
+            raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(e.details, error.run_id)
+          end
+        end
+
+        raise Temporal::ApiError, e.details # unhandled error type
       end
 
       def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
@@ -534,8 +550,17 @@ module Temporal
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
         status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
-        
+
         Temporal::Api::Filter::V1::StatusFilter.new(status: status)
+      end
+
+      def error_details_from(error)
+        error.to_rpc_status&.details&.map do |any_error|
+          type = Google::Protobuf::DescriptorPool.generated_pool.lookup any_error.type_url.split('/').last
+          next if type.nil?
+
+          any_error.unpack type.msgclass
+        end&.compact
       end
     end
   end

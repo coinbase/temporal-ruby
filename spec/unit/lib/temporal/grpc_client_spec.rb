@@ -4,20 +4,40 @@ describe Temporal::Connection::GRPC do
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
-  let(:now) { Time.now}
+  let(:now) { Time.now.utc }
+  let(:already_started_error) do
+    detail_error = Google::Protobuf::Any.new.tap do |any|
+      any.pack(Temporal::Api::ErrorDetails::V1::WorkflowExecutionAlreadyStartedFailure.new(start_request_id: SecureRandom.uuid, run_id: run_id))
+    end
+    rpc_status = Google::Rpc::Status.new(
+      code: 6,
+      message: 'Workflow execution already finished successfully. WorkflowId: TestWorkflow-1, RunId: baaf1d86-4459-4ecd-a288-47aeae55245d. Workflow Id reuse policy: allow duplicate workflow Id if last run failed.',
+      details: [detail_error],
+    )
+    GRPC::AlreadyExists.new('details', { 'grpc-status-details-bin' => Google::Rpc::Status.encode(rpc_status) })
+  end
+
+  let(:invalid_already_exists_error) do
+    detail_error = Google::Protobuf::Any.new.tap do |any|
+      any.pack(Temporal::Api::ErrorDetails::V1::NotFoundFailure.new())
+    end
+    rpc_status = Google::Rpc::Status.new(
+      code: 6,
+      message: 'some error message',
+      details: [detail_error],
+    )
+    GRPC::AlreadyExists.new('details', { 'grpc-status-details-bin' => Google::Rpc::Status.encode(rpc_status) })
+  end
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
   describe '#start_workflow_execution' do
     it 'provides the existing run_id when the workflow is already started' do
-      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(
-        GRPC::AlreadyExists,
-        'Workflow execution already finished successfully. WorkflowId: TestWorkflow-1, RunId: baaf1d86-4459-4ecd-a288-47aeae55245d. Workflow Id reuse policy: allow duplicate workflow Id if last run failed.'
-      )
+      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(already_started_error)
 
       expect do
         subject.start_workflow_execution(
@@ -31,19 +51,35 @@ describe Temporal::Connection::GRPC do
           memo: {}
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
-        expect(e.run_id).to eql('baaf1d86-4459-4ecd-a288-47aeae55245d')
+        expect(e.run_id).to eql(run_id)
       end
     end
+
+    it 'handles unexpected already exists error' do
+      allow(grpc_stub).to receive(:start_workflow_execution).and_raise(invalid_already_exists_error)
+
+      expect do
+        subject.start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'Test',
+          task_queue: 'test',
+          execution_timeout: 0,
+          run_timeout: 0,
+          task_timeout: 0,
+          memo: {}
+        )
+      end.to raise_error(Temporal::ApiError)
+    end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
-    before { allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
-
     it 'starts a workflow with a signal with scalar arguments' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response)
       subject.signal_with_start_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
@@ -70,6 +106,46 @@ describe Temporal::Connection::GRPC do
         expect(request.signal_name).to eq('the question')
         expect(request.signal_input.payloads[0].data).to eq('"what do you get if you multiply six by nine?"')
       end
+    end
+
+    it 'provides the existing run_id when the workflow is already started' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_raise(already_started_error)
+
+      expect do
+        subject.signal_with_start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'workflow_name',
+          task_queue: 'task_queue',
+          input: ['foo'],
+          execution_timeout: 1,
+          run_timeout: 2,
+          task_timeout: 3,
+          signal_name: 'the question',
+          signal_input: 'what do you get if you multiply six by nine?',
+        )
+      end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
+        expect(e.run_id).to eql(run_id)
+      end
+    end
+
+    it 'handles invalid already exists errors' do
+      allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_raise(invalid_already_exists_error)
+
+      expect do
+        subject.signal_with_start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'workflow_name',
+          task_queue: 'task_queue',
+          input: ['foo'],
+          execution_timeout: 1,
+          run_timeout: 2,
+          task_timeout: 3,
+          signal_name: 'the question',
+          signal_input: 'what do you get if you multiply six by nine?',
+        )
+      end.to raise_error(Temporal::ApiError)
     end
   end
 
@@ -148,7 +224,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -161,7 +237,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -261,7 +337,7 @@ describe Temporal::Connection::GRPC do
         end
       end
     end
-    
+
     describe '#list_closed_workflow_executions' do
       let(:namespace) { 'test-namespace' }
       let(:from) { Time.now - 600 }
