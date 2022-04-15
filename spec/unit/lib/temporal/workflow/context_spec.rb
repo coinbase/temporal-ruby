@@ -7,10 +7,32 @@ class MyTestWorkflow < Temporal::Workflow; end
 describe Temporal::Workflow::Context do
   let(:state_manager) { instance_double('Temporal::Workflow::StateManager') }
   let(:dispatcher) { instance_double('Temporal::Workflow::Dispatcher') }
+  let(:query_registry) { instance_double('Temporal::Workflow::QueryRegistry') }
   let(:metadata) { instance_double('Temporal::Metadata::Workflow') }
-  let(:workflow_context) {
-    Temporal::Workflow::Context.new(state_manager, dispatcher, MyTestWorkflow, metadata, Temporal.configuration)
-  }
+  let(:workflow_context) do
+    Temporal::Workflow::Context.new(
+      state_manager,
+      dispatcher,
+      MyTestWorkflow,
+      metadata,
+      Temporal.configuration,
+      query_registry
+    )
+  end
+
+  describe '#on_query' do
+    let(:handler) { Proc.new {} }
+
+    before { allow(query_registry).to receive(:register) }
+
+    it 'registers a query with the query registry' do
+      workflow_context.on_query('test-query', &handler)
+
+      expect(query_registry).to have_received(:register).with('test-query') do |&block|
+        expect(block).to eq(handler)
+      end
+    end
+  end
 
   describe '#upsert_search_attributes' do
     it 'does not accept nil' do

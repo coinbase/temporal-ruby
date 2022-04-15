@@ -176,6 +176,29 @@ module Temporal
       )
     end
 
+    # Issue a query against a running workflow
+    #
+    # @param workflow [Temporal::Workflow, nil] workflow class or nil
+    # @param query [String] name of the query to issue
+    # @param workflow_id [String]
+    # @param run_id [String]
+    # @param args [String, Array, nil] optional arguments for the query
+    # @param namespace [String, nil] if nil, choose the one declared on the workflow class or the
+    #   global default
+    # @param query_reject_condition [Symbol] check Temporal::Connection::GRPC::QUERY_REJECT_CONDITION
+    def query_workflow(workflow, query, workflow_id, run_id, *args, namespace: nil, query_reject_condition: nil)
+      execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
+
+      connection.query_workflow(
+        namespace: namespace || execution_options.namespace,
+        workflow_id: workflow_id,
+        run_id: run_id,
+        query: query,
+        args: args,
+        query_reject_condition: query_reject_condition
+      )
+    end
+
     # Long polls for a workflow to be completed and returns workflow's return value.
     #
     # @note This function times out after 30 seconds and throws Temporal::TimeoutError,
@@ -207,7 +230,7 @@ module Temporal
           timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
-        message = if timeout 
+        message = if timeout
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
           "Timed out after #{max_timeout} seconds, which is the maximum supported amount."

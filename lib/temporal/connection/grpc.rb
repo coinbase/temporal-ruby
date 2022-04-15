@@ -26,6 +26,12 @@ module Temporal
         close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
+      QUERY_REJECT_CONDITION = {
+        none: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NONE,
+        not_open: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_OPEN,
+        not_completed_cleanly: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_COMPLETED_CLEANLY
+      }.freeze
+
       DEFAULT_OPTIONS = {
         max_page_size: 100
       }.freeze
@@ -142,7 +148,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -183,13 +189,28 @@ module Temporal
         poll_request.execute
       end
 
-      def respond_workflow_task_completed(namespace:, task_token:, commands:)
+      def respond_query_task_completed(namespace:, task_token:, query_result:)
+        query_result_proto = Serializer.serialize(query_result)
+        request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
+          task_token: task_token,
+          namespace: namespace,
+          completed_type: query_result_proto.result_type,
+          query_result: query_result_proto.answer,
+          error_message: query_result_proto.error_message,
+        )
+
+        client.respond_query_task_completed(request)
+      end
+
+      def respond_workflow_task_completed(namespace:, task_token:, commands:, query_results: {})
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) }
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
+          query_results: query_results.transform_values { |value| Serializer.serialize(value) }
         )
+
         client.respond_workflow_task_completed(request)
       end
 
@@ -452,16 +473,43 @@ module Temporal
         raise NotImplementedError
       end
 
-      def respond_query_task_completed
-        raise NotImplementedError
-      end
-
       def reset_sticky_task_queue
         raise NotImplementedError
       end
 
-      def query_workflow
-        raise NotImplementedError
+      def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil, query_reject_condition: nil)
+        request = Temporal::Api::WorkflowService::V1::QueryWorkflowRequest.new(
+          namespace: namespace,
+          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+            workflow_id: workflow_id,
+            run_id: run_id
+          ),
+          query: Temporal::Api::Query::V1::WorkflowQuery.new(
+            query_type: query,
+            query_args: to_query_payloads(args)
+          )
+        )
+        if query_reject_condition
+          condition = QUERY_REJECT_CONDITION[query_reject_condition]
+          raise Client::ArgumentError, 'Unknown query_reject_condition specified' unless condition
+
+          request.query_reject_condition = condition
+        end
+
+        begin
+          response = client.query_workflow(request)
+        rescue ::GRPC::InvalidArgument => e
+          raise Temporal::QueryFailed, e.details
+        end
+
+        if response.query_rejected
+          rejection_status = response.query_rejected.status || 'not specified by server'
+          raise Temporal::QueryFailed, "Query rejected: status #{rejection_status}"
+        elsif !response.query_result
+          raise Temporal::QueryFailed, 'Invalid response from server'
+        else
+          from_query_payloads(response.query_result)
+        end
       end
 
       def describe_workflow_execution(namespace:, workflow_id:, run_id:)
@@ -534,7 +582,7 @@ module Temporal
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
         status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
-        
+
         Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end

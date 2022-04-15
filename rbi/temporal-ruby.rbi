@@ -39,5 +39,5 @@ module Temporal
   class FeatureVersionNotSupportedFailure; end
   class NamespaceAlreadyExistsFailure; end
   class CancellationAlreadyRequestedFailure; end
-  class QueryFailedFailure; end
+  class QueryFailed; end
 end

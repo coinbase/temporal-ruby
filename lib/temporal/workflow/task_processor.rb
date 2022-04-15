@@ -7,7 +7,20 @@ require 'temporal/errors'
 module Temporal
   class Workflow
     class TaskProcessor
+      Query = Struct.new(:query) do
+        include Concerns::Payloads
+
+        def query_type
+          query.query_type
+        end
+
+        def query_args
+          from_query_payloads(query.query_args)
+        end
+      end
+
       MAX_FAILED_ATTEMPTS = 1
+      LEGACY_QUERY_KEY = :legacy_query
 
       def initialize(task, namespace, workflow_lookup, middleware_chain, config)
         @task = task
@@ -38,7 +51,13 @@ module Temporal
           executor.run
         end
 
-        complete_task(commands)
+        query_results = executor.process_queries(parse_queries)
+
+        if legacy_query_task?
+          complete_query(query_results[LEGACY_QUERY_KEY])
+        else
+          complete_task(commands, query_results)
+        end
       rescue StandardError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 
@@ -87,10 +106,44 @@ module Temporal
         Workflow::History.new(events)
       end
 
-      def complete_task(commands)
+      def legacy_query_task?
+        !!task.query
+      end
+
+      def parse_queries
+        # Support for deprecated query style
+        if legacy_query_task?
+          { LEGACY_QUERY_KEY => Query.new(task.query) }
+        else
+          task.queries.each_with_object({}) do |(query_id, query), result|
+            result[query_id] = Query.new(query)
+          end
+        end
+      end
+
+      def complete_task(commands, query_results)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
-        connection.respond_workflow_task_completed(namespace: namespace, task_token: task_token, commands: commands)
+        connection.respond_workflow_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          commands: commands,
+          query_results: query_results
+        )
+      end
+
+      def complete_query(result)
+        Temporal.logger.info("Workflow Query task completed", metadata.to_h)
+
+        connection.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: result
+        )
+      rescue StandardError => error
+        Temporal.logger.error("Unable to complete a query", metadata.to_h.merge(error: error.inspect))
+
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
 
       def fail_task(error)

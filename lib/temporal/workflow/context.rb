@@ -19,9 +19,10 @@ module Temporal
     class Context
       attr_reader :metadata, :config
 
-      def initialize(state_manager, dispatcher, workflow_class, metadata, config)
+      def initialize(state_manager, dispatcher, workflow_class, metadata, config, query_registry)
         @state_manager = state_manager
         @dispatcher = dispatcher
+        @query_registry = query_registry
         @workflow_class = workflow_class
         @metadata = metadata
         @completed = false
@@ -298,7 +299,7 @@ module Temporal
       # all signals that do not match a named signal handler.
       #
       # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
-      def on_signal(signal_name=nil, &block)
+      def on_signal(signal_name = nil, &block)
         if signal_name
           target = Signal.new(signal_name)
           dispatcher.register_handler(target, 'signaled') do |_, input|
@@ -310,6 +311,10 @@ module Temporal
             call_in_fiber(block, signal, input)
           end
         end
+      end
+
+      def on_query(query, &block)
+        query_registry.register(query, &block)
       end
 
       def cancel_activity(activity_id)
@@ -344,8 +349,6 @@ module Temporal
       #
       # @return [Future] future
       def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
-        options ||= {}
-
         execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
         command = Command::SignalExternalWorkflow.new(
@@ -398,7 +401,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class
+      attr_reader :state_manager, :dispatcher, :workflow_class, :query_registry
 
       def completed!
         @completed = true
