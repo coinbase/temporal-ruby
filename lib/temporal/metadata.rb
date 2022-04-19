@@ -27,6 +27,8 @@ module Temporal
         )
       end
 
+      # @param task [Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueResponse]
+      # @param namespace [String]
       def generate_workflow_task_metadata(task, namespace)
         Metadata::WorkflowTask.new(
           namespace: namespace,
@@ -40,7 +42,6 @@ module Temporal
       end
 
       # @param event [Temporal::Workflow::History::Event] Workflow started history event
-      # @param event [WorkflowExecutionStartedEventAttributes] :attributes
       # @param task_metadata [Temporal::Metadata::WorkflowTask] workflow task metadata
       def generate_workflow_metadata(event, task_metadata)
         Metadata::Workflow.new(

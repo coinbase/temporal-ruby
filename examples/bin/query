@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+require_relative '../init'
+
+Dir[File.expand_path('../workflows/*.rb', __dir__)].each { |f| require f }
+
+workflow_class_name, workflow_id, run_id, query, args = ARGV
+workflow_class = Object.const_get(workflow_class_name)
+
+if ![workflow_class, workflow_id, run_id, query].all?
+  fail 'Wrong arguments, use `bin/query WORKFLOW WORKFLOW_ID RUN_ID QUERY [ARGS]`'
+end
+
+result = Temporal.query_workflow(workflow_class, query, workflow_id, run_id, args)
+puts result.inspect

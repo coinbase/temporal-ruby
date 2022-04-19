@@ -20,6 +20,7 @@ module Temporal
                  :describe_namespace,
                  :list_namespaces,
                  :signal_workflow,
+                 :query_workflow,
                  :await_workflow_result,
                  :reset_workflow,
                  :terminate_workflow,
@@ -48,11 +49,11 @@ module Temporal
     end
 
     private
-    
+
     def default_client
       @default_client ||= Client.new(config)
     end
-    
+
     def config
       @config ||= Configuration.new
     end

@@ -1,3 +1,6 @@
+require 'temporal/connection/grpc'
+require 'temporal/workflow/query_result'
+
 describe Temporal::Connection::GRPC do
   subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
   let(:grpc_stub) { double('grpc stub') }
@@ -6,9 +9,13 @@ describe Temporal::Connection::GRPC do
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
 
+  class TestDeserializer
+    extend Temporal::Concerns::Payloads
+  end
+
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
@@ -84,7 +91,7 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -219,7 +226,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -232,7 +239,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -412,6 +419,111 @@ describe Temporal::Connection::GRPC do
             expect(request.type_filter).to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowTypeFilter)
             expect(request.type_filter.name).to eq('TestWorkflow')
           end
+        end
+      end
+    end
+  end
+
+  describe '#respond_query_task_completed' do
+    let(:task_token) { SecureRandom.uuid }
+
+    before do
+      allow(grpc_stub)
+        .to receive(:respond_query_task_completed)
+        .and_return(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse.new)
+    end
+
+    context 'when query result is an answer' do
+      let(:query_result) { Temporal::Workflow::QueryResult.answer(42) }
+
+      it 'makes an API request' do
+        subject.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: query_result
+        )
+
+        expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          )
+          expect(request.query_result).to eq(TestDeserializer.to_query_payloads(42))
+          expect(request.error_message).to eq('')
+        end
+      end
+    end
+
+    context 'when query result is a failure' do
+      let(:query_result) { Temporal::Workflow::QueryResult.failure(StandardError.new('Test query failure')) }
+
+      it 'makes an API request' do
+        subject.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: query_result
+        )
+
+        expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          )
+          expect(request.query_result).to eq(nil)
+          expect(request.error_message).to eq('Test query failure')
+        end
+      end
+    end
+  end
+
+  describe '#respond_workflow_task_completed' do
+    let(:task_token) { SecureRandom.uuid }
+
+    before do
+      allow(grpc_stub)
+        .to receive(:respond_workflow_task_completed)
+        .and_return(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse.new)
+    end
+
+    context 'when responding with query results' do
+      let(:query_results) do
+        {
+          '1' => Temporal::Workflow::QueryResult.answer(42),
+          '2' => Temporal::Workflow::QueryResult.failure(StandardError.new('Test query failure')),
+        }
+      end
+
+      it 'makes an API request' do
+        subject.respond_workflow_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          commands: [],
+          query_results: query_results
+        )
+
+        expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.commands).to be_empty
+
+          expect(request.query_results.length).to eq(2)
+
+          expect(request.query_results['1']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['1'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          )
+          expect(request.query_results['1'].answer).to eq(TestDeserializer.to_query_payloads(42))
+
+          expect(request.query_results['2']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['2'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          )
+          expect(request.query_results['2'].error_message).to eq('Test query failure')
         end
       end
     end
