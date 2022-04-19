@@ -20,7 +20,7 @@ class WaitForNamedSignalWorkflow < Temporal::Workflow
     end
 
     timeout_timer = workflow.start_timer(1)
-    workflow.wait_for(timeout_timer)
+    workflow.wait_for_any(timeout_timer)
 
     { received: signals_received, counts: signal_counts }
   end

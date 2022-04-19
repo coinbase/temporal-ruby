@@ -14,7 +14,7 @@ class QueryWorkflow < Temporal::Workflow
       @last_signal_received = signal
     end
 
-    workflow.wait_for { last_signal_received == "finish" }
+    workflow.wait_until { last_signal_received == "finish" }
     @state = "finished"
 
     {
