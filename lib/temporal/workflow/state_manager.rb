@@ -241,8 +241,11 @@ module Temporal
 
         when 'START_CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(history_target, 'failed', 'StandardError', from_payloads(event.attributes.cause))
-
+          error = Temporal::Workflow::Errors.generate_error_for_child_workflow_start(
+            event.attributes.cause,
+            event.attributes.workflow_id
+          )
+          dispatch(history_target, 'failed', error)
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
           dispatch(history_target, 'started')
           state_machine.start

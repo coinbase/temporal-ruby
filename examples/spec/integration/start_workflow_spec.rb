@@ -33,4 +33,39 @@ describe 'Temporal.start_workflow' do
 
     expect(result).to eq('Hello World, Test')
   end
+
+  it 'rejects duplicate workflow ids based on workflow_id_reuse_policy' do
+    # Run it once...
+    run_id = Temporal.start_workflow(HelloWorldWorkflow, 'Test', options: {
+      workflow_id: workflow_id,
+    })
+
+    result = Temporal.await_workflow_result(
+      HelloWorldWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id
+    )
+
+    expect(result).to eq('Hello World, Test')
+
+    # And again, allowing duplicates...
+    run_id = Temporal.start_workflow(HelloWorldWorkflow, 'Test', options: {
+      workflow_id: workflow_id,
+      workflow_id_reuse_policy: :allow
+    })
+
+    Temporal.await_workflow_result(
+      HelloWorldWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id
+    )
+
+    # And again, rejecting duplicates...
+    expect do
+      Temporal.start_workflow(HelloWorldWorkflow, 'Test', options: {
+        workflow_id: workflow_id,
+        workflow_id_reuse_policy: :reject
+      })
+    end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure)
+  end
 end

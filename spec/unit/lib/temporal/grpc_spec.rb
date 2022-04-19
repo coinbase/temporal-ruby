@@ -35,10 +35,59 @@ describe Temporal::Connection::GRPC do
           execution_timeout: 0,
           run_timeout: 0,
           task_timeout: 0,
-          memo: {}
+          memo: {},
+          workflow_id_reuse_policy: :allow,
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
         expect(e.run_id).to eql('baaf1d86-4459-4ecd-a288-47aeae55245d')
+      end
+    end
+
+    it 'starts a workflow with scalar arguments' do
+      allow(grpc_stub).to receive(:start_workflow_execution).and_return(Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx'))
+
+      subject.start_workflow_execution(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        workflow_name: 'workflow_name',
+        task_queue: 'task_queue',
+        input: ['foo'],
+        execution_timeout: 1,
+        run_timeout: 2,
+        task_timeout: 3,
+        memo: {},
+        workflow_id_reuse_policy: :reject,
+      )
+
+      expect(grpc_stub).to have_received(:start_workflow_execution) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.workflow_id).to eq(workflow_id)
+        expect(request.workflow_type.name).to eq('workflow_name')
+        expect(request.task_queue.name).to eq('task_queue')
+        expect(request.input.payloads[0].data).to eq('"foo"')
+        expect(request.workflow_execution_timeout.seconds).to eq(1)
+        expect(request.workflow_run_timeout.seconds).to eq(2)
+        expect(request.workflow_task_timeout.seconds).to eq(3)
+        expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
+      end
+    end
+
+    it 'raises when an invalid workflow_id_reuse_policy is given' do
+      expect do
+        subject.start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'Test',
+          task_queue: 'test',
+          execution_timeout: 0,
+          run_timeout: 0,
+          task_timeout: 0,
+          memo: {},
+          workflow_id_reuse_policy: :not_a_valid_policy
+        )
+      end.to raise_error(Temporal::Connection::ArgumentError) do |e|
+        expect(e.message).to eq('Unknown workflow_id_reuse_policy specified: not_a_valid_policy')
       end
     end
   end
@@ -60,6 +109,7 @@ describe Temporal::Connection::GRPC do
         execution_timeout: 1,
         run_timeout: 2,
         task_timeout: 3,
+        workflow_id_reuse_policy: :allow,
         signal_name: 'the question',
         signal_input: 'what do you get if you multiply six by nine?'
       )
@@ -76,6 +126,27 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_task_timeout.seconds).to eq(3)
         expect(request.signal_name).to eq('the question')
         expect(request.signal_input.payloads[0].data).to eq('"what do you get if you multiply six by nine?"')
+        expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE)
+      end
+    end
+
+    it 'raises when an invalid workflow_id_reuse_policy is given' do
+      expect do
+        subject.signal_with_start_workflow_execution(
+          namespace: namespace,
+          workflow_id: workflow_id,
+          workflow_name: 'Test',
+          task_queue: 'test',
+          execution_timeout: 0,
+          run_timeout: 0,
+          task_timeout: 0,
+          memo: {},
+          workflow_id_reuse_policy: :not_a_valid_policy,
+          signal_name: 'the question',
+          signal_input: 'what do you get if you multiply six by nine?'
+        )
+      end.to raise_error(Temporal::Connection::ArgumentError) do |e|
+        expect(e.message).to eq('Unknown workflow_id_reuse_policy specified: not_a_valid_policy')
       end
     end
   end
