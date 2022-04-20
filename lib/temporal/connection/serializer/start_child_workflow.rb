@@ -32,7 +32,7 @@ module Temporal
                 parent_close_policy: serialize_parent_close_policy(object.parent_close_policy),
                 header: serialize_headers(object.headers),
                 memo: serialize_memo(object.memo),
-                workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.to_proto(object.workflow_id_reuse_policy)
+                workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(object.workflow_id_reuse_policy).to_proto
               )
           )
         end

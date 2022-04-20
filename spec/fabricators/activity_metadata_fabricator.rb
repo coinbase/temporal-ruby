@@ -11,6 +11,6 @@ Fabricator(:activity_metadata, from: :open_struct) do
   workflow_name 'TestWorkflow'
   headers { {} }
   heartbeat_details nil
-  scheduled_time 0
-  current_attempt_scheduled_time 0
+  scheduled_at { Time.now }
+  current_attempt_scheduled_at { Time.now }
 end

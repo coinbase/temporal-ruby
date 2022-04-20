@@ -109,6 +109,7 @@ module Temporal
 
         parent_close_policy = options.delete(:parent_close_policy)
         should_wait_for_start = options.fetch(:should_wait_for_start, true)
+        workflow_id_reuse_policy = options.delete(:workflow_id_reuse_policy)
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
         command = Command::StartChildWorkflow.new(
@@ -122,7 +123,7 @@ module Temporal
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
-          workflow_id_reuse_policy: options[:workflow_id_reuse_policy]
+          workflow_id_reuse_policy: workflow_id_reuse_policy
         )
 
         target, cancelation_id = schedule_command(command)

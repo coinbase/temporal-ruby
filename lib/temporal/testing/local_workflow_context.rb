@@ -61,8 +61,8 @@ module Temporal
           workflow_name: self.metadata.name,
           headers: execution_options.headers,
           heartbeat_details: nil,
-          scheduled_time: Time.now.to_i,
-          current_attempt_scheduled_time: Time.now.to_i,
+          scheduled_at: Time.now,
+          current_attempt_scheduled_at: Time.now,
         )
         context = LocalActivityContext.new(metadata)
 
@@ -113,8 +113,8 @@ module Temporal
           workflow_name: self.metadata.name,
           headers: execution_options.headers,
           heartbeat_details: nil,
-          scheduled_time: Time.now.to_i,
-          current_attempt_scheduled_time: Time.now.to_i,
+          scheduled_at: Time.now,
+          current_attempt_scheduled_at: Time.now,
         )
         context = LocalActivityContext.new(metadata)
 
@@ -139,11 +139,11 @@ module Temporal
           id: workflow_id,
           name: execution_options.name, # Workflow class name
           run_id: run_id,
-          parent_id: metadata.id,
-          parent_run_id: metadata.run_id,
+          parent_id: @workflow_id,
+          parent_run_id: @run_id,
           attempt: 1,
-          task_queue: 'unit-test-task-queue',
-          headers: {},
+          task_queue: execution_options.task_queue,
+          headers: execution_options.headers,
           run_started_at: Time.now,
           memo: {},
         )

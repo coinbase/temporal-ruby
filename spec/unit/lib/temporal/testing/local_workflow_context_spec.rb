@@ -5,6 +5,7 @@ require 'time'
 
 describe Temporal::Testing::LocalWorkflowContext do
   let(:workflow_id) { 'workflow_id_1' }
+  let(:workflow_name) { 'HelloWorldWorkflow' }
   let(:run_id) { 'run_id_1' }
   let(:execution) { Temporal::Testing::WorkflowExecution.new }
   let(:task_queue) { 'my_test_queue' }
@@ -17,7 +18,7 @@ describe Temporal::Testing::LocalWorkflowContext do
       Temporal::Metadata::Workflow.new(
         namespace: 'ruby-samples',
         id: workflow_id,
-        name: 'HelloWorldWorkflow',
+        name: workflow_name,
         run_id: run_id,
         parent_id: nil,
         parent_run_id: nil,
@@ -158,6 +159,7 @@ describe Temporal::Testing::LocalWorkflowContext do
       expect(result.name).to eq('MetadataCapturingActivity')
       expect(result.namespace).to eq('default-namespace')
       expect(result.workflow_id).to eq(workflow_id)
+      expect(result.workflow_name).to eq(workflow_name)
       expect(result.workflow_run_id).to eq(run_id)
     end
   end
