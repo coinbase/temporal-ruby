@@ -137,6 +137,8 @@ module Temporal
           id: workflow_id,
           name: execution_options.name, # Workflow class name
           run_id: run_id,
+          parent_id: @workflow_id,
+          parent_run_id: @run_id,
           attempt: 1,
           task_queue: execution_options.task_queue,
           headers: execution_options.headers,
