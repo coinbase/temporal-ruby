@@ -4,6 +4,7 @@ module Temporal
   class Workflow
     class Future
       attr_reader :target, :success_callbacks, :failure_callbacks
+      attr_accessor :child_workflow_execution_future # will complete when the child workflow has been completed
 
       def initialize(target, context, cancelation_id: nil)
         @target = target

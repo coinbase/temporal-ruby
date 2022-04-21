@@ -125,6 +125,10 @@ module Temporal
         target, cancelation_id = schedule_command(command)
         future = Future.new(target, self, cancelation_id: cancelation_id)
 
+        # setup another future which will track when the child workflow is started
+        child_workflow_execution_future = Future.new(target, self, cancelation_id: cancelation_id)
+        future.child_workflow_execution_future = child_workflow_execution_future
+
         dispatcher.register_handler(target, 'completed') do |result|
           future.set(result)
           future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
@@ -133,15 +137,16 @@ module Temporal
         dispatcher.register_handler(target, 'failed') do |exception|
           future.fail(exception)
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+
+          child_workflow_execution_future.fail(exception)
+          child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
-        # Temporal docs say that we *must* wait for the child to get spawned:
-        child_workflow_started = false
-        dispatcher.register_handler(target, 'started') do
-          child_workflow_started = true
+        dispatcher.register_handler(target, 'started') do |result|
+          # once the workflow starts, complete the child workflow future
+          child_workflow_execution_future.set(result)
+          child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
-
-        wait_for { child_workflow_started || future.failed? }
 
         future
       end
