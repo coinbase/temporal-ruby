@@ -340,6 +340,45 @@ describe Temporal::Connection::GRPC do
       end
     end
     
+    describe '#list_workflow_executions' do
+      let(:namespace) { 'test-namespace' }
+      let(:query) { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
+      let(:args) { { namespace: namespace, query: query } }
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+      end
+      let(:temporal_paginated_response) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: 'more-results')
+      end
+
+      before do
+        allow(grpc_stub).to receive(:list_workflow_executions).and_return(temporal_response)
+      end
+
+      it 'makes an API request' do
+        subject.list_workflow_executions(**args)
+
+        expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+          expect(request.page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
+          expect(request.next_page_token).to eq('')
+          expect(request.namespace).to eq(namespace)
+          expect(request.query).to eq(query)
+        end
+      end
+
+      context 'when next_page_token is supplied' do
+        it 'makes an API request' do
+          subject.list_workflow_executions(**args.merge(next_page_token: 'x'))
+
+          expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+            expect(request.next_page_token).to eq('x')
+          end
+        end
+      end
+    end
+
     describe '#list_closed_workflow_executions' do
       let(:namespace) { 'test-namespace' }
       let(:from) { Time.now - 600 }
