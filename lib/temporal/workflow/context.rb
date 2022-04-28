@@ -138,8 +138,8 @@ module Temporal
           future.fail(exception)
           future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
 
-          child_workflow_execution_future.fail(exception)
-          child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+          # child_workflow_execution_future.fail(exception)
+          # child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
         dispatcher.register_handler(target, 'started') do |result|
