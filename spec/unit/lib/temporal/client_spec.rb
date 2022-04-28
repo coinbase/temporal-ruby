@@ -931,7 +931,7 @@ describe Temporal::Client do
 
       it 'raises ArgumentError' do
         expect do
-          subject.list_open_workflow_executions(namespace, from, filter: filter).each
+          subject.list_open_workflow_executions(namespace, from, filter: filter).to_a
         end.to raise_error(ArgumentError, 'Allowed filters are: [:workflow, :workflow_id]')
       end
     end
@@ -948,7 +948,7 @@ describe Temporal::Client do
 
     context 'when called without filters' do
       it 'makes a request' do
-        subject.list_open_workflow_executions(namespace, from).each
+        subject.list_open_workflow_executions(namespace, from).to_a
 
         expect(connection)
           .to have_received(:list_open_workflow_executions)
@@ -958,7 +958,7 @@ describe Temporal::Client do
 
     context 'when called with :to' do
       it 'makes a request' do
-        subject.list_open_workflow_executions(namespace, from, now - 10).each
+        subject.list_open_workflow_executions(namespace, from, now - 10).to_a
 
         expect(connection)
           .to have_received(:list_open_workflow_executions)
@@ -968,7 +968,7 @@ describe Temporal::Client do
 
     context 'when called with a :workflow filter' do
       it 'makes a request' do
-        subject.list_open_workflow_executions(namespace, from, filter: { workflow: 'TestWorkflow' }).each
+        subject.list_open_workflow_executions(namespace, from, filter: { workflow: 'TestWorkflow' }).to_a
 
         expect(connection)
           .to have_received(:list_open_workflow_executions)
@@ -978,7 +978,7 @@ describe Temporal::Client do
 
     context 'when called with a :workflow_id filter' do
       it 'makes a request' do
-        subject.list_open_workflow_executions(namespace, from, filter: { workflow_id: 'xxx' }).each
+        subject.list_open_workflow_executions(namespace, from, filter: { workflow_id: 'xxx' }).to_a
 
         expect(connection)
           .to have_received(:list_open_workflow_executions)

@@ -399,8 +399,8 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
-    def list_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
-      Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+    def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
+      Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
     class ResultConverter
