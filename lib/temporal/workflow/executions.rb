@@ -23,7 +23,7 @@ module Temporal
         self.class.new(connection: @connection, status: @status, request_options: @request_options.merge(next_page_token: next_page_token))
       end
 
-      def each()
+      def each
         api_method =
           if @status == :open
             :list_open_workflow_executions
