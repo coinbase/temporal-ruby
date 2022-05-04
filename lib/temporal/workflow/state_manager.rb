@@ -247,7 +247,7 @@ module Temporal
           )
           dispatch(history_target, 'failed', error)
         when 'CHILD_WORKFLOW_EXECUTION_STARTED'
-          dispatch(history_target, 'started')
+          dispatch(history_target, 'started', event.attributes.workflow_execution)
           state_machine.start
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'

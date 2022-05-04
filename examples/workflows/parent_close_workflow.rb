@@ -7,6 +7,8 @@ class ParentCloseWorkflow < Temporal::Workflow
       parent_close_policy: parent_close_policy,
     }
     result = SlowChildWorkflow.execute(1, options: options)
+    
+    # waits for the child workflow to start before exiting
     result.child_workflow_execution_future.get
     return
   end

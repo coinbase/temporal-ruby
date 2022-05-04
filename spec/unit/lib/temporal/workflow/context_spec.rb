@@ -19,6 +19,7 @@ describe Temporal::Workflow::Context do
       query_registry
     )
   end
+  let(:child_workflow_execution) { Fabricate(:api_workflow_execution) }
 
   describe '#on_query' do
     let(:handler) { Proc.new {} }
@@ -31,6 +32,100 @@ describe Temporal::Workflow::Context do
       expect(query_registry).to have_received(:register).with('test-query') do |&block|
         expect(block).to eq(handler)
       end
+    end
+  end
+
+  describe '#execute_workflow' do
+    it 'returns the correct futures when starting a child workflow' do
+      allow(state_manager).to receive(:schedule)
+      allow(dispatcher).to receive(:register_handler)
+
+      result = workflow_context.execute_workflow(MyTestWorkflow)
+      expect(result).to be_instance_of(Temporal::Workflow::ChildWorkflowFuture)
+      expect(result.child_workflow_execution_future).to be_instance_of(Temporal::Workflow::Future)
+    end
+
+    it 'futures behave as expected when events are successful' do
+      started_proc = nil
+      completed_proc = nil
+
+      allow(state_manager).to receive(:schedule)
+      allow(dispatcher).to receive(:register_handler) do |target, event_name, &handler|
+        case event_name
+        when 'started'
+          started_proc = handler
+        when 'completed'
+          completed_proc = handler
+        end
+      end
+
+      child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
+      
+      # expect all futures to be false as nothing has happened
+      expect(child_workflow_future.finished?).to be false
+      expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
+
+      # dispatch the start event and check if the child workflow execution changes to true
+      started_proc.call(child_workflow_execution)
+      expect(child_workflow_future.finished?).to be false
+      expect(child_workflow_future.child_workflow_execution_future.finished?).to be true
+      expect(child_workflow_future.child_workflow_execution_future.get).to be_instance_of(Temporal::Api::Common::V1::WorkflowExecution)
+
+      # complete the workflow via dispatch and check if the child workflow future is finished
+      completed_proc.call('finished result')
+      expect(child_workflow_future.finished?).to be true
+      expect(child_workflow_future.child_workflow_execution_future.finished?).to be true
+    end
+
+    it 'futures behave as expected when child workflow fails' do
+      started_proc = nil
+      failed_proc = nil
+
+      allow(state_manager).to receive(:schedule)
+      allow(dispatcher).to receive(:register_handler) do |target, event_name, &handler|
+        case event_name
+        when 'started'
+          started_proc = handler
+        when 'failed'
+          failed_proc = handler
+        end
+      end
+
+      child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
+      
+      # expect all futures to be false as nothing has happened
+      expect(child_workflow_future.finished?).to be false
+      expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
+
+      started_proc.call(child_workflow_execution)
+
+      # dispatch the failed event and check the child_workflow_future failed but the child_workflow_execution_future finished
+      failed_proc.call(Temporal::Workflow::Errors.generate_error_for_child_workflow_start("failed to start", "random-workflow-id"))
+      expect(child_workflow_future.failed?).to be true
+      expect(child_workflow_future.child_workflow_execution_future.failed?).to be false
+    end
+
+    it 'futures behave as expected when child execution workflow fails to start' do
+      failed_proc = nil
+
+      allow(state_manager).to receive(:schedule)
+      allow(dispatcher).to receive(:register_handler) do |target, event_name, &handler|
+        case event_name
+        when 'failed'
+          failed_proc = handler
+        end
+      end
+
+      child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
+      
+      # expect all futures to be false as nothing has happened
+      expect(child_workflow_future.finished?).to be false
+      expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
+
+      # dispatch the failed event and check what happens
+      failed_proc.call(Temporal::Workflow::Errors.generate_error_for_child_workflow_start("failed to start", "random-workflow-id"))
+      expect(child_workflow_future.failed?).to be true
+      expect(child_workflow_future.child_workflow_execution_future.failed?).to be true
     end
   end
 
