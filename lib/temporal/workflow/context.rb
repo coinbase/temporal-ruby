@@ -125,17 +125,7 @@ module Temporal
 
         target, cancelation_id = schedule_command(command)
 
-        # child_workflow_execution_future tracks when the workflow execution starts
-        child_workflow_execution_future = Future.new(target, self, cancelation_id: cancelation_id)
-
-        child_workflow_future = ChildWorkflowFuture.new(
-          target, 
-          self, 
-          cancelation_id: cancelation_id, 
-          child_workflow_execution_future: child_workflow_execution_future
-        )
-
-        has_started_child_workflow_execution = false
+        child_workflow_future = ChildWorkflowFuture.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
           child_workflow_future.set(result)
@@ -155,7 +145,6 @@ module Temporal
 
         dispatcher.register_handler(target, 'started') do |event|
           # once the workflow starts, complete the child workflow execution future
-          has_started_child_workflow_execution = false
           child_workflow_execution_future.set(event)
           child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
