@@ -5,6 +5,7 @@ require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
+require 'temporal/workflow/executions'
 require 'temporal/workflow/status'
 require 'temporal/reset_strategy'
 
@@ -386,16 +387,20 @@ module Temporal
       Workflow::History.new(history_response.history.events)
     end
 
-    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {})
+    def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :workflow, :workflow_id)
 
-      fetch_executions(:open, { namespace: namespace, from: from, to: to }.merge(filter))
+      Temporal::Workflow::Executions.new(connection: connection, status: :open, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
-    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {})
+    def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
-      fetch_executions(:closed, { namespace: namespace, from: from, to: to }.merge(filter))
+      Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
+    end
+
+    def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
+      Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
     class ResultConverter
@@ -449,32 +454,5 @@ module Temporal
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
 
-    def fetch_executions(status, request_options)
-      api_method =
-        if status == :open
-          :list_open_workflow_executions
-        else
-          :list_closed_workflow_executions
-        end
-
-      executions = []
-      next_page_token = nil
-
-      loop do
-        response = connection.public_send(
-          api_method,
-          **request_options.merge(next_page_token: next_page_token)
-        )
-
-        executions += Array(response.executions)
-        next_page_token = response.next_page_token
-
-        break if next_page_token.to_s.empty?
-      end
-
-      executions.map do |raw_execution|
-        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
-      end
-    end
   end
 end

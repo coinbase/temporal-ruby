@@ -28,7 +28,8 @@ module Temporal
                  :complete_activity,
                  :fail_activity,
                  :list_open_workflow_executions,
-                 :list_closed_workflow_executions
+                 :list_closed_workflow_executions,
+                 :query_workflow_executions
 
   class << self
     def configure(&block)
