@@ -134,9 +134,9 @@ module Temporal
 
         dispatcher.register_handler(target, 'failed') do |exception|
           # if the child workflow didn't start already then also fail that future
-          unless child_workflow_execution_future.ready?
-            child_workflow_execution_future.fail(exception)
-            child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+          unless child_workflow_future.child_workflow_execution_future.ready?
+            child_workflow_future.child_workflow_execution_future.fail(exception)
+            child_workflow_future.child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
           end
 
           child_workflow_future.fail(exception)
@@ -145,8 +145,8 @@ module Temporal
 
         dispatcher.register_handler(target, 'started') do |event|
           # once the workflow starts, complete the child workflow execution future
-          child_workflow_execution_future.set(event)
-          child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+          child_workflow_future.child_workflow_execution_future.set(event)
+          child_workflow_future.child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         child_workflow_future
