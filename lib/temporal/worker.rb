@@ -8,10 +8,23 @@ module Temporal
   class Worker
     # activity_thread_pool_size: number of threads that the poller can use to run activities.
     #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
+
+    # binary_checksum: The binary checksum identifies the version of workflow worker code. It is set on each completed or failed workflow
+    #   task. It is present in API responses that return workflow execution info, and is shown in temporal-web and tctl.
+    #   It is traditionally a checksum of the application binary. However, Temporal server treats this as an opaque
+    #   identifier and it does not have to be a "checksum". Typical values for a Ruby application might include the hash
+    #   of the latest git commit or a semantic version number.
+    #
+    #   It can be used to reset workflow history to before a "bad binary" was deployed. Bad checksum values can also
+    #   be marked at the namespace level. This will cause Temporal server to reject any polling for workflow tasks
+    #   from workers with these bad versions.
+    #
+    #   See https://docs.temporal.io/docs/tctl/how-to-use-tctl/#recovery-from-bad-deployment----auto-reset-workflow
     def initialize(
       config = Temporal.configuration,
       activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
-      workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size]
+      workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size],
+      binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum]
     )
       @config = config
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
@@ -25,6 +38,7 @@ module Temporal
       }
       @workflow_poller_options = {
         thread_pool_size: workflow_thread_pool_size,
+        binary_checksum: binary_checksum
       }
     end
 

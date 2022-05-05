@@ -3,7 +3,7 @@ require 'temporal/middleware/chain'
 require 'temporal/configuration'
 
 describe Temporal::Workflow::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, config) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, config, binary_checksum) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -16,6 +16,7 @@ describe Temporal::Workflow::TaskProcessor do
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { ['arg1', 'arg2'] }
   let(:config) { Temporal::Configuration.new }
+  let(:binary_checksum) { 'v1.0.0' }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Workflow::Context') }
@@ -113,6 +114,7 @@ describe Temporal::Workflow::TaskProcessor do
                 namespace: namespace,
                 task_token: task.task_token,
                 commands: commands,
+                binary_checksum: binary_checksum,
                 query_results: { query_id => query_result }
               )
           end
@@ -150,7 +152,7 @@ describe Temporal::Workflow::TaskProcessor do
             expect(connection).to_not have_received(:respond_query_task_completed)
             expect(connection)
               .to have_received(:respond_workflow_task_completed)
-              .with(namespace: namespace, task_token: task.task_token, commands: commands, query_results: nil)
+              .with(namespace: namespace, task_token: task.task_token, commands: commands, query_results: nil, binary_checksum: binary_checksum)
           end
 
           it 'ignores connection exception' do
@@ -196,7 +198,8 @@ describe Temporal::Workflow::TaskProcessor do
                 namespace: namespace,
                 task_token: task.task_token,
                 cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
-                exception: exception
+                exception: exception,
+                binary_checksum: binary_checksum
               )
           end
         end
@@ -211,7 +214,8 @@ describe Temporal::Workflow::TaskProcessor do
                 namespace: namespace,
                 task_token: task.task_token,
                 cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
-                exception: exception
+                exception: exception,
+                binary_checksum: binary_checksum
               )
           end
 
@@ -325,7 +329,8 @@ describe Temporal::Workflow::TaskProcessor do
                 namespace: namespace,
                 task_token: task.task_token,
                 cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
-                exception: an_instance_of(Temporal::UnexpectedResponse)
+                exception: an_instance_of(Temporal::UnexpectedResponse),
+                binary_checksum: binary_checksum
               )
           end
         end
