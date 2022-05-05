@@ -411,10 +411,10 @@ module Temporal
         client.terminate_workflow_execution(request)
       end
 
-      def list_open_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil)
+      def list_open_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, max_page_size: nil)
         request = Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest.new(
           namespace: namespace,
-          maximum_page_size: options[:max_page_size],
+          maximum_page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
           next_page_token: next_page_token,
           start_time_filter: serialize_time_filter(from, to),
           execution_filter: serialize_execution_filter(workflow_id),
@@ -423,10 +423,10 @@ module Temporal
         client.list_open_workflow_executions(request)
       end
 
-      def list_closed_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, status: nil)
+      def list_closed_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, status: nil, max_page_size: nil)
         request = Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest.new(
           namespace: namespace,
-          maximum_page_size: options[:max_page_size],
+          maximum_page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
           next_page_token: next_page_token,
           start_time_filter: serialize_time_filter(from, to),
           execution_filter: serialize_execution_filter(workflow_id),
@@ -436,8 +436,14 @@ module Temporal
         client.list_closed_workflow_executions(request)
       end
 
-      def list_workflow_executions
-        raise NotImplementedError
+      def list_workflow_executions(namespace:, query:, next_page_token: nil, max_page_size: nil)
+        request = Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
+          next_page_token: next_page_token,
+          query: query
+        )
+        client.list_workflow_executions(request)
       end
 
       def list_archived_workflow_executions
