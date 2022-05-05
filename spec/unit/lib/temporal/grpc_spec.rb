@@ -2,12 +2,15 @@ require 'temporal/connection/grpc'
 require 'temporal/workflow/query_result'
 
 describe Temporal::Connection::GRPC do
-  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
+  let(:identity) { 'my-identity' }
+  let(:binary_checksum) { 'v1.0.0' }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
+
+  subject { Temporal::Connection::GRPC.new(nil, nil, identity) }
 
   class TestDeserializer
     extend Temporal::Concerns::Payloads
@@ -541,7 +544,8 @@ describe Temporal::Connection::GRPC do
           namespace: namespace,
           task_token: task_token,
           commands: [],
-          query_results: query_results
+          query_results: query_results,
+          binary_checksum: binary_checksum
         )
 
         expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|
@@ -549,6 +553,8 @@ describe Temporal::Connection::GRPC do
           expect(request.task_token).to eq(task_token)
           expect(request.namespace).to eq(namespace)
           expect(request.commands).to be_empty
+          expect(request.identity).to eq(identity)
+          expect(request.binary_checksum).to eq(binary_checksum)
 
           expect(request.query_results.length).to eq(2)
 
@@ -564,6 +570,32 @@ describe Temporal::Connection::GRPC do
           )
           expect(request.query_results['2'].error_message).to eq('Test query failure')
         end
+      end
+    end
+  end
+
+  describe '#respond_workflow_task_failed' do
+    let(:task_token) { 'task-token' }
+    let(:cause) { Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND }
+
+    before { allow(grpc_stub).to receive(:respond_workflow_task_failed) }
+
+    it 'calls GRPC service with supplied arguments' do
+      subject.respond_workflow_task_failed(
+        namespace: namespace,
+        task_token: task_token,
+        cause: cause,
+        exception: Exception.new('something went wrong'),
+        binary_checksum: binary_checksum
+      )
+
+      expect(grpc_stub).to have_received(:respond_workflow_task_failed) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.task_token).to eq(task_token)
+        expect(request.cause).to be(Temporal::Api::Enums::V1::WorkflowTaskFailedCause.lookup(cause))
+        expect(request.identity).to eq(identity)
+        expect(request.binary_checksum).to eq(binary_checksum)
       end
     end
   end

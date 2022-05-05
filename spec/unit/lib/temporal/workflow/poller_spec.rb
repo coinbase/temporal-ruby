@@ -10,8 +10,20 @@ describe Temporal::Workflow::Poller do
   let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
+  let(:binary_checksum) { 'v1.0.0' }
 
-  subject { described_class.new(namespace, task_queue, lookup, config, middleware) }
+  subject do
+    described_class.new(
+      namespace,
+      task_queue,
+      lookup,
+      config,
+      middleware,
+      {
+        binary_checksum: binary_checksum
+      }
+    )
+  end
 
   before do
     allow(Temporal::Connection).to receive(:generate).and_return(connection)
@@ -31,7 +43,7 @@ describe Temporal::Workflow::Poller do
 
       expect(connection)
         .to have_received(:poll_workflow_task_queue)
-        .with(namespace: namespace, task_queue: task_queue)
+        .with(namespace: namespace, task_queue: task_queue, binary_checksum: binary_checksum)
         .twice
     end
 
@@ -75,7 +87,7 @@ describe Temporal::Workflow::Poller do
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, middleware_chain, config)
+          .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
         expect(task_processor).to have_received(:process)
       end
 
@@ -98,7 +110,7 @@ describe Temporal::Workflow::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, config)
+            .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
         end
       end
     end

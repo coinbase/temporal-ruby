@@ -73,7 +73,8 @@ Fabricator(:api_workflow_task_completed_event, from: :api_history_event) do
     Temporal::Api::History::V1::WorkflowTaskCompletedEventAttributes.new(
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: attrs[:event_id] - 1,
-      identity: 'test-worker@test-host'
+      identity: 'test-worker@test-host',
+      binary_checksum: 'v1.0.0',
     )
   end
 end

@@ -161,13 +161,14 @@ module Temporal
         client.get_workflow_execution_history(request, deadline: deadline)
       end
 
-      def poll_workflow_task_queue(namespace:, task_queue:)
+      def poll_workflow_task_queue(namespace:, task_queue:, binary_checksum:)
         request = Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
           task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
-          )
+          ),
+          binary_checksum: binary_checksum
         )
 
         poll_mutex.synchronize do
@@ -191,25 +192,27 @@ module Temporal
         client.respond_query_task_completed(request)
       end
 
-      def respond_workflow_task_completed(namespace:, task_token:, commands:, query_results: {})
+      def respond_workflow_task_completed(namespace:, task_token:, commands:, binary_checksum:, query_results: {})
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
           commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
-          query_results: query_results.transform_values { |value| Serializer.serialize(value) }
+          query_results: query_results.transform_values { |value| Serializer.serialize(value) },
+          binary_checksum: binary_checksum
         )
 
         client.respond_workflow_task_completed(request)
       end
 
-      def respond_workflow_task_failed(namespace:, task_token:, cause:, exception: nil)
+      def respond_workflow_task_failed(namespace:, task_token:, cause:, exception:, binary_checksum:)
         request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
           cause: cause,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception).to_proto,
+          binary_checksum: binary_checksum
         )
         client.respond_workflow_task_failed(request)
       end

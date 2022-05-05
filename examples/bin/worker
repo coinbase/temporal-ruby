@@ -17,7 +17,7 @@ if !ENV['USE_ENCRYPTION'].nil?
   end
 end
 
-worker = Temporal::Worker.new
+worker = Temporal::Worker.new(binary_checksum: `git show HEAD -s --format=%H`.strip)
 
 worker.register_workflow(AsyncActivityWorkflow)
 worker.register_workflow(AsyncHelloWorldWorkflow)
