@@ -7,6 +7,7 @@ require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/command'
 require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
+require 'temporal/workflow/child_workflow_future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
 require 'temporal/workflow/signal'
@@ -123,27 +124,32 @@ module Temporal
         )
 
         target, cancelation_id = schedule_command(command)
-        future = Future.new(target, self, cancelation_id: cancelation_id)
+
+        child_workflow_future = ChildWorkflowFuture.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
-          future.set(result)
-          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+          child_workflow_future.set(result)
+          child_workflow_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
-          future.fail(exception)
-          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+          # if the child workflow didn't start already then also fail that future
+          unless child_workflow_future.child_workflow_execution_future.ready?
+            child_workflow_future.child_workflow_execution_future.fail(exception)
+            child_workflow_future.child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+          end
+
+          child_workflow_future.fail(exception)
+          child_workflow_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
-        # Temporal docs say that we *must* wait for the child to get spawned:
-        child_workflow_started = false
-        dispatcher.register_handler(target, 'started') do
-          child_workflow_started = true
+        dispatcher.register_handler(target, 'started') do |event|
+          # once the workflow starts, complete the child workflow execution future
+          child_workflow_future.child_workflow_execution_future.set(event)
+          child_workflow_future.child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
-        wait_until { child_workflow_started || future.failed? }
-
-        future
+        child_workflow_future
       end
 
       def execute_workflow!(workflow_class, *input, **args)
