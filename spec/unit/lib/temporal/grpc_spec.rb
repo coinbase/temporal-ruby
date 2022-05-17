@@ -1,14 +1,24 @@
+require 'temporal/connection/grpc'
+require 'temporal/workflow/query_result'
+
 describe Temporal::Connection::GRPC do
-  subject { Temporal::Connection::GRPC.new(nil, nil, nil) }
+  let(:identity) { 'my-identity' }
+  let(:binary_checksum) { 'v1.0.0' }
   let(:grpc_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
 
+  subject { Temporal::Connection::GRPC.new(nil, nil, identity) }
+
+  class TestDeserializer
+    extend Temporal::Concerns::Payloads
+  end
+
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
-    
+
     allow(Time).to receive(:now).and_return(now)
   end
 
@@ -84,7 +94,7 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
-  
+
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
       Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
@@ -219,7 +229,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'demands a timeout to be specified' do 
+      it 'demands a timeout to be specified' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -232,7 +242,7 @@ describe Temporal::Connection::GRPC do
         end
       end
 
-      it 'disallows a timeout larger than the server timeout' do 
+      it 'disallows a timeout larger than the server timeout' do
         expect do
           subject.get_workflow_execution_history(
             namespace: namespace,
@@ -333,6 +343,45 @@ describe Temporal::Connection::GRPC do
       end
     end
     
+    describe '#list_workflow_executions' do
+      let(:namespace) { 'test-namespace' }
+      let(:query) { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
+      let(:args) { { namespace: namespace, query: query } }
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+      end
+      let(:temporal_paginated_response) do
+        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: 'more-results')
+      end
+
+      before do
+        allow(grpc_stub).to receive(:list_workflow_executions).and_return(temporal_response)
+      end
+
+      it 'makes an API request' do
+        subject.list_workflow_executions(**args)
+
+        expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+          expect(request.page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
+          expect(request.next_page_token).to eq('')
+          expect(request.namespace).to eq(namespace)
+          expect(request.query).to eq(query)
+        end
+      end
+
+      context 'when next_page_token is supplied' do
+        it 'makes an API request' do
+          subject.list_workflow_executions(**args.merge(next_page_token: 'x'))
+
+          expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
+            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+            expect(request.next_page_token).to eq('x')
+          end
+        end
+      end
+    end
+
     describe '#list_closed_workflow_executions' do
       let(:namespace) { 'test-namespace' }
       let(:from) { Time.now - 600 }
@@ -413,6 +462,140 @@ describe Temporal::Connection::GRPC do
             expect(request.type_filter.name).to eq('TestWorkflow')
           end
         end
+      end
+    end
+  end
+
+  describe '#respond_query_task_completed' do
+    let(:task_token) { SecureRandom.uuid }
+
+    before do
+      allow(grpc_stub)
+        .to receive(:respond_query_task_completed)
+        .and_return(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse.new)
+    end
+
+    context 'when query result is an answer' do
+      let(:query_result) { Temporal::Workflow::QueryResult.answer(42) }
+
+      it 'makes an API request' do
+        subject.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: query_result
+        )
+
+        expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          )
+          expect(request.query_result).to eq(TestDeserializer.to_query_payloads(42))
+          expect(request.error_message).to eq('')
+        end
+      end
+    end
+
+    context 'when query result is a failure' do
+      let(:query_result) { Temporal::Workflow::QueryResult.failure(StandardError.new('Test query failure')) }
+
+      it 'makes an API request' do
+        subject.respond_query_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          query_result: query_result
+        )
+
+        expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          )
+          expect(request.query_result).to eq(nil)
+          expect(request.error_message).to eq('Test query failure')
+        end
+      end
+    end
+  end
+
+  describe '#respond_workflow_task_completed' do
+    let(:task_token) { SecureRandom.uuid }
+
+    before do
+      allow(grpc_stub)
+        .to receive(:respond_workflow_task_completed)
+        .and_return(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse.new)
+    end
+
+    context 'when responding with query results' do
+      let(:query_results) do
+        {
+          '1' => Temporal::Workflow::QueryResult.answer(42),
+          '2' => Temporal::Workflow::QueryResult.failure(StandardError.new('Test query failure')),
+        }
+      end
+
+      it 'makes an API request' do
+        subject.respond_workflow_task_completed(
+          namespace: namespace,
+          task_token: task_token,
+          commands: [],
+          query_results: query_results,
+          binary_checksum: binary_checksum
+        )
+
+        expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest)
+          expect(request.task_token).to eq(task_token)
+          expect(request.namespace).to eq(namespace)
+          expect(request.commands).to be_empty
+          expect(request.identity).to eq(identity)
+          expect(request.binary_checksum).to eq(binary_checksum)
+
+          expect(request.query_results.length).to eq(2)
+
+          expect(request.query_results['1']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['1'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          )
+          expect(request.query_results['1'].answer).to eq(TestDeserializer.to_query_payloads(42))
+
+          expect(request.query_results['2']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['2'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
+            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          )
+          expect(request.query_results['2'].error_message).to eq('Test query failure')
+        end
+      end
+    end
+  end
+
+  describe '#respond_workflow_task_failed' do
+    let(:task_token) { 'task-token' }
+    let(:cause) { Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND }
+
+    before { allow(grpc_stub).to receive(:respond_workflow_task_failed) }
+
+    it 'calls GRPC service with supplied arguments' do
+      subject.respond_workflow_task_failed(
+        namespace: namespace,
+        task_token: task_token,
+        cause: cause,
+        exception: Exception.new('something went wrong'),
+        binary_checksum: binary_checksum
+      )
+
+      expect(grpc_stub).to have_received(:respond_workflow_task_failed) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.task_token).to eq(task_token)
+        expect(request.cause).to be(Temporal::Api::Enums::V1::WorkflowTaskFailedCause.lookup(cause))
+        expect(request.identity).to eq(identity)
+        expect(request.binary_checksum).to eq(binary_checksum)
       end
     end
   end

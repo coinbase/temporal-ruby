@@ -32,7 +32,7 @@ describe Temporal::Metadata::Workflow do
         'workflow_id' => subject.id,
         'attempt' => subject.attempt,
         'workflow_name' => subject.name,
-        'workflow_run_id' => subject.run_id,
+        'run_id' => subject.run_id,
         'parent_workflow_id' => nil,
         'parent_workflow_run_id' => nil,
         'task_queue' => subject.task_queue,

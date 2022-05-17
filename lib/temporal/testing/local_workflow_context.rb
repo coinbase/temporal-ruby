@@ -211,8 +211,12 @@ module Temporal
         Time.now
       end
 
-      def on_signal(&block)
+      def on_signal(signal_name = nil, &block)
         raise NotImplementedError, 'Signals are not available when Temporal::Testing.local! is on'
+      end
+
+      def on_query(query, &block)
+        raise NotImplementedError, 'Queries are not available when Temporal::Testing.local! is on'
       end
 
       def cancel_activity(activity_id)

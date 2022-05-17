@@ -20,6 +20,7 @@ module Temporal
                  :describe_namespace,
                  :list_namespaces,
                  :signal_workflow,
+                 :query_workflow,
                  :await_workflow_result,
                  :reset_workflow,
                  :terminate_workflow,
@@ -28,7 +29,8 @@ module Temporal
                  :fail_activity,
                  :get_cron_schedule,
                  :list_open_workflow_executions,
-                 :list_closed_workflow_executions
+                 :list_closed_workflow_executions,
+                 :query_workflow_executions
 
   class << self
     def configure(&block)

@@ -11,8 +11,20 @@ describe Temporal::Workflow::Poller do
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
   let(:busy_wait_delay) {0.01}
+  let(:binary_checksum) { 'v1.0.0' }
 
-  subject { described_class.new(namespace, task_queue, lookup, config, middleware) }
+  subject do
+    described_class.new(
+      namespace,
+      task_queue,
+      lookup,
+      config,
+      middleware,
+      {
+        binary_checksum: binary_checksum
+      }
+    )
+  end
 
   # poller will receive task times times, and nil thereafter.  
   # poller will be shut down after that
@@ -79,7 +91,7 @@ describe Temporal::Workflow::Poller do
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, middleware_chain, config)
+          .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
         expect(task_processor).to have_received(:process)
       end
 
@@ -99,7 +111,7 @@ describe Temporal::Workflow::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, config)
+            .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
         end
       end
     end

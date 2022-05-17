@@ -10,6 +10,7 @@ require 'temporal/workflow/future'
 require 'temporal/workflow/child_workflow_future'
 require 'temporal/workflow/replay_aware_logger'
 require 'temporal/workflow/state_manager'
+require 'temporal/workflow/signal'
 
 # This context class is available in the workflow implementation
 # and provides context and methods for interacting with Temporal
@@ -19,9 +20,10 @@ module Temporal
     class Context
       attr_reader :metadata, :config
 
-      def initialize(state_manager, dispatcher, workflow_class, metadata, config)
+      def initialize(state_manager, dispatcher, workflow_class, metadata, config, query_registry)
         @state_manager = state_manager
         @dispatcher = dispatcher
+        @query_registry = query_registry
         @workflow_class = workflow_class
         @metadata = metadata
         @completed = false
@@ -108,7 +110,6 @@ module Temporal
         input << args unless args.empty?
 
         parent_close_policy = options.delete(:parent_close_policy)
-        should_wait_for_start = options.fetch(:should_wait_for_start, true)
         workflow_id_reuse_policy = options.delete(:workflow_id_reuse_policy)
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
@@ -127,40 +128,32 @@ module Temporal
         )
 
         target, cancelation_id = schedule_command(command)
-        future = ChildWorkflowFuture.new(target, self, cancelation_id: cancelation_id)
+
+        child_workflow_future = ChildWorkflowFuture.new(target, self, cancelation_id: cancelation_id)
 
         dispatcher.register_handler(target, 'completed') do |result|
-          future.set(result)
-          future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+          child_workflow_future.set(result)
+          child_workflow_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
         dispatcher.register_handler(target, 'failed') do |exception|
-          future.fail(exception)
-          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
-        end
-
-        dispatcher.register_handler(target, 'started') do
-          future.start
-        end
-
-        # If you opt out of should_wait_for_start, note that temporal requires that this future has
-        # started before the parent workflow execution terminates.
-        if should_wait_for_start
-          wait_until do
-            next true if future.started?
-
-            # The error case - this workflow got notified (via history) that the child workflow didn't
-            # start. This can happen due to the child workflow's workflow_id_reuse_policy. Note that
-            # we don't raise in this case - the returned future will contain an appropriate error. This
-            # lets the parent workflow use one pattern ('check the future') to handle 'child failed' and
-            # 'child failed to start'.
-            next true if future.failed?
-
-            false
+          # if the child workflow didn't start already then also fail that future
+          unless child_workflow_future.child_workflow_execution_future.ready?
+            child_workflow_future.child_workflow_execution_future.fail(exception)
+            child_workflow_future.child_workflow_execution_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
           end
+
+          child_workflow_future.fail(exception)
+          child_workflow_future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
         end
 
-        future
+        dispatcher.register_handler(target, 'started') do |event|
+          # once the workflow starts, complete the child workflow execution future
+          child_workflow_future.child_workflow_execution_future.set(event)
+          child_workflow_future.child_workflow_execution_future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
+        end
+
+        child_workflow_future
       end
 
       def execute_workflow!(workflow_class, *input, **args)
@@ -316,14 +309,31 @@ module Temporal
         state_manager.local_time
       end
 
-      def on_signal(&block)
-        target = History::EventTarget.workflow
-
-        dispatcher.register_handler(target, 'signaled') do |signal, input|
-          call_in_fiber(block, signal, input)
+      # Define a signal handler to receive signals onto the workflow. When
+      # +name+ is defined, this creates a named signal handler which will be
+      # invoked whenever a signal named +name+ is received. A handler without
+      # a set name (defaults to nil) will be the default handler and will receive
+      # all signals that do not match a named signal handler.
+      #
+      # @param signal_name [String, Symbol, nil] an optional signal name; converted to a String
+      def on_signal(signal_name = nil, &block)
+        if signal_name
+          target = Signal.new(signal_name)
+          dispatcher.register_handler(target, 'signaled') do |_, input|
+            # do not pass signal name when triggering a named handler
+            call_in_fiber(block, input)
+          end
+        else
+          dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, 'signaled') do |signal, input|
+            call_in_fiber(block, signal, input)
+          end
         end
 
         return
+      end
+
+      def on_query(query, &block)
+        query_registry.register(query, &block)
       end
 
       def cancel_activity(activity_id)
@@ -358,8 +368,6 @@ module Temporal
       #
       # @return [Future] future
       def signal_external_workflow(workflow, signal, workflow_id, run_id = nil, input = nil, namespace: nil, child_workflow_only: false)
-        options ||= {}
-
         execution_options = ExecutionOptions.new(workflow, {}, config.default_execution_options)
 
         command = Command::SignalExternalWorkflow.new(
@@ -412,7 +420,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class
+      attr_reader :state_manager, :dispatcher, :workflow_class, :query_registry
 
       def completed!
         @completed = true
