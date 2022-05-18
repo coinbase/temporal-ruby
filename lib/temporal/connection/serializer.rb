@@ -1,4 +1,5 @@
 require 'temporal/workflow/command'
+require 'temporal/workflow/query_result'
 require 'temporal/connection/serializer/schedule_activity'
 require 'temporal/connection/serializer/start_child_workflow'
 require 'temporal/connection/serializer/request_activity_cancellation'
@@ -10,6 +11,8 @@ require 'temporal/connection/serializer/continue_as_new'
 require 'temporal/connection/serializer/fail_workflow'
 require 'temporal/connection/serializer/signal_external_workflow'
 require 'temporal/connection/serializer/upsert_search_attributes'
+require 'temporal/connection/serializer/query_answer'
+require 'temporal/connection/serializer/query_failure'
 
 module Temporal
   module Connection
@@ -26,6 +29,8 @@ module Temporal
         Workflow::Command::FailWorkflow => Serializer::FailWorkflow,
         Workflow::Command::SignalExternalWorkflow => Serializer::SignalExternalWorkflow,
         Workflow::Command::UpsertSearchAttributes => Serializer::UpsertSearchAttributes,
+        Workflow::QueryResult::Answer => Serializer::QueryAnswer,
+        Workflow::QueryResult::Failure => Serializer::QueryFailure,
       }.freeze
 
       def self.serialize(object)

@@ -3,8 +3,6 @@ require 'workflows/parent_close_workflow'
 describe ParentCloseWorkflow, :integration do
   subject { described_class }
 
-  before { allow(SlowChildWorkflow).to receive(:stub).and_call_original }
-
   it 'SlowChildWorkflow terminates if parent_close_policy is TERMINATE' do
     workflow_id = 'parent_close_test_wf-' + SecureRandom.uuid
     child_workflow_id = 'slow_child_test_wf-' + SecureRandom.uuid

@@ -3,27 +3,16 @@ require 'temporal/workflow/future'
 
 module Temporal
   class Workflow
-    # A future that represents a child workflow execution, that additionally tracks whether a 
-    # child workflow execution has started.
+    # A future that represents a child workflow execution
     class ChildWorkflowFuture < Future
+      attr_reader :child_workflow_execution_future
+
       def initialize(target, context, cancelation_id: nil)
-        @started = false
         super
+
+        # create a future which will keep track of when the child workflow starts
+        @child_workflow_execution_future = Future.new(target, context, cancelation_id: cancelation_id)
       end
-
-      def started?
-        @started
-      end
-
-      def start
-        raise 'cannot start a fulfilled future' if finished?
-
-        @started = true
-      end
-
-      private
-
-      attr_reader :started
     end
   end
 end

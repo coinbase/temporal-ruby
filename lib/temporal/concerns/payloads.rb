@@ -21,6 +21,10 @@ module Temporal
         from_payloads(payloads)&.first
       end
 
+      def from_query_payloads(payloads)
+        from_payloads(payloads)&.first
+      end
+
       def from_payload_map(payload_map)
         payload_map.map { |key, value| [key, from_payload(value)] }.to_h
       end
@@ -42,6 +46,10 @@ module Temporal
       end
 
       def to_signal_payloads(data)
+        to_payloads([data])
+      end
+
+      def to_query_payloads(data)
         to_payloads([data])
       end
 

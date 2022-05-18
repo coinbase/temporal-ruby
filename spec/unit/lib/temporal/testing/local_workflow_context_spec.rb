@@ -66,7 +66,9 @@ describe Temporal::Testing::LocalWorkflowContext do
 
   class MetadataCapturingActivity < Temporal::Activity
     def execute
-      activity.metadata
+      # activity.metadata is private, which we work around in order to write unit tests that
+      # can observe activity metadata
+      activity.send :metadata
     end
   end
 
