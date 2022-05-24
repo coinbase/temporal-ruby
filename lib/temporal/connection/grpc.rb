@@ -549,7 +549,7 @@ module Temporal
           url,
           :this_channel_is_insecure,
           timeout: 60,
-          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH }
+          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
           interceptors: options.fetch(:interceptors, [])
         )
       end
