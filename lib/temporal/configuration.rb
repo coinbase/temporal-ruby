@@ -3,6 +3,7 @@ require 'temporal/metrics_adapters/null'
 require 'temporal/connection/converter/payload/nil'
 require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
+require 'temporal/connection/converter/payload/json_protobuf'
 require 'temporal/connection/converter/composite'
 
 module Temporal
@@ -40,6 +41,7 @@ module Temporal
         Temporal::Connection::Converter::Payload::Nil.new,
         Temporal::Connection::Converter::Payload::Bytes.new,
         Temporal::Connection::Converter::Payload::JSON.new,
+        Temporal::Connection::Converter::Payload::JSONProtobuf.new,
       ]
     ).freeze
 
