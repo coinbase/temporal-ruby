@@ -1,3 +1,5 @@
+require 'temporal/errors'
+
 module Temporal
   class Workflow
     # This provides a generic event dispatcher mechanism. There are two main entry
@@ -13,18 +15,44 @@ module Temporal
     # the event_name. The order of this dispatch is not guaranteed.
     #
     class Dispatcher
+      # Raised if a duplicate ID is encountered during dispatch handling.
+      # This likely indicates a bug in temporal-ruby or that unsupported multithreaded
+      # workflow code is being used.
+      class DuplicateIDError < InternalError; end
+
+      # Tracks a registered handle so that it can be unregistered later
+      # The handlers are passed by reference here to be mutated (removed) by the
+      # unregister call below.
+      class RegistrationHandle
+        def initialize(handlers_for_target, id)
+          @handlers_for_target = handlers_for_target
+          @id = id
+        end
+
+        # Unregister the handler from the dispatcher
+        def unregister
+          handlers_for_target.delete(id)
+        end
+
+        private
+
+        attr_reader :handlers_for_target, :id
+      end
+
       WILDCARD = '*'.freeze
       TARGET_WILDCARD = '*'.freeze
 
       EventStruct = Struct.new(:event_name, :handler)
 
       def initialize
-        @handlers = Hash.new { |hash, key| hash[key] = [] }
+        @handlers = Hash.new { |hash, key| hash[key] = {} }
+        @next_id = 0
       end
 
       def register_handler(target, event_name, &handler)
-        handlers[target] << EventStruct.new(event_name, handler)
-        self
+        @next_id += 1
+        handlers[target][@next_id] = EventStruct.new(event_name, handler)
+        RegistrationHandle.new(handlers[target], @next_id)
       end
 
       def dispatch(target, event_name, args = nil)
@@ -39,9 +67,10 @@ module Temporal
 
       def handlers_for(target, event_name)
         handlers[target]
-          .concat(handlers[TARGET_WILDCARD])
-          .select { |event_struct| match?(event_struct, event_name) }
-          .map(&:handler)
+          .merge(handlers[TARGET_WILDCARD]) { raise DuplicateIDError.new('Cannot resolve duplicate dispatcher handler IDs') }
+          .select { |_, event_struct| match?(event_struct, event_name) }
+          .sort
+          .map { |_, event_struct| event_struct.handler }
       end
 
       def match?(event_struct, event_name)
