@@ -17,8 +17,6 @@ describe 'GRPC interceptors', :integration do
   let(:interceptor) { ExampleInterceptor.new }
 
   around(:each) do |example|
-    task_queue = Temporal.configuration.task_queue
-
     Temporal.configure do |config|
       config.connection_options = {
         interceptors: [interceptor],
