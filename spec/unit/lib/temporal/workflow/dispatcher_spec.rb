@@ -8,7 +8,10 @@ describe Temporal::Workflow::Dispatcher do
   describe '#register_handler' do
     let(:block) { -> { 'handler body' } }
     let(:event_name) { 'signaled' }
-    let(:dispatcher) { subject.register_handler(target, event_name, &block) }
+    let(:dispatcher) do
+      subject.register_handler(target, event_name, &block)
+      subject
+    end
     let(:handlers) { dispatcher.send(:handlers) }
 
     context 'with default handler_name' do
@@ -19,17 +22,17 @@ describe Temporal::Workflow::Dispatcher do
       end
 
       it 'stores the target and handler once' do
-        expect(handlers[target]).to be_kind_of(Array)
+        expect(handlers[target]).to be_kind_of(Hash)
         expect(handlers[target].count).to eq 1
       end
 
       it 'associates the event name with the target' do
-        event = handlers[target].first
+        event = handlers[target][1]
         expect(event.event_name).to eq(event_name)
       end
 
       it 'associates the handler with the target' do
-        event = handlers[target].first
+        event = handlers[target][1]
         expect(event.handler).to eq(block)
       end
     end
@@ -43,19 +46,43 @@ describe Temporal::Workflow::Dispatcher do
       end
 
       it 'stores the target and handler once' do
-        expect(handlers[target]).to be_kind_of(Array)
+        expect(handlers[target]).to be_kind_of(Hash)
         expect(handlers[target].count).to eq 1
       end
 
       it 'associates the event name and handler name with the target' do
-        event = handlers[target].first
+        event = handlers[target][1]
         expect(event.event_name).to eq(event_name)
       end
 
       it 'associates the handler with the target' do
-        event = handlers[target].first
+        event = handlers[target][1]
         expect(event.handler).to eq(block)
       end
+    end
+
+    it 'removes a given handler against the target' do
+      block1 = -> { 'handler body' }
+      block2 = -> { 'other handler body' }
+      block3 = -> { 'yet another handler body' }
+
+      handle1 = subject.register_handler(target, 'signaled', &block1)
+      subject.register_handler(target, 'signaled', &block2)
+      subject.register_handler(other_target, 'signaled', &block3)
+
+      expect(subject.send(:handlers)[target][1].event_name).to eq('signaled')
+      expect(subject.send(:handlers)[target][1].handler).to be(block1)
+
+      expect(subject.send(:handlers)[target][2].event_name).to eq('signaled')
+      expect(subject.send(:handlers)[target][2].handler).to be(block2)
+
+      expect(subject.send(:handlers)[other_target][3].event_name).to eq('signaled')
+      expect(subject.send(:handlers)[other_target][3].handler).to be(block3)
+
+      handle1.unregister
+      expect(subject.send(:handlers)[target][1]).to be(nil)
+      expect(subject.send(:handlers)[target][2]).to_not be(nil)
+      expect(subject.send(:handlers)[other_target][3]).to_not be(nil)
     end
   end
 
@@ -114,10 +141,13 @@ describe Temporal::Workflow::Dispatcher do
 
     context 'with TARGET_WILDCARD target handler' do
       let(:handler_6) { -> { 'sixth block' } }
+      let(:handler_7) { -> { 'seventh block' } }
       before do
         allow(handler_6).to receive(:call)
+        allow(handler_7).to receive(:call)
 
         subject.register_handler(described_class::TARGET_WILDCARD, described_class::WILDCARD, &handler_6)
+        subject.register_handler(target, 'completed', &handler_7)
       end
 
       it 'calls the handler' do
@@ -127,6 +157,7 @@ describe Temporal::Workflow::Dispatcher do
         expect(handler_1).to have_received(:call).ordered
         expect(handler_4).to have_received(:call).ordered
         expect(handler_6).to have_received(:call).ordered
+        expect(handler_7).to have_received(:call).ordered
       end
 
       it 'TARGET_WILDCARD can be compared to an EventTarget object' do
