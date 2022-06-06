@@ -81,6 +81,8 @@ describe Temporal::Workflow::Dispatcher do
 
       handle1.unregister
       expect(subject.send(:handlers)[target][1]).to be(nil)
+      expect(subject.send(:handlers)[target][2]).to_not be(nil)
+      expect(subject.send(:handlers)[other_target][3]).to_not be(nil)
     end
   end
 
