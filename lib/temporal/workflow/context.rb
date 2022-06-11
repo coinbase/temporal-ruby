@@ -262,16 +262,10 @@ module Temporal
         return if futures.empty? || futures.any?(&:finished?)
 
         fiber = Fiber.current
-        blocked = true
 
         handlers = futures.map do |future|
           dispatcher.register_handler(future.target, Dispatcher::WILDCARD) do
-            # Because any of the futures can resume the fiber, ignore any callbacks
-            # from other futures after unblocking has occurred
-            if blocked && future.finished?
-              blocked = false
-              fiber.resume
-            end
+            fiber.resume if future.finished?
           end
         end
 
@@ -288,15 +282,9 @@ module Temporal
         return if unblock_condition.call
 
         fiber = Fiber.current
-        blocked = true
 
         handler = dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
-          # Because this block can run for any dispatch, ensure the fiber is only
-          # resumed one time by checking if it's already been unblocked.
-          if blocked && unblock_condition.call
-            blocked = false
-            fiber.resume
-          end
+          fiber.resume if unblock_condition.call
         end
 
         Fiber.yield
