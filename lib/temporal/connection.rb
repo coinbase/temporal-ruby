@@ -11,12 +11,13 @@ module Temporal
       host = configuration.host
       port = configuration.port
       credentials = configuration.credentials
+      interceptors = configuration.interceptors
 
       hostname = `hostname`
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      connection_class.new(host, port, identity, credentials)
+      connection_class.new(host, port, identity, credentials, interceptors)
     end
   end
 end
