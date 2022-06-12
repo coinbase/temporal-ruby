@@ -9,6 +9,7 @@ require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/future'
 require 'temporal/workflow/child_workflow_future'
 require 'temporal/workflow/replay_aware_logger'
+require 'temporal/workflow/stack_trace_tracker'
 require 'temporal/workflow/state_manager'
 require 'temporal/workflow/signal'
 
@@ -20,7 +21,7 @@ module Temporal
     class Context
       attr_reader :metadata, :config
 
-      def initialize(state_manager, dispatcher, workflow_class, metadata, config, query_registry)
+      def initialize(state_manager, dispatcher, workflow_class, metadata, config, query_registry, track_stack_trace)
         @state_manager = state_manager
         @dispatcher = dispatcher
         @query_registry = query_registry
@@ -28,6 +29,16 @@ module Temporal
         @metadata = metadata
         @completed = false
         @config = config
+
+        if track_stack_trace
+          @stack_trace_tracker = StackTraceTracker.new
+        else
+          @stack_trace_tracker = nil
+        end
+
+        query_registry.register(StackTraceTracker::STACK_TRACE_QUERY_NAME) do
+          stack_trace_tracker&.to_s
+        end
       end
 
       def completed?
@@ -259,8 +270,13 @@ module Temporal
           end
         end
 
-        Fiber.yield
-        handlers.each(&:unregister)
+        stack_trace_tracker&.record
+        begin
+          Fiber.yield
+        ensure
+          stack_trace_tracker&.clear
+          handlers.each(&:unregister)
+        end
 
         return
       end
@@ -277,8 +293,13 @@ module Temporal
           fiber.resume if unblock_condition.call
         end
 
-        Fiber.yield
-        handler.unregister
+        stack_trace_tracker&.record
+        begin
+          Fiber.yield
+        ensure
+          stack_trace_tracker&.clear
+          handler.unregister
+        end
 
         return
       end
@@ -398,7 +419,7 @@ module Temporal
 
       private
 
-      attr_reader :state_manager, :dispatcher, :workflow_class, :query_registry
+      attr_reader :state_manager, :dispatcher, :workflow_class, :query_registry, :stack_trace_tracker
 
       def completed!
         @completed = true

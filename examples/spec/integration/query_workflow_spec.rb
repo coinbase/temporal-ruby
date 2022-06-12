@@ -24,6 +24,11 @@ describe QueryWorkflow, :integration do
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
       .to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for unknown_query')
 
+    # Query built-in stack trace handler, looking for a couple of key parts of the contents
+    stack_trace = Temporal.query_workflow(described_class, '__stack_trace', workflow_id, run_id)
+    expect(stack_trace).to start_with "Fiber count: 1\n\n"
+    expect(stack_trace).to include "/examples/workflows/query_workflow.rb:"
+
     Temporal.signal_workflow(described_class, 'make_progress', workflow_id, run_id)
 
     # Query for updated signal_count with an unsatisfied reject condition

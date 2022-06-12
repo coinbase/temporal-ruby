@@ -5,7 +5,7 @@ require 'temporal/workflow/task_processor'
 require 'temporal/workflow/query_registry'
 
 describe Temporal::Workflow::Executor do
-  subject { described_class.new(workflow, history, workflow_metadata, config) }
+  subject { described_class.new(workflow, history, workflow_metadata, config, false) }
 
   let(:workflow_started_event) { Fabricate(:api_workflow_execution_started_event, event_id: 1) }
   let(:history) do
