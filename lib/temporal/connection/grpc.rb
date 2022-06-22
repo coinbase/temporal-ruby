@@ -31,9 +31,10 @@ module Temporal
         max_page_size: 100
       }.freeze
 
-      def initialize(host, port, identity, options = {})
+      def initialize(host, port, identity, credentials, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
+        @credentials = credentials
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -536,12 +537,12 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          :this_channel_is_insecure,
+          credentials,
           timeout: 60
         )
       end
