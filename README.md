@@ -59,6 +59,7 @@ Temporal.configure do |config|
   config.port = 7233
   config.namespace = 'ruby-samples'
   config.task_queue = 'hello-world'
+  config.credentials = :this_channel_is_insecure
 end
 
 begin
@@ -112,6 +113,57 @@ Run:
 curl -O https://raw.githubusercontent.com/temporalio/docker-compose/main/docker-compose.yml
 
 docker-compose up
+```
+
+## Using Credentials
+
+### SSL
+
+In many production deployments you will end up connecting to your Temporal Services via SSL. In this
+case you must read the public cert of the CA that issued your Temporal server's SSL cert and create
+an instance of [gRPC Channel Credentials](https://grpc.io/docs/guides/auth/#with-server-authentication-ssltls-1).
+
+Configure your Temporal connection:
+
+```ruby
+Temporal.configure do |config|
+    config.host = 'localhost'
+    config.port = 7233
+    config.namespace = 'ruby-samples'
+    config.task_queue = 'hello-world'
+    config.credentials = GRPC::Core::ChannelCredentials.new(root_cert, client_key, client_chain)
+end
+```
+
+### OAuth2 Token
+
+Use gRPC Call Credentials to add OAuth2 token to gRPC calls:
+
+```ruby
+Temporal.configure do |config|
+    config.host = 'localhost'
+    config.port = 7233
+    config.namespace = 'ruby-samples'
+    config.task_queue = 'hello-world'
+    config.credentials = GRPC::Core::CallCredentials.new(updater_proc)
+end
+```
+`updater_proc` should be a method that returns `proc`. See an example of `updater_proc` in [googleauth](https://www.rubydoc.info/gems/googleauth/0.1.0/Signet/OAuth2/Client) library.
+
+### Combining Credentials
+
+To configure both SSL and OAuth2 token cedentials use `compose` method:
+
+```ruby
+Temporal.configure do |config|
+    config.host = 'localhost'
+    config.port = 7233
+    config.namespace = 'ruby-samples'
+    config.task_queue = 'hello-world'
+    config.credentials = GRPC::Core::ChannelCredentials.new(root_cert, client_key, client_chain).compose(
+        GRPC::Core::CallCredentials.new(token.updater_proc)
+    )
+end
 ```
 
 ## Workflows
