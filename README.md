@@ -120,7 +120,7 @@ docker-compose up
 ### SSL
 
 In many production deployments you will end up connecting to your Temporal Services via SSL. In this
-case you must read the public cert of the CA that issued your Temporal server's SSL cert and create
+case you must read the public certificate of the CA that issued your Temporal server's SSL certificate and create
 an instance of [gRPC Channel Credentials](https://grpc.io/docs/guides/auth/#with-server-authentication-ssltls-1).
 
 Configure your Temporal connection:
