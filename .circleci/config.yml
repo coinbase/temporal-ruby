@@ -29,7 +29,7 @@ jobs:
           - POSTGRES_USER=postgres
           - POSTGRES_PWD=temporal
           - POSTGRES_SEEDS=postgres
-          - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/config/dynamicconfig/development-sql.yaml
+          - DYNAMIC_CONFIG_FILE_PATH="config/dynamicconfig/development-sql.yaml"
 
     environment:
       - TEMPORAL_HOST=temporal
