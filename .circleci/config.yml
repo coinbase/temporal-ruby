@@ -21,7 +21,7 @@ jobs:
         name: postgres
         environment:
           POSTGRES_PASSWORD: temporal
-      - image: temporalio/auto-setup:latest
+      - image: temporalio/auto-setup@sha256:1cf8fba342ff6311cb2ade9a67df989b68613e7e3efdb8d259d3a4e6be7e099f
         name: temporal
         environment:
           - DB=postgresql
@@ -29,7 +29,7 @@ jobs:
           - POSTGRES_USER=postgres
           - POSTGRES_PWD=temporal
           - POSTGRES_SEEDS=postgres
-          - DYNAMIC_CONFIG_FILE_PATH="config/dynamicconfig/development-sql.yaml"
+          - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
 
     environment:
       - TEMPORAL_HOST=temporal
