@@ -10,12 +10,13 @@ module Temporal
       connection_class = CLIENT_TYPES_MAP[configuration.type]
       host = configuration.host
       port = configuration.port
+      credentials = configuration.credentials
 
       hostname = `hostname`
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
-      connection_class.new(host, port, identity)
+      connection_class.new(host, port, identity, credentials)
     end
   end
 end
