@@ -2,6 +2,8 @@ require 'temporal/workflow'
 require 'temporal/workflow/context'
 require 'temporal/workflow/dispatcher'
 require 'temporal/workflow/future'
+require 'temporal/workflow/query_registry'
+require 'temporal/workflow/stack_trace_tracker'
 require 'time'
 
 class MyTestWorkflow < Temporal::Workflow; end
@@ -9,7 +11,11 @@ class MyTestWorkflow < Temporal::Workflow; end
 describe Temporal::Workflow::Context do
   let(:state_manager) { instance_double('Temporal::Workflow::StateManager') }
   let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
-  let(:query_registry) { instance_double('Temporal::Workflow::QueryRegistry') }
+  let(:query_registry) do
+    double = instance_double('Temporal::Workflow::QueryRegistry')
+    allow(double).to receive(:register)
+    double
+  end
   let(:metadata) { instance_double('Temporal::Metadata::Workflow') }
   let(:workflow_context) do
     Temporal::Workflow::Context.new(
@@ -18,21 +24,38 @@ describe Temporal::Workflow::Context do
       MyTestWorkflow,
       metadata,
       Temporal.configuration,
-      query_registry
+      query_registry,
+      track_stack_trace
     )
   end
   let(:child_workflow_execution) { Fabricate(:api_workflow_execution) }
+  let(:track_stack_trace) { false }
 
   describe '#on_query' do
     let(:handler) { Proc.new {} }
-
-    before { allow(query_registry).to receive(:register) }
 
     it 'registers a query with the query registry' do
       workflow_context.on_query('test-query', &handler)
 
       expect(query_registry).to have_received(:register).with('test-query') do |&block|
         expect(block).to eq(handler)
+      end
+    end
+
+    it 'automatically registers stack trace query' do
+      expect(workflow_context).to_not be(nil) # ensure constructor is called
+      expect(query_registry).to have_received(:register)
+        .with(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+    end
+
+    context 'stack trace' do
+      let(:track_stack_trace) { true }
+      let(:query_registry) { Temporal::Workflow::QueryRegistry.new }
+
+      it 'cleared to start' do
+        expect(workflow_context).to_not be(nil) # ensure constructor is called
+        stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+        expect(stack_trace).to eq("Fiber count: 0\n")
       end
     end
   end
@@ -265,6 +288,32 @@ describe Temporal::Workflow::Context do
 
       expect(check_unblocked.call).to be(false)
     end
+
+    context 'stack trace' do
+      let(:track_stack_trace) { true }
+      let(:query_registry) { Temporal::Workflow::QueryRegistry.new }
+
+      it 'is recorded' do
+        wait_for_any
+        stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+
+        expect(stack_trace).to start_with('Fiber count: 1')
+        expect(stack_trace).to include('block in wait_for_any')
+      end
+
+      it 'cleared after unblocked' do
+        wait_for_any
+
+        future_1.set("it's done")
+        future_2.set("it's done")
+        dispatcher.dispatch(target_1, 'foo')
+        dispatcher.dispatch(target_2, 'foo')
+
+        stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+
+        expect(stack_trace).to eq("Fiber count: 0\n")
+      end
+    end
   end
 
   describe '#wait_until' do
@@ -307,6 +356,31 @@ describe Temporal::Workflow::Context do
 
       # Can dispatch again safely without resuming dead fiber
       dispatcher.dispatch('target', 'foo')
+    end
+
+    context 'stack trace' do
+      let(:track_stack_trace) { true }
+      let(:query_registry) { Temporal::Workflow::QueryRegistry.new }
+
+      it 'is recorded' do
+        wait_until { false }
+        stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+
+        expect(stack_trace).to start_with('Fiber count: 1')
+        expect(stack_trace).to include('block in wait_until')
+      end
+
+      it 'cleared after unblocked' do
+        value = false
+        wait_until { value }
+
+        value = true
+        dispatcher.dispatch('target', 'foo')
+
+        stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
+
+        expect(stack_trace).to eq("Fiber count: 0\n")
+      end
     end
   end
 end

@@ -22,7 +22,12 @@ describe QueryWorkflow, :integration do
 
     # Query with unregistered handler
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
-      .to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for unknown_query')
+      .to raise_error(Temporal::QueryFailed, "Workflow did not register a handler for 'unknown_query'. KnownQueryTypes=[__stack_trace, state, signal_count]")
+
+    # Query built-in stack trace handler, looking for a couple of key parts of the contents
+    stack_trace = Temporal.query_workflow(described_class, '__stack_trace', workflow_id, run_id)
+    expect(stack_trace).to start_with "Fiber count: 1\n\n"
+    expect(stack_trace).to include "/examples/workflows/query_workflow.rb:"
 
     Temporal.signal_workflow(described_class, 'make_progress', workflow_id, run_id)
 
@@ -45,7 +50,7 @@ describe QueryWorkflow, :integration do
       .to eq 2
 
     expect { Temporal.query_workflow(described_class, 'unknown_query', workflow_id, run_id) }
-      .to raise_error(Temporal::QueryFailed, 'Workflow did not register a handler for unknown_query')
+      .to raise_error(Temporal::QueryFailed, "Workflow did not register a handler for 'unknown_query'. KnownQueryTypes=[__stack_trace, state, signal_count]")
 
     # Now that the workflow is completed, test a query with a reject condition satisfied
     expect { Temporal.query_workflow(described_class, 'state', workflow_id, run_id, query_reject_condition: :not_open) }
