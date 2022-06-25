@@ -37,9 +37,10 @@ module Temporal
       # match the golang sdk just because it's bigger.
       MAX_RECEIVED_MESSAGE_LENGTH = 64 * 1024 * 1024
 
-      def initialize(host, port, identity, options = {})
+      def initialize(host, port, identity, credentials, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
+        @credentials = credentials
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -542,12 +543,12 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
-          :this_channel_is_insecure,
+          credentials,
           timeout: 60,
           channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
           interceptors: options.fetch(:interceptors, [])

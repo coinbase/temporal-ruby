@@ -5,7 +5,7 @@ require 'temporal/workflow/task_processor'
 require 'temporal/workflow/query_registry'
 
 describe Temporal::Workflow::Executor do
-  subject { described_class.new(workflow, history, workflow_metadata, config) }
+  subject { described_class.new(workflow, history, workflow_metadata, config, false) }
 
   let(:workflow_started_event) { Fabricate(:api_workflow_execution_started_event, event_id: 1) }
   let(:history) do
@@ -111,7 +111,7 @@ describe Temporal::Workflow::Executor do
       expect(results['2'].error).to eq(query_2_error)
       expect(results['3']).to be_a(Temporal::Workflow::QueryResult::Failure)
       expect(results['3'].error).to be_a(Temporal::QueryFailed)
-      expect(results['3'].error.message).to eq('Workflow did not register a handler for unknown')
+      expect(results['3'].error.message).to eq("Workflow did not register a handler for 'unknown'. KnownQueryTypes=[success, failure]")
     end
   end
 end

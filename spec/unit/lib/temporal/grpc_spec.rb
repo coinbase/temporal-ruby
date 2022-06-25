@@ -10,7 +10,7 @@ describe Temporal::Connection::GRPC do
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
 
-  subject { Temporal::Connection::GRPC.new(nil, nil, identity) }
+  subject { Temporal::Connection::GRPC.new(nil, nil, identity, :this_channel_is_insecure) }
 
   class TestDeserializer
     extend Temporal::Concerns::Payloads

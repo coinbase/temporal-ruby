@@ -1,8 +1,9 @@
-require 'temporal/workflow/executor'
-require 'temporal/workflow/history'
-require 'temporal/metadata'
 require 'temporal/error_handler'
 require 'temporal/errors'
+require 'temporal/metadata'
+require 'temporal/workflow/executor'
+require 'temporal/workflow/history'
+require 'temporal/workflow/stack_trace_tracker'
 
 module Temporal
   class Workflow
@@ -45,14 +46,19 @@ module Temporal
         end
 
         history = fetch_full_history
+        queries = parse_queries
+
+        # We only need to track the stack trace if this is a stack trace query
+        track_stack_trace = queries.values.map(&:query_type).include?(StackTraceTracker::STACK_TRACE_QUERY_NAME)
+
         # TODO: For sticky workflows we need to cache the Executor instance
-        executor = Workflow::Executor.new(workflow_class, history, metadata, config)
+        executor = Workflow::Executor.new(workflow_class, history, metadata, config, track_stack_trace)
 
         commands = middleware_chain.invoke(metadata) do
           executor.run
         end
 
-        query_results = executor.process_queries(parse_queries)
+        query_results = executor.process_queries(queries)
 
         if legacy_query_task?
           complete_query(query_results[LEGACY_QUERY_KEY])
