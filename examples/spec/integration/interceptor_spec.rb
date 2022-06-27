@@ -14,25 +14,39 @@ describe 'GRPC interceptors', :integration do
     end
   end
 
-  let(:interceptor) { ExampleInterceptor.new }
+  def run_workflow_with_client(client, workflow, *input, **args)
+    args[:options] = { workflow_id: SecureRandom.uuid }.merge(args[:options] || {})
+    run_id = client.start_workflow(workflow, *input, **args)
 
-  around(:each) do |example|
-    Temporal.configure do |config|
+    [args[:options][:workflow_id], run_id]
+  end
+
+  let(:interceptor) { ExampleInterceptor.new }
+  let(:config) do
+    # We can't depend on test order here and the memoized
+    # Temporal.default_client will not include our interceptors. Therefore we
+    # build a new config and client based on the one used in the other tests.
+    common_config = Temporal.configuration
+    Temporal::Configuration.new.tap do |config|
+      config.host = common_config.host
+      config.port = common_config.port
+      config.namespace = common_config.namespace
+      config.task_queue = common_config.task_queue
+      config.metrics_adapter = common_config.metrics_adapter
       config.connection_options = {
         interceptors: [interceptor],
       }
     end
-
-    example.run
-  ensure
-    Temporal.configure do |config|
-      config.connection_options = {}
-    end
   end
+  let(:client) { Temporal::Client.new(config) }
 
   it 'calls the given interceptors when performing operations' do
-    workflow_id, run_id = run_workflow(HelloWorldWorkflow, 'Tom')
-    wait_for_workflow_completion(workflow_id, run_id)
+    workflow_id, run_id = run_workflow_with_client(client, HelloWorldWorkflow, 'Tom')
+    client.await_workflow_result(
+      HelloWorldWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id
+    )
 
     expect(interceptor.called_methods).to match_array([
       "/temporal.api.workflowservice.v1.WorkflowService/StartWorkflowExecution",
