@@ -39,6 +39,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :allow,
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
@@ -59,6 +60,7 @@ describe Temporal::Connection::GRPC do
         run_timeout: 2,
         task_timeout: 3,
         memo: {},
+        search_attributes: {},
         workflow_id_reuse_policy: :reject,
       )
 
@@ -87,6 +89,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :not_a_valid_policy
         )
       end.to raise_error(Temporal::Connection::ArgumentError) do |e|
@@ -144,6 +147,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :not_a_valid_policy,
           signal_name: 'the question',
           signal_input: 'what do you get if you multiply six by nine?'

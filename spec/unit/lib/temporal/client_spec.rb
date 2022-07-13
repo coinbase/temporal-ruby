@@ -63,6 +63,7 @@ describe Temporal::Client do
             workflow_id_reuse_policy: nil,
             headers: {},
             memo: {},
+            search_attributes: {},
           )
       end
 
@@ -76,7 +77,8 @@ describe Temporal::Client do
             task_queue: 'test-task-queue',
             headers: { 'Foo' => 'Bar' },
             workflow_id_reuse_policy: :reject,
-            memo: { 'MemoKey1' => 'MemoValue1' }
+            memo: { 'MemoKey1' => 'MemoValue1' },
+            search_attributes: { 'SearchAttribute1' => 256 },
           }
         )
 
@@ -93,7 +95,8 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: :reject,
             headers: { 'Foo' => 'Bar' },
-            memo: { 'MemoKey1' => 'MemoValue1' }
+            memo: { 'MemoKey1' => 'MemoValue1' },
+            search_attributes: { 'SearchAttribute1' => 256 },
           )
       end
 
@@ -119,7 +122,8 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: nil,
             headers: {},
-            memo: {}
+            memo: {},
+            search_attributes: {},
           )
       end
 
@@ -139,7 +143,8 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: nil,
             headers: {},
-            memo: {}
+            memo: {},
+            search_attributes: {},
           )
       end
 
@@ -161,7 +166,8 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: :allow,
             headers: {},
-            memo: {}
+            memo: {},
+            search_attributes: {},
           )
       end
     end
@@ -187,7 +193,8 @@ describe Temporal::Client do
             execution_timeout: Temporal.configuration.timeouts[:execution],
             workflow_id_reuse_policy: nil,
             headers: {},
-            memo: {}
+            memo: {},
+            search_attributes: {},
           )
       end
     end
@@ -215,6 +222,7 @@ describe Temporal::Client do
           workflow_id_reuse_policy: nil,
           headers: {},
           memo: {},
+          search_attributes: {},
           signal_name: 'the question',
           signal_input: expected_signal_argument,
         )
@@ -295,6 +303,7 @@ describe Temporal::Client do
           execution_timeout: Temporal.configuration.timeouts[:execution],
           workflow_id_reuse_policy: nil,
           memo: {},
+          search_attributes: {},
           headers: {},
         )
     end

@@ -93,7 +93,8 @@ module Temporal
         workflow_id_reuse_policy: nil,
         headers: nil,
         cron_schedule: nil,
-        memo: nil
+        memo: nil,
+        search_attributes: nil
       )
         request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
@@ -117,7 +118,10 @@ module Temporal
           cron_schedule: cron_schedule,
           memo: Temporal::Api::Common::V1::Memo.new(
             fields: to_payload_map(memo || {})
-          )
+          ),
+          search_attributes: Temporal::Api::Common::V1::SearchAttributes.new(
+            indexed_fields: to_payload_map(search_attributes || {})
+          ),
         )
 
         client.start_workflow_execution(request)
@@ -339,7 +343,8 @@ module Temporal
         cron_schedule: nil,
         signal_name:,
         signal_input:,
-        memo: nil
+        memo: nil,
+        search_attributes: nil
       )
         proto_header_fields = if headers.nil?
             to_payload_map({})
@@ -375,6 +380,9 @@ module Temporal
           signal_input: to_signal_payloads(signal_input),
           memo: Temporal::Api::Common::V1::Memo.new(
             fields: to_payload_map(memo || {})
+          ),
+          search_attributes: Temporal::Api::Common::V1::SearchAttributes.new(
+            indexed_fields: to_payload_map(search_attributes || {})
           ),
         )
 

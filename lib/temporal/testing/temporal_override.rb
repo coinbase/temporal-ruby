@@ -83,6 +83,7 @@ module Temporal
         workflow_id = options[:workflow_id] || SecureRandom.uuid
         run_id = SecureRandom.uuid
         memo = options[:memo] || {}
+        initial_search_attributes = options[:search_attributes] || {}
 
         if !allowed?(workflow_id, reuse_policy)
           raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
@@ -91,7 +92,7 @@ module Temporal
           )
         end
 
-        execution = WorkflowExecution.new
+        execution = WorkflowExecution.new(initial_search_attributes: initial_search_attributes)
         executions[[workflow_id, run_id]] = execution
 
         execution_options = ExecutionOptions.new(workflow, options)
