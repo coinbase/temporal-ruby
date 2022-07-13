@@ -6,10 +6,10 @@ module Temporal
     class WorkflowExecution
       attr_reader :status, :search_attributes
 
-      def initialize
+      def initialize(initial_search_attributes: {})
         @status = Workflow::Status::RUNNING
         @futures = FutureRegistry.new
-        @search_attributes = {}
+        @search_attributes = initial_search_attributes
       end
 
       def run(&block)

@@ -232,7 +232,7 @@ module Temporal
       end
 
       def upsert_search_attributes(search_attributes)
-        search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(search_attributes)
+        search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(search_attributes, allow_empty: false)
         execution.upsert_search_attributes(search_attributes)
       end
 

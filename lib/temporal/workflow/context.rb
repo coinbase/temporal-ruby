@@ -135,7 +135,8 @@ module Temporal
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
-          workflow_id_reuse_policy: workflow_id_reuse_policy
+          workflow_id_reuse_policy: workflow_id_reuse_policy,
+          search_attributes: execution_options.search_attributes,
         )
 
         target, cancelation_id = schedule_command(command)
@@ -255,6 +256,7 @@ module Temporal
           retry_policy: execution_options.retry_policy,
           headers: execution_options.headers,
           memo: execution_options.memo,
+          search_attributes: execution_options.search_attributes,
         )
         schedule_command(command)
         completed!
@@ -419,7 +421,7 @@ module Temporal
       # @return [Hash] the search attributes after any preprocessing.
       #
       def upsert_search_attributes(search_attributes)
-        search_attributes = Helpers.process_search_attributes(search_attributes)
+        search_attributes = Helpers.process_search_attributes(search_attributes, allow_empty: false)
         command = Command::UpsertSearchAttributes.new(
           search_attributes: search_attributes
         )
