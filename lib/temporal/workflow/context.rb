@@ -421,7 +421,10 @@ module Temporal
       # @return [Hash] the search attributes after any preprocessing.
       #
       def upsert_search_attributes(search_attributes)
-        search_attributes = Helpers.process_search_attributes(search_attributes, allow_empty: false)
+        search_attributes = Helpers.process_search_attributes(search_attributes)
+        if search_attributes.empty?
+          raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
+        end
         command = Command::UpsertSearchAttributes.new(
           search_attributes: search_attributes
         )
