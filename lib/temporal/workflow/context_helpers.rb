@@ -2,7 +2,7 @@ require 'time'
 module Temporal
   class Workflow
     class Context
-      # Shared between Context, and LocalWorkflowContext, and ExecutionOptions so we can do the same validations in test and production.
+      # Shared between Context, and LocalWorkflowContext, and Client so we can do the same validations in test and production.
       module Helpers
 
         def self.process_search_attributes(search_attributes)

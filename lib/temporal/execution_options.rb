@@ -15,7 +15,7 @@ module Temporal
       @timeouts = options[:timeouts] || {}
       @headers = options[:headers] || {}
       @memo = options[:memo] || {}
-      @search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(options[:search_attributes] || {})
+      @search_attributes = options[:search_attributes] || {}
 
       # For Temporal::Workflow and Temporal::Activity use defined values as the next option
       if has_executable_concern?(object)

@@ -62,7 +62,7 @@ module Temporal
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
           headers: execution_options.headers,
           memo: execution_options.memo,
-          search_attributes: execution_options.search_attributes,
+          search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
         )
       else
         raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
@@ -79,7 +79,7 @@ module Temporal
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
           headers: execution_options.headers,
           memo: execution_options.memo,
-          search_attributes: execution_options.search_attributes,
+          search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
           signal_name: signal_name,
           signal_input: signal_input
         )
@@ -129,7 +129,7 @@ module Temporal
         headers: execution_options.headers,
         cron_schedule: cron_schedule,
         memo: execution_options.memo,
-        search_attributes: execution_options.search_attributes,
+        search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
       )
 
       response.run_id
