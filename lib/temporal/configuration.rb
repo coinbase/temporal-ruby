@@ -9,11 +9,11 @@ require 'temporal/connection/converter/composite'
 module Temporal
   class Configuration
     Connection = Struct.new(:type, :host, :port, :options, :credentials, keyword_init: true)
-    Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, keyword_init: true)
+    Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
     attr_writer :converter
-    attr_accessor :connection_type, :host, :port, :credentials, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :max_page_size, :connection_options
+    attr_accessor :connection_type, :host, :port, :credentials, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :max_page_size, :connection_options, :search_attributes
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -57,6 +57,7 @@ module Temporal
       @error_handlers = []
       @connection_options = {}
       @credentials = :this_channel_is_insecure
+      @search_attributes = {}
     end
 
     def on_error(&block)
@@ -96,7 +97,8 @@ module Temporal
         namespace: namespace,
         task_queue: task_list,
         timeouts: timeouts,
-        headers: headers
+        headers: headers,
+        search_attributes: search_attributes,
       ).freeze
     end
   end

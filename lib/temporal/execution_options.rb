@@ -32,6 +32,7 @@ module Temporal
         @task_queue ||= defaults.task_queue
         @timeouts = defaults.timeouts.merge(@timeouts)
         @headers = defaults.headers.merge(@headers)
+        @search_attributes = defaults.search_attributes.merge(@search_attributes)
       end
 
       if @retry_policy.empty?
