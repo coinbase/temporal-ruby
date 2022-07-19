@@ -11,6 +11,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
         timeouts: Temporal.configuration.timeouts,
         headers: {'foo-header': 'bar'},
         memo: {'foo-memo': 'baz'},
+        search_attributes: {'foo-search-attribute': 'qux'},
       )
 
       result = described_class.new(command).to_proto
@@ -31,6 +32,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
 
       expect(attribs.header.fields['foo-header'].data).to eq('"bar"')
       expect(attribs.memo.fields['foo-memo'].data).to eq('"baz"')
+      expect(attribs.search_attributes.indexed_fields['foo-search-attribute'].data).to eq('"qux"')
     end
   end
 end

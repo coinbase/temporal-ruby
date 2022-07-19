@@ -233,6 +233,9 @@ module Temporal
 
       def upsert_search_attributes(search_attributes)
         search_attributes = Temporal::Workflow::Context::Helpers.process_search_attributes(search_attributes)
+        if search_attributes.empty?
+          raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
+        end
         execution.upsert_search_attributes(search_attributes)
       end
 

@@ -1,7 +1,7 @@
 require 'activities/hello_world_activity'
 class UpsertSearchAttributesWorkflow < Temporal::Workflow
   # time_value example: use this format: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-  def execute(string_value, bool_value, float_value, int_value, time_value)
+  def execute(string_value: nil, bool_value: nil, float_value: nil, int_value: nil, time_value: nil)
     # These are included in the default temporal docker setup.
     # Run tctl admin cluster get-search-attributes to list the options and
     # See https://docs.temporal.io/docs/tctl/how-to-add-a-custom-search-attribute-to-a-cluster-using-tctl
@@ -13,6 +13,7 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
       'CustomIntField' => int_value,
       'CustomDatetimeField' => time_value,
     }
+    attributes.compact!
     workflow.upsert_search_attributes(attributes)
     # The following lines are extra complexity to test if upsert_search_attributes is tracked properly in the internal
     # state machine.

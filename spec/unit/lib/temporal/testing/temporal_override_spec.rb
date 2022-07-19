@@ -325,11 +325,17 @@ describe Temporal::Testing::TemporalOverride do
             UpsertSearchAttributesWorkflow,
             options: {
               workflow_id: workflow_id,
+              search_attributes: {
+                'AdditionalSearchAttribute' => 189,
+              },
             },
           )
 
           info = client.fetch_workflow_execution_info('default-namespace', workflow_id, run_id)
-          expect(info.search_attributes).to eq({'CustomIntField' => 5})
+          expect(info.search_attributes).to eq({
+            'CustomIntField' => 5,
+            'AdditionalSearchAttribute' => 189,
+          })
         end
 
       end

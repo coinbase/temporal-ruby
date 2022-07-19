@@ -2,7 +2,7 @@ require 'time'
 module Temporal
   class Workflow
     class Context
-      # Shared between Context and LocalWorkflowContext so we can do the same validations in test and production.
+      # Shared between Context, and LocalWorkflowContext, and Client so we can do the same validations in test and production.
       module Helpers
 
         def self.process_search_attributes(search_attributes)
@@ -11,9 +11,6 @@ module Temporal
           end
           if !search_attributes.is_a?(Hash)
             raise ArgumentError, "for search_attributes, expecting a Hash, not #{search_attributes.class}"
-          end
-          if search_attributes.empty?
-            raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
           end
           search_attributes.transform_values do |attribute|
             if attribute.is_a?(Time)

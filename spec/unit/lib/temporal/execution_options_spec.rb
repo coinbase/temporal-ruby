@@ -66,7 +66,8 @@ describe Temporal::ExecutionOptions do
           {
             namespace: 'test-namespace',
             timeouts: { start_to_close: 10 },
-            headers: { 'TestHeader' => 'Test' }
+            headers: { 'TestHeader' => 'Test' },
+            search_attributes: { 'DoubleSearchAttribute' => 3.14 },
           }
         end
         let(:defaults) do
@@ -74,7 +75,8 @@ describe Temporal::ExecutionOptions do
             namespace: 'default-namespace',
             task_queue: 'default-task-queue',
             timeouts: { schedule_to_close: 42 },
-            headers: { 'DefaultHeader' => 'Default' }
+            headers: { 'DefaultHeader' => 'Default' },
+            search_attributes: { 'DefaultIntSearchAttribute' => 256 },
           )
         end
   
@@ -85,6 +87,7 @@ describe Temporal::ExecutionOptions do
           expect(subject.retry_policy).to be_nil
           expect(subject.timeouts).to eq(schedule_to_close: 42, start_to_close: 10)
           expect(subject.headers).to eq('DefaultHeader' => 'Default', 'TestHeader' => 'Test')
+          expect(subject.search_attributes).to eq('DefaultIntSearchAttribute' => 256, 'DoubleSearchAttribute' => 3.14)
         end
       end
 
@@ -191,7 +194,8 @@ describe Temporal::ExecutionOptions do
             namespace: 'default-namespace',
             task_queue: 'default-task-queue',
             timeouts: { schedule_to_close: 42 },
-            headers: { 'DefaultHeader' => 'Default', 'HeaderA' => 'DefaultA' }
+            headers: { 'DefaultHeader' => 'Default', 'HeaderA' => 'DefaultA' },
+            search_attributes: {},
           )
         end
   
