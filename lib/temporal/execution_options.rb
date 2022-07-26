@@ -1,6 +1,5 @@
 require 'temporal/concerns/executable'
 require 'temporal/retry_policy'
-require 'temporal/workflow/context_helpers'
 
 module Temporal
   class ExecutionOptions
