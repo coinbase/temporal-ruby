@@ -13,16 +13,19 @@ module Temporal
       Temporal::ThreadLocalContext.set(context)
 
       workflow = new(context)
+      puts input.inspect
+      require 'json'
+      puts input.to_json
       result = workflow.execute(*input)
 
       context.complete(result) unless context.completed?
-    rescue StandardError, ScriptError => error
-      Temporal.logger.error("Workflow execution failed", context.metadata.to_h.merge(error: error.inspect))
-      Temporal.logger.debug(error.backtrace.join("\n"))
+    rescue StandardError, ScriptError => e
+      Temporal.logger.error('Workflow execution failed', context.metadata.to_h.merge(error: e.inspect))
+      Temporal.logger.debug(e.backtrace.join("\n"))
 
-      Temporal::ErrorHandler.handle(error, context.config, metadata: context.metadata)
+      Temporal::ErrorHandler.handle(e, context.config, metadata: context.metadata)
 
-      context.fail(error)
+      context.fail(e)
     ensure
       Temporal::ThreadLocalContext.set(old_context)
     end
