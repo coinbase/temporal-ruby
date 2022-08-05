@@ -16,7 +16,11 @@ describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
 
     run_id = Temporal.start_workflow(
       UpsertSearchAttributesWorkflow,
-      *expected_added_attributes.values,
+      string_value: expected_added_attributes['CustomStringField'],
+      bool_value: expected_added_attributes['CustomBoolField'],
+      float_value: expected_added_attributes['CustomDoubleField'],
+      int_value: expected_added_attributes['CustomIntField'],
+      time_value: expected_added_attributes['CustomDatetimeField'],
       options: {
         workflow_id: workflow_id,
       },

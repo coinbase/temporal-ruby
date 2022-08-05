@@ -39,6 +39,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :allow,
         )
       end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure) do |e|
@@ -49,6 +50,7 @@ describe Temporal::Connection::GRPC do
     it 'starts a workflow with scalar arguments' do
       allow(grpc_stub).to receive(:start_workflow_execution).and_return(Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx'))
 
+      datetime_attribute_value = Time.now
       subject.start_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
@@ -59,6 +61,16 @@ describe Temporal::Connection::GRPC do
         run_timeout: 2,
         task_timeout: 3,
         memo: {},
+        search_attributes: {
+          'foo-int-attribute' => 256,
+          'foo-string-attribute' => "bar",
+          'foo-double-attribute' => 6.28,
+          'foo-bool-attribute' => false,
+          # Temporal::Workflow::Context::Helpers.process_search_attributes will have converted
+          # any `Time` instances to strings by the time `start_workflow_execution` is called,
+          # so do the same here.
+          'foo-datetime-attribute' => datetime_attribute_value.utc.iso8601,
+        },
         workflow_id_reuse_policy: :reject,
       )
 
@@ -73,6 +85,13 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_run_timeout.seconds).to eq(2)
         expect(request.workflow_task_timeout.seconds).to eq(3)
         expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
+        expect(request.search_attributes.indexed_fields).to eq({
+          'foo-int-attribute' => Temporal::Api::Common::V1::Payload.new(data: '256', metadata: { 'encoding' => 'json/plain' }),
+          'foo-string-attribute' => Temporal::Api::Common::V1::Payload.new(data: '"bar"', metadata: { 'encoding' => 'json/plain' }),
+          'foo-double-attribute' => Temporal::Api::Common::V1::Payload.new(data: '6.28', metadata: { 'encoding' => 'json/plain' }),
+          'foo-bool-attribute' => Temporal::Api::Common::V1::Payload.new(data: 'false', metadata: { 'encoding' => 'json/plain' }),
+          'foo-datetime-attribute' => Temporal::Api::Common::V1::Payload.new(data: "\"#{datetime_attribute_value.utc.iso8601}\"", metadata: { 'encoding' => 'json/plain' }),
+        })
       end
     end
 
@@ -87,6 +106,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :not_a_valid_policy
         )
       end.to raise_error(Temporal::Connection::ArgumentError) do |e|
@@ -144,6 +164,7 @@ describe Temporal::Connection::GRPC do
           run_timeout: 0,
           task_timeout: 0,
           memo: {},
+          search_attributes: {},
           workflow_id_reuse_policy: :not_a_valid_policy,
           signal_name: 'the question',
           signal_input: 'what do you get if you multiply six by nine?'

@@ -14,6 +14,7 @@ describe Temporal::Connection::Serializer::StartChildWorkflow do
       timeouts: { execution: 1, run: 1, task: 1 },
       headers: nil,
       memo: {},
+      search_attributes: {},
     )
   end
 

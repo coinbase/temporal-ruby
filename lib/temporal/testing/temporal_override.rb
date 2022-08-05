@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'temporal/activity/async_token'
+require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/status'
 require 'temporal/testing/workflow_execution'
@@ -83,6 +84,7 @@ module Temporal
         workflow_id = options[:workflow_id] || SecureRandom.uuid
         run_id = SecureRandom.uuid
         memo = options[:memo] || {}
+        initial_search_attributes = Workflow::Context::Helpers.process_search_attributes(options[:search_attributes] || {})
 
         if !allowed?(workflow_id, reuse_policy)
           raise Temporal::WorkflowExecutionAlreadyStartedFailure.new(
@@ -91,7 +93,7 @@ module Temporal
           )
         end
 
-        execution = WorkflowExecution.new
+        execution = WorkflowExecution.new(initial_search_attributes: initial_search_attributes)
         executions[[workflow_id, run_id]] = execution
 
         execution_options = ExecutionOptions.new(workflow, options)

@@ -20,7 +20,8 @@ module Temporal
                 workflow_task_timeout: object.timeouts[:task],
                 retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
                 header: serialize_headers(object.headers),
-                memo: serialize_memo(object.memo)
+                memo: serialize_memo(object.memo),
+                search_attributes: serialize_search_attributes(object.search_attributes),
               )
           )
         end
@@ -37,6 +38,12 @@ module Temporal
           return unless memo
 
           Temporal::Api::Common::V1::Memo.new(fields: to_payload_map(memo))
+        end
+
+        def serialize_search_attributes(search_attributes)
+          return unless search_attributes
+
+          Temporal::Api::Common::V1::SearchAttributes.new(indexed_fields: to_payload_map(search_attributes))
         end
       end
     end

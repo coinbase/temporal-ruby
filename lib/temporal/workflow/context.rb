@@ -131,7 +131,8 @@ module Temporal
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
           memo: execution_options.memo,
-          workflow_id_reuse_policy: workflow_id_reuse_policy
+          workflow_id_reuse_policy: workflow_id_reuse_policy,
+          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
         )
 
         target, cancelation_id = schedule_command(command)
@@ -245,6 +246,7 @@ module Temporal
           retry_policy: execution_options.retry_policy,
           headers: execution_options.headers,
           memo: execution_options.memo,
+          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
         )
         schedule_command(command)
         completed!
@@ -410,6 +412,9 @@ module Temporal
       #
       def upsert_search_attributes(search_attributes)
         search_attributes = Helpers.process_search_attributes(search_attributes)
+        if search_attributes.empty?
+          raise ArgumentError, "Cannot upsert an empty hash for search_attributes, as this would do nothing."
+        end
         command = Command::UpsertSearchAttributes.new(
           search_attributes: search_attributes
         )
