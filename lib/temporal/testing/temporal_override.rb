@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'temporal/activity/async_token'
+require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/status'
 require 'temporal/testing/workflow_execution'

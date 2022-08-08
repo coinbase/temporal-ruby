@@ -1,8 +1,8 @@
 require 'workflows/upsert_search_attributes_workflow'
 require 'time'
 
-describe 'Temporal::Client.start_workflow', :integration do
-  it 'can start a workflow with initial search attributes' do
+describe 'starting workflow with initial search attributes', :integration do
+  it 'has attributes appear in final execution info, but can get overriden by upserting' do
     workflow_id = 'initial_search_attributes_test_wf-' + SecureRandom.uuid
     expected_binary_checksum = `git show HEAD -s --format=%H`.strip
 
