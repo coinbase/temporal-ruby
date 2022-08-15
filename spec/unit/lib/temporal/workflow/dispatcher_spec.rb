@@ -12,7 +12,7 @@ describe Temporal::Workflow::Dispatcher do
       subject.register_handler(target, event_name, &block)
       subject
     end
-    let(:handlers) { dispatcher.send(:handlers) }
+    let(:handlers) { dispatcher.send(:event_handlers) }
 
     it 'stores the target' do
       expect(handlers.key?(target)).to be true
@@ -111,14 +111,14 @@ describe Temporal::Workflow::Dispatcher do
       end
     end
 
-    context 'with TARGET_WILDCARD target handler' do
+    context 'with WILDCARD target handler' do
       let(:handler_6) { -> { 'sixth block' } }
       let(:handler_7) { -> { 'seventh block' } }
       before do
         allow(handler_6).to receive(:call)
         allow(handler_7).to receive(:call)
 
-        subject.register_handler(described_class::TARGET_WILDCARD, described_class::WILDCARD, &handler_6)
+        subject.register_handler(described_class::WILDCARD, described_class::WILDCARD, &handler_6)
         subject.register_handler(target, 'completed', &handler_7)
       end
 
@@ -132,8 +132,36 @@ describe Temporal::Workflow::Dispatcher do
         expect(handler_7).to have_received(:call).ordered
       end
 
-      it 'TARGET_WILDCARD can be compared to an EventTarget object' do
-        expect(target.eql?(described_class::TARGET_WILDCARD)).to be(false)
+      it 'WILDCARD can be compared to an EventTarget object' do
+        expect(target.eql?(described_class::WILDCARD)).to be(false)
+      end
+    end
+
+    context 'with wait_until handler' do
+      let(:handler_5) { -> { 'fifth block' } }
+      let(:handler_6) { -> { 'sixth block' } }
+      let(:handler_7) { -> { 'seventh block' } }
+      before do
+        allow(handler_5).to receive(:call)
+        allow(handler_6).to receive(:call)
+        allow(handler_7).to receive(:call)
+
+        subject.register_wait_until_handler(&handler_5)
+        subject.register_wait_until_handler(&handler_6)
+        subject.register_handler(target, 'completed', &handler_7)
+      end
+
+      it 'calls the handler' do
+        subject.dispatch(target, 'completed')
+
+        # Target handlers still invoked
+        expect(handler_1).to have_received(:call).ordered
+        expect(handler_4).to have_received(:call).ordered
+        expect(handler_7).to have_received(:call).ordered
+
+        # wait_until handlers are invoked at the end, in order
+        expect(handler_5).to have_received(:call).ordered
+        expect(handler_6).to have_received(:call).ordered
       end
     end
   end

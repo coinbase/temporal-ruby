@@ -35,19 +35,25 @@ module Temporal
       end
 
       WILDCARD = '*'.freeze
-      TARGET_WILDCARD = '*'.freeze
 
       EventStruct = Struct.new(:event_name, :handler)
 
       def initialize
-        @handlers = Hash.new { |hash, key| hash[key] = {} }
+        @event_handlers = Hash.new { |hash, key| hash[key] = {} }
+        @wait_until_handlers = {}
         @next_id = 0
       end
 
       def register_handler(target, event_name, &handler)
         @next_id += 1
-        handlers[target][@next_id] = EventStruct.new(event_name, handler)
-        RegistrationHandle.new(handlers[target], @next_id)
+        event_handlers[target][@next_id] = EventStruct.new(event_name, handler)
+        RegistrationHandle.new(event_handlers[target], @next_id)
+      end
+
+      def register_wait_until_handler(&handler)
+        @next_id += 1
+        wait_until_handlers[@next_id] = handler
+        RegistrationHandle.new(wait_until_handlers, @next_id)
       end
 
       def dispatch(target, event_name, args = nil)
@@ -58,14 +64,15 @@ module Temporal
 
       private
 
-      attr_reader :handlers
+      attr_reader :event_handlers, :wait_until_handlers
 
       def handlers_for(target, event_name)
-        handlers[target]
-          .merge(handlers[TARGET_WILDCARD]) { raise DuplicateIDError.new('Cannot resolve duplicate dispatcher handler IDs') }
+        event_handlers[target]
+          .merge(event_handlers[WILDCARD]) { raise DuplicateIDError.new('Cannot resolve duplicate dispatcher handler IDs') }
           .select { |_, event_struct| match?(event_struct, event_name) }
           .sort
           .map { |_, event_struct| event_struct.handler }
+          .concat(wait_until_handlers.sort.map(&:last))
       end
 
       def match?(event_struct, event_name)
