@@ -14,51 +14,23 @@ describe Temporal::Workflow::Dispatcher do
     end
     let(:handlers) { dispatcher.send(:handlers) }
 
-    context 'with default handler_name' do
-      let(:handler_name) { nil }
-
-      it 'stores the target' do
-        expect(handlers.key?(target)).to be true
-      end
-
-      it 'stores the target and handler once' do
-        expect(handlers[target]).to be_kind_of(Hash)
-        expect(handlers[target].count).to eq 1
-      end
-
-      it 'associates the event name with the target' do
-        event = handlers[target][1]
-        expect(event.event_name).to eq(event_name)
-      end
-
-      it 'associates the handler with the target' do
-        event = handlers[target][1]
-        expect(event.handler).to eq(block)
-      end
+    it 'stores the target' do
+      expect(handlers.key?(target)).to be true
     end
 
-    context 'with a specific handler_name' do
-      let(:handler_name) { 'specific name' }
-      let(:event_name) { "signaled:#{handler_name}" }
+    it 'stores the target and handler once' do
+      expect(handlers[target]).to be_kind_of(Hash)
+      expect(handlers[target].count).to eq 1
+    end
 
-      it 'stores the target' do
-        expect(handlers.key?(target)).to be true
-      end
+    it 'associates the event name with the target' do
+      event = handlers[target][1]
+      expect(event.event_name).to eq(event_name)
+    end
 
-      it 'stores the target and handler once' do
-        expect(handlers[target]).to be_kind_of(Hash)
-        expect(handlers[target].count).to eq 1
-      end
-
-      it 'associates the event name and handler name with the target' do
-        event = handlers[target][1]
-        expect(event.event_name).to eq(event_name)
-      end
-
-      it 'associates the handler with the target' do
-        event = handlers[target][1]
-        expect(event.handler).to eq(block)
-      end
+    it 'associates the handler with the target' do
+      event = handlers[target][1]
+      expect(event.handler).to eq(block)
     end
 
     it 'removes a given handler against the target' do
@@ -70,19 +42,19 @@ describe Temporal::Workflow::Dispatcher do
       subject.register_handler(target, 'signaled', &block2)
       subject.register_handler(other_target, 'signaled', &block3)
 
-      expect(subject.send(:handlers)[target][1].event_name).to eq('signaled')
-      expect(subject.send(:handlers)[target][1].handler).to be(block1)
+      expect(handlers[target][1].event_name).to eq('signaled')
+      expect(handlers[target][1].handler).to be(block1)
 
-      expect(subject.send(:handlers)[target][2].event_name).to eq('signaled')
-      expect(subject.send(:handlers)[target][2].handler).to be(block2)
+      expect(handlers[target][2].event_name).to eq('signaled')
+      expect(handlers[target][2].handler).to be(block2)
 
-      expect(subject.send(:handlers)[other_target][3].event_name).to eq('signaled')
-      expect(subject.send(:handlers)[other_target][3].handler).to be(block3)
+      expect(handlers[other_target][3].event_name).to eq('signaled')
+      expect(handlers[other_target][3].handler).to be(block3)
 
       handle1.unregister
-      expect(subject.send(:handlers)[target][1]).to be(nil)
-      expect(subject.send(:handlers)[target][2]).to_not be(nil)
-      expect(subject.send(:handlers)[other_target][3]).to_not be(nil)
+      expect(handlers[target][1]).to be(nil)
+      expect(handlers[target][2]).to_not be(nil)
+      expect(handlers[other_target][3]).to_not be(nil)
     end
   end
 
@@ -162,29 +134,6 @@ describe Temporal::Workflow::Dispatcher do
 
       it 'TARGET_WILDCARD can be compared to an EventTarget object' do
         expect(target.eql?(described_class::TARGET_WILDCARD)).to be(false)
-      end
-    end
-
-    context 'with a named handler' do
-      let(:handler_7) { -> { 'seventh block' } }
-      let(:handler_name) { 'specific name' }
-      before do
-        allow(handler_7).to receive(:call)
-
-        subject.register_handler(target, 'completed', &handler_7)
-      end
-
-      it 'calls the named handler and the default' do
-        subject.dispatch(target, 'completed', handler_name: handler_name)
-
-        # the parent context "before" block registers the handlers with the target
-        # so look there for why handlers 1 and 4 are also called
-        expect(handler_7).to have_received(:call)
-        expect(handler_1).to have_received(:call)
-        expect(handler_4).to have_received(:call)
-
-        expect(handler_2).not_to have_received(:call)
-        expect(handler_3).not_to have_received(:call)
       end
     end
   end
