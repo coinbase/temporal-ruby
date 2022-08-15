@@ -9,11 +9,6 @@ module Temporal
     # elsewhere in the system we may dispatch the event and execute the handler.
     # We *always* execute the handler associated with the event_name.
     #
-    # Optionally, we may register a named handler that is triggered when an event _and
-    # an optional handler_name key_ are provided. In this situation, we dispatch to both
-    # the handler associated to event_name+handler_name and to the handler associated with
-    # the event_name. The order of this dispatch is not guaranteed.
-    #
     class Dispatcher
       # Raised if a duplicate ID is encountered during dispatch handling.
       # This likely indicates a bug in temporal-ruby or that unsupported multithreaded
