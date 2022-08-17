@@ -301,7 +301,7 @@ module Temporal
 
         fiber = Fiber.current
 
-        handler = dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
+        handler = dispatcher.register_wait_until_handler do
           fiber.resume if unblock_condition.call
         end
 
@@ -335,7 +335,7 @@ module Temporal
             call_in_fiber(block, input)
           end
         else
-          dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, 'signaled') do |signal, input|
+          dispatcher.register_handler(Dispatcher::WILDCARD, 'signaled') do |signal, input|
             call_in_fiber(block, signal, input)
           end
         end

@@ -7,11 +7,11 @@ describe 'signal with start' do
     run_id = Temporal.start_workflow(
       SignalWithStartWorkflow,
       'signal_name',
-      0.1,
       options: {
         workflow_id: workflow_id,
         signal_name: 'signal_name',
         signal_input: 'expected value',
+        timeouts: { execution: 10 },
       }
     )
 
@@ -29,10 +29,10 @@ describe 'signal with start' do
     run_id = Temporal.start_workflow(
       SignalWithStartWorkflow,
       'signal_name',
-      0.1,
       options: {
         workflow_id: workflow_id,
         signal_name: 'signal_name',
+        timeouts: { execution: 10 },
       }
     )
 
@@ -50,22 +50,22 @@ describe 'signal with start' do
     run_id = Temporal.start_workflow(
       SignalWithStartWorkflow,
       'signal_name',
-      10,
       options: {
         workflow_id: workflow_id,
         signal_name: 'signal_name',
         signal_input: 'expected value',
+        timeouts: { execution: 10 },
       }
     )
 
     second_run_id = Temporal.start_workflow(
       SignalWithStartWorkflow,
       'signal_name',
-      0.1,
       options: {
         workflow_id: workflow_id,
         signal_name: 'signal_name',
         signal_input: 'expected value',
+        timeouts: { execution: 10 },
       }
     )
 
