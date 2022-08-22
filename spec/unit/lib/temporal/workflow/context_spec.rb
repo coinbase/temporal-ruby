@@ -186,23 +186,23 @@ describe Temporal::Workflow::Context do
 
     context 'when given workflow options' do
       it 'executes workflow with merged cron_schedule option' do
-        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow, **{
+        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow,
           options: {
             parent_close_policy: :abandon,
             cron_schedule: cron_schedule
           }
-        })
+        )
         workflow_context.schedule_workflow(MyTestWorkflow, cron_schedule, options: { parent_close_policy: :abandon })
       end
     end
 
     context 'when not given workflow options' do
       it 'executes workflow with cron_schedule option' do
-        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow, **{
+        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow,
           options: {
             cron_schedule: cron_schedule
           }
-        })
+        )
         workflow_context.schedule_workflow(MyTestWorkflow, cron_schedule)
       end
     end
