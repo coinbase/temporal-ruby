@@ -15,17 +15,15 @@ describe ScheduleChildWorkflow, :integration do
       }
     )
 
-    # Giving the parent workflow sufficient time to run and schedule the child
-    sleep 2
-
-    history_response = fetch_history(child_workflow_id, nil)
-    expect(
-      history_response.history.events.first.workflow_execution_started_event_attributes.cron_schedule
-    ).to eq(cron_schedule)
-
-    Temporal.signal_workflow(described_class, 'finish', workflow_id, run_id)
-
     wait_for_workflow_completion(workflow_id, run_id)
+    parent_history = fetch_history(workflow_id, run_id)
+
+    child_workflow_event = parent_history.history.events.detect do |event|
+      event.event_type == :EVENT_TYPE_START_CHILD_WORKFLOW_EXECUTION_INITIATED
+    end
+    expect(
+      child_workflow_event.start_child_workflow_execution_initiated_event_attributes.cron_schedule
+    ).to eq(cron_schedule)
 
     # Expecting the child workflow to terminate as a result of the parent close policy
     expect do
