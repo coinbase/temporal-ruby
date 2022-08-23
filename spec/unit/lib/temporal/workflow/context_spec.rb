@@ -155,7 +155,6 @@ describe Temporal::Workflow::Context do
   end
 
   describe '#execute_workflow!' do
-    let(:result) { 'result' }
     let(:child_workflow_future) do
       double = instance_double('Temporal::Workflow::ChildWorkflowFuture')
       allow(double).to receive(:get).and_return(result)
@@ -167,13 +166,17 @@ describe Temporal::Workflow::Context do
     end
 
     context 'when future fails' do
-      it 'raises the future result' do
+      let(:result) { Temporal::WorkflowRunError }
+
+      it 'raises the future result exception' do
         expect(child_workflow_future).to receive(:failed?).and_return(true)
-        expect { workflow_context.execute_workflow!(MyTestWorkflow) }.to raise_error(StandardError, result)
+        expect { workflow_context.execute_workflow!(MyTestWorkflow) }.to raise_error(result)
       end
     end
 
     context 'when future succeeds' do
+      let(:result) { 'result' }
+
       it 'returns the future result' do
         expect(child_workflow_future).to receive(:failed?).and_return(false)
         expect(workflow_context.execute_workflow!(MyTestWorkflow)).to eq(result)
