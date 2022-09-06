@@ -9,11 +9,6 @@ module Temporal
     # elsewhere in the system we may dispatch the event and execute the handler.
     # We *always* execute the handler associated with the event_name.
     #
-    # Optionally, we may register a named handler that is triggered when an event _and
-    # an optional handler_name key_ are provided. In this situation, we dispatch to both
-    # the handler associated to event_name+handler_name and to the handler associated with
-    # the event_name. The order of this dispatch is not guaranteed.
-    #
     class Dispatcher
       # Raised if a duplicate ID is encountered during dispatch handling.
       # This likely indicates a bug in temporal-ruby or that unsupported multithreaded
@@ -40,19 +35,23 @@ module Temporal
       end
 
       WILDCARD = '*'.freeze
-      TARGET_WILDCARD = '*'.freeze
 
-      EventStruct = Struct.new(:event_name, :handler)
+      module Order
+        AT_BEGINNING = 1
+        AT_END = 2
+      end
+
+      EventStruct = Struct.new(:event_name, :handler, :order)
 
       def initialize
-        @handlers = Hash.new { |hash, key| hash[key] = {} }
+        @event_handlers = Hash.new { |hash, key| hash[key] = {} }
         @next_id = 0
       end
 
-      def register_handler(target, event_name, &handler)
+      def register_handler(target, event_name, order=Order::AT_BEGINNING, &handler)
         @next_id += 1
-        handlers[target][@next_id] = EventStruct.new(event_name, handler)
-        RegistrationHandle.new(handlers[target], @next_id)
+        event_handlers[target][@next_id] = EventStruct.new(event_name, handler, order)
+        RegistrationHandle.new(event_handlers[target], @next_id)
       end
 
       def dispatch(target, event_name, args = nil)
@@ -63,14 +62,14 @@ module Temporal
 
       private
 
-      attr_reader :handlers
+      attr_reader :event_handlers
 
       def handlers_for(target, event_name)
-        handlers[target]
-          .merge(handlers[TARGET_WILDCARD]) { raise DuplicateIDError.new('Cannot resolve duplicate dispatcher handler IDs') }
-          .select { |_, event_struct| match?(event_struct, event_name) }
-          .sort
-          .map { |_, event_struct| event_struct.handler }
+        event_handlers[target]
+          .merge(event_handlers[WILDCARD]) { raise DuplicateIDError.new('Cannot resolve duplicate dispatcher handler IDs') }
+          .select { |_, event| match?(event, event_name) }
+          .sort_by{ |id, event_struct| [event_struct.order, id]}
+          .map { |_, event| event.handler }
       end
 
       def match?(event_struct, event_name)

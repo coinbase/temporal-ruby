@@ -298,7 +298,14 @@ module Temporal
 
         fiber = Fiber.current
 
-        handler = dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, Dispatcher::WILDCARD) do
+        # wait_until condition blocks often read state modified by target-specfic handlers like
+        # signal handlers or callbacks for timer or activity completion. Running the wait_until
+        # handlers after the other handlers ensures that state is correctly updated before being
+        # read.
+        handler = dispatcher.register_handler(
+          Dispatcher::WILDCARD, # any target
+          Dispatcher::WILDCARD, # any event type
+          Dispatcher::Order::AT_END) do
           fiber.resume if unblock_condition.call
         end
 
@@ -332,7 +339,7 @@ module Temporal
             call_in_fiber(block, input)
           end
         else
-          dispatcher.register_handler(Dispatcher::TARGET_WILDCARD, 'signaled') do |signal, input|
+          dispatcher.register_handler(Dispatcher::WILDCARD, 'signaled') do |signal, input|
             call_in_fiber(block, signal, input)
           end
         end
