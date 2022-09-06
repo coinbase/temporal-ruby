@@ -137,7 +137,7 @@ describe Temporal::Workflow::Dispatcher do
       end
     end
 
-    context 'with wait_until handler' do
+    context 'with AT_END order' do
       let(:handler_5) { -> { 'fifth block' } }
       let(:handler_6) { -> { 'sixth block' } }
       let(:handler_7) { -> { 'seventh block' } }
@@ -146,8 +146,8 @@ describe Temporal::Workflow::Dispatcher do
         allow(handler_6).to receive(:call)
         allow(handler_7).to receive(:call)
 
-        subject.register_wait_until_handler(&handler_5)
-        subject.register_wait_until_handler(&handler_6)
+        subject.register_handler(described_class::WILDCARD, described_class::WILDCARD, described_class::Order::AT_END, &handler_5)
+        subject.register_handler(described_class::WILDCARD, described_class::WILDCARD, described_class::Order::AT_END, &handler_6)
         subject.register_handler(target, 'completed', &handler_7)
       end
 
@@ -159,7 +159,7 @@ describe Temporal::Workflow::Dispatcher do
         expect(handler_4).to have_received(:call).ordered
         expect(handler_7).to have_received(:call).ordered
 
-        # wait_until handlers are invoked at the end, in order
+        # AT_END handlers are invoked at the end, in order
         expect(handler_5).to have_received(:call).ordered
         expect(handler_6).to have_received(:call).ordered
       end
