@@ -31,6 +31,7 @@ module Temporal
                 retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
                 parent_close_policy: serialize_parent_close_policy(object.parent_close_policy),
                 header: serialize_headers(object.headers),
+                cron_schedule: object.cron_schedule,
                 memo: serialize_memo(object.memo),
                 workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(object.workflow_id_reuse_policy).to_proto,
                 search_attributes: serialize_search_attributes(object.search_attributes),

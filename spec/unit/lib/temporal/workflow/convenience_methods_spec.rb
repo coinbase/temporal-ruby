@@ -19,7 +19,7 @@ describe Temporal::Workflow::ConvenienceMethods do
         allow(context).to receive(:execute_workflow)
       end
 
-      it 'executes activity' do
+      it 'executes workflow' do
         subject.execute(input, **options)
 
         expect(context)
@@ -46,7 +46,7 @@ describe Temporal::Workflow::ConvenienceMethods do
         allow(context).to receive(:execute_workflow!)
       end
 
-      it 'executes activity' do
+      it 'executes workflow' do
         subject.execute!(input, **options)
 
         expect(context)
@@ -62,6 +62,35 @@ describe Temporal::Workflow::ConvenienceMethods do
         expect do
           subject.execute!(input, **options)
         end.to raise_error('Called Workflow#execute! outside of a Workflow context')
+      end
+    end
+  end
+
+  describe '.schedule' do
+    let(:cron_schedule) { '* * * * *' }
+
+    context 'with local context' do
+      before do
+        Temporal::ThreadLocalContext.set(context)
+        allow(context).to receive(:schedule_workflow)
+      end
+
+      it 'schedules workflow' do
+        subject.schedule(cron_schedule, input, **options)
+
+        expect(context)
+          .to have_received(:schedule_workflow)
+          .with(subject, cron_schedule, input, options)
+      end
+    end
+
+    context 'without local context' do
+      before { Temporal::ThreadLocalContext.set(nil) }
+
+      it 'raises an error' do
+        expect do
+          subject.schedule(cron_schedule, input, **options)
+        end.to raise_error('Called Workflow#schedule outside of a Workflow context')
       end
     end
   end

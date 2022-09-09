@@ -117,6 +117,7 @@ module Temporal
         input << args unless args.empty?
 
         parent_close_policy = options.delete(:parent_close_policy)
+        cron_schedule = options.delete(:cron_schedule)
         workflow_id_reuse_policy = options.delete(:workflow_id_reuse_policy)
         execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
 
@@ -130,6 +131,7 @@ module Temporal
           parent_close_policy: parent_close_policy,
           timeouts: execution_options.timeouts,
           headers: execution_options.headers,
+          cron_schedule: cron_schedule,
           memo: execution_options.memo,
           workflow_id_reuse_policy: workflow_id_reuse_policy,
           search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
@@ -171,6 +173,11 @@ module Temporal
         raise result if future.failed?
 
         result
+      end
+
+      def schedule_workflow(workflow_class, cron_schedule, *input, **args)
+        args[:options] = (args[:options] || {}).merge(cron_schedule: cron_schedule)
+        execute_workflow(workflow_class, *input, **args)
       end
 
       def side_effect(&block)

@@ -85,7 +85,7 @@ describe Temporal::Workflow::Context do
       end
 
       child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
-      
+
       # expect all futures to be false as nothing has happened
       expect(child_workflow_future.finished?).to be false
       expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
@@ -117,7 +117,7 @@ describe Temporal::Workflow::Context do
       end
 
       child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
-      
+
       # expect all futures to be false as nothing has happened
       expect(child_workflow_future.finished?).to be false
       expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
@@ -142,7 +142,7 @@ describe Temporal::Workflow::Context do
       end
 
       child_workflow_future = workflow_context.execute_workflow(MyTestWorkflow)
-      
+
       # expect all futures to be false as nothing has happened
       expect(child_workflow_future.finished?).to be false
       expect(child_workflow_future.child_workflow_execution_future.finished?).to be false
@@ -151,6 +151,63 @@ describe Temporal::Workflow::Context do
       failed_proc.call(Temporal::Workflow::Errors.generate_error_for_child_workflow_start("failed to start", "random-workflow-id"))
       expect(child_workflow_future.failed?).to be true
       expect(child_workflow_future.child_workflow_execution_future.failed?).to be true
+    end
+  end
+
+  describe '#execute_workflow!' do
+    let(:child_workflow_future) do
+      double = instance_double('Temporal::Workflow::ChildWorkflowFuture')
+      allow(double).to receive(:get).and_return(result)
+      double
+    end
+
+    before do
+      expect(workflow_context).to receive(:execute_workflow).and_return(child_workflow_future)
+    end
+
+    context 'when future fails' do
+      let(:result) { Temporal::WorkflowRunError }
+
+      it 'raises the future result exception' do
+        expect(child_workflow_future).to receive(:failed?).and_return(true)
+        expect { workflow_context.execute_workflow!(MyTestWorkflow) }.to raise_error(result)
+      end
+    end
+
+    context 'when future succeeds' do
+      let(:result) { 'result' }
+
+      it 'returns the future result' do
+        expect(child_workflow_future).to receive(:failed?).and_return(false)
+        expect(workflow_context.execute_workflow!(MyTestWorkflow)).to eq(result)
+      end
+    end
+  end
+
+  describe '#schedule_workflow' do
+    let(:cron_schedule) { '* * * * *' }
+
+    context 'when given workflow options' do
+      it 'executes workflow with merged cron_schedule option' do
+        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow,
+          options: {
+            parent_close_policy: :abandon,
+            cron_schedule: cron_schedule
+          }
+        )
+        workflow_context.schedule_workflow(MyTestWorkflow, cron_schedule, options: { parent_close_policy: :abandon })
+      end
+    end
+
+    context 'when not given workflow options' do
+      it 'executes workflow with cron_schedule option' do
+        expect(workflow_context).to receive(:execute_workflow).with(MyTestWorkflow,
+          options: {
+            cron_schedule: cron_schedule
+          }
+        )
+        workflow_context.schedule_workflow(MyTestWorkflow, cron_schedule)
+      end
     end
   end
 
