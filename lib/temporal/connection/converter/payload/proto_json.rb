@@ -5,8 +5,6 @@ module Temporal
     module Converter
       module Payload
         class ProtoJSON
-          class InvalidPayload < RuntimeError; end
-
           ENCODING = 'json/protobuf'.freeze
 
           def encoding
@@ -21,7 +19,7 @@ module Temporal
           end
 
           def to_payload(data)
-            return unless data&.is_a?(Google::Protobuf::MessageExts)
+            return unless data.is_a?(Google::Protobuf::MessageExts)
             Temporal::Api::Common::V1::Payload.new(
               metadata: {
                 'encoding' => ENCODING,

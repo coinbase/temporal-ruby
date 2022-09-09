@@ -1,10 +1,13 @@
-require 'temporal/connection/converter/payload/json'
+require 'temporal/connection/converter/payload/proto_json'
 
 describe Temporal::Connection::Converter::Payload::ProtoJSON do
   subject { described_class.new }
 
   describe 'round trip' do
     it 'converts' do
+      # Temporal::Api::Common::V1::Payload is a protobuf.
+      # Using it as the "input" here to show the roundtrip.
+      # #to_payload will return a wrapped Payload around this one.
       input = Temporal::Api::Common::V1::Payload.new(
         metadata: { 'hello' => 'world' },
         data: 'hello world',
