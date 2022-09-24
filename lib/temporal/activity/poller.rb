@@ -3,6 +3,7 @@ require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
 require 'temporal/error_handler'
+require 'temporal/metrics_keys'
 
 module Temporal
   class Activity
@@ -66,7 +67,7 @@ module Temporal
           return if shutting_down?
 
           time_diff_ms = ((Time.now - last_poll_time) * 1000).round
-          Temporal.metrics.timing('activity_poller.time_since_last_poll', time_diff_ms, metrics_tags)
+          Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_POLLER_TIME_SINCE_LAST_POLL, time_diff_ms, metrics_tags)
           Temporal.logger.debug("Polling activity task queue", { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
