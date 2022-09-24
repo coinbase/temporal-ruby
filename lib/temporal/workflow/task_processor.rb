@@ -4,6 +4,7 @@ require 'temporal/metadata'
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow/stack_trace_tracker'
+require 'temporal/metric_keys'
 
 module Temporal
   class Workflow
@@ -39,7 +40,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Workflow task", metadata.to_h)
-        Temporal.metrics.timing('workflow_task.queue_time', queue_time_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace)
 
         if !workflow_class
           raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
@@ -71,7 +72,7 @@ module Temporal
         fail_task(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing('workflow_task.latency', time_diff_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_LATENCY, time_diff_ms, workflow: workflow_name, namespace: namespace)
         Temporal.logger.debug("Workflow task processed", metadata.to_h.merge(execution_time: time_diff_ms))
       end
 
@@ -155,7 +156,7 @@ module Temporal
       end
 
       def fail_task(error)
-        Temporal.logger.error("Workflow task failed", metadata.to_h.merge(error: error.inspect))
+        Temporal.logger.error('Workflow task failed', metadata.to_h.merge(error: error.inspect))
         Temporal.logger.debug(error.backtrace.join("\n"))
 
         # Only fail the workflow task on the first attempt. Subsequent failures of the same workflow task
