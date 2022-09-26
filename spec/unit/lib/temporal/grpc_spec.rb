@@ -620,4 +620,25 @@ describe Temporal::Connection::GRPC do
       end
     end
   end
+
+  describe "#describe_task_queue" do
+    let(:response) do
+      Temporal::Api::WorkflowService::V1::DescribeTaskQueueResponse.new
+    end
+
+    before { allow(grpc_stub).to receive(:describe_task_queue).and_return(response) }
+
+    it 'calls GRPC service with supplied arguments' do
+      subject.describe_task_queue(
+        namespace: 'test ns',
+        task_queue: 'test task_queue',
+      )
+
+      expect(grpc_stub).to have_received(:describe_task_queue) do |request|
+        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest)
+        expect(request.namespace).to eq('test ns')
+        expect(request.task_queue.name).to eq('test task_queue')
+      end
+    end
+  end
 end
