@@ -3,7 +3,7 @@ require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
 require 'temporal/error_handler'
-require 'temporal/metrics_keys'
+require 'temporal/metric_keys'
 
 module Temporal
   class Activity

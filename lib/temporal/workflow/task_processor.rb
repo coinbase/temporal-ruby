@@ -4,7 +4,7 @@ require 'temporal/metadata'
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow/stack_trace_tracker'
-require 'temporal/metrics_keys'
+require 'temporal/metric_keys'
 
 module Temporal
   class Workflow

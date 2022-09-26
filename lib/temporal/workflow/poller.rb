@@ -4,7 +4,7 @@ require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
 require 'temporal/error_handler'
-require 'temporal/metrics_keys'
+require 'temporal/metric_keys'
 
 module Temporal
   class Workflow

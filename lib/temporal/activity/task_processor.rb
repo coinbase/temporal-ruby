@@ -5,7 +5,7 @@ require 'temporal/activity/context'
 require 'temporal/concerns/payloads'
 require 'temporal/connection/retryer'
 require 'temporal/connection'
-require 'temporal/metrics_keys'
+require 'temporal/metric_keys'
 
 module Temporal
   class Activity
