@@ -264,11 +264,11 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error_for_child_workflow_timeout)
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
-          # todo
-
+          state_machine.terminated
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error_for_child_workflow_terminated)
         when 'SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED'
           # Temporal Server will try to Signal the targeted Workflow
           # Contains the Signal name, as well as a Signal payload

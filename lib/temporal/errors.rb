@@ -15,6 +15,12 @@ module Temporal
   # Represents any timeout
   class TimeoutError < ClientError; end
 
+  # Represents when a child workflow times out
+  class ChildWorkflowTimeoutError < Error; end
+
+  # Represents when a child workflow is terminated
+  class ChildWorkflowTerminatedError < Error; end
+
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
   class ActivityException < ClientError; end
@@ -61,7 +67,6 @@ module Temporal
       super(message)
       @run_id = run_id
     end
-
   end
   class NamespaceNotActiveFailure < ApiError; end
   class ClientVersionNotSupportedFailure < ApiError; end
@@ -70,5 +75,4 @@ module Temporal
   class CancellationAlreadyRequestedFailure < ApiError; end
   class QueryFailed < ApiError; end
   class UnexpectedResponse < ApiError; end
-
 end
