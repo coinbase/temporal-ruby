@@ -63,7 +63,7 @@ module Temporal
           workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
           headers: execution_options.headers,
           memo: execution_options.memo,
-          search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes)
+          search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
         )
       else
         raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
@@ -130,7 +130,7 @@ module Temporal
         headers: execution_options.headers,
         cron_schedule: cron_schedule,
         memo: execution_options.memo,
-        search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes)
+        search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
       )
 
       response.run_id
@@ -158,7 +158,7 @@ module Temporal
     #
     # @param page_size [Integer] number of namespace results to return per page.
     # @param next_page_token [String] a optional pagination token returned by a previous list_namespaces call
-    def list_namespaces(page_size:, next_page_token: '')
+    def list_namespaces(page_size:, next_page_token: "")
       connection.list_namespaces(page_size: page_size, next_page_token: next_page_token)
     end
 
@@ -223,7 +223,7 @@ module Temporal
     #
     # @return workflow's return value
     def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout: nil, namespace: nil)
-      options = namespace ? { namespace: namespace } : {}
+      options = namespace ? {namespace: namespace} : {}
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       max_timeout = Temporal::Connection::GRPC::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
       history_response = nil
@@ -234,22 +234,22 @@ module Temporal
           run_id: run_id,
           wait_for_new_event: true,
           event_type: :close,
-          timeout: timeout || max_timeout
+          timeout: timeout || max_timeout,
         )
       rescue GRPC::DeadlineExceeded => e
         message = if timeout
-                    "Timed out after your specified limit of timeout: #{timeout} seconds"
-                  else
-                    "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
+          "Timed out after your specified limit of timeout: #{timeout} seconds"
+        else
+          "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
         end
-        raise TimeoutError, message
+        raise TimeoutError.new(message)
       end
       history = Workflow::History.new(history_response.history.events)
       closed_event = history.events.first
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        ResultConverter.from_result_payloads(payloads)
+        return ResultConverter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -287,7 +287,9 @@ module Temporal
       # Pick default strategy for backwards-compatibility
       strategy ||= :last_workflow_task unless workflow_task_id
 
-      raise ArgumentError, 'Please specify either :strategy or :workflow_task_id' if strategy && workflow_task_id
+      if strategy && workflow_task_id
+        raise ArgumentError, 'Please specify either :strategy or :workflow_task_id'
+      end
 
       workflow_task_id ||= find_workflow_task(namespace, workflow_id, run_id, strategy)&.id
       raise Error, 'Could not find an event to reset to' unless workflow_task_id
@@ -394,13 +396,13 @@ module Temporal
     def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :workflow, :workflow_id)
 
-      Temporal::Workflow::Executions.new(connection: connection, status: :open, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+      Temporal::Workflow::Executions.new(connection: connection, status: :open, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
     def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
-      Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+      Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
     def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
@@ -434,13 +436,13 @@ module Temporal
       # TODO: Move this into a separate class if it keeps growing
       case strategy
       when ResetStrategy::LAST_WORKFLOW_TASK
-        events = %(WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED).freeze
+        events = %[WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED].freeze
         history.events.select { |event| events.include?(event.type) }.last
       when ResetStrategy::FIRST_WORKFLOW_TASK
-        events = %(WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED).freeze
+        events = %[WORKFLOW_TASK_COMPLETED WORKFLOW_TASK_TIMED_OUT WORKFLOW_TASK_FAILED].freeze
         history.events.select { |event| events.include?(event.type) }.first
       when ResetStrategy::LAST_FAILED_ACTIVITY
-        events = %(ACTIVITY_TASK_FAILED ACTIVITY_TASK_TIMED_OUT).freeze
+        events = %[ACTIVITY_TASK_FAILED ACTIVITY_TASK_TIMED_OUT].freeze
         failed_event = history.events.select { |event| events.include?(event.type) }.last
         return unless failed_event
 
@@ -450,11 +452,13 @@ module Temporal
         raise ArgumentError, 'Unsupported reset strategy'
       end
     end
-
     def validate_filter(filter, *allowed_filters)
-      raise ArgumentError, "Allowed filters are: #{allowed_filters}" if (filter.keys - allowed_filters).length > 0
+      if (filter.keys - allowed_filters).length > 0
+        raise ArgumentError, "Allowed filters are: #{allowed_filters}"
+      end
 
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
+
   end
 end
