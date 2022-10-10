@@ -1,3 +1,4 @@
+require 'socket'
 require 'temporal/connection/grpc'
 
 module Temporal
@@ -12,7 +13,7 @@ module Temporal
       port = configuration.port
       credentials = configuration.credentials
 
-      hostname = `hostname`
+      hostname = Socket.gethostname
       thread_id = Thread.current.object_id
       identity = "#{thread_id}@#{hostname}"
 
