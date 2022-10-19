@@ -11,10 +11,7 @@ module Temporal
       host = configuration.host
       port = configuration.port
       credentials = configuration.credentials
-
-      hostname = `hostname`
-      thread_id = Thread.current.object_id
-      identity = "#{thread_id}@#{hostname}"
+      identity = configuration.identity
 
       connection_class.new(host, port, identity, credentials)
     end
