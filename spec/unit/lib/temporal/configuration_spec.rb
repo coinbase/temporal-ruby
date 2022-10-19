@@ -31,7 +31,7 @@ describe Temporal::Configuration do
     let (:new_identity) { 'new_identity' }
 
     it 'default identity' do
-      expect(subject.for_connection).to have_attributes(identity: "#{Thread.current.object_id}@#{`hostname`}")
+      expect(subject.for_connection).to have_attributes(identity: "#{Process.pid}@#{`hostname`}")
     end
 
     it 'override identity' do

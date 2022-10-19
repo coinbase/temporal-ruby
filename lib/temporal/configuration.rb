@@ -90,9 +90,9 @@ module Temporal
 
     def default_identity
       hostname = `hostname`
-      thread_id = Thread.current.object_id
+      pid = Process.pid
 
-      "#{thread_id}@#{hostname}"
+      "#{pid}@#{hostname}"
     end
 
     def default_execution_options
