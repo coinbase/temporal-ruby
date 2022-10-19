@@ -10,6 +10,14 @@ describe Temporal::Connection do
     config
   end
 
+  context 'identity' do
+    let(:identity) { 'my_identity' }
+    it 'overrides' do
+      config.identity = identity
+      expect(subject.send(:identity)).to eq(identity)
+    end
+  end
+
   context 'insecure' do
     let(:credentials) { :this_channel_is_insecure }
 
