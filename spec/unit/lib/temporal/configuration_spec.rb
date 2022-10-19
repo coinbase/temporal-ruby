@@ -26,4 +26,17 @@ describe Temporal::Configuration do
       expect(timeouts[:heartbeat]).to be(nil)
     end
   end
+
+  describe '#for_connection' do
+    let (:new_identity) { 'new_identity' }
+
+    it 'default identity' do
+      expect(subject.for_connection).to have_attributes(identity: "#{Thread.current.object_id}@#{`hostname`}")
+    end
+
+    it 'override identity' do
+      subject.identity = new_identity
+      expect(subject.for_connection).to have_attributes(identity: new_identity)
+    end
+  end
 end
