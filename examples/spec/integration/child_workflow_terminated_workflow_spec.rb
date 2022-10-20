@@ -16,6 +16,7 @@ describe ChildWorkflowTerminatedWorkflow do
       workflow_id: workflow_id
     )
 
-    puts result
+    expect(result[:child_workflow_terminated]).to eq(true)
+    expect(result[:error]).to be_a(Temporal::ChildWorkflowTerminatedError)
   end
 end

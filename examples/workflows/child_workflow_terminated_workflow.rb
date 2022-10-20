@@ -14,7 +14,8 @@ class ChildWorkflowTerminatedWorkflow < Temporal::Workflow
 
     # check that the result is now 'failed'
     {
-      child_workflow_terminated: result.failed? # terminated is represented as failed? with the Terminated Error
+      child_workflow_terminated: result.failed?, # terminated is represented as failed? with the Terminated Error
+      error: result.get
     }
   end
 end

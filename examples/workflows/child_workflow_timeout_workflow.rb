@@ -8,7 +8,8 @@ class ChildWorkflowTimeoutWorkflow < Temporal::Workflow
     result.get # wait for the workflow to finish so we can detect if it failed or not
 
     {
-      child_workflow_failed: result.failed?
+      child_workflow_failed: result.failed?,
+      error: result.get
     }
   end
 end

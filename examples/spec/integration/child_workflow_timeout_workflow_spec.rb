@@ -15,9 +15,8 @@ describe ChildWorkflowTimeoutWorkflow do
       subject,
       workflow_id: workflow_id
     )
-
-    expect(result).to eq({
-                          child_workflow_failed: true, # true dictates the workflow detected the child workflow failure!
-                        })
+    puts result
+    expect(result[:child_workflow_failed]).to eq(true)
+    expect(result[:error]).to be_a(Temporal::ChildWorkflowTimeoutError)
   end
 end
