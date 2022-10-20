@@ -9,8 +9,9 @@ module Temporal
   class ThreadPool
     attr_reader :size
 
-    def initialize(size)
+    def initialize(size, metrics_tags)
       @size = size
+      @metrics_tags = metrics_tags
       @queue = Queue.new
       @mutex = Mutex.new
       @availability = ConditionVariable.new
@@ -18,6 +19,11 @@ module Temporal
       @pool = Array.new(size) do |i|
         Thread.new { poll }
       end
+    end
+
+    def report_metrics
+      Temporal.metrics.gauge(Temporal::MetricKeys::THREAD_POOL_AVAILABLE_THREADS, @available_threads, @metrics_tags)
+      Temporal.metrics.gauge(Temporal::MetricKeys::THREAD_POOL_QUEUE_SIZE, @queue.size, @metrics_tags)
     end
 
     def wait_for_available_threads
@@ -33,6 +39,8 @@ module Temporal
         @available_threads -= 1
         @queue << block
       end
+
+      report_metrics
     end
 
     def shutdown
@@ -56,6 +64,8 @@ module Temporal
             @available_threads += 1
             @availability.signal
           end
+
+          report_metrics
         end
       end
     end

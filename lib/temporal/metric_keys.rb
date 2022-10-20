@@ -10,5 +10,8 @@ module Temporal
     WORKFLOW_TASK_QUEUE_TIME = 'workflow_task.queue_time'.freeze
     WORKFLOW_TASK_LATENCY = 'workflow_task.latency'.freeze
     WORKFLOW_TASK_EXECUTION_FAILED = 'workflow_task.execution_failed'.freeze
+
+    THREAD_POOL_AVAILABLE_THREADS = 'thread_pool.available_threads'.freeze
+    THREAD_POOL_QUEUE_SIZE = 'thread_pool.queue_size'.freeze
   end
 end

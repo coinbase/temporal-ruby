@@ -104,7 +104,7 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
+        @thread_pool ||= ThreadPool.new(options[:thread_pool_size], { pool_name: 'workflow_task_poller' })
       end
 
       def binary_checksum
