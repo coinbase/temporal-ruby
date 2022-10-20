@@ -76,7 +76,7 @@ module Temporal
 
           Temporal.metrics.increment(
             Temporal::MetricKeys::WORKFLOW_POLLER_POLL_COMPLETED,
-            metrics_tags.merge(received_task: !task.nil?.to_s)
+            metrics_tags.merge(received_task: (!task.nil?).to_s)
           )
 
           next unless task&.workflow_type
