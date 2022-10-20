@@ -68,6 +68,12 @@ module Temporal
 
           task = poll_for_task
           last_poll_time = Time.now
+
+          Temporal.metrics.increment(
+            Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+            metrics_tags.merge(received_task: (!task.nil?).to_s)
+          )
+
           next unless task&.activity_type
 
           thread_pool.schedule { process(task) }
