@@ -72,6 +72,12 @@ module Temporal
 
           task = poll_for_task
           last_poll_time = Time.now
+
+          Temporal.metrics.increment(
+            Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+            metrics_tags.merge(received_task: !task.nil?.to_s)
+          )
+
           next unless task&.activity_type
 
           thread_pool.schedule { process(task) }
@@ -98,7 +104,7 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
+        @thread_pool ||= ThreadPool.new(options[:thread_pool_size], { pool_name: 'activity_task_poller' })
       end
     end
   end
