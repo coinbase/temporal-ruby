@@ -18,7 +18,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'oj'
 
   spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rspec'
+  # TODO: Investigate spec failure surfacing in RSpec 3.11
+  spec.add_development_dependency 'rspec', '~> 3.10.0'
   spec.add_development_dependency 'fabrication'
   spec.add_development_dependency 'grpc-tools'
   spec.add_development_dependency 'yard'
