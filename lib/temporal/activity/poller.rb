@@ -100,7 +100,14 @@ module Temporal
       end
 
       def thread_pool
-        @thread_pool ||= ThreadPool.new(options[:thread_pool_size])
+        @thread_pool ||= ThreadPool.new(
+          options[:thread_pool_size],
+          {
+            pool_name: 'activity_task_poller',
+            namespace: namespace,
+            task_queue: task_queue
+          }
+        )
       end
     end
   end
