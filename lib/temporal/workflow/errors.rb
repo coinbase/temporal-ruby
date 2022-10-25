@@ -67,14 +67,6 @@ module Temporal
         end
       end
 
-      def self.generate_error_for_child_workflow_timeout
-        ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding')
-      end
-
-      def self.generate_error_for_child_workflow_terminated
-        ChildWorkflowTerminatedError.new('The child workflow was terminated')
-      end
-
       private_class_method def self.safe_constantize(const)
         Object.const_get(const) if Object.const_defined?(const)
       rescue NameError
