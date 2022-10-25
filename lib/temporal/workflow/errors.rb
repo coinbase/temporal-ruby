@@ -15,35 +15,34 @@ module Temporal
           exception_class = safe_constantize(failure.application_failure_info.type)
           if exception_class.nil?
             Temporal.logger.error(
-              "Could not find original error class. Defaulting to StandardError.", 
-              {original_error: failure.application_failure_info.type},
+              'Could not find original error class. Defaulting to StandardError.',
+              { original_error: failure.application_failure_info.type }
             )
             message = "#{failure.application_failure_info.type}: #{message}"
             exception_class = default_exception_class
           end
 
-
           begin
             exception = exception_class.new(message)
-          rescue => deserialization_error
+          rescue StandardError => e
             # We don't currently support serializing/deserializing exceptions with more than one argument.
             message = "#{exception_class}: #{message}"
             exception = default_exception_class.new(message)
             Temporal.logger.error(
-              "Could not instantiate original error. Defaulting to StandardError.", 
+              'Could not instantiate original error. Defaulting to StandardError.',
               {
                 original_error: failure.application_failure_info.type,
-                instantiation_error_class: deserialization_error.class.to_s,
-                instantiation_error_message: deserialization_error.message,
-              },
-            ) 
+                instantiation_error_class: e.class.to_s,
+                instantiation_error_message: e.message
+              }
+            )
           end
           exception.tap do |exception|
             backtrace = failure.stack_trace.split("\n")
-            exception.set_backtrace(backtrace) if !backtrace.empty?
+            exception.set_backtrace(backtrace) unless backtrace.empty?
           end
         when :timeout_failure_info
-          TimeoutError.new("Timeout type: #{failure.timeout_failure_info.timeout_type.to_s}")
+          TimeoutError.new("Timeout type: #{failure.timeout_failure_info.timeout_type}")
         when :canceled_failure_info
           # TODO: Distinguish between different entity cancellations
           StandardError.new(from_payloads(failure.canceled_failure_info.details))
@@ -59,20 +58,12 @@ module Temporal
       def self.generate_error_for_child_workflow_start(cause, workflow_id)
         if cause == WORKFLOW_ALREADY_EXISTS_SYM
           Temporal::WorkflowExecutionAlreadyStartedFailure.new(
-            "The child workflow could not be started - per its workflow_id_reuse_policy, it conflicts with another workflow with the same id: #{workflow_id}",
+            "The child workflow could not be started - per its workflow_id_reuse_policy, it conflicts with another workflow with the same id: #{workflow_id}"
           )
         else
           # Right now, there's only one cause, but temporal may add more in the future
           StandardError.new("The child workflow could not be started. Reason: #{cause}")
         end
-      end
-
-      def self.generate_error_for_child_workflow_timeout
-        ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding')
-      end
-
-      def self.generate_error_for_child_workflow_terminated
-        ChildWorkflowTerminatedError.new('The child workflow was terminated')
       end
 
       private_class_method def self.safe_constantize(const)
