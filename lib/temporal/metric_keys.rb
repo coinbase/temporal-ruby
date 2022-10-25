@@ -1,5 +1,5 @@
 module Temporal
-  class MetricKeys
+  module MetricKeys
     ACTIVITY_POLLER_TIME_SINCE_LAST_POLL = 'activity_poller.time_since_last_poll'.freeze
     ACTIVITY_POLLER_POLL_COMPLETED = 'activity_poller.poll_completed'.freeze
     ACTIVITY_TASK_QUEUE_TIME = 'activity_task.queue_time'.freeze
