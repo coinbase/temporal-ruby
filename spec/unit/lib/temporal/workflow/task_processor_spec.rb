@@ -14,7 +14,7 @@ describe Temporal::Workflow::TaskProcessor do
   let(:workflow_name) { 'TestWorkflow' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
-  let(:input) { ['arg1', 'arg2'] }
+  let(:input) { %w[arg1 arg2] }
   let(:config) { Temporal::Configuration.new }
   let(:binary_checksum) { 'v1.0.0' }
 
@@ -169,7 +169,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
 
         it 'sends latency metric' do
@@ -177,7 +182,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
       end
 
@@ -256,7 +266,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
 
         it 'sends latency metric' do
@@ -264,7 +279,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
       end
 

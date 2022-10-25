@@ -51,8 +51,8 @@ describe Temporal::Activity::Poller do
       expect(Temporal.metrics)
         .to have_received(:timing)
         .with(
-          'activity_poller.time_since_last_poll',
-          an_instance_of(Fixnum),
+          Temporal::MetricKeys::ACTIVITY_POLLER_TIME_SINCE_LAST_POLL,
+          an_instance_of(Integer),
           namespace: namespace,
           task_queue: task_queue
         )
@@ -94,6 +94,7 @@ describe Temporal::Activity::Poller do
       context 'with middleware configured' do
         class TestPollerMiddleware
           def initialize(_); end
+
           def call(_); end
         end
 
@@ -131,7 +132,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal.logger)
           .to have_received(:error)
-          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>'})
+          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>' })
       end
     end
   end

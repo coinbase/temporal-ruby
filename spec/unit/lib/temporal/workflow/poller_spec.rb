@@ -59,8 +59,8 @@ describe Temporal::Workflow::Poller do
       expect(Temporal.metrics)
         .to have_received(:timing)
         .with(
-          'workflow_poller.time_since_last_poll',
-          an_instance_of(Fixnum),
+          Temporal::MetricKeys::WORKFLOW_POLLER_TIME_SINCE_LAST_POLL,
+          an_instance_of(Integer),
           namespace: namespace,
           task_queue: task_queue
         )
@@ -94,6 +94,7 @@ describe Temporal::Workflow::Poller do
       context 'with middleware configured' do
         class TestPollerMiddleware
           def initialize(_); end
+
           def call(_); end
         end
 
