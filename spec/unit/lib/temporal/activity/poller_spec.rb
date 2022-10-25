@@ -21,6 +21,7 @@ describe Temporal::Activity::Poller do
     allow(Temporal::ThreadPool).to receive(:new).and_return(thread_pool)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
+    allow(Temporal.metrics).to receive(:increment)
   end
 
   describe '#start' do
@@ -59,6 +60,26 @@ describe Temporal::Activity::Poller do
         .twice
     end
 
+    it 'reports polling completed with received_task false' do
+      allow(subject).to receive(:shutting_down?).and_return(false, false, true)
+      allow(connection).to receive(:poll_activity_task_queue).and_return(nil)
+
+      subject.start
+
+      # stop poller before inspecting
+      subject.stop_polling; subject.wait
+
+      expect(Temporal.metrics)
+        .to have_received(:increment)
+        .with(
+          Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+          received_task: 'false',
+          namespace: namespace,
+          task_queue: task_queue
+        )
+        .twice
+    end
+
     context 'when an activity task is received' do
       let(:task_processor) { instance_double(Temporal::Activity::TaskProcessor, process: nil) }
       let(:task) { Fabricate(:api_activity_task) }
@@ -89,6 +110,23 @@ describe Temporal::Activity::Poller do
           .to have_received(:new)
           .with(task, namespace, lookup, middleware_chain, config)
         expect(task_processor).to have_received(:process)
+      end
+
+      it 'reports polling completed with received_task true' do
+        subject.start
+
+        # stop poller before inspecting
+        subject.stop_polling; subject.wait
+
+        expect(Temporal.metrics)
+          .to have_received(:increment)
+          .with(
+            Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+            received_task: 'true',
+            namespace: namespace,
+            task_queue: task_queue
+          )
+          .once
       end
 
       context 'with middleware configured' do
