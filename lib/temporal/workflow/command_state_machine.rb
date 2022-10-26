@@ -9,6 +9,7 @@ module Temporal
       CANCELED_STATE = :canceled
       FAILED_STATE = :failed
       TIMED_OUT_STATE = :timed_out
+      TERMINATED_STATE = :terminated
 
       attr_reader :state
 
@@ -34,6 +35,10 @@ module Temporal
 
       def cancel
         @state = CANCELED_STATE
+      end
+
+      def terminated
+        @state = TERMINATED_STATE
       end
 
       def fail

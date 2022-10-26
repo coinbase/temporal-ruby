@@ -72,7 +72,6 @@ module Temporal
       rescue NameError
         nil
       end
-
     end
   end
 end
