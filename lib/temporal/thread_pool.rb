@@ -1,3 +1,5 @@
+require 'temporal/metric_keys'
+
 # This class implements a very simple ThreadPool with the ability to
 # block until at least one thread becomes available. This allows Pollers
 # to only poll when there's an available thread in the pool.

@@ -1,6 +1,7 @@
 require 'temporal/activity/poller'
-require 'temporal/middleware/entry'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
   let(:connection) { instance_double('Temporal::Connection::GRPC', cancel_polling_request: nil) }

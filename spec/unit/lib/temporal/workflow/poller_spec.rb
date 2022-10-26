@@ -1,6 +1,7 @@
-require 'temporal/workflow/poller'
-require 'temporal/middleware/entry'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/entry'
+require 'temporal/workflow/poller'
 
 describe Temporal::Workflow::Poller do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }

@@ -1,6 +1,7 @@
-require 'temporal/workflow/task_processor'
-require 'temporal/middleware/chain'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/chain'
+require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::TaskProcessor do
   subject { described_class.new(task, namespace, lookup, middleware_chain, config, binary_checksum) }
