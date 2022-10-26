@@ -12,8 +12,7 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_writer :converter
-    attr_accessor :connection_type, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes
+    attr_accessor :connection_type, :converter, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -76,8 +75,6 @@ module Temporal
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
     end
 
-    attr_reader :converter
-
     def for_connection
       Connection.new(
         type: connection_type,
@@ -88,13 +85,6 @@ module Temporal
       ).freeze
     end
 
-    def default_identity
-      hostname = `hostname`
-      pid = Process.pid
-
-      "#{pid}@#{hostname}"
-    end
-
     def default_execution_options
       Execution.new(
         namespace: namespace,
@@ -103,6 +93,15 @@ module Temporal
         headers: headers,
         search_attributes: search_attributes
       ).freeze
+    end
+
+    private
+
+    def default_identity
+      hostname = `hostname`
+      pid = Process.pid
+
+      "#{pid}@#{hostname}".freeze
     end
   end
 end
