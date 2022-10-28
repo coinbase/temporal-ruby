@@ -1,5 +1,5 @@
 module Temporal
-  class MetricKeys
+  module MetricKeys
     ACTIVITY_POLLER_TIME_SINCE_LAST_POLL = 'activity_poller.time_since_last_poll'.freeze
     ACTIVITY_POLLER_POLL_COMPLETED = 'activity_poller.poll_completed'.freeze
     ACTIVITY_TASK_QUEUE_TIME = 'activity_task.queue_time'.freeze
@@ -12,6 +12,5 @@ module Temporal
     WORKFLOW_TASK_EXECUTION_FAILED = 'workflow_task.execution_failed'.freeze
 
     THREAD_POOL_AVAILABLE_THREADS = 'thread_pool.available_threads'.freeze
-    THREAD_POOL_QUEUE_SIZE = 'thread_pool.queue_size'.freeze
   end
 end
