@@ -1,6 +1,7 @@
-require 'temporal/workflow/task_processor'
-require 'temporal/middleware/chain'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/chain'
+require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::TaskProcessor do
   subject { described_class.new(task, namespace, lookup, middleware_chain, config, binary_checksum) }
@@ -14,7 +15,7 @@ describe Temporal::Workflow::TaskProcessor do
   let(:workflow_name) { 'TestWorkflow' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
-  let(:input) { ['arg1', 'arg2'] }
+  let(:input) { %w[arg1 arg2] }
   let(:config) { Temporal::Configuration.new }
   let(:binary_checksum) { 'v1.0.0' }
 
@@ -33,6 +34,7 @@ describe Temporal::Workflow::TaskProcessor do
       allow(middleware_chain).to receive(:invoke).and_call_original
 
       allow(Temporal.metrics).to receive(:timing)
+      allow(Temporal.metrics).to receive(:increment)
     end
 
     context 'when workflow is not registered' do
@@ -57,6 +59,18 @@ describe Temporal::Workflow::TaskProcessor do
 
         expect(reported_error).to be_an_instance_of(Temporal::WorkflowNotRegistered)
         expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::WorkflowTask)
+      end
+
+      it 'emits workflow task failure metric' do
+        subject.process
+
+        expect(Temporal.metrics)
+          .to have_received(:increment)
+          .with(
+            Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
+            workflow: workflow_name,
+            namespace: namespace
+          )
       end
     end
 
@@ -169,7 +183,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
 
         it 'sends latency metric' do
@@ -177,7 +196,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
       end
 
@@ -200,6 +224,18 @@ describe Temporal::Workflow::TaskProcessor do
                 cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
                 exception: exception,
                 binary_checksum: binary_checksum
+              )
+          end
+
+          it 'emits workflow task failure metric' do
+            subject.process
+
+            expect(Temporal.metrics)
+              .to have_received(:increment)
+              .with(
+                Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
+                workflow: workflow_name,
+                namespace: namespace
               )
           end
         end
@@ -256,7 +292,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.queue_time', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
 
         it 'sends latency metric' do
@@ -264,7 +305,12 @@ describe Temporal::Workflow::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('workflow_task.latency', an_instance_of(Integer), workflow: workflow_name, namespace: namespace)
+            .with(
+              Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
+              an_instance_of(Integer),
+              workflow: workflow_name,
+              namespace: namespace
+            )
         end
       end
 

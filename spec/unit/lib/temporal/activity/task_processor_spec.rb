@@ -1,6 +1,7 @@
 require 'temporal/activity/task_processor'
-require 'temporal/middleware/chain'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/chain'
 
 describe Temporal::Activity::TaskProcessor do
   subject { described_class.new(task, namespace, lookup, middleware_chain, config) }
@@ -20,7 +21,7 @@ describe Temporal::Activity::TaskProcessor do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:config) { Temporal::Configuration.new }
-  let(:input) { ['arg1', 'arg2'] }
+  let(:input) { %w[arg1 arg2] }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Activity::Context', async?: false) }
@@ -127,7 +128,13 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
+            .with(
+              Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              activity: activity_name,
+              namespace: namespace,
+              workflow: workflow_name
+            )
         end
 
         it 'sends latency metric' do
@@ -135,7 +142,13 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
+            .with(
+              Temporal::MetricKeys::ACTIVITY_TASK_LATENCY,
+              an_instance_of(Integer),
+              activity: activity_name,
+              namespace: namespace,
+              workflow: workflow_name
+            )
         end
 
         context 'with async activity' do
@@ -206,7 +219,13 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.queue_time', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
+            .with(
+              Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME,
+              an_instance_of(Integer),
+              activity: activity_name,
+              namespace: namespace,
+              workflow: workflow_name
+            )
         end
 
         it 'sends latency metric' do
@@ -214,7 +233,13 @@ describe Temporal::Activity::TaskProcessor do
 
           expect(Temporal.metrics)
             .to have_received(:timing)
-            .with('activity_task.latency', an_instance_of(Integer), activity: activity_name, namespace: namespace, workflow: workflow_name)
+            .with(
+              Temporal::MetricKeys::ACTIVITY_TASK_LATENCY,
+              an_instance_of(Integer),
+              activity: activity_name,
+              namespace: namespace,
+              workflow: workflow_name
+            )
         end
 
         context 'with ScriptError exception' do
