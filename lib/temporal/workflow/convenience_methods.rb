@@ -29,6 +29,13 @@ module Temporal
 
         context.execute_workflow!(self, *input, **args)
       end
+
+      def schedule(cron_schedule, *input, **args)
+        context = Temporal::ThreadLocalContext.get
+        raise 'Called Workflow#schedule outside of a Workflow context' unless context
+
+        context.schedule_workflow(self, cron_schedule, *input, **args)
+      end
     end
   end
 end

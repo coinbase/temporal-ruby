@@ -3,7 +3,7 @@ require 'temporal/metrics_adapters/null'
 require 'temporal/connection/converter/payload/nil'
 require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
-require 'temporal/connection/converter/payload/json_protobuf'
+require 'temporal/connection/converter/payload/proto_json'
 require 'temporal/connection/converter/composite'
 
 module Temporal
@@ -12,8 +12,7 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_writer :converter
-    attr_accessor :connection_type, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :max_page_size, :connection_options, :search_attributes
+    attr_accessor :connection_type, :converter, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :max_page_size, :connection_options, :search_attributes
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -40,8 +39,8 @@ module Temporal
       payload_converters: [
         Temporal::Connection::Converter::Payload::Nil.new,
         Temporal::Connection::Converter::Payload::Bytes.new,
-        Temporal::Connection::Converter::Payload::JSON.new,
-        Temporal::Connection::Converter::Payload::JSONProtobuf.new,
+        Temporal::Connection::Converter::Payload::ProtoJSON.new,
+        Temporal::Connection::Converter::Payload::JSON.new
       ]
     ).freeze
 
@@ -77,10 +76,6 @@ module Temporal
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
     end
 
-    def converter
-      @converter
-    end
-
     def for_connection
       Connection.new(
         type: connection_type,
@@ -90,15 +85,8 @@ module Temporal
         identity: identity || default_identity,
         options: {
           max_page_size: max_page_size
-        }.merge(connection_options),
+        }.merge(connection_options)
       ).freeze
-    end
-
-    def default_identity
-      hostname = `hostname`
-      pid = Process.pid
-
-      "#{pid}@#{hostname}"
     end
 
     def default_execution_options
@@ -107,8 +95,17 @@ module Temporal
         task_queue: task_list,
         timeouts: timeouts,
         headers: headers,
-        search_attributes: search_attributes,
+        search_attributes: search_attributes
       ).freeze
+    end
+
+    private
+
+    def default_identity
+      hostname = `hostname`
+      pid = Process.pid
+
+      "#{pid}@#{hostname}".freeze
     end
   end
 end

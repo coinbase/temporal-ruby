@@ -1,6 +1,7 @@
 require 'temporal/activity/poller'
-require 'temporal/middleware/entry'
 require 'temporal/configuration'
+require 'temporal/metric_keys'
+require 'temporal/middleware/entry'
 
 describe Temporal::Activity::Poller do
   let(:connection) { instance_double('Temporal::Connection::GRPC', cancel_polling_request: nil) }
@@ -23,6 +24,7 @@ describe Temporal::Activity::Poller do
     allow(Temporal::ThreadPool).to receive(:new).and_return(thread_pool)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
+    allow(Temporal.metrics).to receive(:increment)
   end
 
   # poller will receive task times times, and nil thereafter.  
@@ -61,8 +63,22 @@ describe Temporal::Activity::Poller do
       expect(Temporal.metrics)
         .to have_received(:timing)
         .with(
-          'activity_poller.time_since_last_poll',
-          an_instance_of(Fixnum),
+          Temporal::MetricKeys::ACTIVITY_POLLER_TIME_SINCE_LAST_POLL,
+          an_instance_of(Integer),
+          namespace: namespace,
+          task_queue: task_queue
+        )
+        .at_least(:twice)
+    end
+
+    it 'reports polling completed with received_task false' do
+      poll(subject, connection, nil, times: 2)
+
+      expect(Temporal.metrics)
+        .to have_received(:increment)
+        .with(
+          Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+          received_task: 'false',
           namespace: namespace,
           task_queue: task_queue
         )
@@ -93,9 +109,24 @@ describe Temporal::Activity::Poller do
         expect(task_processor).to have_received(:process)
       end
 
+      it 'reports polling completed with received_task true' do
+        poll(subject, connection, task)
+
+        expect(Temporal.metrics)
+          .to have_received(:increment)
+          .with(
+            Temporal::MetricKeys::ACTIVITY_POLLER_POLL_COMPLETED,
+            received_task: 'true',
+            namespace: namespace,
+            task_queue: task_queue
+          )
+          .once
+      end
+
       context 'with middleware configured' do
         class TestPollerMiddleware
           def initialize(_); end
+
           def call(_); end
         end
 
@@ -135,7 +166,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal.logger)
           .to have_received(:error)
-          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>'})
+          .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>' })
       end
     end
   end
