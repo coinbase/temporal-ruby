@@ -409,6 +409,10 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
+    def count_workflow_executions(namespace, query)
+      connection.count_workflow_executions(namespace: namespace, query: query).count
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
