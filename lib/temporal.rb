@@ -13,7 +13,7 @@ require 'temporal/workflow/errors'
 module Temporal
   extend SingleForwardable
 
-  def_delegators :default_client, #target
+  def_delegators :default_client, # target
                  :start_workflow,
                  :schedule_workflow,
                  :register_namespace,
@@ -29,10 +29,11 @@ module Temporal
                  :fail_activity,
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions,
-                 :query_workflow_executions
+                 :query_workflow_executions,
+                 :count_workflow_executions
 
   class << self
-    def configure(&block)
+    def configure
       yield config
     end
 
@@ -58,6 +59,5 @@ module Temporal
     def config
       @config ||= Configuration.new
     end
-
   end
 end
