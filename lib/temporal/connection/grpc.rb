@@ -472,7 +472,8 @@ module Temporal
           query: query
         )
         client.count_workflow_executions(request)
-
+      end
+      
       def get_search_attributes
         raise NotImplementedError
       end

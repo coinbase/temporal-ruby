@@ -3,11 +3,11 @@ require 'securerandom'
 
 describe 'Temporal.count_workflow_executions', :integration do
   it 'counts 0 workflows when none match' do
-    result = Temporal.count_workflow_executions(
-      Temporal.configuration.namespace, 'WorkflowType="ThisDoesntExistWorkflow"'
+    result = Temporal.connection.count_workflow_executions(
+      namespace: Temporal.configuration.namespace, query: 'WorkflowType="ThisDoesntExistWorkflow"'
     )
 
-    expect(result).to eq(0)
+    expect(result.count).to eq(0)
   end
 
   it 'counts workflows correctly' do
@@ -24,14 +24,14 @@ describe 'Temporal.count_workflow_executions', :integration do
     found_correct_result = false
     count = 0
     while count < 15 && !found_correct_result
-      result = Temporal.count_workflow_executions(
-        Temporal.configuration.namespace, "WorkflowId=\"#{workflow_id}\""
+      result = Temporal.connection.count_workflow_executions(
+        namespace: Temporal.configuration.namespace, query: "WorkflowId=\"#{workflow_id}\""
       )
 
       sleep 2
 
       # should return result == 1
-      found_correct_result = result == 1
+      found_correct_result = result.count == 1
       count += 1
     end
 
