@@ -15,6 +15,7 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
       'CustomDatetimeField' => values[:time_value],
     }
     attributes.compact!
+    workflow.logger("Attempting to create attributes", attributes)
     workflow.upsert_search_attributes(attributes)
     # The following lines are extra complexity to test if upsert_search_attributes is tracked properly in the internal
     # state machine.
