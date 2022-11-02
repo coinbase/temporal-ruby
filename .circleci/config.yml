@@ -21,6 +21,16 @@ jobs:
         name: postgres
         environment:
           POSTGRES_PASSWORD: temporal
+      - image: elasticsearch:7.16.2
+        name: elasticsearch
+        environment:
+          cluster.routing.allocation.disk.threshold_enabled: true
+          cluster.routing.allocation.disk.watermark.low: 512mb
+          cluster.routing.allocation.disk.watermark.high: 256mb
+          cluster.routing.allocation.disk.watermark.flood_stage: 128mb
+          discovery.type: single-node
+          ES_JAVA_OPTS: -Xms256m -Xmx256m
+          xpack.security.enabled: false
       - image: temporalio/auto-setup:latest
         name: temporal
         environment:
@@ -29,6 +39,9 @@ jobs:
           - POSTGRES_USER=postgres
           - POSTGRES_PWD=temporal
           - POSTGRES_SEEDS=postgres
+          - ENABLE_ES=true
+          - ES_SEEDS=elasticsearch
+          - ES_VERSION=v7
 
     environment:
       - TEMPORAL_HOST=temporal
