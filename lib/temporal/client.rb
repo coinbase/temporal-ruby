@@ -409,6 +409,10 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
+    def connection
+      @connection ||= Temporal::Connection.generate(config.for_connection)
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
@@ -417,10 +421,6 @@ module Temporal
     private
 
     attr_reader :config
-
-    def connection
-      @connection ||= Temporal::Connection.generate(config.for_connection)
-    end
 
     def compute_run_timeout(execution_options)
       execution_options.timeouts[:run] || execution_options.timeouts[:execution]
