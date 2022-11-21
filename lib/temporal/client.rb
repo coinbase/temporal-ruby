@@ -442,6 +442,10 @@ module Temporal
       cron_schedule != '' ? cron_schedule : nil
     end
 
+    def connection
+      @connection ||= Temporal::Connection.generate(config.for_connection)
+    end
+
     class ResultConverter
       extend Concerns::Payloads
     end
@@ -450,10 +454,6 @@ module Temporal
     private
 
     attr_reader :config
-
-    def connection
-      @connection ||= Temporal::Connection.generate(config.for_connection)
-    end
 
     def compute_run_timeout(execution_options)
       execution_options.timeouts[:run] || execution_options.timeouts[:execution]
