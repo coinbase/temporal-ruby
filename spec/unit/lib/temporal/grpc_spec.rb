@@ -363,6 +363,29 @@ describe Temporal::Connection::GRPC do
         end
       end
     end
+
+    describe "#count_workflow_executions" do
+      let(:namespace) { 'test-namespace' }
+      let(:query)  { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
+      let(:args) { { namespace: namespace, query: query } }
+      let(:temporal_response) do
+        Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsResponse.new(count: 0)
+      end
+
+      before do
+        allow(grpc_stub).to receive(:count_workflow_executions).and_return(temporal_response)
+      end
+
+      it 'makes an API request' do
+        subject.count_workflow_executions(**args)
+
+        expect(grpc_stub).to have_received(:count_workflow_executions) do |request|
+          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest)
+          expect(request.namespace).to eq(namespace)
+          expect(request.query).to eq(query)
+        end
+      end
+    end
     
     describe '#list_workflow_executions' do
       let(:namespace) { 'test-namespace' }

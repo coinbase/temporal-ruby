@@ -472,8 +472,12 @@ module Temporal
         raise NotImplementedError
       end
 
-      def count_workflow_executions
-        raise NotImplementedError
+      def count_workflow_executions(namespace:, query:)
+        request = Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest.new(
+          namespace: namespace,
+          query: query
+        )
+        client.count_workflow_executions(request)
       end
 
       def get_search_attributes

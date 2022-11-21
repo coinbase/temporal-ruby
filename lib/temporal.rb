@@ -30,7 +30,8 @@ module Temporal
                  :get_cron_schedule,
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions,
-                 :query_workflow_executions
+                 :query_workflow_executions,
+                 :connection
 
   class << self
     def configure(&block)
