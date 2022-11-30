@@ -142,7 +142,7 @@ module Temporal
         event_type: :all,
         timeout: nil
       )
-        if wait_for_new_event 
+        if wait_for_new_event
           if timeout.nil?
             # This is an internal error.  Wrappers should enforce this.
             raise "You must specify a timeout when wait_for_new_event = true."
@@ -293,8 +293,17 @@ module Temporal
         raise NotImplementedError
       end
 
-      def request_cancel_workflow_execution
-        raise NotImplementedError
+      def request_cancel_workflow_execution(namespace:, workflow_id:, run_id:, reason: nil)
+        request = Temporal::Api::WorkflowService::V1::RequestCancelWorkflowExecution.new(
+          namespace: namespace,
+          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+            workflow_id: workflow_id,
+            run_id: run_id
+          ),
+          identity: identity,
+          reason: reason,
+        )
+        client.request_cancel_workflow_execution(request)
       end
 
       def signal_workflow_execution(namespace:, workflow_id:, run_id:, signal:, input: nil)
@@ -534,7 +543,7 @@ module Temporal
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
         status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
-        
+
         Temporal::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end
