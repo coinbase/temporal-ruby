@@ -3,7 +3,7 @@ require 'temporal/metrics_adapters/null'
 require 'temporal/connection/converter/payload/nil'
 require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
-require 'temporal/connection/converter/payload/json_protobuf'
+require 'temporal/connection/converter/payload/json_proto'
 require 'temporal/connection/converter/composite'
 
 module Temporal
