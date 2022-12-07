@@ -193,7 +193,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 
@@ -303,7 +304,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 

@@ -40,7 +40,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Workflow task", metadata.to_h)
-        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace, task_queue: config.task_queue)
 
         if !workflow_class
           raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
