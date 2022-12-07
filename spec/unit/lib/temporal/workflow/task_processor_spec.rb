@@ -16,8 +16,13 @@ describe Temporal::Workflow::TaskProcessor do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { %w[arg1 arg2] }
-  let(:config) { Temporal::Configuration.new }
+  let(:config) { 
+    Temporal::Configuration.new.tap do |config|
+      config.task_queue = task_queue
+    end
+  }
   let(:binary_checksum) { 'v1.0.0' }
+  let(:task_queue) { 'test-task-queue' }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Workflow::Context') }
@@ -69,7 +74,8 @@ describe Temporal::Workflow::TaskProcessor do
           .with(
             Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
             workflow: workflow_name,
-            namespace: namespace
+            namespace: namespace,
+            task_queue: task_queue
           )
       end
     end
@@ -187,7 +193,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 
@@ -235,7 +242,8 @@ describe Temporal::Workflow::TaskProcessor do
               .with(
                 Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
                 workflow: workflow_name,
-                namespace: namespace
+                namespace: namespace,
+                task_queue: task_queue
               )
           end
         end
@@ -296,7 +304,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 
