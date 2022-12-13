@@ -7,10 +7,11 @@ require 'temporal/activity/async_token'
 module Temporal
   class Activity
     class Context
-      def initialize(connection, metadata)
+      def initialize(connection, metadata, activity_name)
         @connection = connection
         @metadata = metadata
         @async = false
+        @name = activity_name
       end
 
       def async
@@ -31,7 +32,7 @@ module Temporal
       end
 
       def heartbeat(details = nil)
-        logger.debug("Activity heartbeat", metadata.to_h)
+        logger.debug('Activity heartbeat', metadata.to_h)
         connection.record_activity_task_heartbeat(namespace: metadata.namespace, task_token: task_token, details: details)
       end
 
@@ -55,6 +56,8 @@ module Temporal
       def headers
         metadata.headers
       end
+
+      attr_reader :name
 
       private
 
