@@ -7,9 +7,7 @@
 module MyExecutor
   def call(args)
     context = Temporal::ThreadLocalContext.get
-    unless context
-      raise "Called #{name}#execute outside of a Workflow context"
-    end
+    raise "Called #{name}#execute outside of a Workflow context" unless context
 
     # We want temporal to record 'Plus' or 'Times' as the names of the activites,
     # rather than DelegatorActivity
@@ -38,15 +36,9 @@ end
 
 # Calls into our other class hierarchy.
 class DelegatorActivity < Temporal::Activity
-
   dynamic
 
   def execute(input)
-    case activity.name
-    when 'Plus'
-      Plus.new.do_it(input)
-    when 'Times'
-      Times.new.do_it(input)
-    end
+    Object.const_get(activity.name).new.do_it(input)
   end
 end
