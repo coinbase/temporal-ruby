@@ -31,8 +31,8 @@ describe Temporal::ExecutableLookup do
         subject.add('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
       end.to raise_error(
         Temporal::TypeAlreadyRegisteredError,
-        'Cannot register IllegalSecondDynamicActivity marked as dynamic?; MyDynamicActivity is already registered as ' \
-        'dynamic?, and there can be only one.'
+        'Cannot register IllegalSecondDynamicActivity marked as dynamic; MyDynamicActivity is already registered as ' \
+        'dynamic, and there can be only one.'
       )
     end
   end
@@ -56,5 +56,4 @@ describe Temporal::ExecutableLookup do
       expect(subject.find('SomethingElse')).to eq(MyDynamicActivity)
     end
   end
-
 end
