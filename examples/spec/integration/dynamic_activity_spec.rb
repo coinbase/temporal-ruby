@@ -5,8 +5,8 @@ describe 'Dynamic activities' do
 
   it 'can delegate to other classes' do
     run_id = Temporal.start_workflow(CallsDelegatorWorkflow, options: {
-      workflow_id: workflow_id
-    })
+                                       workflow_id: workflow_id
+                                     })
 
     result = Temporal.await_workflow_result(
       CallsDelegatorWorkflow,
