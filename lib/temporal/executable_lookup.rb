@@ -16,8 +16,8 @@ module Temporal
       if executable.dynamic?
         if @fallback_executable
           raise Temporal::TypeAlreadyRegisteredError.new(
-            "Cannot register #{name} marked as dynamic?; #{fallback_executable_name} is already registered as " \
-            "dynamic?, and there can be only one."
+            "Cannot register #{name} marked as dynamic; #{fallback_executable_name} is already registered as " \
+            "dynamic, and there can be only one."
           )
         end
         @fallback_executable = executable
