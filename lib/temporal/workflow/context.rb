@@ -111,7 +111,7 @@ module Temporal
 
         side_effect do
           # TODO: this probably requires a local context implementation
-          context = Activity::Context.new(nil, nil)
+          context = Activity::Context.new(nil, nil, activity_class.name)
           activity_class.execute_in_context(context, input)
         end
       end
