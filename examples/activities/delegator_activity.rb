@@ -3,32 +3,20 @@
 # that doesn't know about temporal.
 # See Concerns::Executable#dynamic for more info.
 
-# An example of another class hierarchy.
-module MyExecutor
-  def call(args)
-    context = Temporal::ThreadLocalContext.get
-    raise "Called #{name}#execute outside of a Workflow context" unless context
-
-    # We want temporal to record 'Plus' or 'Times' as the names of the activites,
-    # rather than DelegatorActivity
-    context.execute_activity!(
-      self,
-      args
-    )
+# An example of another non-Activity class hierarchy.
+class MyExecutor
+  def do_it(args)
+    raise NotImplementedError.new
   end
 end
 
-class Plus
-  extend MyExecutor
-
+class Plus < MyExecutor
   def do_it(args)
     args[:a] + args[:b]
   end
 end
 
-class Times
-  extend MyExecutor
-
+class Times < MyExecutor
   def do_it(args)
     args[:a] * args[:b]
   end
@@ -39,6 +27,9 @@ class DelegatorActivity < Temporal::Activity
   dynamic
 
   def execute(input)
-    Object.const_get(activity.name).new.do_it(input)
+    executor = Object.const_get(activity.name).new
+    raise ArgumentError, "Unknown activity: #{executor.class}" unless executor.is_a?(MyExecutor)
+
+    executor.do_it(input)
   end
 end
