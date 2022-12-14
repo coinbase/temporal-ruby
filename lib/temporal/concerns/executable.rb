@@ -33,12 +33,13 @@ module Temporal
       # Set this for one special activity or workflow that you want to intercept any unknown Workflows or Activities,
       # perhaps so you can delegate work to other classes.
       # Only one dynamic Activity and one dynamic Workflow may be registered per task queue.
+      @dynamic = false
       def dynamic
         @dynamic = true
       end
 
       def dynamic?
-        @dynamic || false
+        @dynamic
       end
     end
   end
