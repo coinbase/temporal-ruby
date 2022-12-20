@@ -50,10 +50,21 @@ module Temporal
     end
 
     def register_activity(activity_class, options = {})
-      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
-      key = [execution_options.namespace, execution_options.task_queue]
+      if activity_class.dynamic?
+        raise ArgumentError,
+              "Activity #{activity_class} is marked as dynamic and must be registered using register_dynamic_activity."
+      end
 
-      @activities[key].add(execution_options.name, activity_class)
+      register_any_activity(activity_class, options)
+    end
+
+    def register_dynamic_activity(activity_class, options = {})
+      unless activity_class.dynamic?
+        raise ArgumentError,
+              "Activity #{activity_class} is not marked as dynamic and cannot be registered using register_dynamic_activity."
+      end
+
+      register_any_activity(activity_class, options)
     end
 
     def add_workflow_task_middleware(middleware_class, *args)
@@ -116,6 +127,13 @@ module Temporal
       %w[TERM INT].each do |signal|
         Signal.trap(signal) { stop }
       end
+    end
+
+    def register_any_activity(activity_class, options)
+      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
+      key = [execution_options.namespace, execution_options.task_queue]
+
+      @activities[key].add(execution_options.name, activity_class)
     end
   end
 end
