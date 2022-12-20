@@ -6,7 +6,7 @@ class CallsDelegatorWorkflow < Temporal::Workflow
   def call_executor(executor_class, args)
     # We want temporal to record the MyExecutor class--e.g. 'Plus','Times'--as the name of the activites,
     # rather than DelegatorActivity, for better debuggability
-    Temporal::ThreadLocalContext.get.execute_activity!(
+    workflow.execute_activity!(
       executor_class,
       args
     )
