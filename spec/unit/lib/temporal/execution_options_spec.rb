@@ -50,7 +50,7 @@ describe Temporal::ExecutionOptions do
         let(:options) do
           { name: 'OtherTestWorkflow', namespace: 'test-namespace', task_queue: 'test-task-queue' }
         end
-  
+
         it 'is initialized with name from options' do
           expect(subject.name).to eq(options[:name])
           expect(subject.namespace).to eq(options[:namespace])
@@ -77,9 +77,10 @@ describe Temporal::ExecutionOptions do
             timeouts: { schedule_to_close: 42 },
             headers: { 'DefaultHeader' => 'Default' },
             search_attributes: { 'DefaultIntSearchAttribute' => 256 },
+            workflow_id_reuse_policy: :reject
           )
         end
-  
+
         it 'is initialized with a mix of options and defaults' do
           expect(subject.name).to eq(object)
           expect(subject.namespace).to eq(options[:namespace])
@@ -88,6 +89,7 @@ describe Temporal::ExecutionOptions do
           expect(subject.timeouts).to eq(schedule_to_close: 42, start_to_close: 10)
           expect(subject.headers).to eq('DefaultHeader' => 'Default', 'TestHeader' => 'Test')
           expect(subject.search_attributes).to eq('DefaultIntSearchAttribute' => 256, 'DoubleSearchAttribute' => 3.14)
+          expect(subject.workflow_id_reuse_policy).to eq(:reject)
         end
       end
 
@@ -99,10 +101,11 @@ describe Temporal::ExecutionOptions do
             task_queue: 'test-task-queue',
             retry_policy: { interval: 1, backoff: 2, max_attempts: 5 },
             timeouts: { start_to_close: 10 },
-            headers: { 'TestHeader' => 'Test' }
+            headers: { 'TestHeader' => 'Test' },
+            workflow_id_reuse_policy: :reject
           }
         end
-  
+
         it 'is initialized with full options' do
           expect(subject.name).to eq(options[:name])
           expect(subject.namespace).to eq(options[:namespace])
@@ -113,12 +116,13 @@ describe Temporal::ExecutionOptions do
           expect(subject.retry_policy.max_attempts).to eq(options[:retry_policy][:max_attempts])
           expect(subject.timeouts).to eq(options[:timeouts])
           expect(subject.headers).to eq(options[:headers])
+          expect(subject.workflow_id_reuse_policy).to eq(options[:workflow_id_reuse_policy])
         end
       end
-  
+
       context 'when retry policy options are invalid' do
         let(:options) { { retry_policy: { max_attempts: 10 } } }
-  
+
         it 'raises' do
           expect { subject }.to raise_error(
             Temporal::RetryPolicy::InvalidRetryPolicy,
@@ -128,7 +132,6 @@ describe Temporal::ExecutionOptions do
       end
     end
 
-
     context 'when initialized with an Executable' do
       class TestWorkflow < Temporal::Workflow
         namespace 'namespace'
@@ -136,6 +139,7 @@ describe Temporal::ExecutionOptions do
         retry_policy interval: 1, backoff: 2, max_attempts: 5
         timeouts start_to_close: 10
         headers 'HeaderA' => 'TestA', 'HeaderB' => 'TestB'
+        workflow_id_reuse_policy :reject
       end
 
       let(:object) { TestWorkflow }
@@ -151,6 +155,7 @@ describe Temporal::ExecutionOptions do
         expect(subject.retry_policy.max_attempts).to eq(5)
         expect(subject.timeouts).to eq(start_to_close: 10)
         expect(subject.headers).to eq('HeaderA' => 'TestA', 'HeaderB' => 'TestB')
+        expect(subject.workflow_id_reuse_policy).to eq(:reject)
       end
 
       context 'when options are present' do
@@ -160,10 +165,11 @@ describe Temporal::ExecutionOptions do
             task_queue: 'test-task-queue',
             retry_policy: { interval: 2, max_attempts: 10 },
             timeouts: { schedule_to_close: 20 },
-            headers: { 'TestHeader' => 'Value', 'HeaderB' => 'ValueB' }
+            headers: { 'TestHeader' => 'Value', 'HeaderB' => 'ValueB' },
+            workflow_id_reuse_policy: :allow_failed
           }
         end
-  
+
         it 'is initialized with a mix of options and executable values' do
           expect(subject.name).to eq(options[:name])
           expect(subject.namespace).to eq('namespace')
@@ -178,6 +184,7 @@ describe Temporal::ExecutionOptions do
             'HeaderA' => 'TestA',
             'HeaderB' => 'ValueB' # overriden by options
           )
+          expect(subject.workflow_id_reuse_policy).to eq(:allow_failed)
         end
       end
 
@@ -196,9 +203,10 @@ describe Temporal::ExecutionOptions do
             timeouts: { schedule_to_close: 42 },
             headers: { 'DefaultHeader' => 'Default', 'HeaderA' => 'DefaultA' },
             search_attributes: {},
+            workflow_id_reuse_policy: :allow_failed
           )
         end
-  
+
         it 'is initialized with a mix of executable values, options and defaults' do
           expect(subject.name).to eq(object.name)
           expect(subject.namespace).to eq(options[:namespace])
@@ -214,12 +222,13 @@ describe Temporal::ExecutionOptions do
             'HeaderB' => 'TestB', # not overriden by defaults
             'DefaultHeader' => 'Default'
           )
+          expect(subject.workflow_id_reuse_policy).to eq(:reject)
         end
       end
 
       context 'when retry policy options are invalid' do
         let(:options) { { retry_policy: { interval: 1.5 } } }
-  
+
         it 'raises' do
           expect { subject }.to raise_error(
             Temporal::RetryPolicy::InvalidRetryPolicy,

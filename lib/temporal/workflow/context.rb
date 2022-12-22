@@ -133,7 +133,7 @@ module Temporal
           headers: execution_options.headers,
           cron_schedule: cron_schedule,
           memo: execution_options.memo,
-          workflow_id_reuse_policy: workflow_id_reuse_policy,
+          workflow_id_reuse_policy: workflow_id_reuse_policy || execution_options.workflow_id_reuse_policy,
           search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
         )
 
