@@ -7,11 +7,10 @@ require 'temporal/activity/async_token'
 module Temporal
   class Activity
     class Context
-      def initialize(connection, metadata, activity_name)
+      def initialize(connection, metadata)
         @connection = connection
         @metadata = metadata
         @async = false
-        @name = activity_name
       end
 
       def async
@@ -57,7 +56,11 @@ module Temporal
         metadata.headers
       end
 
-      attr_reader :name
+      # The name of the activity's class.  In a dynamic Activity, it may be the name
+      # of a class or a key to an executor you want to delegate to.
+      def name
+        metadata.name
+      end
 
       private
 

@@ -5,8 +5,8 @@
 
 # An example of another non-Activity class hierarchy.
 class MyExecutor
-  def do_it(args)
-    raise NotImplementedError.new
+  def do_it(_args)
+    raise NotImplementedError
   end
 end
 

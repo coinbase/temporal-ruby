@@ -35,7 +35,7 @@ describe Temporal::Activity::TaskProcessor do
         .to receive(:generate_activity_metadata)
         .with(task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, 'TestActivity').and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata).and_return(context)
 
       allow(connection).to receive(:respond_activity_task_completed)
       allow(connection).to receive(:respond_activity_task_failed)

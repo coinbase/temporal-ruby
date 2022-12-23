@@ -29,7 +29,7 @@ module Temporal
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME, queue_time_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
 
-        context = Activity::Context.new(connection, metadata, @activity_name)
+        context = Activity::Context.new(connection, metadata)
 
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
