@@ -29,19 +29,6 @@ module Temporal
         return @headers if args.empty?
         @headers = args.first
       end
-
-      # Set this for one special activity or workflow that you want to intercept any unknown Workflows or Activities,
-      # perhaps so you can delegate work to other classes, somewhat analogous to ruby's method_missing.
-      # Only one dynamic Activity and one dynamic Workflow may be registered per task queue.
-      # Within Activity.execute, you may retrieve the name of the unknown class via activity.name.
-      @dynamic = false
-      def dynamic
-        @dynamic = true
-      end
-
-      def dynamic?
-        @dynamic
-      end
     end
   end
 end

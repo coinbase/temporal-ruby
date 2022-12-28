@@ -34,7 +34,6 @@ describe Temporal::Worker do
     namespace 'default-namespace'
     task_queue 'default-task-queue'
 
-    dynamic
   end
 
   THREAD_SYNC_DELAY = 0.01
@@ -82,14 +81,6 @@ describe Temporal::Worker do
       expect(activity_keys).to include(%w[default-namespace default-task-queue])
     end
 
-    it 'cannot register a dynamic activity' do
-      expect do
-        subject.register_activity(TestDynamicActivity)
-      end.to raise_error(ArgumentError) do |_e|
-        'Activity TestDynamicActivity is marked as dynamic and must be registered using register_dynamic_activity'
-      end
-    end
-
     it 'registers an activity with provided config options' do
       expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
 
@@ -111,6 +102,7 @@ describe Temporal::Worker do
 
     it 'registers a dynamic activity with the provided config options' do
       expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
+      expect(lookup).to receive(:add_dynamic).with('test-dynamic-activity', TestDynamicActivity)
 
       subject.register_dynamic_activity(
         TestDynamicActivity,
@@ -119,16 +111,7 @@ describe Temporal::Worker do
         task_queue: 'test-task-queue'
       )
 
-      expect(lookup).to have_received(:add).with('test-dynamic-activity', TestDynamicActivity)
       expect(activity_keys).to include(%w[test-namespace test-task-queue])
-    end
-
-    it 'cannot register a non-dynamic activity' do
-      expect do
-        subject.register_dynamic_activity(TestWorkerActivity)
-      end.to raise_error(ArgumentError) do |_e|
-        'Activity TestWorkerActivity is not marked as dynamic and cannot be registered using register_dynamic_activity'
-      end
     end
   end
 

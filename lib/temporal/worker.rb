@@ -50,21 +50,17 @@ module Temporal
     end
 
     def register_activity(activity_class, options = {})
-      if activity_class.dynamic?
-        raise ArgumentError,
-              "Activity #{activity_class} is marked as dynamic and must be registered using register_dynamic_activity."
-      end
-
-      register_any_activity(activity_class, options)
+      key, execution_options = activity_registration(activity_class, options)
+      @activities[key].add(execution_options.name, activity_class)
     end
 
+    # Register one special activity that you want to intercept any unknown Activities,
+    # perhaps so you can delegate work to other classes, somewhat analogous to ruby's method_missing.
+    # Only one dynamic Activity may be registered per task queue.
+    # Within Activity#execute, you may retrieve the name of the unknown class via activity.name.
     def register_dynamic_activity(activity_class, options = {})
-      unless activity_class.dynamic?
-        raise ArgumentError,
-              "Activity #{activity_class} is not marked as dynamic and cannot be registered using register_dynamic_activity."
-      end
-
-      register_any_activity(activity_class, options)
+      key, execution_options = activity_registration(activity_class, options)
+      @activities[key].add_dynamic(execution_options.name, activity_class)
     end
 
     def add_workflow_task_middleware(middleware_class, *args)
@@ -123,17 +119,17 @@ module Temporal
       Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
     end
 
+    def activity_registration(activity_class, options)
+      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
+      key = [execution_options.namespace, execution_options.task_queue]
+      [key, execution_options]
+    end
+
     def trap_signals
       %w[TERM INT].each do |signal|
         Signal.trap(signal) { stop }
       end
     end
 
-    def register_any_activity(activity_class, options)
-      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
-      key = [execution_options.namespace, execution_options.task_queue]
-
-      @activities[key].add(execution_options.name, activity_class)
-    end
   end
 end

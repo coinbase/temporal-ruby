@@ -8,14 +8,10 @@ describe Temporal::ExecutableLookup do
 
   class MyDynamicActivity
     extend Temporal::Concerns::Executable
-
-    dynamic
   end
 
   class IllegalSecondDynamicActivity
     extend Temporal::Concerns::Executable
-
-    dynamic
   end
 
   describe '#add' do
@@ -24,15 +20,17 @@ describe Temporal::ExecutableLookup do
 
       expect(subject.send(:executables)).to eq('foo' => TestClass)
     end
+  end
 
-    it 'fails on the second dynamic activity.' do
-      subject.add('MyDynamicActivity', MyDynamicActivity)
+  describe '#add_dynamic' do
+    it 'fails on the second dynamic activity' do
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
       expect do
-        subject.add('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
+        subject.add_dynamic('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
       end.to raise_error(
         Temporal::TypeAlreadyRegisteredError,
-        'Cannot register IllegalSecondDynamicActivity marked as dynamic; MyDynamicActivity is already registered as ' \
-        'dynamic, and there can be only one.'
+        'Cannot register IllegalSecondDynamicActivity dynamically; MyDynamicActivity is already registered ' \
+        'dynamically, and there can be only one per task queue.'
       )
     end
   end
@@ -50,7 +48,7 @@ describe Temporal::ExecutableLookup do
 
     it 'falls back to the dynamic executable' do
       subject.add('TestClass', TestClass)
-      subject.add('MyDynamicActivity', MyDynamicActivity)
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
 
       expect(subject.find('TestClass')).to eq(TestClass)
       expect(subject.find('SomethingElse')).to eq(MyDynamicActivity)
