@@ -27,11 +27,7 @@ describe Temporal::ExecutableLookup do
       subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
       expect do
         subject.add_dynamic('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
-      end.to raise_error(
-        Temporal::TypeAlreadyRegisteredError,
-        'Cannot register IllegalSecondDynamicActivity dynamically; MyDynamicActivity is already registered ' \
-        'dynamically, and there can be only one per task queue.'
-      )
+      end.to raise_error(Temporal::ExecutableLookup::SecondDynamicExecutableError)
     end
   end
 

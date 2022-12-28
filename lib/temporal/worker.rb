@@ -60,7 +60,14 @@ module Temporal
     # Within Activity#execute, you may retrieve the name of the unknown class via activity.name.
     def register_dynamic_activity(activity_class, options = {})
       key, execution_options = activity_registration(activity_class, options)
-      @activities[key].add_dynamic(execution_options.name, activity_class)
+      begin
+        @activities[key].add_dynamic(execution_options.name, activity_class)
+      rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
+        raise Temporal::SecondDynamicActivityError,
+          "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
+          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+          "'#{execution_options.task_queue}', and there can be only one."
+      end
     end
 
     def add_workflow_task_middleware(middleware_class, *args)
