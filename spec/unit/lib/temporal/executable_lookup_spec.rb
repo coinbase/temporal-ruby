@@ -1,13 +1,33 @@
 require 'temporal/executable_lookup'
+require 'temporal/concerns/executable'
 
 describe Temporal::ExecutableLookup do
-  class TestClass; end
+  class TestClass
+    extend Temporal::Concerns::Executable
+  end
+
+  class MyDynamicActivity
+    extend Temporal::Concerns::Executable
+  end
+
+  class IllegalSecondDynamicActivity
+    extend Temporal::Concerns::Executable
+  end
 
   describe '#add' do
     it 'adds a class to the lookup map' do
       subject.add('foo', TestClass)
 
       expect(subject.send(:executables)).to eq('foo' => TestClass)
+    end
+  end
+
+  describe '#add_dynamic' do
+    it 'fails on the second dynamic activity' do
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
+      expect do
+        subject.add_dynamic('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
+      end.to raise_error(Temporal::ExecutableLookup::SecondDynamicExecutableError)
     end
   end
 
@@ -20,6 +40,14 @@ describe Temporal::ExecutableLookup do
 
     it 'returns nil if there were no matches' do
       expect(subject.find('bar')).to eq(nil)
+    end
+
+    it 'falls back to the dynamic executable' do
+      subject.add('TestClass', TestClass)
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
+
+      expect(subject.find('TestClass')).to eq(TestClass)
+      expect(subject.find('SomethingElse')).to eq(MyDynamicActivity)
     end
   end
 end

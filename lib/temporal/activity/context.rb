@@ -31,7 +31,7 @@ module Temporal
       end
 
       def heartbeat(details = nil)
-        logger.debug("Activity heartbeat", metadata.to_h)
+        logger.debug('Activity heartbeat', metadata.to_h)
         connection.record_activity_task_heartbeat(namespace: metadata.namespace, task_token: task_token, details: details)
       end
 
@@ -54,6 +54,12 @@ module Temporal
 
       def headers
         metadata.headers
+      end
+
+      # The name of the activity's class.  In a dynamic Activity, it may be the name
+      # of a class or a key to an executor you want to delegate to.
+      def name
+        metadata.name
       end
 
       private
