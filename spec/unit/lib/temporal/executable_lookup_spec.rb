@@ -8,14 +8,10 @@ describe Temporal::ExecutableLookup do
 
   class MyDynamicActivity
     extend Temporal::Concerns::Executable
-
-    dynamic
   end
 
   class IllegalSecondDynamicActivity
     extend Temporal::Concerns::Executable
-
-    dynamic
   end
 
   describe '#add' do
@@ -37,6 +33,15 @@ describe Temporal::ExecutableLookup do
     end
   end
 
+  describe '#add_dynamic' do
+    it 'fails on the second dynamic activity' do
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
+      expect do
+        subject.add_dynamic('IllegalSecondDynamicActivity', IllegalSecondDynamicActivity)
+      end.to raise_error(Temporal::ExecutableLookup::SecondDynamicExecutableError)
+    end
+  end
+
   describe '#find' do
     before { subject.add('foo', TestClass) }
 
@@ -50,7 +55,7 @@ describe Temporal::ExecutableLookup do
 
     it 'falls back to the dynamic executable' do
       subject.add('TestClass', TestClass)
-      subject.add('MyDynamicActivity', MyDynamicActivity)
+      subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)
 
       expect(subject.find('TestClass')).to eq(TestClass)
       expect(subject.find('SomethingElse')).to eq(MyDynamicActivity)

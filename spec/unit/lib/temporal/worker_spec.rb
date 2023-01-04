@@ -25,9 +25,10 @@ describe Temporal::Worker do
     def call(_); end
   end
 
-  class TestWorkerActivity < Temporal::Activity
+  class OtherTestWorkerActivity < Temporal::Activity
     namespace 'default-namespace'
     task_queue 'default-task-queue'
+
   end
 
   THREAD_SYNC_DELAY = 0.01
@@ -67,16 +68,17 @@ describe Temporal::Worker do
     let(:lookup) { instance_double(Temporal::ExecutableLookup, add: nil) }
     let(:activity_keys) { subject.send(:activities).keys }
 
-    before { expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup) }
-
     it 'registers an activity based on the default config options' do
+      expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
       subject.register_activity(TestWorkerActivity)
 
       expect(lookup).to have_received(:add).with('TestWorkerActivity', TestWorkerActivity)
-      expect(activity_keys).to include(['default-namespace', 'default-task-queue'])
+      expect(activity_keys).to include(%w[default-namespace default-task-queue])
     end
 
     it 'registers an activity with provided config options' do
+      expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
+
       subject.register_activity(
         TestWorkerActivity,
         name: 'test-activity',
@@ -85,8 +87,41 @@ describe Temporal::Worker do
       )
 
       expect(lookup).to have_received(:add).with('test-activity', TestWorkerActivity)
-      expect(activity_keys).to include(['test-namespace', 'test-task-queue'])
+      expect(activity_keys).to include(%w[test-namespace test-task-queue])
     end
+  end
+
+  describe '#register_dynamic_activity' do
+    let(:activity_keys) { subject.send(:activities).keys }
+
+    it 'registers a dynamic activity with the provided config options' do
+      lookup = instance_double(Temporal::ExecutableLookup, add: nil)
+      expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
+      expect(lookup).to receive(:add_dynamic).with('test-dynamic-activity', TestWorkerActivity)
+
+      subject.register_dynamic_activity(
+        TestWorkerActivity,
+        name: 'test-dynamic-activity',
+        namespace: 'test-namespace',
+        task_queue: 'test-task-queue'
+      )
+
+      expect(activity_keys).to include(%w[test-namespace test-task-queue])
+    end
+
+    it 'cannot double-register an activity' do
+      subject.register_dynamic_activity(TestWorkerActivity)
+      expect do
+        subject.register_dynamic_activity(OtherTestWorkerActivity)
+      end.to raise_error(
+        Temporal::SecondDynamicActivityError,
+        'Temporal::Worker#register_dynamic_activity: cannot register OtherTestWorkerActivity dynamically; ' \
+        'TestWorkerActivity was already registered dynamically for task queue \'default-task-queue\', ' \
+        'and there can be only one.'
+      )
+    end
+
+
   end
 
   describe '#add_workflow_task_middleware' do
