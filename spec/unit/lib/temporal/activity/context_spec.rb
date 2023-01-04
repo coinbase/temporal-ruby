@@ -109,8 +109,8 @@ describe Temporal::Activity::Context do
   end
 
   describe '#name' do
-    it 'returns the name of the activity' do
-      expect(subject.name).to eq('MyActivity')
+    it 'returns the class name of the activity' do
+      expect(subject.name).to eq('TestActivity')
     end
   end
 end

@@ -80,7 +80,7 @@ worker.register_activity(Trip::CancelFlightActivity)
 worker.register_activity(Trip::CancelHotelActivity)
 worker.register_activity(Trip::MakePaymentActivity)
 worker.register_activity(Trip::RentCarActivity)
-worker.register_activity(DelegatorActivity)
+worker.register_dynamic_activity(DelegatorActivity)
 
 worker.add_workflow_task_middleware(LoggingMiddleware, 'EXAMPLE')
 worker.add_activity_middleware(LoggingMiddleware, 'EXAMPLE')

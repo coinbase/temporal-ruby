@@ -8,8 +8,27 @@ require 'temporal/errors'
 #
 module Temporal
   class ExecutableLookup
+
+    class SecondDynamicExecutableError < StandardError
+      attr_reader :previous_executable_name
+
+      def initialize(previous_executable_name)
+        @previous_executable_name = previous_executable_name
+      end
+    end
+
     def initialize
       @executables = {}
+    end
+
+    # Register an executable to call as a fallback when one of that name isn't registered.
+    def add_dynamic(name, executable)
+      if @fallback_executable_name
+        raise SecondDynamicExecutableError, @fallback_executable_name
+      end
+
+      @fallback_executable = executable
+      @fallback_executable_name = name
     end
 
     def add(name, executable)

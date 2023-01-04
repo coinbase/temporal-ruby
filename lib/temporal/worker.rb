@@ -51,10 +51,24 @@ module Temporal
     end
 
     def register_activity(activity_class, options = {})
-      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
-      key = [execution_options.namespace, execution_options.task_queue]
-
+      key, execution_options = activity_registration(activity_class, options)
       @activities[key].add(execution_options.name, activity_class)
+    end
+
+    # Register one special activity that you want to intercept any unknown Activities,
+    # perhaps so you can delegate work to other classes, somewhat analogous to ruby's method_missing.
+    # Only one dynamic Activity may be registered per task queue.
+    # Within Activity#execute, you may retrieve the name of the unknown class via activity.name.
+    def register_dynamic_activity(activity_class, options = {})
+      key, execution_options = activity_registration(activity_class, options)
+      begin
+        @activities[key].add_dynamic(execution_options.name, activity_class)
+      rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
+        raise Temporal::SecondDynamicActivityError,
+          "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
+          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+          "'#{execution_options.task_queue}', and there can be only one."
+      end
     end
 
     def add_workflow_task_middleware(middleware_class, *args)
@@ -125,10 +139,17 @@ module Temporal
       Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
     end
 
+    def activity_registration(activity_class, options)
+      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
+      key = [execution_options.namespace, execution_options.task_queue]
+      [key, execution_options]
+    end
+
     def trap_signals
       %w[TERM INT].each do |signal|
         Signal.trap(signal) { stop }
       end
     end
+
   end
 end
