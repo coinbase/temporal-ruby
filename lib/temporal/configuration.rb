@@ -9,10 +9,10 @@ require 'temporal/connection/converter/composite'
 module Temporal
   class Configuration
     Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
-    Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
+    Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, :workflow_id_reuse_policy, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_accessor :connection_type, :converter, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes
+    attr_accessor :connection_type, :converter, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :workflow_id_reuse_policy
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -43,6 +43,9 @@ module Temporal
         Temporal::Connection::Converter::Payload::JSON.new
       ]
     ).freeze
+    # default workflow id reuse policy is nil for backwards compatibility. in reality, the
+    # default is :allow, due to that being the temporal server's default
+    DEFAULT_WORKFLOW_ID_REUSE_POLICY = nil
 
     def initialize
       @connection_type = :grpc
@@ -57,6 +60,7 @@ module Temporal
       @credentials = :this_channel_is_insecure
       @identity = nil
       @search_attributes = {}
+      @workflow_id_reuse_policy = DEFAULT_WORKFLOW_ID_REUSE_POLICY
     end
 
     def on_error(&block)
@@ -91,7 +95,8 @@ module Temporal
         task_queue: task_list,
         timeouts: timeouts,
         headers: headers,
-        search_attributes: search_attributes
+        search_attributes: search_attributes,
+        workflow_id_reuse_policy: workflow_id_reuse_policy
       ).freeze
     end
 

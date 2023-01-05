@@ -60,7 +60,7 @@ module Temporal
           # If unspecified, individual runs should have the full time for the execution (which includes retries).
           run_timeout: compute_run_timeout(execution_options),
           task_timeout: execution_options.timeouts[:task],
-          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy] || execution_options.workflow_id_reuse_policy,
           headers: execution_options.headers,
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
@@ -77,7 +77,7 @@ module Temporal
           execution_timeout: execution_options.timeouts[:execution],
           run_timeout: compute_run_timeout(execution_options),
           task_timeout: execution_options.timeouts[:task],
-          workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+          workflow_id_reuse_policy: options[:workflow_id_reuse_policy] || execution_options.workflow_id_reuse_policy,
           headers: execution_options.headers,
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
@@ -126,7 +126,7 @@ module Temporal
         # than the execution timeout.
         run_timeout: compute_run_timeout(execution_options),
         task_timeout: execution_options.timeouts[:task],
-        workflow_id_reuse_policy: options[:workflow_id_reuse_policy],
+        workflow_id_reuse_policy: options[:workflow_id_reuse_policy] || execution_options.workflow_id_reuse_policy,
         headers: execution_options.headers,
         cron_schedule: cron_schedule,
         memo: execution_options.memo,

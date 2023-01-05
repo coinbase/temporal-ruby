@@ -29,6 +29,11 @@ module Temporal
         return @headers if args.empty?
         @headers = args.first
       end
+
+      def workflow_id_reuse_policy(*args)
+        return @workflow_id_reuse_policy if args.empty?
+        @workflow_id_reuse_policy = args.first
+      end
     end
   end
 end
