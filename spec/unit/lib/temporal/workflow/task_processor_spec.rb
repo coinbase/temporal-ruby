@@ -212,6 +212,33 @@ describe Temporal::Workflow::TaskProcessor do
         end
       end
 
+      context 'when recording the workflow task complete fails' do
+        let(:exception) { StandardError.new('workflow task could not be completed') }
+
+        before { allow(connection).to receive(:respond_workflow_task_completed).and_raise(exception) }
+
+        it 'does not try to fail the workflow task' do
+          subject.process
+
+          expect(connection).to_not have_received(:respond_workflow_task_failed)
+        end
+
+        it 'calls error_handlers' do
+          reported_error = nil
+          reported_metadata = nil
+
+          config.on_error do |error, metadata: nil|
+            reported_error = error
+            reported_metadata = metadata
+          end
+
+          subject.process
+
+          expect(reported_error).to be_an_instance_of(StandardError)
+          expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::WorkflowTask)
+        end
+      end
+
       context 'when workflow task raises an exception' do
         let(:exception) { StandardError.new('workflow task failed') }
 
