@@ -139,6 +139,10 @@ module Temporal
           binary_checksum: binary_checksum,
           query_results: query_results
         )
+      rescue StandardError => error
+        Temporal.logger.error("Unable to complete the workflow task", metadata.to_h.merge(error: error.inspect))
+
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
 
       def complete_query(result)
