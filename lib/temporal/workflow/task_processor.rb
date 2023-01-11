@@ -140,6 +140,15 @@ module Temporal
           query_results: query_results
         )
       rescue StandardError => error
+        # We rescue the error here to avoid failing the task in the process
+        # function above. One common cause of errors here is if the current
+        # workflow task is invalidated by a concurrent signal arriving while it
+        # tries to complete the workflow. In this case we do not need to and
+        # should not fail the workflow task.
+        #
+        # Not failing the workflow task will still result it being retried after
+        # a delay which is the behavior we'd want in cases like the above but
+        # also for ephemeral issues like network outages.
         Temporal.logger.error("Unable to complete the workflow task", metadata.to_h.merge(error: error.inspect))
 
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
