@@ -32,18 +32,7 @@ module Temporal
     end
 
     def add(name, executable)
-      if executable.dynamic?
-        if @fallback_executable
-          raise Temporal::TypeAlreadyRegisteredError.new(
-            "Cannot register #{name} marked as dynamic; #{fallback_executable_name} is already registered as " \
-            "dynamic, and there can be only one."
-          )
-        end
-        @fallback_executable = executable
-        @fallback_executable_name = name
-      else
-        executables[name] = executable
-      end
+      executables[name] = executable
     end
 
     def find(name)
