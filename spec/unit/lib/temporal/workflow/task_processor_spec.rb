@@ -206,7 +206,7 @@ describe Temporal::Workflow::TaskProcessor do
       end
 
       context 'when recording the workflow task complete fails' do
-        let(:exception) { StandardError.new('workflow task could not be completed') }
+        let(:exception) { GRPC::InvalidArgument.new('workflow task could not be completed') }
 
         before { allow(connection).to receive(:respond_workflow_task_completed).and_raise(exception) }
 
@@ -227,7 +227,7 @@ describe Temporal::Workflow::TaskProcessor do
 
           subject.process
 
-          expect(reported_error).to be_an_instance_of(StandardError)
+          expect(reported_error).to be_an_instance_of(GRPC::InvalidArgument)
           expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::WorkflowTask)
         end
       end
