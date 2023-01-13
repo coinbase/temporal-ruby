@@ -28,10 +28,14 @@ describe Temporal::Activity::SerializedException do
     marshalling_error = described_class.from_activity_exception(error)
     expect(marshalling_error).to be_a(described_class)
 
-    client_error = described_class.to_activity_exception(marshalling_error.message)
-    expect(client_error).to be_a(MyError)
-    expect(client_error.foo).to eq(['seven', 'three'])
-    expect(client_error.bar).to eq(5)
+    original_error_class_name, serialized_args =
+      described_class.error_type_and_serialized_args(marshalling_error.message)
+
+    original_error_class = Object.const_get(original_error_class_name)
+    expect(original_error_class).to eq(MyError)
+    original_error = original_error_class.from_serialized_args(serialized_args)
+    expect(original_error.foo).to eq(['seven', 'three'])
+    expect(original_error.bar).to eq(5)
   end
 
   class NotAnActivityExceptionError < StandardError; end
