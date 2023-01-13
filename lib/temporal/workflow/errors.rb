@@ -1,4 +1,5 @@
 require 'temporal/errors'
+require 'temporal/activity/serialized_exception'
 
 module Temporal
   class Workflow
@@ -12,31 +13,42 @@ module Temporal
         when :application_failure_info
           message = from_details_payloads(failure.application_failure_info.details)
 
-          exception_class = safe_constantize(failure.application_failure_info.type)
+          exception_class = Temporal::Activity::SerializedException.safe_constantize(
+            failure.application_failure_info.type
+          )
           if exception_class.nil?
             Temporal.logger.error(
-              "Could not find original error class. Defaulting to StandardError.", 
-              {original_error: failure.application_failure_info.type},
+              'Could not find original error class. Defaulting to StandardError.',
+              { original_error: failure.application_failure_info.type }
             )
             message = "#{failure.application_failure_info.type}: #{message}"
             exception_class = default_exception_class
           end
-
-
           begin
-            exception = exception_class.new(message)
-          rescue => deserialization_error
-            # We don't currently support serializing/deserializing exceptions with more than one argument.
-            message = "#{exception_class}: #{message}"
+            exception = if exception_class == Temporal::Activity::SerializedException
+                          Temporal::Activity::SerializedException.to_activity_exception(message)
+                        else
+                          exception_class.new(message)
+                        end
+          rescue StandardError => deserialization_error
+            if exception_class == Temporal::Activity::SerializedException
+              original_error_type, message =
+                Temporal::Activity::SerializedException.error_type_and_serialized_data(message)
+            else
+              message = "#{exception_class}: #{message}"
+              original_error_type = failure.application_failure_info.type
+            end
             exception = default_exception_class.new(message)
             Temporal.logger.error(
-              "Could not instantiate original error. Defaulting to StandardError.", 
+              'Could not instantiate original error. Defaulting to StandardError. You can avoid this by '\
+              'raising an error that subclasses ActivityException, and which properly implements serialize '\
+              'and from_serialized_args.',
               {
-                original_error: failure.application_failure_info.type,
+                original_error: original_error_type,
                 instantiation_error_class: deserialization_error.class.to_s,
                 instantiation_error_message: deserialization_error.message,
               },
-            ) 
+            )
           end
           exception.tap do |exception|
             backtrace = failure.stack_trace.split("\n")
@@ -65,12 +77,6 @@ module Temporal
           # Right now, there's only one cause, but temporal may add more in the future
           StandardError.new("The child workflow could not be started. Reason: #{cause}")
         end
-      end
-
-      private_class_method def self.safe_constantize(const)
-        Object.const_get(const) if Object.const_defined?(const)
-      rescue NameError
-        nil
       end
     end
   end
