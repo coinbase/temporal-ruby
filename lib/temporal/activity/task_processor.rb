@@ -6,6 +6,7 @@ require 'temporal/concerns/payloads'
 require 'temporal/connection/retryer'
 require 'temporal/connection'
 require 'temporal/metric_keys'
+require 'temporal/activity/serialized_exception'
 
 module Temporal
   class Activity
@@ -86,6 +87,9 @@ module Temporal
           Temporal.logger.debug("Failed to report activity task failure, retrying", metadata.to_h)
         end
         Temporal::Connection::Retryer.with_retries(on_retry: log_retry) do
+          if error.is_a?(Temporal::ActivityException)
+            error = Temporal::Activity::SerializedException.from_activity_exception(error)
+          end
           connection.respond_activity_task_failed(namespace: namespace, task_token: task_token, exception: error)
         end
       rescue StandardError => error

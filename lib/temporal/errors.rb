@@ -26,7 +26,20 @@ module Temporal
 
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
-  class ActivityException < ClientError; end
+  class ActivityException < ClientError
+
+    # Override this and from_serialized_args if your ActivityException takes arguments in its
+    # constructor other than a single positional argument.  It should return a string.
+    # You may use an encoding of your choice.
+    def serialize_args
+      nil
+    end
+
+    # new up your activity based on the results of serialize_args
+    def self.from_serialized_args(serialized_args)
+      nil
+    end
+  end
 
   # Represents cancellation of a non-started activity
   class ActivityCanceled < ActivityException; end
