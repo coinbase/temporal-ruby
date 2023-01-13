@@ -30,24 +30,11 @@ module Temporal
         end
       end
 
-      def self.error_type_and_serialized_data(serialized_hash)
+      def self.error_type_and_serialized_args(serialized_hash)
         hash = Temporal::JSON.deserialize(serialized_hash)
         [hash['error_type'], hash['serialized_data']]
       end
 
-      def self.to_activity_exception(serialized_hash)
-        error_type, serialized_data = error_type_and_serialized_data(serialized_hash)
-        exception_class = safe_constantize(error_type)
-        raise "Cannot load original error class #{error_type}" if exception_class.nil?
-
-        exception_class.from_serialized_args(serialized_data)
-      end
-
-      def self.safe_constantize(const)
-        Object.const_get(const) if Object.const_defined?(const)
-      rescue NameError
-        nil
-      end
     end
   end
 end

@@ -109,7 +109,8 @@ describe Temporal::Workflow::Errors do
       e = Temporal::Workflow::Errors.generate_error(failure)
       expect(e).to be_a(StandardError)
       expect(e.backtrace).to eq(stack_trace)
-      expect(e.message).to eq('{"foo":"a","bar":"b"}')
+      # StandardError shows the user what the original error would have been.
+      expect(e.message).to eq('MyMessedUpError: {"foo":"a","bar":"b"}')
       expect(Temporal.logger)
         .to have_received(:error)
         .with(
