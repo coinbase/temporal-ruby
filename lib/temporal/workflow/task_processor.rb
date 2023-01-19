@@ -94,7 +94,6 @@ module Temporal
       def fetch_full_history
         events = task.history.events.to_a
         next_page_token = task.next_page_token
-
         while !next_page_token.empty? do
           response = connection.get_workflow_execution_history(
             namespace: namespace,
@@ -102,12 +101,8 @@ module Temporal
             run_id: task.workflow_execution.run_id,
             next_page_token: next_page_token
           )
-
-          if response.history.events.empty?
-            raise Temporal::UnexpectedResponse, 'Received empty history page'
-          end
-
           events += response.history.events.to_a
+
           next_page_token = response.next_page_token
         end
 
