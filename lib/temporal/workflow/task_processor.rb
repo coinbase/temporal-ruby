@@ -102,11 +102,6 @@ module Temporal
             run_id: task.workflow_execution.run_id,
             next_page_token: next_page_token
           )
-
-          if response.history.events.empty?
-            raise Temporal::UnexpectedResponse, 'Received empty history page'
-          end
-
           events += response.history.events.to_a
           next_page_token = response.next_page_token
         end
