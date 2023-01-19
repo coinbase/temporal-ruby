@@ -12,7 +12,3 @@ Fabricator(:api_workflow_task, from: Temporal::Api::WorkflowService::V1::PollWor
   history { |attrs| Temporal::Api::History::V1::History.new(events: attrs[:events]) }
   query { nil }
 end
-
-Fabricator(:api_paginated_workflow_task, from: :api_workflow_task) do
-  next_page_token 'page-1'
-end
