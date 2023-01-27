@@ -1,5 +1,4 @@
 require 'temporal/errors'
-require 'temporal/activity/serialized_exception'
 
 module Temporal
   class Workflow
@@ -13,7 +12,7 @@ module Temporal
         when :application_failure_info
 
           if failure.application_failure_info.type == 'Temporal::Activity::SerializedException'
-            error_type, message = Temporal::Activity::SerializedException.error_type_and_serialized_args(
+            error_type, message = Temporal::Activity::SerializedExcepion.error_type_and_serialized_args(
               from_details_payloads(failure.application_failure_info.details)
             )
             user_provided_constructor = true
