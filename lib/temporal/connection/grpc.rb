@@ -276,11 +276,12 @@ module Temporal
       end
 
       def respond_activity_task_failed(namespace:, task_token:, exception:)
+        serialize_whole_error = Temporal.configuration.use_error_serialization_v2
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, serialize_whole_error: serialize_whole_error).to_proto
         )
         client.respond_activity_task_failed(request)
       end
