@@ -7,7 +7,7 @@ class HandlingStructuredErrorWorkflow < Temporal::Workflow
       FailingWithStructuredErrorActivity.execute!(foo, bar)
     rescue FailingWithStructuredErrorActivity::MyError => e
       if e.foo == foo && e.bar == bar
-        return 'success'
+        return 'successfully handled error'
       else
         raise "Failure: didn't receive expected error from the activity"
       end

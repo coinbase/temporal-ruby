@@ -24,7 +24,7 @@ describe HandlingStructuredErrorWorkflow, :integration do
     Temporal.start_workflow(described_class, 'foo', 5.0, options: { workflow_id: workflow_id })
     begin
       result = Temporal.await_workflow_result(described_class, workflow_id: workflow_id)
-      expect(result).to eq('success')
+      expect(result).to eq('successfully handled error')
     rescue Temporal::ActivityException
       raise "Error deserialization failed.  You probably need to run USE_ERROR_SERIALIZATION_V2=1 ./bin/worker and try again."
     end
