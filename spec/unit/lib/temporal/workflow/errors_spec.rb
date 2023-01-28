@@ -15,23 +15,14 @@ end
 
 class SomeError < StandardError; end
 
-class MyFancyError < Temporal::ActivityException
+class MyFancyError < Exception
 
   attr_reader :foo, :bar
 
+  # Initializer doesn't just take one argument as StandardError does.
   def initialize(foo, bar)
     @foo = foo
     @bar = bar
-  end
-
-  def serialize_args
-    # Users can use whatever serialization they would like
-    Temporal::JSON.serialize({'foo' => @foo, 'bar' => @bar})
-  end
-
-  def self.from_serialized_args(value)
-    hash = Temporal::JSON.deserialize(value)
-    MyFancyError.new(hash['foo'], hash['bar'])
   end
 end
 

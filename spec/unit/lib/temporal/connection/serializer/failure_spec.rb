@@ -5,7 +5,6 @@ class TestDeserializer
   include Temporal::Concerns::Payloads
 end
 
-
 describe Temporal::Connection::Serializer::Failure do
   describe 'to_proto' do
     it 'produces a protobuf' do
