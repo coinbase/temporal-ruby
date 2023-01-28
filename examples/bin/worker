@@ -17,6 +17,13 @@ if !ENV['USE_ENCRYPTION'].nil?
   end
 end
 
+if !ENV['USE_ERROR_SERIALIZATION_V2'].nil?
+  Temporal.configure do |config|
+    config.task_queue = 'error_serialization_v2'
+    config.use_error_serialization_v2 = true
+  end
+end
+
 worker = Temporal::Worker.new(binary_checksum: `git show HEAD -s --format=%H`.strip)
 
 worker.register_workflow(AsyncActivityWorkflow)

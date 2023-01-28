@@ -1,6 +1,6 @@
 require 'temporal/json'
 
-# Illustrates subclassing Temporal::ActivityException to raise an error that
+# Illustrates raising an error with a non-standard initializer that
 # is handleable by the Workflow.
 class FailingWithStructuredErrorActivity < Temporal::Activity
   retry_policy(max_attempts: 1)
@@ -11,16 +11,6 @@ class FailingWithStructuredErrorActivity < Temporal::Activity
     def initialize(foo, bar)
       @foo = foo
       @bar = bar
-    end
-
-    def serialize_args
-      # Users can use whatever serialization they would like
-      Temporal::JSON.serialize({ 'foo' => @foo, 'bar' => @bar })
-    end
-
-    def self.from_serialized_args(payload)
-      hash = Temporal::JSON.deserialize(payload)
-      MyError.new(hash['foo'], hash['bar'])
     end
   end
 

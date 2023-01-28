@@ -35,26 +35,6 @@ class MyFancyError < Temporal::ActivityException
   end
 end
 
-class MyMessedUpError < Temporal::ActivityException
-  attr_reader :foo, :bar
-
-  def initialize(foo, bar)
-    @foo = foo
-    @bar = bar
-  end
-
-  def serialize_args
-    # Users can use whatever serialization they would like
-    Temporal::JSON.serialize({'foo' => @foo, 'bar' => @bar})
-  end
-
-  def self.from_serialized_args(serialized_args)
-    raise "Whoops"
-  end
-
-end
-
-
 describe Temporal::Workflow::Errors do
   describe '.generate_error' do
     it "instantiates properly when the client has the error" do
@@ -74,18 +54,9 @@ describe Temporal::Workflow::Errors do
 
     end
 
-
-    it 'generates an ActivityException marshalled via an Activity::SerializedException' do
-      marshalling_error = Temporal::Activity::SerializedException.from_activity_exception(
-        MyFancyError.new('foo', 'bar')
-      )
-      stack_trace = ['a fake backtrace']
-      failure = Fabricate(
-        :api_application_failure,
-        message: marshalling_error.message,
-        backtrace: stack_trace,
-        error_class: marshalling_error.class.to_s
-      )
+    it 'correctly deserializes a complex error' do
+      error = MyFancyError.new('foo', 'bar')
+      failure = Temporal::Connection::Serializer::Failure.new(error, serialize_whole_error: true).to_proto
 
       e = Temporal::Workflow::Errors.generate_error(failure)
       expect(e).to be_a(MyFancyError)
@@ -93,37 +64,6 @@ describe Temporal::Workflow::Errors do
       expect(e.bar).to eq('bar')
     end
 
-    it 'falls back to StandardError when the deserializer fails on an ActivityException' do
-      allow(Temporal.logger).to receive(:error)
-
-      marshalling_error = Temporal::Activity::SerializedException.from_activity_exception(
-        MyMessedUpError.new('a', 'b')
-      )
-      stack_trace = ['a fake backtrace']
-      failure = Fabricate(
-        :api_application_failure,
-        message: marshalling_error.message,
-        backtrace: stack_trace,
-        error_class: marshalling_error.class.to_s
-      )
-      e = Temporal::Workflow::Errors.generate_error(failure)
-      expect(e).to be_a(StandardError)
-      expect(e.backtrace).to eq(stack_trace)
-      # StandardError shows the user what the original error would have been.
-      expect(e.message).to eq('MyMessedUpError: {"foo":"a","bar":"b"}')
-      expect(Temporal.logger)
-        .to have_received(:error)
-        .with(
-          'Could not instantiate original error. Defaulting to StandardError. ' \
-          'You can avoid this by raising an error that subclasses ActivityException, '\
-          'and which properly implements serialize and from_serialized_args.',
-          {
-            original_error: "MyMessedUpError",
-            instantiation_error_class: "RuntimeError",
-            instantiation_error_message: "Whoops",
-          },
-        )
-    end
 
     it "falls back to StandardError when the client doesn't have the error class" do
       allow(Temporal.logger).to receive(:error)
@@ -171,8 +111,9 @@ describe Temporal::Workflow::Errors do
         .to have_received(:error)
         .with(
           'Could not instantiate original error. Defaulting to StandardError. ' \
-          'You can avoid this by raising an error that subclasses ActivityException, '\
-          'and which properly implements serialize and from_serialized_args.',
+          'It\'s likely that your error\'s initializer takes something more than just one positional argument. '\
+          'If so, make sure the worker running your activities is setting '\
+          'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorWithTwoArgs",
             instantiation_error_class: "ArgumentError",
@@ -200,9 +141,10 @@ describe Temporal::Workflow::Errors do
       expect(Temporal.logger)
         .to have_received(:error)
         .with(
-          'Could not instantiate original error. Defaulting to StandardError. '\
-          'You can avoid this by raising an error that subclasses ActivityException, '\
-          'and which properly implements serialize and from_serialized_args.',
+          'Could not instantiate original error. Defaulting to StandardError. ' \
+          'It\'s likely that your error\'s initializer takes something more than just one positional argument. '\
+          'If so, make sure the worker running your activities is setting '\
+          'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorThatRaisesInInitialize",
             instantiation_error_class: "TypeError",
