@@ -1,6 +1,7 @@
 require 'activities/failing_with_structured_error_activity'
 
 class HandlingStructuredErrorWorkflow < Temporal::Workflow
+
   def execute(foo, bar)
     begin
       FailingWithStructuredErrorActivity.execute!(foo, bar)

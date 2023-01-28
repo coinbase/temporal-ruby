@@ -33,7 +33,7 @@ describe Temporal::Connection::Serializer::Failure do
       # Make sure serializing various bits round-trips
       e = MyError.new(['seven', 'three'], "Bar", bad_class: NaughtyClass)
       failure_proto = described_class.new(e, serialize_whole_error: true).to_proto
-      expect(failure_proto.application_failure_info.type).to eq("<SerializedError>")
+      expect(failure_proto.application_failure_info.type).to eq("MyError")
 
       deserialized_error = TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details)
       expect(deserialized_error).to be_an_instance_of(MyError)

@@ -13,19 +13,17 @@ module Temporal
         end
 
         def to_proto
-          if @serialize_whole_error
-            details_input = object
-            type = "<SerializedError>"
-          else
-            details_input = object.message
-            type = object.class.name
-          end
+          details = if @serialize_whole_error
+                      to_details_payloads(object)
+                    else
+                      to_details_payloads(object.message)
+                    end
           Temporal::Api::Failure::V1::Failure.new(
             message: object.message,
             stack_trace: stack_trace_from(object.backtrace),
             application_failure_info: Temporal::Api::Failure::V1::ApplicationFailureInfo.new(
-              type: type,
-              details: to_details_payloads(details_input)
+              type: object.class.name,
+              details: details
             )
           )
         end
