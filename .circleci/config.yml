@@ -61,7 +61,7 @@ jobs:
             USE_ENCRYPTION: 1
 
       - run:
-          name: Run v2 error serialization tests
+          name: Boot up worker for v2 error serialization tests
           command: cd examples && bin/worker
           background: true
           environment:
