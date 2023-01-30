@@ -15,6 +15,17 @@ end
 
 class SomeError < StandardError; end
 
+class MyFancyError < Exception
+
+  attr_reader :foo, :bar
+
+  # Initializer doesn't just take one argument as StandardError does.
+  def initialize(foo, bar)
+    @foo = foo
+    @bar = bar
+  end
+end
+
 describe Temporal::Workflow::Errors do
   describe '.generate_error' do
     it "instantiates properly when the client has the error" do
@@ -34,7 +45,18 @@ describe Temporal::Workflow::Errors do
 
     end
 
-    it "falls back to StandardError when the client doesn't have the error class" do 
+    it 'correctly deserializes a complex error' do
+      error = MyFancyError.new('foo', 'bar')
+      failure = Temporal::Connection::Serializer::Failure.new(error, serialize_whole_error: true).to_proto
+
+      e = Temporal::Workflow::Errors.generate_error(failure)
+      expect(e).to be_a(MyFancyError)
+      expect(e.foo).to eq('foo')
+      expect(e.bar).to eq('bar')
+    end
+
+
+    it "falls back to StandardError when the client doesn't have the error class" do
       allow(Temporal.logger).to receive(:error)
 
       message = "An error message"
@@ -60,7 +82,7 @@ describe Temporal::Workflow::Errors do
     end
 
 
-    it "falls back to StandardError when the client can't initialize the error class due to arity" do 
+    it "falls back to StandardError when the client can't initialize the error class due to arity" do
       allow(Temporal.logger).to receive(:error)
 
       message = "An error message"
@@ -79,7 +101,10 @@ describe Temporal::Workflow::Errors do
       expect(Temporal.logger)
         .to have_received(:error)
         .with(
-          'Could not instantiate original error. Defaulting to StandardError.',
+          'Could not instantiate original error. Defaulting to StandardError. ' \
+          'It\'s likely that your error\'s initializer takes something more than just one positional argument. '\
+          'If so, make sure the worker running your activities is setting '\
+          'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorWithTwoArgs",
             instantiation_error_class: "ArgumentError",
@@ -88,7 +113,7 @@ describe Temporal::Workflow::Errors do
         )
     end
 
-    it "falls back to StandardError when the client can't initialize the error class when initialize doesn't take a string" do 
+    it "falls back to StandardError when the client can't initialize the error class when initialize doesn't take a string" do
       allow(Temporal.logger).to receive(:error)
 
       message = "An error message"
@@ -107,7 +132,10 @@ describe Temporal::Workflow::Errors do
       expect(Temporal.logger)
         .to have_received(:error)
         .with(
-          'Could not instantiate original error. Defaulting to StandardError.',
+          'Could not instantiate original error. Defaulting to StandardError. ' \
+          'It\'s likely that your error\'s initializer takes something more than just one positional argument. '\
+          'If so, make sure the worker running your activities is setting '\
+          'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorThatRaisesInInitialize",
             instantiation_error_class: "TypeError",

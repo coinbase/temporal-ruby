@@ -17,6 +17,13 @@ if !ENV['USE_ENCRYPTION'].nil?
   end
 end
 
+if !ENV['USE_ERROR_SERIALIZATION_V2'].nil?
+  Temporal.configure do |config|
+    config.task_queue = 'error_serialization_v2'
+    config.use_error_serialization_v2 = true
+  end
+end
+
 worker = Temporal::Worker.new(binary_checksum: `git show HEAD -s --format=%H`.strip)
 
 worker.register_workflow(AsyncActivityWorkflow)
@@ -30,6 +37,7 @@ worker.register_workflow(ChildWorkflowTimeoutWorkflow)
 worker.register_workflow(ChildWorkflowTerminatedWorkflow)
 worker.register_workflow(FailingActivitiesWorkflow)
 worker.register_workflow(FailingWorkflow)
+worker.register_workflow(HandlingStructuredErrorWorkflow)
 worker.register_workflow(HelloWorldWorkflow)
 worker.register_workflow(InvalidContinueAsNewWorkflow)
 worker.register_workflow(LocalHelloWorldWorkflow)
@@ -63,6 +71,7 @@ worker.register_workflow(WaitForNamedSignalWorkflow)
 worker.register_activity(AsyncActivity)
 worker.register_activity(EchoActivity)
 worker.register_activity(FailingActivity)
+worker.register_activity(FailingWithStructuredErrorActivity)
 worker.register_activity(GenerateFileActivity)
 worker.register_activity(GuessActivity)
 worker.register_activity(HelloWorldActivity)

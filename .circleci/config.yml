@@ -61,6 +61,13 @@ jobs:
             USE_ENCRYPTION: 1
 
       - run:
+          name: Boot up worker for v2 error serialization tests
+          command: cd examples && bin/worker
+          background: true
+          environment:
+            USE_ERROR_SERIALIZATION_V2: 1
+
+      - run:
           name: Run RSpec
           command: cd examples && bundle exec rspec
 
