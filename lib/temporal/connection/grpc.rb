@@ -283,7 +283,6 @@ module Temporal
 
       def respond_activity_task_failed(namespace:, task_token:, exception:)
         serialize_whole_error = Temporal.configuration.use_error_serialization_v2
-        puts("BIppity")
         request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
