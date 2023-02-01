@@ -417,8 +417,8 @@ module Temporal
     end
 
     # TODO: (calum, 2022-06-01) remove this once we have a better understanding of the how to do pagination on these temporal-ruby APIs
-    def list_workflow_executions_paginated(namespace, query, next_page_token: nil)
-      response = connection.list_workflow_executions(namespace: namespace, query: query, next_page_token: next_page_token)
+    def list_workflow_executions_paginated(namespace, query, next_page_token: nil, max_page_size: nil)
+      response = connection.list_workflow_executions(namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size)
 
       executions = response.executions.map do |raw_execution|
         Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
