@@ -107,6 +107,7 @@ describe Temporal::Workflow::Errors do
           'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorWithTwoArgs",
+            serialized_error: '"An error message"',
             instantiation_error_class: "ArgumentError",
             instantiation_error_message: "wrong number of arguments (given 1, expected 2)",
           },
@@ -138,6 +139,7 @@ describe Temporal::Workflow::Errors do
           'Temporal.configuration.use_error_serialization_v2 to support this.',
           {
             original_error: "ErrorThatRaisesInInitialize",
+            serialized_error: '"An error message"',
             instantiation_error_class: "TypeError",
             instantiation_error_message: "String can't be coerced into Integer",
           },

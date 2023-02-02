@@ -24,7 +24,8 @@ module Temporal
             exception_class = default_exception_class
           end
           begin
-            exception_or_message = from_details_payloads(failure.application_failure_info.details)
+            details = failure.application_failure_info.details
+            exception_or_message = from_details_payloads(details)
             # v1 serialization only supports StandardErrors with a single "message" argument.
             # v2 serialization supports complex errors using our converters to serialize them.
             # enable v2 serialization in activities with Temporal.configuration.use_error_serialization_v2
@@ -42,6 +43,7 @@ module Temporal
               "your activities is setting Temporal.configuration.use_error_serialization_v2 to support this.",
               {
                 original_error: error_type,
+                serialized_error: details.payloads.first.data,
                 instantiation_error_class: deserialization_error.class.to_s,
                 instantiation_error_message: deserialization_error.message,
               },
