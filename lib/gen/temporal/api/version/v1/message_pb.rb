@@ -4,7 +4,9 @@
 require 'google/protobuf'
 
 require 'google/protobuf/timestamp_pb'
+require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/common_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/version/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.version.v1.ReleaseInfo" do
@@ -26,7 +28,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Version
       module V1

@@ -1,4 +1,4 @@
-PROTO_ROOT := proto/temporal
+PROTO_ROOT := proto
 PROTO_FILES = $(shell find $(PROTO_ROOT) -name "*.proto")
 PROTO_DIRS = $(sort $(dir $(PROTO_FILES)))
 PROTO_OUT := lib/gen
