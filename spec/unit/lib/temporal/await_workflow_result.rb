@@ -12,12 +12,12 @@ describe 'Temporal.await_workflow_result' do
   after { Temporal.remove_instance_variable(:@client) rescue NameError }
 
   let(:response) do
-    Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
-      history: Temporal::Api::History::V1::History.new(
+    Temporalio::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
+      history: Temporalio::Api::History::V1::History.new(
         events: [
           {
             event_type: :EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED,
-            workflow_execution_completed_event_attributes: Temporal::Api::History::V1::WorkflowExecutionCompletedEventAttributes.new(
+            workflow_execution_completed_event_attributes: Temporalio::Api::History::V1::WorkflowExecutionCompletedEventAttributes.new(
               result: nil
             )
           }

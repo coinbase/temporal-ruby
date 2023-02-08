@@ -94,7 +94,7 @@ describe Temporal::Workflow::Context do
       started_proc.call(child_workflow_execution)
       expect(child_workflow_future.finished?).to be false
       expect(child_workflow_future.child_workflow_execution_future.finished?).to be true
-      expect(child_workflow_future.child_workflow_execution_future.get).to be_instance_of(Temporal::Api::Common::V1::WorkflowExecution)
+      expect(child_workflow_future.child_workflow_execution_future.get).to be_instance_of(Temporalio::Api::Common::V1::WorkflowExecution)
 
       # complete the workflow via dispatch and check if the child workflow future is finished
       completed_proc.call('finished result')

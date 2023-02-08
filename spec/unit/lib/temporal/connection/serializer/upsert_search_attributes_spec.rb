@@ -23,7 +23,7 @@ describe Temporal::Connection::Serializer::UpsertSearchAttributes do
     )
 
     result = described_class.new(command).to_proto
-    expect(result).to be_an_instance_of(Temporal::Api::Command::V1::Command)
+    expect(result).to be_an_instance_of(Temporalio::Api::Command::V1::Command)
     expect(result.command_type).to eql(
       :COMMAND_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES
     )

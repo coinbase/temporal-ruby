@@ -16,7 +16,7 @@ module Temporal
           end
 
           def to_payload(data)
-            Temporal::Api::Common::V1::Payload.new(
+            Temporalio::Api::Common::V1::Payload.new(
               metadata: { 'encoding' => ENCODING },
               data: Temporal::JSON.serialize(data).b
             )

@@ -17,7 +17,7 @@ module Temporal
 
         def to_payloads(data)
           return nil if data.nil?
-          Temporal::Api::Common::V1::Payloads.new(
+          Temporalio::Api::Common::V1::Payloads.new(
             payloads: data.map(&method(:to_payload))
           )
         end

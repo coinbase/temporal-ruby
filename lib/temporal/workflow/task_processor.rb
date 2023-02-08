@@ -176,7 +176,7 @@ module Temporal
         connection.respond_workflow_task_failed(
           namespace: namespace,
           task_token: task_token,
-          cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+          cause: Temporalio::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
           exception: error,
           binary_checksum: binary_checksum
         )

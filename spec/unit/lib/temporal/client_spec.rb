@@ -34,7 +34,7 @@ describe Temporal::Client do
 
   describe '#start_workflow' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
+      Temporalio::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
     before { allow(connection).to receive(:start_workflow_execution).and_return(temporal_response) }
@@ -202,7 +202,7 @@ describe Temporal::Client do
 
   describe '#start_workflow with a signal' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
+      Temporalio::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
     before { allow(connection).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
@@ -281,7 +281,7 @@ describe Temporal::Client do
 
   describe '#schedule_workflow' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
+      Temporalio::Api::WorkflowService::V1::StartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
     before { allow(connection).to receive(:start_workflow_execution).and_return(temporal_response) }
@@ -330,7 +330,7 @@ describe Temporal::Client do
   end
 
   describe '#describe_namespace' do
-    before { allow(connection).to receive(:describe_namespace).and_return(Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse.new) }
+    before { allow(connection).to receive(:describe_namespace).and_return(Temporalio::Api::WorkflowService::V1::DescribeNamespaceResponse.new) }
     
     it 'passes the namespace to the connection' do
       result = subject.describe_namespace('new-namespace')
@@ -450,7 +450,7 @@ describe Temporal::Client do
       ['string', 'a result'],
     ].each do |(type, expected_result)|
       it "completes and returns a #{type}" do
-        payload = Temporal::Api::Common::V1::Payloads.new(
+        payload = Temporalio::Api::Common::V1::Payloads.new(
           payloads: [
             Temporal.configuration.converter.to_payload(expected_result)
           ],
@@ -554,7 +554,7 @@ describe Temporal::Client do
 
   describe '#reset_workflow' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
+      Temporalio::Api::WorkflowService::V1::ResetWorkflowExecutionResponse.new(run_id: 'xxx')
     end
     let(:history) do
       Temporal::Workflow::History.new([
@@ -705,7 +705,7 @@ describe Temporal::Client do
 
   describe '#terminate_workflow' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
+      Temporalio::Api::WorkflowService::V1::TerminateWorkflowExecutionResponse.new
     end
 
     before { allow(connection).to receive(:terminate_workflow_execution).and_return(temporal_response) }
@@ -727,7 +727,7 @@ describe Temporal::Client do
 
   describe '#fetch_workflow_execution_info' do
     let(:response) do
-      Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
+      Temporalio::Api::WorkflowService::V1::DescribeWorkflowExecutionResponse.new(
         workflow_execution_info: api_info
       )
     end
@@ -818,7 +818,7 @@ describe Temporal::Client do
       Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '')
     end
     let(:response) do
-      Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+      Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
         executions: [api_execution_info],
         next_page_token: ''
       )
@@ -839,19 +839,19 @@ describe Temporal::Client do
 
     context 'when history is paginated' do
       let(:response_1) do
-        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+        Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
           executions: [api_execution_info],
           next_page_token: 'a'
         )
       end
       let(:response_2) do
-        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+        Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
           executions: [api_execution_info],
           next_page_token: 'b'
         )
       end
       let(:response_3) do
-        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
+        Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(
           executions: [api_execution_info],
           next_page_token: ''
         )

@@ -18,7 +18,7 @@ module Temporal
           def to_payload(data)
             return nil unless data.is_a?(String) && data.encoding == Encoding::ASCII_8BIT
 
-            Temporal::Api::Common::V1::Payload.new(
+            Temporalio::Api::Common::V1::Payload.new(
               metadata: { 'encoding' => ENCODING },
               data: data
             )
