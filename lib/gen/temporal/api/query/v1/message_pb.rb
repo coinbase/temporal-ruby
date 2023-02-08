@@ -6,11 +6,13 @@ require 'google/protobuf'
 require 'temporal/api/enums/v1/query_pb'
 require 'temporal/api/enums/v1/workflow_pb'
 require 'temporal/api/common/v1/message_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/query/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.query.v1.WorkflowQuery" do
       optional :query_type, :string, 1
       optional :query_args, :message, 2, "temporal.api.common.v1.Payloads"
+      optional :header, :message, 3, "temporal.api.common.v1.Header"
     end
     add_message "temporal.api.query.v1.WorkflowQueryResult" do
       optional :result_type, :enum, 1, "temporal.api.enums.v1.QueryResultType"
@@ -23,7 +25,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Query
       module V1

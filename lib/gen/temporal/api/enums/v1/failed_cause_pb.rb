@@ -30,23 +30,41 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :WORKFLOW_TASK_FAILED_CAUSE_BAD_BINARY, 21
       value :WORKFLOW_TASK_FAILED_CAUSE_SCHEDULE_ACTIVITY_DUPLICATE_ID, 22
       value :WORKFLOW_TASK_FAILED_CAUSE_BAD_SEARCH_ATTRIBUTES, 23
+      value :WORKFLOW_TASK_FAILED_CAUSE_NON_DETERMINISTIC_ERROR, 24
+      value :WORKFLOW_TASK_FAILED_CAUSE_BAD_MODIFY_WORKFLOW_PROPERTIES_ATTRIBUTES, 25
+      value :WORKFLOW_TASK_FAILED_CAUSE_PENDING_CHILD_WORKFLOWS_LIMIT_EXCEEDED, 26
+      value :WORKFLOW_TASK_FAILED_CAUSE_PENDING_ACTIVITIES_LIMIT_EXCEEDED, 27
+      value :WORKFLOW_TASK_FAILED_CAUSE_PENDING_SIGNALS_LIMIT_EXCEEDED, 28
+      value :WORKFLOW_TASK_FAILED_CAUSE_PENDING_REQUEST_CANCEL_LIMIT_EXCEEDED, 29
+      value :WORKFLOW_TASK_FAILED_CAUSE_BAD_UPDATE_WORKFLOW_EXECUTION_MESSAGE, 30
+      value :WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_UPDATE, 31
     end
     add_enum "temporal.api.enums.v1.StartChildWorkflowExecutionFailedCause" do
       value :START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_UNSPECIFIED, 0
       value :START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS, 1
+      value :START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_NAMESPACE_NOT_FOUND, 2
     end
     add_enum "temporal.api.enums.v1.CancelExternalWorkflowExecutionFailedCause" do
       value :CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_UNSPECIFIED, 0
       value :CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_EXTERNAL_WORKFLOW_EXECUTION_NOT_FOUND, 1
+      value :CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_NAMESPACE_NOT_FOUND, 2
     end
     add_enum "temporal.api.enums.v1.SignalExternalWorkflowExecutionFailedCause" do
       value :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_UNSPECIFIED, 0
       value :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_EXTERNAL_WORKFLOW_EXECUTION_NOT_FOUND, 1
+      value :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_NAMESPACE_NOT_FOUND, 2
+    end
+    add_enum "temporal.api.enums.v1.ResourceExhaustedCause" do
+      value :RESOURCE_EXHAUSTED_CAUSE_UNSPECIFIED, 0
+      value :RESOURCE_EXHAUSTED_CAUSE_RPS_LIMIT, 1
+      value :RESOURCE_EXHAUSTED_CAUSE_CONCURRENT_LIMIT, 2
+      value :RESOURCE_EXHAUSTED_CAUSE_SYSTEM_OVERLOADED, 3
+      value :RESOURCE_EXHAUSTED_CAUSE_PERSISTENCE_LIMIT, 4
     end
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Enums
       module V1
@@ -54,6 +72,7 @@ module Temporal
         StartChildWorkflowExecutionFailedCause = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.StartChildWorkflowExecutionFailedCause").enummodule
         CancelExternalWorkflowExecutionFailedCause = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.CancelExternalWorkflowExecutionFailedCause").enummodule
         SignalExternalWorkflowExecutionFailedCause = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.SignalExternalWorkflowExecutionFailedCause").enummodule
+        ResourceExhaustedCause = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ResourceExhaustedCause").enummodule
       end
     end
   end

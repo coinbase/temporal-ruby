@@ -5,7 +5,9 @@ require 'google/protobuf'
 
 require 'google/protobuf/duration_pb'
 require 'google/protobuf/timestamp_pb'
+require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/namespace_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/namespace/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.namespace.v1.NamespaceInfo" do
@@ -15,6 +17,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :owner_email, :string, 4
       map :data, :string, :string, 5
       optional :id, :string, 6
+      optional :supports_schedules, :bool, 100
     end
     add_message "temporal.api.namespace.v1.NamespaceConfig" do
       optional :workflow_execution_retention_ttl, :message, 1, "google.protobuf.Duration"
@@ -23,6 +26,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :history_archival_uri, :string, 4
       optional :visibility_archival_state, :enum, 5, "temporal.api.enums.v1.ArchivalState"
       optional :visibility_archival_uri, :string, 6
+      map :custom_search_attribute_aliases, :string, :string, 7
     end
     add_message "temporal.api.namespace.v1.BadBinaries" do
       map :binaries, :string, :message, 1, "temporal.api.namespace.v1.BadBinaryInfo"
@@ -36,11 +40,15 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :description, :string, 1
       optional :owner_email, :string, 2
       map :data, :string, :string, 3
+      optional :state, :enum, 4, "temporal.api.enums.v1.NamespaceState"
+    end
+    add_message "temporal.api.namespace.v1.NamespaceFilter" do
+      optional :include_deleted, :bool, 1
     end
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Namespace
       module V1
@@ -49,6 +57,7 @@ module Temporal
         BadBinaries = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.namespace.v1.BadBinaries").msgclass
         BadBinaryInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.namespace.v1.BadBinaryInfo").msgclass
         UpdateNamespaceInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.namespace.v1.UpdateNamespaceInfo").msgclass
+        NamespaceFilter = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.namespace.v1.NamespaceFilter").msgclass
       end
     end
   end
