@@ -18,10 +18,10 @@ module Temporal
                     else
                       to_details_payloads(object.message)
                     end
-          Temporal::Api::Failure::V1::Failure.new(
+          Temporalio::Api::Failure::V1::Failure.new(
             message: object.message,
             stack_trace: stack_trace_from(object.backtrace),
-            application_failure_info: Temporal::Api::Failure::V1::ApplicationFailureInfo.new(
+            application_failure_info: Temporalio::Api::Failure::V1::ApplicationFailureInfo.new(
               type: object.class.name,
               details: details
             )

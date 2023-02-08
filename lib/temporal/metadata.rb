@@ -27,7 +27,7 @@ module Temporal
         )
       end
 
-      # @param task [Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueResponse]
+      # @param task [Temporalio::Api::WorkflowService::V1::PollWorkflowTaskQueueResponse]
       # @param namespace [String]
       def generate_workflow_task_metadata(task, namespace)
         Metadata::WorkflowTask.new(

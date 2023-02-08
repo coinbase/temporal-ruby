@@ -6,10 +6,10 @@ module Temporal
     module Serializer
       class FailWorkflow < Base
         def to_proto
-          Temporal::Api::Command::V1::Command.new(
-            command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_FAIL_WORKFLOW_EXECUTION,
+          Temporalio::Api::Command::V1::Command.new(
+            command_type: Temporalio::Api::Enums::V1::CommandType::COMMAND_TYPE_FAIL_WORKFLOW_EXECUTION,
             fail_workflow_execution_command_attributes:
-              Temporal::Api::Command::V1::FailWorkflowExecutionCommandAttributes.new(
+              Temporalio::Api::Command::V1::FailWorkflowExecutionCommandAttributes.new(
                 failure: Failure.new(object.exception).to_proto
               )
           )

@@ -17,14 +17,14 @@ module Temporal
       include Concerns::Payloads
 
       HISTORY_EVENT_FILTER = {
-        all: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
-        close: Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
+        all: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+        close: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
       }.freeze
 
       QUERY_REJECT_CONDITION = {
-        none: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NONE,
-        not_open: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_OPEN,
-        not_completed_cleanly: Temporal::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_COMPLETED_CLEANLY
+        none: Temporalio::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NONE,
+        not_open: Temporalio::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_OPEN,
+        not_completed_cleanly: Temporalio::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_COMPLETED_CLEANLY
       }.freeze
 
       DEFAULT_OPTIONS = {
@@ -42,7 +42,7 @@ module Temporal
       end
 
       def register_namespace(name:, description: nil, is_global: false, retention_period: 10, data: nil)
-        request = Temporal::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RegisterNamespaceRequest.new(
           namespace: name,
           description: description,
           is_global_namespace: is_global,
@@ -57,19 +57,19 @@ module Temporal
       end
 
       def describe_namespace(name:)
-        request = Temporal::Api::WorkflowService::V1::DescribeNamespaceRequest.new(namespace: name)
+        request = Temporalio::Api::WorkflowService::V1::DescribeNamespaceRequest.new(namespace: name)
         client.describe_namespace(request)
       end
 
       def list_namespaces(page_size:, next_page_token: "")
-        request = Temporal::Api::WorkflowService::V1::ListNamespacesRequest.new(page_size: page_size, next_page_token: next_page_token)
+        request = Temporalio::Api::WorkflowService::V1::ListNamespacesRequest.new(page_size: page_size, next_page_token: next_page_token)
         client.list_namespaces(request)
       end
 
       def update_namespace(name:, description:)
-        request = Temporal::Api::WorkflowService::V1::UpdateNamespaceRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::UpdateNamespaceRequest.new(
           namespace: name,
-          update_info: Temporal::Api::WorkflowService::V1::UpdateNamespaceInfo.new(
+          update_info: Temporalio::Api::WorkflowService::V1::UpdateNamespaceInfo.new(
             description: description
           )
         )
@@ -77,7 +77,7 @@ module Temporal
       end
 
       def deprecate_namespace(name:)
-        request = Temporal::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(namespace: name)
+        request = Temporalio::Api::WorkflowService::V1::DeprecateNamespaceRequest.new(namespace: name)
         client.deprecate_namespace(request)
       end
 
@@ -96,15 +96,15 @@ module Temporal
         memo: nil,
         search_attributes: nil
       )
-        request = Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
           namespace: namespace,
-          workflow_type: Temporal::Api::Common::V1::WorkflowType.new(
+          workflow_type: Temporalio::Api::Common::V1::WorkflowType.new(
             name: workflow_name
           ),
           workflow_id: workflow_id,
           workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
-          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
           input: to_payloads(input),
@@ -112,14 +112,14 @@ module Temporal
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
-          header: Temporal::Api::Common::V1::Header.new(
+          header: Temporalio::Api::Common::V1::Header.new(
             fields: to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
-          memo: Temporal::Api::Common::V1::Memo.new(
+          memo: Temporalio::Api::Common::V1::Memo.new(
             fields: to_payload_map(memo || {})
           ),
-          search_attributes: Temporal::Api::Common::V1::SearchAttributes.new(
+          search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: to_payload_map(search_attributes || {})
           ),
         )
@@ -152,9 +152,9 @@ module Temporal
             )
           end
         end
-        request = Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest.new(
           namespace: namespace,
-          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
@@ -167,10 +167,10 @@ module Temporal
       end
 
       def poll_workflow_task_queue(namespace:, task_queue:, binary_checksum:)
-        request = Temporal::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::PollWorkflowTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
-          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
           binary_checksum: binary_checksum
@@ -186,7 +186,7 @@ module Temporal
 
       def respond_query_task_completed(namespace:, task_token:, query_result:)
         query_result_proto = Serializer.serialize(query_result)
-        request = Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
           task_token: task_token,
           namespace: namespace,
           completed_type: query_result_proto.result_type,
@@ -198,7 +198,7 @@ module Temporal
       end
 
       def respond_workflow_task_completed(namespace:, task_token:, commands:, binary_checksum:, query_results: {})
-        request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
@@ -211,7 +211,7 @@ module Temporal
       end
 
       def respond_workflow_task_failed(namespace:, task_token:, cause:, exception:, binary_checksum:)
-        request = Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
@@ -223,10 +223,10 @@ module Temporal
       end
 
       def poll_activity_task_queue(namespace:, task_queue:)
-        request = Temporal::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
-          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           )
         )
@@ -240,7 +240,7 @@ module Temporal
       end
 
       def record_activity_task_heartbeat(namespace:, task_token:, details: nil)
-        request = Temporal::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
@@ -254,7 +254,7 @@ module Temporal
       end
 
       def respond_activity_task_completed(namespace:, task_token:, result:)
-        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
@@ -264,7 +264,7 @@ module Temporal
       end
 
       def respond_activity_task_completed_by_id(namespace:, activity_id:, workflow_id:, run_id:, result:)
-        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskCompletedByIdRequest.new(
           identity: identity,
           namespace: namespace,
           workflow_id: workflow_id,
@@ -277,7 +277,7 @@ module Temporal
 
       def respond_activity_task_failed(namespace:, task_token:, exception:)
         serialize_whole_error = Temporal.configuration.use_error_serialization_v2
-        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
           task_token: task_token,
@@ -287,7 +287,7 @@ module Temporal
       end
 
       def respond_activity_task_failed_by_id(namespace:, activity_id:, workflow_id:, run_id:, exception:)
-        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskFailedByIdRequest.new(
           identity: identity,
           namespace: namespace,
           workflow_id: workflow_id,
@@ -299,7 +299,7 @@ module Temporal
       end
 
       def respond_activity_task_canceled(namespace:, task_token:, details: nil)
-        request = Temporal::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           namespace: namespace,
           task_token: task_token,
           details: to_details_payloads(details),
@@ -317,9 +317,9 @@ module Temporal
       end
 
       def signal_workflow_execution(namespace:, workflow_id:, run_id:, signal:, input: nil)
-        request = Temporal::Api::WorkflowService::V1::SignalWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::SignalWorkflowExecutionRequest.new(
           namespace: namespace,
-          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
@@ -357,15 +357,15 @@ module Temporal
           headers
         end
 
-        request = Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest.new(
           identity: identity,
           namespace: namespace,
-          workflow_type: Temporal::Api::Common::V1::WorkflowType.new(
+          workflow_type: Temporalio::Api::Common::V1::WorkflowType.new(
             name: workflow_name
           ),
           workflow_id: workflow_id,
           workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
-          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
           input: to_payloads(input),
@@ -373,16 +373,16 @@ module Temporal
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
-          header: Temporal::Api::Common::V1::Header.new(
+          header: Temporalio::Api::Common::V1::Header.new(
             fields: proto_header_fields,
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
           signal_input: to_signal_payloads(signal_input),
-          memo: Temporal::Api::Common::V1::Memo.new(
+          memo: Temporalio::Api::Common::V1::Memo.new(
             fields: to_payload_map(memo || {})
           ),
-          search_attributes: Temporal::Api::Common::V1::SearchAttributes.new(
+          search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: to_payload_map(search_attributes || {})
           ),
         )
@@ -391,9 +391,9 @@ module Temporal
       end
 
       def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
-        request = Temporal::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: namespace,
-          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id,
           ),
@@ -410,10 +410,10 @@ module Temporal
         reason: nil,
         details: nil
       )
-        request = Temporal::Api::WorkflowService::V1::TerminateWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::TerminateWorkflowExecutionRequest.new(
           identity: identity,
           namespace: namespace,
-          workflow_execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id,
           ),
@@ -425,7 +425,7 @@ module Temporal
       end
 
       def list_open_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, max_page_size: nil)
-        request = Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest.new(
           namespace: namespace,
           maximum_page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
           next_page_token: next_page_token,
@@ -437,7 +437,7 @@ module Temporal
       end
 
       def list_closed_workflow_executions(namespace:, from:, to:, next_page_token: nil, workflow_id: nil, workflow: nil, status: nil, max_page_size: nil)
-        request = Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest.new(
           namespace: namespace,
           maximum_page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
           next_page_token: next_page_token,
@@ -450,7 +450,7 @@ module Temporal
       end
 
       def list_workflow_executions(namespace:, query:, next_page_token: nil, max_page_size: nil)
-        request = Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::ListWorkflowExecutionsRequest.new(
           namespace: namespace,
           page_size: max_page_size.nil? ? options[:max_page_size] : max_page_size,
           next_page_token: next_page_token,
@@ -468,7 +468,7 @@ module Temporal
       end
 
       def count_workflow_executions(namespace:, query:)
-        request = Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::CountWorkflowExecutionsRequest.new(
           namespace: namespace,
           query: query
         )
@@ -484,13 +484,13 @@ module Temporal
       end
 
       def query_workflow(namespace:, workflow_id:, run_id:, query:, args: nil, query_reject_condition: nil)
-        request = Temporal::Api::WorkflowService::V1::QueryWorkflowRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::QueryWorkflowRequest.new(
           namespace: namespace,
-          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           ),
-          query: Temporal::Api::Query::V1::WorkflowQuery.new(
+          query: Temporalio::Api::Query::V1::WorkflowQuery.new(
             query_type: query,
             query_args: to_query_payloads(args)
           )
@@ -519,9 +519,9 @@ module Temporal
       end
 
       def describe_workflow_execution(namespace:, workflow_id:, run_id:)
-        request = Temporal::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::DescribeWorkflowExecutionRequest.new(
           namespace: namespace,
-          execution: Temporal::Api::Common::V1::WorkflowExecution.new(
+          execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
             workflow_id: workflow_id,
             run_id: run_id
           )
@@ -530,12 +530,12 @@ module Temporal
       end
 
       def describe_task_queue(namespace:, task_queue:)
-        request = Temporal::Api::WorkflowService::V1::DescribeTaskQueueRequest.new(
+        request = Temporalio::Api::WorkflowService::V1::DescribeTaskQueueRequest.new(
           namespace: namespace,
-          task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          task_queue_type: Temporal::Api::Enums::V1::TaskQueueType::Workflow,
+          task_queue_type: Temporalio::Api::Enums::V1::TaskQueueType::Workflow,
           include_task_queue_status: true
         )
         client.describe_task_queue(request)
@@ -553,7 +553,7 @@ module Temporal
       attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
-        @client ||= Temporal::Api::WorkflowService::V1::WorkflowService::Stub.new(
+        @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
           timeout: 60
@@ -565,7 +565,7 @@ module Temporal
       end
 
       def serialize_time_filter(from, to)
-        Temporal::Api::Filter::V1::StartTimeFilter.new(
+        Temporalio::Api::Filter::V1::StartTimeFilter.new(
           earliest_time: from&.to_time,
           latest_time: to&.to_time
         )
@@ -574,22 +574,22 @@ module Temporal
       def serialize_execution_filter(value)
         return unless value
 
-        Temporal::Api::Filter::V1::WorkflowExecutionFilter.new(workflow_id: value)
+        Temporalio::Api::Filter::V1::WorkflowExecutionFilter.new(workflow_id: value)
       end
 
       def serialize_type_filter(value)
         return unless value
 
-        Temporal::Api::Filter::V1::WorkflowTypeFilter.new(name: value)
+        Temporalio::Api::Filter::V1::WorkflowTypeFilter.new(name: value)
       end
 
       def serialize_status_filter(value)
         return unless value
 
         sym = Temporal::Workflow::Status::API_STATUS_MAP.invert[value]
-        status = Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
+        status = Temporalio::Api::Enums::V1::WorkflowExecutionStatus.resolve(sym)
 
-        Temporal::Api::Filter::V1::StatusFilter.new(status: status)
+        Temporalio::Api::Filter::V1::StatusFilter.new(status: status)
       end
     end
   end

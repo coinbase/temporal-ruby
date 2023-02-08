@@ -2,7 +2,7 @@ require 'securerandom'
 
 Fabricator(
   :api_workflow_execution_started_event_attributes,
-  from: Temporal::Api::History::V1::WorkflowExecutionStartedEventAttributes
+  from: Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes
 ) do
   transient :headers
 
@@ -14,6 +14,6 @@ Fabricator(
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
       h[field] = Temporal.configuration.converter.to_payload(value)
     end
-    Temporal::Api::Common::V1::Header.new(fields: fields)
+    Temporalio::Api::Common::V1::Header.new(fields: fields)
   end
 end

@@ -4,7 +4,7 @@ describe Temporal::Connection::Converter::Payload::Nil do
   subject { described_class.new }
 
   it 'encodes a null payload' do
-    payload = Temporal::Api::Common::V1::Payload.new(
+    payload = Temporalio::Api::Common::V1::Payload.new(
       metadata: { 'encoding' => described_class::ENCODING }
     )
 
@@ -12,7 +12,7 @@ describe Temporal::Connection::Converter::Payload::Nil do
   end
 
   it 'decodes a null payload' do
-    payload = Temporal::Api::Common::V1::Payload.new(
+    payload = Temporalio::Api::Common::V1::Payload.new(
       metadata: { 'encoding' => described_class::ENCODING }
     )
 

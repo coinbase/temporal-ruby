@@ -10,20 +10,20 @@ module Temporal
         include Concerns::Payloads
 
         PARENT_CLOSE_POLICY = {
-          terminate: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_TERMINATE,
-          abandon: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_ABANDON,
-          request_cancel: Temporal::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_REQUEST_CANCEL,
+          terminate: Temporalio::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_TERMINATE,
+          abandon: Temporalio::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_ABANDON,
+          request_cancel: Temporalio::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_REQUEST_CANCEL,
         }.freeze
 
         def to_proto
-          Temporal::Api::Command::V1::Command.new(
-            command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
+          Temporalio::Api::Command::V1::Command.new(
+            command_type: Temporalio::Api::Enums::V1::CommandType::COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION,
             start_child_workflow_execution_command_attributes:
-              Temporal::Api::Command::V1::StartChildWorkflowExecutionCommandAttributes.new(
+              Temporalio::Api::Command::V1::StartChildWorkflowExecutionCommandAttributes.new(
                 namespace: object.namespace,
                 workflow_id: object.workflow_id.to_s,
-                workflow_type: Temporal::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
-                task_queue: Temporal::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
+                workflow_type: Temporalio::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
+                task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 input: to_payloads(object.input),
                 workflow_execution_timeout: object.timeouts[:execution],
                 workflow_run_timeout: object.timeouts[:run],
@@ -44,13 +44,13 @@ module Temporal
         def serialize_headers(headers)
           return unless headers
 
-          Temporal::Api::Common::V1::Header.new(fields: to_payload_map(headers))
+          Temporalio::Api::Common::V1::Header.new(fields: to_payload_map(headers))
         end
 
         def serialize_memo(memo)
           return unless memo
 
-          Temporal::Api::Common::V1::Memo.new(fields: to_payload_map(memo))
+          Temporalio::Api::Common::V1::Memo.new(fields: to_payload_map(memo))
         end
 
         def serialize_parent_close_policy(parent_close_policy)
@@ -66,7 +66,7 @@ module Temporal
         def serialize_search_attributes(search_attributes)
           return unless search_attributes
 
-          Temporal::Api::Common::V1::SearchAttributes.new(indexed_fields: to_payload_map(search_attributes))
+          Temporalio::Api::Common::V1::SearchAttributes.new(indexed_fields: to_payload_map(search_attributes))
         end
       end
     end
