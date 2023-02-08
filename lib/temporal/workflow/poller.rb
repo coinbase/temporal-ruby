@@ -11,7 +11,8 @@ module Temporal
     class Poller
       DEFAULT_OPTIONS = {
         thread_pool_size: 10,
-        binary_checksum: nil
+        binary_checksum: nil,
+        poll_retry_seconds: 0
       }.freeze
 
       def initialize(namespace, task_queue, workflow_lookup, config, middleware = [], workflow_middleware = [], options = {})
@@ -92,6 +93,8 @@ module Temporal
         Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
         Temporal::ErrorHandler.handle(error, config)
 
+        sleep poll_retry_seconds unless poll_retry_seconds.zero?
+
         nil
       end
 
@@ -115,6 +118,10 @@ module Temporal
 
       def binary_checksum
         @options[:binary_checksum]
+      end
+
+      def poll_retry_seconds
+        @options[:poll_retry_seconds]
       end
     end
   end

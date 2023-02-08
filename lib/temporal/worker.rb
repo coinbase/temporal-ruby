@@ -24,7 +24,9 @@ module Temporal
       config = Temporal.configuration,
       activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size],
-      binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum]
+      binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum],
+      activity_poll_retry_seconds: Temporal::Activity::Poller::DEFAULT_OPTIONS[:poll_retry_seconds],
+      workflow_poll_retry_seconds: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:poll_retry_seconds]
     )
       @config = config
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
@@ -36,10 +38,12 @@ module Temporal
       @shutting_down = false
       @activity_poller_options = {
         thread_pool_size: activity_thread_pool_size,
+        poll_retry_seconds: activity_poll_retry_seconds
       }
       @workflow_poller_options = {
         thread_pool_size: workflow_thread_pool_size,
-        binary_checksum: binary_checksum
+        binary_checksum: binary_checksum,
+        poll_retry_seconds: workflow_poll_retry_seconds
       }
     end
 
