@@ -221,7 +221,8 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
-          binary_checksum: nil
+          binary_checksum: nil,
+          poll_retry_seconds: 0
         )
         .and_return(workflow_poller_1)
 
@@ -235,7 +236,8 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
-          binary_checksum: nil
+          binary_checksum: nil,
+          poll_retry_seconds: 0
         )
         .and_return(workflow_poller_2)
 
@@ -247,7 +249,8 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           config,
           [],
-          thread_pool_size: 20
+          thread_pool_size: 20,
+          poll_retry_seconds: 0
         )
         .and_return(activity_poller_1)
 
@@ -259,7 +262,8 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           config,
           [],
-          thread_pool_size: 20
+          thread_pool_size: 20,
+          poll_retry_seconds: 0
         )
         .and_return(activity_poller_2)
 
@@ -286,7 +290,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
-          {thread_pool_size: 10}
+          {thread_pool_size: 10, poll_retry_seconds: 0}
         )
         .and_return(activity_poller)
 
@@ -323,11 +327,60 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
-          binary_checksum: binary_checksum
+          binary_checksum: binary_checksum,
+          poll_retry_seconds: 0
         )
         .and_return(workflow_poller)
 
       worker = Temporal::Worker.new(binary_checksum: binary_checksum)
+      allow(worker).to receive(:shutting_down?).and_return(true)
+      worker.register_workflow(TestWorkerWorkflow)
+      worker.register_activity(TestWorkerActivity)
+
+      worker.start
+
+      expect(workflow_poller).to have_received(:start)
+    end
+
+    it 'can have an activity poller that sleeps after unsuccessful poll' do
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      expect(Temporal::Activity::Poller)
+        .to receive(:new)
+        .with(
+          'default-namespace',
+          'default-task-queue',
+          an_instance_of(Temporal::ExecutableLookup),
+          an_instance_of(Temporal::Configuration),
+          [],
+          {thread_pool_size: 20, poll_retry_seconds: 10}
+        )
+        .and_return(activity_poller)
+
+      worker = Temporal::Worker.new(activity_poll_retry_seconds: 10)
+      allow(worker).to receive(:shutting_down?).and_return(true)
+      worker.register_workflow(TestWorkerWorkflow)
+      worker.register_activity(TestWorkerActivity)
+
+      worker.start
+
+      expect(activity_poller).to have_received(:start)
+    end
+
+    it 'can have a workflow poller sleeping after unsuccessful poll' do
+      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
+      expect(Temporal::Workflow::Poller)
+        .to receive(:new)
+        .with(
+          'default-namespace',
+          'default-task-queue',
+          an_instance_of(Temporal::ExecutableLookup),
+          an_instance_of(Temporal::Configuration),
+          [],
+          {binary_checksum: nil, poll_retry_seconds: 10, thread_pool_size: 10}
+        )
+        .and_return(workflow_poller)
+
+      worker = Temporal::Worker.new(workflow_poll_retry_seconds: 10)
       allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
@@ -376,7 +429,8 @@ describe Temporal::Worker do
             [entry_1],
             [entry_3],
             thread_pool_size: 10,
-            binary_checksum: nil
+            binary_checksum: nil,
+            poll_retry_seconds: 0
           )
           .and_return(workflow_poller_1)
 
@@ -388,7 +442,8 @@ describe Temporal::Worker do
             an_instance_of(Temporal::ExecutableLookup),
             config,
             [entry_2],
-            thread_pool_size: 20
+            thread_pool_size: 20,
+            poll_retry_seconds: 0
           )
           .and_return(activity_poller_1)
 
