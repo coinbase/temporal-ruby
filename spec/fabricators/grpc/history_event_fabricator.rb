@@ -86,7 +86,6 @@ Fabricator(:api_activity_task_scheduled_event, from: :api_history_event) do
       activity_id: attrs[:event_id].to_s,
       activity_type: Temporalio::Api::Common::V1::ActivityType.new(name: 'TestActivity'),
       workflow_task_completed_event_id: attrs[:event_id] - 1,
-      namespace: 'test-namespace',
       task_queue: Fabricate(:api_task_queue)
     )
   end

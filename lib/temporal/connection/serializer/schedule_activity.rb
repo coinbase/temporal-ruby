@@ -16,7 +16,6 @@ module Temporal
                 activity_id: object.activity_id.to_s,
                 activity_type: Temporalio::Api::Common::V1::ActivityType.new(name: object.activity_type),
                 input: to_payloads(object.input),
-                namespace: object.namespace,
                 task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 schedule_to_close_timeout: object.timeouts[:schedule_to_close],
                 schedule_to_start_timeout: object.timeouts[:schedule_to_start],
