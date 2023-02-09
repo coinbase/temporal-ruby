@@ -16,15 +16,21 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :ARCHIVAL_STATE_DISABLED, 1
       value :ARCHIVAL_STATE_ENABLED, 2
     end
+    add_enum "temporal.api.enums.v1.ReplicationState" do
+      value :REPLICATION_STATE_UNSPECIFIED, 0
+      value :REPLICATION_STATE_NORMAL, 1
+      value :REPLICATION_STATE_HANDOVER, 2
+    end
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Enums
       module V1
         NamespaceState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.NamespaceState").enummodule
         ArchivalState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ArchivalState").enummodule
+        ReplicationState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ReplicationState").enummodule
       end
     end
   end

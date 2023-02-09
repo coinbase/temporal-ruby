@@ -8,8 +8,8 @@ module Temporal
         include Concerns::Payloads
 
         def to_proto
-          Temporal::Api::Query::V1::WorkflowQueryResult.new(
-            result_type: Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
+          Temporalio::Api::Query::V1::WorkflowQueryResult.new(
+            result_type: Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED,
             answer: to_query_payloads(object.result)
           )
         end

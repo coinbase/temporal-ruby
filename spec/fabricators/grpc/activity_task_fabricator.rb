@@ -1,6 +1,6 @@
 require 'securerandom'
 
-Fabricator(:api_activity_task, from: Temporal::Api::WorkflowService::V1::PollActivityTaskQueueResponse) do
+Fabricator(:api_activity_task, from: Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueResponse) do
   transient :task_token, :activity_name, :headers
 
   activity_id { SecureRandom.uuid }
@@ -17,6 +17,6 @@ Fabricator(:api_activity_task, from: Temporal::Api::WorkflowService::V1::PollAct
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
       h[field] = Temporal.configuration.converter.to_payload(value)
     end
-    Temporal::Api::Common::V1::Header.new(fields: fields)
+    Temporalio::Api::Common::V1::Header.new(fields: fields)
   end
 end

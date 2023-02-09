@@ -12,12 +12,13 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     end
     add_enum "temporal.api.enums.v1.IndexedValueType" do
       value :INDEXED_VALUE_TYPE_UNSPECIFIED, 0
-      value :INDEXED_VALUE_TYPE_STRING, 1
+      value :INDEXED_VALUE_TYPE_TEXT, 1
       value :INDEXED_VALUE_TYPE_KEYWORD, 2
       value :INDEXED_VALUE_TYPE_INT, 3
       value :INDEXED_VALUE_TYPE_DOUBLE, 4
       value :INDEXED_VALUE_TYPE_BOOL, 5
       value :INDEXED_VALUE_TYPE_DATETIME, 6
+      value :INDEXED_VALUE_TYPE_KEYWORD_LIST, 7
     end
     add_enum "temporal.api.enums.v1.Severity" do
       value :SEVERITY_UNSPECIFIED, 0
@@ -28,7 +29,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Enums
       module V1

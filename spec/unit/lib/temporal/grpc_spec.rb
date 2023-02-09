@@ -48,7 +48,7 @@ describe Temporal::Connection::GRPC do
     end
 
     it 'starts a workflow with scalar arguments' do
-      allow(grpc_stub).to receive(:start_workflow_execution).and_return(Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx'))
+      allow(grpc_stub).to receive(:start_workflow_execution).and_return(Temporalio::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx'))
 
       datetime_attribute_value = Time.now
       subject.start_workflow_execution(
@@ -75,7 +75,7 @@ describe Temporal::Connection::GRPC do
       )
 
       expect(grpc_stub).to have_received(:start_workflow_execution) do |request|
-        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::StartWorkflowExecutionRequest)
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::StartWorkflowExecutionRequest)
         expect(request.namespace).to eq(namespace)
         expect(request.workflow_id).to eq(workflow_id)
         expect(request.workflow_type.name).to eq('workflow_name')
@@ -86,11 +86,11 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_task_timeout.seconds).to eq(3)
         expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
         expect(request.search_attributes.indexed_fields).to eq({
-          'foo-int-attribute' => Temporal::Api::Common::V1::Payload.new(data: '256', metadata: { 'encoding' => 'json/plain' }),
-          'foo-string-attribute' => Temporal::Api::Common::V1::Payload.new(data: '"bar"', metadata: { 'encoding' => 'json/plain' }),
-          'foo-double-attribute' => Temporal::Api::Common::V1::Payload.new(data: '6.28', metadata: { 'encoding' => 'json/plain' }),
-          'foo-bool-attribute' => Temporal::Api::Common::V1::Payload.new(data: 'false', metadata: { 'encoding' => 'json/plain' }),
-          'foo-datetime-attribute' => Temporal::Api::Common::V1::Payload.new(data: "\"#{datetime_attribute_value.utc.iso8601}\"", metadata: { 'encoding' => 'json/plain' }),
+          'foo-int-attribute' => Temporalio::Api::Common::V1::Payload.new(data: '256', metadata: { 'encoding' => 'json/plain' }),
+          'foo-string-attribute' => Temporalio::Api::Common::V1::Payload.new(data: '"bar"', metadata: { 'encoding' => 'json/plain' }),
+          'foo-double-attribute' => Temporalio::Api::Common::V1::Payload.new(data: '6.28', metadata: { 'encoding' => 'json/plain' }),
+          'foo-bool-attribute' => Temporalio::Api::Common::V1::Payload.new(data: 'false', metadata: { 'encoding' => 'json/plain' }),
+          'foo-datetime-attribute' => Temporalio::Api::Common::V1::Payload.new(data: "\"#{datetime_attribute_value.utc.iso8601}\"", metadata: { 'encoding' => 'json/plain' }),
         })
       end
     end
@@ -117,7 +117,7 @@ describe Temporal::Connection::GRPC do
 
   describe '#signal_with_start_workflow' do
     let(:temporal_response) do
-      Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
+      Temporalio::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionResponse.new(run_id: 'xxx')
     end
 
     before { allow(grpc_stub).to receive(:signal_with_start_workflow_execution).and_return(temporal_response) }
@@ -138,7 +138,7 @@ describe Temporal::Connection::GRPC do
       )
 
       expect(grpc_stub).to have_received(:signal_with_start_workflow_execution) do |request|
-        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest)
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::SignalWithStartWorkflowExecutionRequest)
         expect(request.namespace).to eq(namespace)
         expect(request.workflow_id).to eq(workflow_id)
         expect(request.workflow_type.name).to eq('workflow_name')
@@ -177,8 +177,8 @@ describe Temporal::Connection::GRPC do
 
   describe "#list_namespaces" do
     let (:response) do
-      Temporal::Api::WorkflowService::V1::ListNamespacesResponse.new(
-        namespaces: [Temporal::Api::WorkflowService::V1::DescribeNamespaceResponse.new],
+      Temporalio::Api::WorkflowService::V1::ListNamespacesResponse.new(
+        namespaces: [Temporalio::Api::WorkflowService::V1::DescribeNamespaceResponse.new],
         next_page_token: ""
       )
     end
@@ -194,7 +194,7 @@ describe Temporal::Connection::GRPC do
       )
 
       expect(grpc_stub).to have_received(:list_namespaces) do |request|
-        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListNamespacesRequest)
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListNamespacesRequest)
         expect(request.page_size).to eq(10)
         expect(request.next_page_token).to eq(next_page_token)
       end
@@ -203,8 +203,8 @@ describe Temporal::Connection::GRPC do
 
   describe '#get_workflow_execution_history' do
     let(:response) do
-      Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
-        history: Temporal::Api::History::V1::History.new,
+      Temporalio::Api::WorkflowService::V1::GetWorkflowExecutionHistoryResponse.new(
+        history: Temporalio::Api::History::V1::History.new,
         next_page_token: nil
       )
     end
@@ -219,15 +219,15 @@ describe Temporal::Connection::GRPC do
       )
 
       expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request|
-        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest)
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::GetWorkflowExecutionHistoryRequest)
         expect(request.namespace).to eq(namespace)
         expect(request.execution.workflow_id).to eq(workflow_id)
         expect(request.execution.run_id).to eq(run_id)
         expect(request.next_page_token).to be_empty
         expect(request.wait_new_event).to eq(false)
         expect(request.history_event_filter_type).to eq(
-          Temporal::Api::Enums::V1::HistoryEventFilterType.lookup(
-            Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT
+          Temporalio::Api::Enums::V1::HistoryEventFilterType.lookup(
+            Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT
           )
         )
       end
@@ -289,8 +289,8 @@ describe Temporal::Connection::GRPC do
 
         expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request|
           expect(request.history_event_filter_type).to eq(
-            Temporal::Api::Enums::V1::HistoryEventFilterType.lookup(
-              Temporal::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT
+            Temporalio::Api::Enums::V1::HistoryEventFilterType.lookup(
+              Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT
             )
           )
         end
@@ -303,7 +303,7 @@ describe Temporal::Connection::GRPC do
       let(:to) { Time.now }
       let(:args) { { namespace: namespace, from: from, to: to } }
       let(:temporal_response) do
-        Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+        Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
       end
 
       before do
@@ -314,10 +314,10 @@ describe Temporal::Connection::GRPC do
         subject.list_open_workflow_executions(**args)
 
         expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
           expect(request.maximum_page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
           expect(request.next_page_token).to eq('')
-          expect(request.start_time_filter).to be_an_instance_of(Temporal::Api::Filter::V1::StartTimeFilter)
+          expect(request.start_time_filter).to be_an_instance_of(Temporalio::Api::Filter::V1::StartTimeFilter)
           expect(request.start_time_filter.earliest_time.to_time)
             .to eq(from)
           expect(request.start_time_filter.latest_time.to_time)
@@ -332,7 +332,7 @@ describe Temporal::Connection::GRPC do
           subject.list_open_workflow_executions(**args.merge(next_page_token: 'x'))
 
           expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
             expect(request.next_page_token).to eq('x')
           end
         end
@@ -343,9 +343,9 @@ describe Temporal::Connection::GRPC do
           subject.list_open_workflow_executions(**args.merge(workflow_id: 'xxx'))
 
           expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
             expect(request.execution_filter)
-              .to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowExecutionFilter)
+              .to be_an_instance_of(Temporalio::Api::Filter::V1::WorkflowExecutionFilter)
             expect(request.execution_filter.workflow_id).to eq('xxx')
           end
         end
@@ -356,8 +356,8 @@ describe Temporal::Connection::GRPC do
           subject.list_open_workflow_executions(**args.merge(workflow: 'TestWorkflow'))
 
           expect(grpc_stub).to have_received(:list_open_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
-            expect(request.type_filter).to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowTypeFilter)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListOpenWorkflowExecutionsRequest)
+            expect(request.type_filter).to be_an_instance_of(Temporalio::Api::Filter::V1::WorkflowTypeFilter)
             expect(request.type_filter.name).to eq('TestWorkflow')
           end
         end
@@ -369,7 +369,7 @@ describe Temporal::Connection::GRPC do
       let(:query)  { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
       let(:args) { { namespace: namespace, query: query } }
       let(:temporal_response) do
-        Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsResponse.new(count: 0)
+        Temporalio::Api::WorkflowService::V1::CountWorkflowExecutionsResponse.new(count: 0)
       end
 
       before do
@@ -380,7 +380,7 @@ describe Temporal::Connection::GRPC do
         subject.count_workflow_executions(**args)
 
         expect(grpc_stub).to have_received(:count_workflow_executions) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::CountWorkflowExecutionsRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::CountWorkflowExecutionsRequest)
           expect(request.namespace).to eq(namespace)
           expect(request.query).to eq(query)
         end
@@ -392,10 +392,10 @@ describe Temporal::Connection::GRPC do
       let(:query) { 'StartDate < 2022-04-07T20:48:20Z order by StartTime desc' }
       let(:args) { { namespace: namespace, query: query } }
       let(:temporal_response) do
-        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+        Temporalio::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
       end
       let(:temporal_paginated_response) do
-        Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: 'more-results')
+        Temporalio::Api::WorkflowService::V1::ListWorkflowExecutionsResponse.new(executions: [], next_page_token: 'more-results')
       end
 
       before do
@@ -406,7 +406,7 @@ describe Temporal::Connection::GRPC do
         subject.list_workflow_executions(**args)
 
         expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
           expect(request.page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
           expect(request.next_page_token).to eq('')
           expect(request.namespace).to eq(namespace)
@@ -419,7 +419,7 @@ describe Temporal::Connection::GRPC do
           subject.list_workflow_executions(**args.merge(next_page_token: 'x'))
 
           expect(grpc_stub).to have_received(:list_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListWorkflowExecutionsRequest)
             expect(request.next_page_token).to eq('x')
           end
         end
@@ -432,7 +432,7 @@ describe Temporal::Connection::GRPC do
       let(:to) { Time.now }
       let(:args) { { namespace: namespace, from: from, to: to } }
       let(:temporal_response) do
-        Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
+        Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsResponse.new(executions: [], next_page_token: '')
       end
 
       before do
@@ -443,10 +443,10 @@ describe Temporal::Connection::GRPC do
         subject.list_closed_workflow_executions(**args)
 
         expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
           expect(request.maximum_page_size).to eq(described_class::DEFAULT_OPTIONS[:max_page_size])
           expect(request.next_page_token).to eq('')
-          expect(request.start_time_filter).to be_an_instance_of(Temporal::Api::Filter::V1::StartTimeFilter)
+          expect(request.start_time_filter).to be_an_instance_of(Temporalio::Api::Filter::V1::StartTimeFilter)
           expect(request.start_time_filter.earliest_time.to_time)
             .to eq(from)
           expect(request.start_time_filter.latest_time.to_time)
@@ -462,14 +462,14 @@ describe Temporal::Connection::GRPC do
           subject.list_closed_workflow_executions(**args.merge(next_page_token: 'x'))
 
           expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
             expect(request.next_page_token).to eq('x')
           end
         end
       end
 
       context 'when status is supplied' do
-        let(:api_completed_status) { Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_COMPLETED }
+        let(:api_completed_status) { Temporalio::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_COMPLETED }
 
         it 'makes an API request' do
           subject.list_closed_workflow_executions(
@@ -477,8 +477,8 @@ describe Temporal::Connection::GRPC do
           )
 
           expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
-            expect(request.status_filter).to eq(Temporal::Api::Filter::V1::StatusFilter.new(status: api_completed_status))
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.status_filter).to eq(Temporalio::Api::Filter::V1::StatusFilter.new(status: api_completed_status))
           end
         end
       end
@@ -488,9 +488,9 @@ describe Temporal::Connection::GRPC do
           subject.list_closed_workflow_executions(**args.merge(workflow_id: 'xxx'))
 
           expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
             expect(request.execution_filter)
-              .to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowExecutionFilter)
+              .to be_an_instance_of(Temporalio::Api::Filter::V1::WorkflowExecutionFilter)
             expect(request.execution_filter.workflow_id).to eq('xxx')
           end
         end
@@ -501,8 +501,8 @@ describe Temporal::Connection::GRPC do
           subject.list_closed_workflow_executions(**args.merge(workflow: 'TestWorkflow'))
 
           expect(grpc_stub).to have_received(:list_closed_workflow_executions) do |request|
-            expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
-            expect(request.type_filter).to be_an_instance_of(Temporal::Api::Filter::V1::WorkflowTypeFilter)
+            expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::ListClosedWorkflowExecutionsRequest)
+            expect(request.type_filter).to be_an_instance_of(Temporalio::Api::Filter::V1::WorkflowTypeFilter)
             expect(request.type_filter.name).to eq('TestWorkflow')
           end
         end
@@ -516,7 +516,7 @@ describe Temporal::Connection::GRPC do
     before do
       allow(grpc_stub)
         .to receive(:respond_query_task_completed)
-        .and_return(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse.new)
+        .and_return(Temporalio::Api::WorkflowService::V1::RespondQueryTaskCompletedResponse.new)
     end
 
     context 'when query result is an answer' do
@@ -530,11 +530,11 @@ describe Temporal::Connection::GRPC do
         )
 
         expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
           expect(request.task_token).to eq(task_token)
           expect(request.namespace).to eq(namespace)
-          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
-            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          expect(request.completed_type).to eq(Temporalio::Api::Enums::V1::QueryResultType.lookup(
+            Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
           )
           expect(request.query_result).to eq(TestDeserializer.to_query_payloads(42))
           expect(request.error_message).to eq('')
@@ -553,11 +553,11 @@ describe Temporal::Connection::GRPC do
         )
 
         expect(grpc_stub).to have_received(:respond_query_task_completed) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest)
           expect(request.task_token).to eq(task_token)
           expect(request.namespace).to eq(namespace)
-          expect(request.completed_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
-            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          expect(request.completed_type).to eq(Temporalio::Api::Enums::V1::QueryResultType.lookup(
+            Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
           )
           expect(request.query_result).to eq(nil)
           expect(request.error_message).to eq('Test query failure')
@@ -572,7 +572,7 @@ describe Temporal::Connection::GRPC do
     before do
       allow(grpc_stub)
         .to receive(:respond_workflow_task_completed)
-        .and_return(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse.new)
+        .and_return(Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskCompletedResponse.new)
     end
 
     context 'when responding with query results' do
@@ -593,7 +593,7 @@ describe Temporal::Connection::GRPC do
         )
 
         expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|
-          expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest)
+          expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest)
           expect(request.task_token).to eq(task_token)
           expect(request.namespace).to eq(namespace)
           expect(request.commands).to be_empty
@@ -602,15 +602,15 @@ describe Temporal::Connection::GRPC do
 
           expect(request.query_results.length).to eq(2)
 
-          expect(request.query_results['1']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
-          expect(request.query_results['1'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
-            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
+          expect(request.query_results['1']).to be_a(Temporalio::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['1'].result_type).to eq(Temporalio::Api::Enums::V1::QueryResultType.lookup(
+            Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_ANSWERED)
           )
           expect(request.query_results['1'].answer).to eq(TestDeserializer.to_query_payloads(42))
 
-          expect(request.query_results['2']).to be_a(Temporal::Api::Query::V1::WorkflowQueryResult)
-          expect(request.query_results['2'].result_type).to eq(Temporal::Api::Enums::V1::QueryResultType.lookup(
-            Temporal::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
+          expect(request.query_results['2']).to be_a(Temporalio::Api::Query::V1::WorkflowQueryResult)
+          expect(request.query_results['2'].result_type).to eq(Temporalio::Api::Enums::V1::QueryResultType.lookup(
+            Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
           )
           expect(request.query_results['2'].error_message).to eq('Test query failure')
         end
@@ -620,7 +620,7 @@ describe Temporal::Connection::GRPC do
 
   describe '#respond_workflow_task_failed' do
     let(:task_token) { 'task-token' }
-    let(:cause) { Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND }
+    let(:cause) { Temporalio::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND }
 
     before { allow(grpc_stub).to receive(:respond_workflow_task_failed) }
 
@@ -634,10 +634,10 @@ describe Temporal::Connection::GRPC do
       )
 
       expect(grpc_stub).to have_received(:respond_workflow_task_failed) do |request|
-        expect(request).to be_an_instance_of(Temporal::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest)
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskFailedRequest)
         expect(request.namespace).to eq(namespace)
         expect(request.task_token).to eq(task_token)
-        expect(request.cause).to be(Temporal::Api::Enums::V1::WorkflowTaskFailedCause.lookup(cause))
+        expect(request.cause).to be(Temporalio::Api::Enums::V1::WorkflowTaskFailedCause.lookup(cause))
         expect(request.identity).to eq(identity)
         expect(request.binary_checksum).to eq(binary_checksum)
       end

@@ -16,7 +16,7 @@ module Temporal
 
       payloads = super(data)
 
-      Temporal::Api::Common::V1::Payloads.new(
+      Temporalio::Api::Common::V1::Payloads.new(
         payloads: payloads.payloads.map { |payload| encrypt_payload(payload, key_id, key) }
       )
     end
@@ -55,12 +55,12 @@ module Temporal
     end
 
     def encrypt_payload(payload, key_id, key)
-      Temporal::Api::Common::V1::Payload.new(
+      Temporalio::Api::Common::V1::Payload.new(
         metadata: {
           METADATA_ENCODING_KEY => METADATA_ENCODING,
           METADATA_KEY_ID_KEY => key_id,
         },
-        data: encrypt(Temporal::Api::Common::V1::Payload.encode(payload), key)
+        data: encrypt(Temporalio::Api::Common::V1::Payload.encode(payload), key)
       )
     end
 
@@ -85,7 +85,7 @@ module Temporal
       key = get_key(key_id)
       serialized_payload = decrypt(payload.data, key)
 
-      Temporal::Api::Common::V1::Payload.decode(serialized_payload)
+      Temporalio::Api::Common::V1::Payload.decode(serialized_payload)
     end
   end
 end

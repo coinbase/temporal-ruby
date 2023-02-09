@@ -8,10 +8,10 @@ module Temporal
         include Concerns::Payloads
 
         def to_proto
-          Temporal::Api::Command::V1::Command.new(
-            command_type: Temporal::Api::Enums::V1::CommandType::COMMAND_TYPE_RECORD_MARKER,
+          Temporalio::Api::Command::V1::Command.new(
+            command_type: Temporalio::Api::Enums::V1::CommandType::COMMAND_TYPE_RECORD_MARKER,
             record_marker_command_attributes:
-              Temporal::Api::Command::V1::RecordMarkerCommandAttributes.new(
+              Temporalio::Api::Command::V1::RecordMarkerCommandAttributes.new(
                 marker_name: object.name,
                 details: {
                   'data' => to_details_payloads(object.details)

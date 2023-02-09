@@ -5,6 +5,7 @@ require 'google/protobuf'
 
 require 'temporal/api/common/v1/message_pb'
 require 'temporal/api/enums/v1/workflow_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/failure/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.failure.v1.ApplicationFailureInfo" do
@@ -47,6 +48,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :message, :string, 1
       optional :source, :string, 2
       optional :stack_trace, :string, 3
+      optional :encoded_attributes, :message, 20, "temporal.api.common.v1.Payload"
       optional :cause, :message, 4, "temporal.api.failure.v1.Failure"
       oneof :failure_info do
         optional :application_failure_info, :message, 5, "temporal.api.failure.v1.ApplicationFailureInfo"
@@ -62,7 +64,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Failure
       module V1

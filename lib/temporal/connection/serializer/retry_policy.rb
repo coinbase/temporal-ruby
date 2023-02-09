@@ -16,7 +16,7 @@ module Temporal
             non_retryable_error_types: non_retriable_errors,
           }.compact
 
-          Temporal::Api::Common::V1::RetryPolicy.new(options)
+          Temporalio::Api::Common::V1::RetryPolicy.new(options)
         end
       end
     end

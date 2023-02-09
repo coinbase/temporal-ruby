@@ -36,7 +36,7 @@ describe Temporal::Workflow::ExecutionInfo do
         :api_workflow_execution_info,
         workflow: 'TestWorkflow',
         workflow_id: '',
-        status: Temporal::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_TERMINATED
+        status: Temporalio::Api::Enums::V1::WorkflowExecutionStatus::WORKFLOW_EXECUTION_STATUS_TERMINATED
       )
     end
 
@@ -70,7 +70,7 @@ describe Temporal::Workflow::ExecutionInfo do
               :api_workflow_execution_info,
               workflow: 'TestWorkflow',
               workflow_id: '',
-              status: Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(status)
+              status: Temporalio::Api::Enums::V1::WorkflowExecutionStatus.resolve(status)
             )
           end
           it { is_expected.to be_closed }
@@ -83,7 +83,7 @@ describe Temporal::Workflow::ExecutionInfo do
           :api_workflow_execution_info,
           workflow: 'TestWorkflow',
           workflow_id: '',
-          status: Temporal::Api::Enums::V1::WorkflowExecutionStatus.resolve(:WORKFLOW_EXECUTION_STATUS_RUNNING)
+          status: Temporalio::Api::Enums::V1::WorkflowExecutionStatus.resolve(:WORKFLOW_EXECUTION_STATUS_RUNNING)
         )
       end
 

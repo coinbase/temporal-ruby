@@ -16,7 +16,7 @@ module Temporal
           def to_payload(data)
             return nil unless data.nil?
 
-            Temporal::Api::Common::V1::Payload.new(
+            Temporalio::Api::Common::V1::Payload.new(
               metadata: { 'encoding' => ENCODING }
             )
           end

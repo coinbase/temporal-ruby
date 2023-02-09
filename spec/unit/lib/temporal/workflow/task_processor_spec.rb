@@ -113,7 +113,7 @@ describe Temporal::Workflow::TaskProcessor do
           let(:query_id) { SecureRandom.uuid }
           let(:query_result) { Temporal::Workflow::QueryResult.answer(42) }
           let(:queries) do
-            Google::Protobuf::Map.new(:string, :message, Temporal::Api::Query::V1::WorkflowQuery).tap do |map|
+            Google::Protobuf::Map.new(:string, :message, Temporalio::Api::Query::V1::WorkflowQuery).tap do |map|
               map[query_id] = Fabricate(:api_workflow_query)
             end
           end
@@ -255,7 +255,7 @@ describe Temporal::Workflow::TaskProcessor do
               .with(
                 namespace: namespace,
                 task_token: task.task_token,
-                cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+                cause: Temporalio::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
                 exception: exception,
                 binary_checksum: binary_checksum
               )
@@ -284,7 +284,7 @@ describe Temporal::Workflow::TaskProcessor do
               .with(
                 namespace: namespace,
                 task_token: task.task_token,
-                cause: Temporal::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
+                cause: Temporalio::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
                 exception: exception,
                 binary_checksum: binary_checksum
               )
