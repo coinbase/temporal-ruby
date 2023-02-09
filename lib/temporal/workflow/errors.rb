@@ -10,33 +10,44 @@ module Temporal
       def self.generate_error(failure, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
-          message = from_details_payloads(failure.application_failure_info.details)
 
-          exception_class = safe_constantize(failure.application_failure_info.type)
+          error_type = failure.application_failure_info.type
+          exception_class = safe_constantize(error_type)
+          message = failure.message
+
           if exception_class.nil?
             Temporal.logger.error(
-              "Could not find original error class. Defaulting to StandardError.", 
-              {original_error: failure.application_failure_info.type},
+              'Could not find original error class. Defaulting to StandardError.',
+              { original_error: error_type }
             )
-            message = "#{failure.application_failure_info.type}: #{message}"
+            message = "#{error_type}: #{failure.message}"
             exception_class = default_exception_class
           end
-
-
           begin
-            exception = exception_class.new(message)
-          rescue => deserialization_error
-            # We don't currently support serializing/deserializing exceptions with more than one argument.
+            details = failure.application_failure_info.details
+            exception_or_message = from_details_payloads(details)
+            # v1 serialization only supports StandardErrors with a single "message" argument.
+            # v2 serialization supports complex errors using our converters to serialize them.
+            # enable v2 serialization in activities with Temporal.configuration.use_error_serialization_v2
+            if exception_or_message.is_a?(Exception)
+              exception = exception_or_message
+            else
+              exception = exception_class.new(message)
+            end
+          rescue StandardError => deserialization_error
             message = "#{exception_class}: #{message}"
             exception = default_exception_class.new(message)
             Temporal.logger.error(
-              "Could not instantiate original error. Defaulting to StandardError.", 
+              "Could not instantiate original error. Defaulting to StandardError. It's likely that your error's " \
+              "initializer takes something more than just one positional argument. If so, make sure the worker running "\
+              "your activities is setting Temporal.configuration.use_error_serialization_v2 to support this.",
               {
-                original_error: failure.application_failure_info.type,
+                original_error: error_type,
+                serialized_error: details.payloads.first.data,
                 instantiation_error_class: deserialization_error.class.to_s,
                 instantiation_error_message: deserialization_error.message,
               },
-            ) 
+            )
           end
           exception.tap do |exception|
             backtrace = failure.stack_trace.split("\n")
