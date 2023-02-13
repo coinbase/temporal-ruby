@@ -4,7 +4,9 @@
 require 'google/protobuf'
 
 require 'google/protobuf/timestamp_pb'
+require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/workflow_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/filter/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.filter.v1.WorkflowExecutionFilter" do
@@ -24,7 +26,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Filter
       module V1

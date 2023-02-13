@@ -4,17 +4,18 @@
 require 'google/protobuf'
 
 require 'google/protobuf/duration_pb'
+require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/workflow_pb'
 require 'temporal/api/enums/v1/command_type_pb'
 require 'temporal/api/common/v1/message_pb'
 require 'temporal/api/failure/v1/message_pb'
 require 'temporal/api/taskqueue/v1/message_pb'
+
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/command/v1/message.proto", :syntax => :proto3) do
     add_message "temporal.api.command.v1.ScheduleActivityTaskCommandAttributes" do
       optional :activity_id, :string, 1
       optional :activity_type, :message, 2, "temporal.api.common.v1.ActivityType"
-      optional :namespace, :string, 3
       optional :task_queue, :message, 4, "temporal.api.taskqueue.v1.TaskQueue"
       optional :header, :message, 5, "temporal.api.common.v1.Header"
       optional :input, :message, 6, "temporal.api.common.v1.Payloads"
@@ -23,6 +24,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :start_to_close_timeout, :message, 9, "google.protobuf.Duration"
       optional :heartbeat_timeout, :message, 10, "google.protobuf.Duration"
       optional :retry_policy, :message, 11, "temporal.api.common.v1.RetryPolicy"
+      optional :request_eager_execution, :bool, 12
     end
     add_message "temporal.api.command.v1.RequestCancelActivityTaskCommandAttributes" do
       optional :scheduled_event_id, :int64, 1
@@ -49,6 +51,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :run_id, :string, 3
       optional :control, :string, 4
       optional :child_workflow_only, :bool, 5
+      optional :reason, :string, 6
     end
     add_message "temporal.api.command.v1.SignalExternalWorkflowExecutionCommandAttributes" do
       optional :namespace, :string, 1
@@ -57,9 +60,13 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :input, :message, 4, "temporal.api.common.v1.Payloads"
       optional :control, :string, 5
       optional :child_workflow_only, :bool, 6
+      optional :header, :message, 7, "temporal.api.common.v1.Header"
     end
     add_message "temporal.api.command.v1.UpsertWorkflowSearchAttributesCommandAttributes" do
       optional :search_attributes, :message, 1, "temporal.api.common.v1.SearchAttributes"
+    end
+    add_message "temporal.api.command.v1.ModifyWorkflowPropertiesCommandAttributes" do
+      optional :upserted_memo, :message, 1, "temporal.api.common.v1.Memo"
     end
     add_message "temporal.api.command.v1.RecordMarkerCommandAttributes" do
       optional :marker_name, :string, 1
@@ -101,6 +108,9 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :memo, :message, 15, "temporal.api.common.v1.Memo"
       optional :search_attributes, :message, 16, "temporal.api.common.v1.SearchAttributes"
     end
+    add_message "temporal.api.command.v1.ProtocolMessageCommandAttributes" do
+      optional :message_id, :string, 1
+    end
     add_message "temporal.api.command.v1.Command" do
       optional :command_type, :enum, 1, "temporal.api.enums.v1.CommandType"
       oneof :attributes do
@@ -117,12 +127,14 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
         optional :start_child_workflow_execution_command_attributes, :message, 12, "temporal.api.command.v1.StartChildWorkflowExecutionCommandAttributes"
         optional :signal_external_workflow_execution_command_attributes, :message, 13, "temporal.api.command.v1.SignalExternalWorkflowExecutionCommandAttributes"
         optional :upsert_workflow_search_attributes_command_attributes, :message, 14, "temporal.api.command.v1.UpsertWorkflowSearchAttributesCommandAttributes"
+        optional :protocol_message_command_attributes, :message, 15, "temporal.api.command.v1.ProtocolMessageCommandAttributes"
+        optional :modify_workflow_properties_command_attributes, :message, 17, "temporal.api.command.v1.ModifyWorkflowPropertiesCommandAttributes"
       end
     end
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Command
       module V1
@@ -136,9 +148,11 @@ module Temporal
         RequestCancelExternalWorkflowExecutionCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.RequestCancelExternalWorkflowExecutionCommandAttributes").msgclass
         SignalExternalWorkflowExecutionCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.SignalExternalWorkflowExecutionCommandAttributes").msgclass
         UpsertWorkflowSearchAttributesCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.UpsertWorkflowSearchAttributesCommandAttributes").msgclass
+        ModifyWorkflowPropertiesCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.ModifyWorkflowPropertiesCommandAttributes").msgclass
         RecordMarkerCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.RecordMarkerCommandAttributes").msgclass
         ContinueAsNewWorkflowExecutionCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.ContinueAsNewWorkflowExecutionCommandAttributes").msgclass
         StartChildWorkflowExecutionCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.StartChildWorkflowExecutionCommandAttributes").msgclass
+        ProtocolMessageCommandAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.ProtocolMessageCommandAttributes").msgclass
         Command = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.command.v1.Command").msgclass
       end
     end

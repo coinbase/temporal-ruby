@@ -2,7 +2,7 @@ module Temporal
   class Workflow
     module Command
       # TODO: Move these classes into their own directories under workflow/command/*
-      ScheduleActivity = Struct.new(:activity_type, :activity_id, :input, :namespace, :task_queue, :retry_policy, :timeouts, :headers, keyword_init: true)
+      ScheduleActivity = Struct.new(:activity_type, :activity_id, :input, :task_queue, :retry_policy, :timeouts, :headers, keyword_init: true)
       StartChildWorkflow = Struct.new(:workflow_type, :workflow_id, :input, :namespace, :task_queue, :retry_policy, :parent_close_policy, :timeouts, :headers, :cron_schedule, :memo, :workflow_id_reuse_policy, :search_attributes, keyword_init: true)
       ContinueAsNew = Struct.new(:workflow_type, :task_queue, :input, :timeouts, :retry_policy, :headers, :memo, :search_attributes, keyword_init: true)
       RequestActivityCancellation = Struct.new(:activity_id, keyword_init: true)

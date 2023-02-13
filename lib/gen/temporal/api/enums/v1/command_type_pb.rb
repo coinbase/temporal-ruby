@@ -20,11 +20,13 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :COMMAND_TYPE_START_CHILD_WORKFLOW_EXECUTION, 11
       value :COMMAND_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION, 12
       value :COMMAND_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES, 13
+      value :COMMAND_TYPE_PROTOCOL_MESSAGE, 14
+      value :COMMAND_TYPE_MODIFY_WORKFLOW_PROPERTIES, 16
     end
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Enums
       module V1

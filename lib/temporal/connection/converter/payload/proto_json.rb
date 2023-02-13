@@ -20,7 +20,7 @@ module Temporal
 
           def to_payload(data)
             return unless data.is_a?(Google::Protobuf::MessageExts)
-            Temporal::Api::Common::V1::Payload.new(
+            Temporalio::Api::Common::V1::Payload.new(
               metadata: {
                 'encoding' => ENCODING,
                 'messageType' => data.class.descriptor.name,

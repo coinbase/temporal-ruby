@@ -10,6 +10,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE, 1
       value :WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY, 2
       value :WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE, 3
+      value :WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING, 4
     end
     add_enum "temporal.api.enums.v1.ParentClosePolicy" do
       value :PARENT_CLOSE_POLICY_UNSPECIFIED, 0
@@ -39,6 +40,11 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       value :PENDING_ACTIVITY_STATE_STARTED, 2
       value :PENDING_ACTIVITY_STATE_CANCEL_REQUESTED, 3
     end
+    add_enum "temporal.api.enums.v1.PendingWorkflowTaskState" do
+      value :PENDING_WORKFLOW_TASK_STATE_UNSPECIFIED, 0
+      value :PENDING_WORKFLOW_TASK_STATE_SCHEDULED, 1
+      value :PENDING_WORKFLOW_TASK_STATE_STARTED, 2
+    end
     add_enum "temporal.api.enums.v1.HistoryEventFilterType" do
       value :HISTORY_EVENT_FILTER_TYPE_UNSPECIFIED, 0
       value :HISTORY_EVENT_FILTER_TYPE_ALL_EVENT, 1
@@ -64,7 +70,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   end
 end
 
-module Temporal
+module Temporalio
   module Api
     module Enums
       module V1
@@ -73,6 +79,7 @@ module Temporal
         ContinueAsNewInitiator = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ContinueAsNewInitiator").enummodule
         WorkflowExecutionStatus = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.WorkflowExecutionStatus").enummodule
         PendingActivityState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.PendingActivityState").enummodule
+        PendingWorkflowTaskState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.PendingWorkflowTaskState").enummodule
         HistoryEventFilterType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.HistoryEventFilterType").enummodule
         RetryState = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.RetryState").enummodule
         TimeoutType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.TimeoutType").enummodule

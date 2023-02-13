@@ -10,11 +10,11 @@ describe Temporal::Connection::Converter::Composite do
   describe 'encoding' do
     it 'tries converters until it finds a match' do
       payloads = [
-        Temporal::Api::Common::V1::Payload.new(
+        Temporalio::Api::Common::V1::Payload.new(
           metadata: { 'encoding' =>  Temporal::Connection::Converter::Payload::Bytes::ENCODING },
           data: 'test'.b
         ),
-        Temporal::Api::Common::V1::Payload.new(
+        Temporalio::Api::Common::V1::Payload.new(
           metadata: { 'encoding' =>  Temporal::Connection::Converter::Payload::JSON::ENCODING },
           data: '"test"'
         ),
@@ -32,11 +32,11 @@ describe Temporal::Connection::Converter::Composite do
   describe 'decoding' do
     it 'uses metadata to pick a converter' do
       payloads = [
-        Temporal::Api::Common::V1::Payload.new(
+        Temporalio::Api::Common::V1::Payload.new(
           metadata: { 'encoding' =>  Temporal::Connection::Converter::Payload::Bytes::ENCODING },
           data: 'test'.b
         ),
-        Temporal::Api::Common::V1::Payload.new(
+        Temporalio::Api::Common::V1::Payload.new(
           metadata: { 'encoding' =>  Temporal::Connection::Converter::Payload::JSON::ENCODING },
           data: '"test"'
         ),
@@ -50,7 +50,7 @@ describe Temporal::Connection::Converter::Composite do
     end
 
     it 'raises if there is no converter for an encoding' do
-      payload = Temporal::Api::Common::V1::Payload.new(
+      payload = Temporalio::Api::Common::V1::Payload.new(
         metadata: { 'encoding' => 'fake' }
       )
 

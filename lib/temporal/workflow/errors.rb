@@ -6,7 +6,7 @@ module Temporal
       extend Concerns::Payloads
 
       # Convert a failure returned from the server to an Error to raise to the client
-      # failure: Temporal::Api::Failure::V1::Failure
+      # failure: Temporalio::Api::Failure::V1::Failure
       def self.generate_error(failure, default_exception_class = StandardError)
         case failure.failure_info
         when :application_failure_info
@@ -63,8 +63,8 @@ module Temporal
         end
       end
 
-      WORKFLOW_ALREADY_EXISTS_SYM = Temporal::Api::Enums::V1::StartChildWorkflowExecutionFailedCause.lookup(
-        Temporal::Api::Enums::V1::StartChildWorkflowExecutionFailedCause::START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS
+      WORKFLOW_ALREADY_EXISTS_SYM = Temporalio::Api::Enums::V1::StartChildWorkflowExecutionFailedCause.lookup(
+        Temporalio::Api::Enums::V1::StartChildWorkflowExecutionFailedCause::START_CHILD_WORKFLOW_EXECUTION_FAILED_CAUSE_WORKFLOW_ALREADY_EXISTS
       )
 
       def self.generate_error_for_child_workflow_start(cause, workflow_id)

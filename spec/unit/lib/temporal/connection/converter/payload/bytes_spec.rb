@@ -5,7 +5,7 @@ describe Temporal::Connection::Converter::Payload::Bytes do
 
   describe 'round trip' do
     it 'encodes to a binary/plain payload' do
-      payload = Temporal::Api::Common::V1::Payload.new(
+      payload = Temporalio::Api::Common::V1::Payload.new(
         metadata: { 'encoding' => described_class::ENCODING },
         data: 'test'.b
       )
@@ -14,7 +14,7 @@ describe Temporal::Connection::Converter::Payload::Bytes do
     end
 
     it 'decodes a binary/plain payload to a byte string' do
-      payload = Temporal::Api::Common::V1::Payload.new(
+      payload = Temporalio::Api::Common::V1::Payload.new(
         metadata: { 'encoding' => described_class::ENCODING },
         data: 'test'.b
       )
