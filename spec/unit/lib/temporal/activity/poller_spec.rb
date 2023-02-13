@@ -159,7 +159,7 @@ describe Temporal::Activity::Poller do
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
         allow(connection).to receive(:poll_activity_task_queue).and_raise(StandardError)
-        allow(subject).to receive(:sleep_before_retry).and_return(nil)
+        allow(subject).to receive(:sleep).and_return(nil)
       end
 
       it 'logs' do
@@ -181,7 +181,7 @@ describe Temporal::Activity::Poller do
         # stop poller before inspecting
         subject.stop_polling; subject.wait
 
-        expect(subject).to_not have_received(:sleep_before_retry)
+        expect(subject).to have_received(:sleep).with(0).once
       end
     end
   end
@@ -203,7 +203,7 @@ describe Temporal::Activity::Poller do
     before do
       allow(subject).to receive(:shutting_down?).and_return(false, true)
       allow(connection).to receive(:poll_activity_task_queue).and_raise(StandardError)
-      allow(subject).to receive(:sleep_before_retry).and_return(nil)
+      allow(subject).to receive(:sleep).and_return(nil)
     end
 
     it 'sleeps' do
@@ -212,7 +212,7 @@ describe Temporal::Activity::Poller do
       # stop poller before inspecting
       subject.stop_polling; subject.wait
 
-      expect(subject).to have_received(:sleep_before_retry).with(5).once
+      expect(subject).to have_received(:sleep).with(5).once
     end
   end
 

@@ -91,7 +91,7 @@ module Temporal
 
         Temporal::ErrorHandler.handle(error, config)
 
-        sleep_before_retry(poll_retry_seconds) unless poll_retry_seconds.zero?
+        sleep(poll_retry_seconds)
 
         nil
       end
@@ -115,10 +115,6 @@ module Temporal
 
       def poll_retry_seconds
         @options[:poll_retry_seconds]
-      end
-
-      def sleep_before_retry(seconds)
-        sleep seconds
       end
     end
   end
