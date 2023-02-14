@@ -4,7 +4,9 @@ require 'google/protobuf/well_known_types'
 require 'securerandom'
 require 'gen/temporal/api/filter/v1/message_pb'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
+require 'gen/temporal/api/operatorservice/v1/service_services_pb'
 require 'gen/temporal/api/enums/v1/workflow_pb'
+require 'gen/temporal/api/enums/v1/common_pb'
 require 'temporal/connection/errors'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
@@ -27,6 +29,20 @@ module Temporal
         not_completed_cleanly: Temporalio::Api::Enums::V1::QueryRejectCondition::QUERY_REJECT_CONDITION_NOT_COMPLETED_CLEANLY
       }.freeze
 
+      SYMBOL_TO_INDEXED_VALUE_TYPE = {
+        text: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT,
+        keyword: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD,
+        int: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_INT,
+        double: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DOUBLE,
+        bool: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_BOOL,
+        datetime: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DATETIME,
+        keyword_list: Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD_LIST,
+      }.freeze
+
+      INDEXED_VALUE_TYPE_TO_SYMBOL = SYMBOL_TO_INDEXED_VALUE_TYPE.map do |symbol, int_value|
+        [Temporalio::Api::Enums::V1::IndexedValueType.lookup(int_value), symbol]
+      end.to_h.freeze
+
       DEFAULT_OPTIONS = {
         max_page_size: 100
       }.freeze
@@ -36,6 +52,8 @@ module Temporal
       # PollWorkflowTaskQueueResponse contains a workflow's full history, which can be large. We
       # match the golang sdk just because it's bigger.
       MAX_RECEIVED_MESSAGE_LENGTH = 64 * 1024 * 1024
+
+      CONNECTION_TIMEOUT_SECONDS = 60
 
       def initialize(host, port, identity, credentials, options = {})
         @url = "#{host}:#{port}"
@@ -481,8 +499,45 @@ module Temporal
         client.count_workflow_executions(request)
       end
 
-      def get_search_attributes
-        raise NotImplementedError
+      def add_custom_search_attributes(attributes)
+        attributes.each_value do |symbol_type|
+          next if SYMBOL_TO_INDEXED_VALUE_TYPE.include?(symbol_type)
+
+          raise Temporal::InvalidSearchAttributeTypeFailure.new(
+            "Cannot add search attributes (#{attributes}): unknown search attribute type :#{symbol_type}, supported types: #{SYMBOL_TO_INDEXED_VALUE_TYPE.keys}"
+          )
+        end
+
+        request = Temporalio::Api::OperatorService::V1::AddSearchAttributesRequest.new(
+          search_attributes: attributes.map { |name, type| [name, SYMBOL_TO_INDEXED_VALUE_TYPE[type]] }.to_h
+        )
+        begin
+          operator_client.add_search_attributes(request)
+        rescue ::GRPC::AlreadyExists => e
+          raise Temporal::SearchAttributeAlreadyExistsFailure.new(e)
+        rescue ::GRPC::Internal => e
+          # The internal workflow that adds search attributes can fail for a variety of reasons such
+          # as recreating a removed attribute with a new type. Wrap these all up into a fall through
+          # exception.
+          raise Temporal::SearchAttributeFailure.new(e)
+        end
+      end
+
+      def list_custom_search_attributes
+        request = Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest.new
+        response = operator_client.list_search_attributes(request)
+        response.custom_attributes.map { |name, type| [name, INDEXED_VALUE_TYPE_TO_SYMBOL[type]] }.to_h
+      end
+
+      def remove_custom_search_attributes(attribute_names)
+        request = Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest.new(
+          search_attributes: attribute_names
+        )
+        begin
+          operator_client.remove_search_attributes(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure.new(e)
+        end
       end
 
       def reset_sticky_task_queue
@@ -562,7 +617,17 @@ module Temporal
         @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
-          timeout: 60,
+          timeout: CONNECTION_TIMEOUT_SECONDS,
+          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
+          interceptors: options.fetch(:interceptors, [])
+        )
+      end
+
+      def operator_client
+        @operator_client ||= Temporalio::Api::OperatorService::V1::OperatorService::Stub.new(
+          url,
+          credentials,
+          timeout: CONNECTION_TIMEOUT_SECONDS,
           channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
           interceptors: options.fetch(:interceptors, [])
         )

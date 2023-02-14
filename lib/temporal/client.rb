@@ -438,8 +438,22 @@ module Temporal
       )
       history = Workflow::History.new(history_response.history.events)
       cron_schedule = history.first_workflow_event.attributes.cron_schedule
-      
       cron_schedule != '' ? cron_schedule : nil
+    end
+
+    # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
+    def add_custom_search_attributes(attributes)
+      connection.add_custom_search_attributes(attributes)
+    end
+
+    # @return Hash[String, Symbol] name to symbol for type, see INDEXED_VALUE_TYPE above
+    def list_custom_search_attributes
+      connection.list_custom_search_attributes
+    end
+
+    # @param attribute_names [Array[String]] Attributes to remove
+    def remove_custom_search_attributes(*attribute_names)
+      connection.remove_custom_search_attributes(attribute_names)
     end
 
     def connection
