@@ -5,6 +5,7 @@ describe Temporal::Connection::GRPC do
   let(:identity) { 'my-identity' }
   let(:binary_checksum) { 'v1.0.0' }
   let(:grpc_stub) { double('grpc stub') }
+  let(:grpc_operator_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
@@ -18,6 +19,7 @@ describe Temporal::Connection::GRPC do
 
   before do
     allow(subject).to receive(:client).and_return(grpc_stub)
+    allow(subject).to receive(:operator_client).and_return(grpc_operator_stub)
 
     allow(Time).to receive(:now).and_return(now)
   end
@@ -640,6 +642,188 @@ describe Temporal::Connection::GRPC do
         expect(request.cause).to be(Temporalio::Api::Enums::V1::WorkflowTaskFailedCause.lookup(cause))
         expect(request.identity).to eq(identity)
         expect(request.binary_checksum).to eq(binary_checksum)
+      end
+    end
+  end
+
+  describe '#add_custom_search_attributes' do
+    it 'calls GRPC service with supplied arguments' do
+      allow(grpc_operator_stub).to receive(:add_search_attributes)
+      subject.add_custom_search_attributes(
+        {
+          'SomeTextField' => :text,
+          'SomeKeywordField' => :keyword,
+          'SomeIntField' => :int,
+          'SomeDoubleField' => :double,
+          'SomeBoolField' => :bool,
+          'SomeDatetimeField' => :datetime,
+          'SomeKeywordListField' => :keyword_list
+        }
+      )
+
+      expect(grpc_operator_stub).to have_received(:add_search_attributes) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::AddSearchAttributesRequest)
+        expect(request.search_attributes).to eq(
+          {
+            'SomeTextField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT,
+            'SomeKeywordField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD,
+            'SomeIntField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_INT,
+            'SomeDoubleField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DOUBLE,
+            'SomeBoolField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_BOOL,
+            'SomeDatetimeField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DATETIME,
+            'SomeKeywordListField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD_LIST
+          }
+        )
+      end
+    end
+
+    it 'attribute already exists' do
+      allow(grpc_operator_stub).to receive(:add_search_attributes).and_raise(GRPC::AlreadyExists.new(''))
+      expect do
+        subject.add_custom_search_attributes(
+          {
+            'SomeTextField' => :text
+          }
+        )
+      end.to raise_error(Temporal::SearchAttributeAlreadyExistsFailure)
+    end
+
+    it 'failed to add attribute' do
+      allow(grpc_operator_stub).to receive(:add_search_attributes).and_raise(GRPC::Internal.new(''))
+      expect do
+        subject.add_custom_search_attributes(
+          {
+            'SomeTextField' => :text
+          }
+        )
+      end.to raise_error(Temporal::SearchAttributeFailure)
+    end
+
+    it 'attributes can be symbols' do
+      allow(grpc_operator_stub).to receive(:add_search_attributes)
+      subject.add_custom_search_attributes(
+        {
+          SomeTextField: :text
+        }
+      )
+
+      expect(grpc_operator_stub).to have_received(:add_search_attributes) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::AddSearchAttributesRequest)
+        expect(request.search_attributes).to eq(
+          {
+            'SomeTextField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT
+          }
+        )
+      end
+    end
+
+    it 'invalid attribute type' do
+      expect do
+        subject.add_custom_search_attributes(
+          {
+            'SomeBadField' => :foo
+          }
+        )
+      end.to raise_error(Temporal::InvalidSearchAttributeTypeFailure) do |e|
+        expect(e.to_s).to eq('Cannot add search attributes ({"SomeBadField"=>:foo}): unknown search attribute type :foo, supported types: [:text, :keyword, :int, :double, :bool, :datetime, :keyword_list]')
+      end
+    end
+  end
+
+  describe '#list_custom_search_attributes' do
+    it 'calls GRPC service with supplied arguments' do
+      allow(grpc_operator_stub).to receive(:list_search_attributes).and_return(
+        Temporalio::Api::OperatorService::V1::ListSearchAttributesResponse.new(
+          custom_attributes: {
+            'SomeTextField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT,
+            'SomeKeywordField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD,
+            'SomeIntField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_INT,
+            'SomeDoubleField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DOUBLE,
+            'SomeBoolField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_BOOL,
+            'SomeDatetimeField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_DATETIME,
+            'SomeKeywordListField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD_LIST
+          }
+        )
+      )
+
+      response = subject.list_custom_search_attributes
+
+      expect(response).to eq(
+        {
+          'SomeTextField' => :text,
+          'SomeKeywordField' => :keyword,
+          'SomeIntField' => :int,
+          'SomeDoubleField' => :double,
+          'SomeBoolField' => :bool,
+          'SomeDatetimeField' => :datetime,
+          'SomeKeywordListField' => :keyword_list
+        }
+      )
+
+      expect(grpc_operator_stub).to have_received(:list_search_attributes) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest)
+      end
+    end
+
+    it 'unknown attribute type becomes nil' do
+      allow(grpc_operator_stub).to receive(:list_search_attributes).and_return(
+        Temporalio::Api::OperatorService::V1::ListSearchAttributesResponse.new(
+          custom_attributes: {
+            'SomeTextField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT,
+            'SomeUnknownField' => 100 # simulate some new type being added in the proto in the future
+          }
+        )
+      )
+
+      response = subject.list_custom_search_attributes
+
+      expect(response).to eq(
+        {
+          'SomeTextField' => :text,
+          'SomeUnknownField' => nil
+        }
+      )
+    end
+  end
+
+  describe '#remove_custom_search_attributes' do
+    it 'calls GRPC service with supplied arguments' do
+      allow(grpc_operator_stub).to receive(:remove_search_attributes)
+
+      attributes = ['SomeTextField', 'SomeIntField']
+
+      subject.remove_custom_search_attributes(
+        attributes
+      )
+
+      expect(grpc_operator_stub).to have_received(:remove_search_attributes) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest)
+        expect(request.search_attributes).to eq(attributes)
+      end
+    end
+
+    it 'cannot remove non-existent attribute' do
+      allow(grpc_operator_stub).to receive(:remove_search_attributes).and_raise(GRPC::NotFound.new)
+
+      attributes = ['SomeTextField', 'SomeIntField']
+
+      expect do
+        subject.remove_custom_search_attributes(
+          attributes
+        )
+      end.to raise_error(Temporal::NotFoundFailure)
+    end
+
+    it 'attribute names can be symbols' do
+      allow(grpc_operator_stub).to receive(:remove_search_attributes)
+
+      subject.remove_custom_search_attributes(
+        %i[SomeTextField SomeIntField]
+      )
+
+      expect(grpc_operator_stub).to have_received(:remove_search_attributes) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest)
+        expect(request.search_attributes).to eq(%w[SomeTextField SomeIntField])
       end
     end
   end
