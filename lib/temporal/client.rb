@@ -5,6 +5,7 @@ require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/history'
+require 'temporal/workflow/history/event'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
 require 'temporal/workflow/status'
@@ -240,8 +241,12 @@ module Temporal
       rescue GRPC::DeadlineExceeded
         closed_event = nil
       else
-        history = Workflow::History.new(history_response.history.events)
-        closed_event = history.events.first
+        first_history_event = history_response.history&.events&.first
+        closed_event = if first_history_event.nil?
+          nil
+        else
+          Workflow::History::Event.new(first_history_event)
+        end
       end
 
       if closed_event.nil?

@@ -526,9 +526,8 @@ describe Temporal::Client do
         end.to raise_error(Temporal::TimeoutError)
     end
 
-    it 'raises TimeoutError when the server times out' do 
+    def test_history_timeout(response)
       # empty events list implies the server gave up before getting a closed event
-      empty_response = Fabricate(:workflow_execution_history, events: [])
       expect(connection)
         .to receive(:get_workflow_execution_history)
         .with(
@@ -539,7 +538,7 @@ describe Temporal::Client do
           event_type: :close,
           timeout: 30,
         )
-        .and_return(empty_response)
+        .and_return(response)
 
         expect do
           subject.await_workflow_result(
@@ -549,6 +548,16 @@ describe Temporal::Client do
             timeout: 30,
           )
         end.to raise_error(Temporal::TimeoutError)
+    end
+
+    it 'raises TimeoutError when the server times out with empty history' do
+      # empty events list implies the server gave up before getting a closed event
+      test_history_timeout(Fabricate(:workflow_execution_history, events: []))
+    end
+
+    it 'raises TimeoutError when the server times out with no history' do
+      # no history submessage also implies the server gave up before getting a closed event
+      test_history_timeout(Fabricate(:workflow_execution_history, no_history: true))
     end
   end
 
