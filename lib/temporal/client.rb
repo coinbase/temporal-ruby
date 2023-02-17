@@ -241,7 +241,7 @@ module Temporal
       rescue GRPC::DeadlineExceeded
         closed_event = nil
       else
-        first_history_event = history_response&.history&.events&.first
+        first_history_event = history_response.history&.events&.first
         closed_event = if first_history_event.nil?
           nil
         else
