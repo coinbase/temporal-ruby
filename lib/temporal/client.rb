@@ -409,6 +409,21 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
+    # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
+    def add_custom_search_attributes(attributes)
+      connection.add_custom_search_attributes(attributes)
+    end
+
+    # @return Hash[String, Symbol] name to symbol for type, see INDEXED_VALUE_TYPE above
+    def list_custom_search_attributes
+      connection.list_custom_search_attributes
+    end
+
+    # @param attribute_names [Array[String]] Attributes to remove
+    def remove_custom_search_attributes(*attribute_names)
+      connection.remove_custom_search_attributes(attribute_names)
+    end
+
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end

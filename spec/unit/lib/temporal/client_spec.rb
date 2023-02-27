@@ -787,6 +787,47 @@ describe Temporal::Client do
     end
   end
 
+  describe '#add_custom_search_attributes' do
+    before { allow(connection).to receive(:add_custom_search_attributes) }
+
+    let(:attributes) { { SomeTextField: :text, SomeIntField: :int } }
+
+    it 'passes through to connection' do
+      subject.add_custom_search_attributes(attributes)
+
+      expect(connection)
+        .to have_received(:add_custom_search_attributes)
+        .with(attributes)
+    end
+  end
+
+  describe '#list_custom_search_attributes' do
+    let(:attributes) { { 'SomeIntField' => :int, 'SomeBoolField' => :bool } }
+
+    before { allow(connection).to receive(:list_custom_search_attributes).and_return(attributes) }
+
+    it 'passes through to connection' do
+      response = subject.list_custom_search_attributes
+
+      expect(response).to eq(attributes)
+
+      expect(connection)
+        .to have_received(:list_custom_search_attributes)
+    end
+  end
+
+  describe '#remove_custom_search_attributes' do
+    before { allow(connection).to receive(:remove_custom_search_attributes) }
+
+    it 'passes through to connection' do
+      subject.remove_custom_search_attributes(:SomeTextField, :SomeIntField)
+
+      expect(connection)
+        .to have_received(:remove_custom_search_attributes)
+        .with(%i[SomeTextField SomeIntField])
+    end
+  end
+
   describe '#list_open_workflow_executions' do
     let(:from) { Time.now - 600 }
     let(:now) { Time.now }
@@ -931,7 +972,6 @@ describe Temporal::Client do
           .to have_received(:list_open_workflow_executions)
           .with(namespace: namespace, from: from, to: now, next_page_token: 'a', max_page_size: 10)
           .once
-
       end
     end
 
