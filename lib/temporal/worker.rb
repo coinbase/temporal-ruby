@@ -44,23 +44,39 @@ module Temporal
     end
 
     def register_workflow(workflow_class, options = {})
-      execution_options = ExecutionOptions.new(workflow_class, options, config.default_execution_options)
-      key = [execution_options.namespace, execution_options.task_queue]
+      key, execution_options = executable_registration(workflow_class, options)
 
       @workflows[key].add(execution_options.name, workflow_class)
     end
 
+    # Register one special workflow that you want to intercept any unknown workflows,
+    # perhaps so you can delegate work to other classes, somewhat analogous to ruby's method_missing.
+    # Only one dynamic Workflow may be registered per task queue.
+    # Within Workflow#execute, you may retrieve the name of the unknown class via workflow.name.
+    def register_dynamic_workflow(workflow_class, options = {})
+      key, execution_options = executable_registration(workflow_class, options)
+
+      begin
+        @workflows[key].add_dynamic(execution_options.name, workflow_class)
+      rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
+        raise Temporal::SecondDynamicWorkflowError,
+          "Temporal::Worker#register_dynamic_workflow: cannot register #{execution_options.name} "\
+          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+          "'#{execution_options.task_queue}', and there can be only one."
+      end
+    end
+
     def register_activity(activity_class, options = {})
-      key, execution_options = activity_registration(activity_class, options)
+      key, execution_options = executable_registration(activity_class, options)
       @activities[key].add(execution_options.name, activity_class)
     end
 
-    # Register one special activity that you want to intercept any unknown Activities,
+    # Register one special activity that you want to intercept any unknown activities,
     # perhaps so you can delegate work to other classes, somewhat analogous to ruby's method_missing.
     # Only one dynamic Activity may be registered per task queue.
     # Within Activity#execute, you may retrieve the name of the unknown class via activity.name.
     def register_dynamic_activity(activity_class, options = {})
-      key, execution_options = activity_registration(activity_class, options)
+      key, execution_options = executable_registration(activity_class, options)
       begin
         @activities[key].add_dynamic(execution_options.name, activity_class)
       rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
@@ -104,7 +120,7 @@ module Temporal
       @shutting_down = true
 
       Thread.new do
-        @start_stop_mutex.synchronize do 
+        @start_stop_mutex.synchronize do
           pollers.each(&:stop_polling)
           while_stopping_test_hook
           # allow workers to drain in-transit tasks.
@@ -139,8 +155,8 @@ module Temporal
       Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
     end
 
-    def activity_registration(activity_class, options)
-      execution_options = ExecutionOptions.new(activity_class, options, config.default_execution_options)
+    def executable_registration(executable_class, options)
+      execution_options = ExecutionOptions.new(executable_class, options, config.default_execution_options)
       key = [execution_options.namespace, execution_options.task_queue]
       [key, execution_options]
     end

@@ -36,6 +36,7 @@ module Temporal
   class ActivityNotRegistered < ClientError; end
   class WorkflowNotRegistered < ClientError; end
   class SecondDynamicActivityError < ClientError; end
+  class SecondDynamicWorkflowError < ClientError; end
 
   class ApiError < Error; end
 

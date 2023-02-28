@@ -67,6 +67,7 @@ worker.register_workflow(UpsertSearchAttributesWorkflow)
 worker.register_workflow(WaitForWorkflow)
 worker.register_workflow(WaitForExternalSignalWorkflow)
 worker.register_workflow(WaitForNamedSignalWorkflow)
+worker.register_dynamic_workflow(DelegatorWorkflow)
 
 worker.register_activity(AsyncActivity)
 worker.register_activity(EchoActivity)
