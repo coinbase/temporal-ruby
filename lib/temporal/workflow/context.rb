@@ -212,6 +212,10 @@ module Temporal
         future
       end
 
+      def name
+        @metadata.name
+      end
+
       def cancel_timer(timer_id)
         command = Command::CancelTimer.new(timer_id: timer_id)
         schedule_command(command)
