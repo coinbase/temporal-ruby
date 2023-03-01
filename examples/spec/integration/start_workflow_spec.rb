@@ -1,4 +1,5 @@
 require 'workflows/hello_world_workflow'
+require 'workflows/long_workflow'
 
 describe 'Temporal.start_workflow' do
   let(:workflow_id) { SecureRandom.uuid }
@@ -67,5 +68,29 @@ describe 'Temporal.start_workflow' do
         workflow_id_reuse_policy: :reject
       })
     end.to raise_error(Temporal::WorkflowExecutionAlreadyStartedFailure)
+  end
+
+  it 'terminates duplicate workflow ids based on workflow_id_reuse_policy' do
+    run_id_1 = Temporal.start_workflow(LongWorkflow, options: {
+      workflow_id: workflow_id,
+      workflow_id_reuse_policy: :terminate_if_running
+    })
+
+    run_id_2 = Temporal.start_workflow(LongWorkflow, options: {
+      workflow_id: workflow_id,
+      workflow_id_reuse_policy: :terminate_if_running
+    })
+
+    execution_1 = Temporal.fetch_workflow_execution_info(
+      Temporal.configuration.namespace,
+      workflow_id,
+      run_id_1)
+    execution_2 = Temporal.fetch_workflow_execution_info(
+      Temporal.configuration.namespace,
+      workflow_id,
+      run_id_2)
+
+    expect(execution_1.status).to eq(Temporal::Workflow::Status::TERMINATED)
+    expect(execution_2.status).to eq(Temporal::Workflow::Status::RUNNING)
   end
 end
