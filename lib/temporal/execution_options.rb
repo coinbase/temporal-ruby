@@ -51,9 +51,21 @@ module Temporal
     private
 
     def has_executable_concern?(object)
-      # NOTE: When object is a String .dup is needed since Object#singleton_class mutates
-      #       it and screws up C extension class detection (used by Protobufs)
-      object.dup.singleton_class.included_modules.include?(Concerns::Executable)
+      if object.is_a?(String)
+        # NOTE: When object is a String, Object#singleton_class mutates it and
+        #       screws up C extension class detection used in older versions of
+        #       the protobuf library. This was fixed in protobuf 3.20.0-rc1
+        #       via https://github.com/protocolbuffers/protobuf/pull/9342.
+        #
+        #       Creating a duplicate of this object prevents the mutation of
+        #       the original object which will be put into a protobuf payload
+        #       before being sent to Temporal server. Because duplication fails
+        #       when Sorbet final classes are used, duplication is limited only
+        #       to String classes.
+        object = object.dup
+      end
+
+      object.singleton_class.included_modules.include?(Concerns::Executable)
     rescue TypeError
       false
     end
