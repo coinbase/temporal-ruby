@@ -25,7 +25,6 @@ end
 # Calls into our other class hierarchy.
 class DelegatorWorkflow < Temporal::Workflow
   def execute(input)
-    puts(workflow.name.to_s)
     executor = Object.const_get(workflow.name).new
     raise ArgumentError, "Unknown workflow: #{executor.class}" unless executor.is_a?(MyWorkflowExecutor)
 
