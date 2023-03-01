@@ -73,7 +73,7 @@ describe 'Temporal.start_workflow' do
   it 'terminates duplicate workflow ids based on workflow_id_reuse_policy' do
     run_id_1 = Temporal.start_workflow(LongWorkflow, options: {
       workflow_id: workflow_id,
-      workflow_id_reuse_policy: :allow
+      workflow_id_reuse_policy: :terminate_if_running
     })
 
     run_id_2 = Temporal.start_workflow(LongWorkflow, options: {
