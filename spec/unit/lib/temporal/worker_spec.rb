@@ -12,6 +12,11 @@ describe Temporal::Worker do
     task_queue 'default-task-queue'
   end
 
+  class OtherTestWorkerWorkflow < Temporal::Workflow
+    namespace 'default-namespace'
+    task_queue 'default-task-queue'
+  end
+
   class TestWorkerActivity < Temporal::Activity
     namespace 'default-namespace'
     task_queue 'default-task-queue'
@@ -61,6 +66,37 @@ describe Temporal::Worker do
 
       expect(lookup).to have_received(:add).with('test-workflow', TestWorkerWorkflow)
       expect(workflow_keys).to include(['test-namespace', 'test-task-queue'])
+    end
+  end
+
+  describe '#register_dynamic_workflow' do
+    let(:workflow_keys) { subject.send(:workflows).keys }
+
+    it 'registers a dynamic workflow with the provided config options' do
+      lookup = instance_double(Temporal::ExecutableLookup, add: nil)
+      expect(Temporal::ExecutableLookup).to receive(:new).and_return(lookup)
+      expect(lookup).to receive(:add_dynamic).with('test-dynamic-workflow', TestWorkerWorkflow)
+
+      subject.register_dynamic_workflow(
+        TestWorkerWorkflow,
+        name: 'test-dynamic-workflow',
+        namespace: 'test-namespace',
+        task_queue: 'test-task-queue'
+      )
+
+      expect(workflow_keys).to include(['test-namespace', 'test-task-queue'])
+    end
+
+    it 'cannot double-register a workflow' do
+      subject.register_dynamic_workflow(TestWorkerWorkflow)
+      expect do
+        subject.register_dynamic_workflow(OtherTestWorkerWorkflow)
+      end.to raise_error(
+        Temporal::SecondDynamicWorkflowError,
+        'Temporal::Worker#register_dynamic_workflow: cannot register OtherTestWorkerWorkflow dynamically; ' \
+        'TestWorkerWorkflow was already registered dynamically for task queue \'default-task-queue\', ' \
+        'and there can be only one.'
+      )
     end
   end
 
@@ -178,8 +214,8 @@ describe Temporal::Worker do
     thread
   end
 
-  describe 'start and stop' do 
-    it 'can stop before starting' do 
+  describe 'start and stop' do
+    it 'can stop before starting' do
       expect(Temporal::Workflow::Poller)
         .to_not receive(:new)
       expect(Temporal::Activity::Poller)
@@ -310,11 +346,11 @@ describe Temporal::Worker do
       expect(workflow_poller).to have_received(:start)
     end
 
-    it 'is mutually exclusive with stop' do 
+    it 'is mutually exclusive with stop' do
       subject.register_workflow(TestWorkerWorkflow)
       subject.register_activity(TestWorkerActivity)
 
-      allow(subject).to receive(:while_stopping_test_hook) do 
+      allow(subject).to receive(:while_stopping_test_hook) do
         # This callback is within a mutex, so this new thread shouldn't
         # do anything until Worker.stop is complete.
         Thread.new {subject.start}
