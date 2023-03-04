@@ -64,7 +64,7 @@ module Temporal
       end
 
       def release?(release_name)
-        track_release(release_name) unless releases.key?(release_name)
+        track_release(release_name)
 
         releases[release_name]
       end
@@ -365,8 +365,9 @@ module Temporal
       def track_release(release_name)
         # replay does not allow untracked (via marker) releases
         if replay?
-          releases[release_name] = false
-        else
+          releases[release_name] = false unless releases.key?(release_name)
+        elsif !releases.fetch(release_name, false)
+          # track the release if it hasn't been seen before or if it was previously false
           releases[release_name] = true
           schedule(Command::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
         end
