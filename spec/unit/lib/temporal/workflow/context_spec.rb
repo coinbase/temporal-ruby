@@ -4,6 +4,7 @@ require 'temporal/workflow/dispatcher'
 require 'temporal/workflow/future'
 require 'temporal/workflow/query_registry'
 require 'temporal/workflow/stack_trace_tracker'
+require 'temporal/metadata/workflow'
 require 'time'
 
 class MyTestWorkflow < Temporal::Workflow; end
@@ -16,7 +17,9 @@ describe Temporal::Workflow::Context do
     allow(double).to receive(:register)
     double
   end
-  let(:metadata) { instance_double('Temporal::Metadata::Workflow') }
+  let(:metadata_hash) { Fabricate(:workflow_metadata).to_h }
+  let(:metadata) { Temporal::Metadata::Workflow.new(**metadata_hash) }
+
   let(:workflow_context) do
     Temporal::Workflow::Context.new(
       state_manager,
@@ -244,6 +247,13 @@ describe Temporal::Workflow::Context do
       expect(
         workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
       ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
+    end
+  end
+
+  describe '#name' do
+    it 'returns the name from the metadata' do
+      # Set in the :workflow_metadata Fabricator
+      expect(workflow_context.name).to eq("TestWorkflow")
     end
   end
 
