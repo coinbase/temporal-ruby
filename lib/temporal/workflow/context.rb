@@ -55,6 +55,10 @@ module Temporal
         metadata.headers
       end
 
+      def search_attributes
+        state_manager.search_attributes
+      end
+
       def has_release?(release_name)
         state_manager.release?(release_name.to_s)
       end
@@ -256,7 +260,7 @@ module Temporal
           retry_policy: execution_options.retry_policy,
           headers: execution_options.headers,
           memo: execution_options.memo,
-          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
+          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes)
         )
         schedule_command(command)
         completed!

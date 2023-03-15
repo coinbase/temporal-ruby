@@ -24,6 +24,9 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
     workflow.wait_for_all(future)
 
     HelloWorldActivity.execute!(name)
-    attributes
+    {
+      from_code: attributes,
+      from_context: workflow.search_attributes
+    }
   end
 end

@@ -45,7 +45,8 @@ describe 'starting workflow with initial search attributes', :integration do
       workflow_id: workflow_id,
       run_id: run_id,
     )
-    expect(added_attributes).to eq(upserted_search_attributes)
+    expect(added_attributes[:from_code]).to eq(upserted_search_attributes)
+    expect(added_attributes[:from_context]).to eq(expected_custom_attributes)
 
     # These attributes are set for the worker in bin/worker
     expected_attributes = {

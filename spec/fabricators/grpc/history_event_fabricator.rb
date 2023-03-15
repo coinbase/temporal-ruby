@@ -31,6 +31,11 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
       retry_policy: nil,
       attempt: 0,
       header: header,
+      search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
+        indexed_fields: {
+          'CustomIntAttribute' => Temporal.configuration.converter.to_payload(42)
+        }
+      )
     )
   end
 end
@@ -177,6 +182,20 @@ Fabricator(:api_timer_canceled_event, from: :api_history_event) do
       started_event_id: attrs[:event_id] - 4,
       workflow_task_completed_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host'
+    )
+  end
+end
+
+Fabricator(:api_upsert_search_attributes_event, from: :api_history_event) do
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES }
+  upsert_workflow_search_attributes_event_attributes do |attrs|
+    Temporalio::Api::History::V1::UpsertWorkflowSearchAttributesEventAttributes.new(
+      workflow_task_completed_event_id: attrs[:event_id] - 1,
+      search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
+        indexed_fields: {
+          'CustomStringAttribute' => Temporal.configuration.converter.to_payload('foo')
+        }
+      )
     )
   end
 end
