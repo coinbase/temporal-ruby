@@ -55,6 +55,9 @@ module Temporal
         metadata.headers
       end
 
+      # Retrieves a hash of all current search attributes on this workflow run. Attributes
+      # can be set in a workflow by calling upsert_search_attributes or when starting a
+      # workflow by specifying the search_attributes option.
       def search_attributes
         state_manager.search_attributes
       end
