@@ -423,8 +423,18 @@ module Temporal
       end
 
       # Replaces or adds the values of your custom search attributes specified during a workflow's execution.
-      # To use this your server must support Elasticsearch, and the attributes must be pre-configured
+      # To use this your server must enable advanced visibility using SQL starting with version 1.20 or
+      # Elasticsearch on all versions. The attributes must be pre-configured.
       # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
+      #
+      # Do be aware that non-deterministic upserting of search attributes can lead to "phantom"
+      # attributes that are available in code but not on Temporal server. For example, if your code
+      # upserted {"foo" => 1} then changed to upsert {"bar" => 2} without proper versioning, you
+      # will see {"foo" => 1, "bar" => 2} in search attributes in workflow code even though
+      # {"bar" => 2} was never upserted on Temporal server. When the same search attribute
+      # name is used with a different value, you will see a similar case where the new value will
+      # be present until the end of the history window, then change to the old version after that. This
+      # does at least match the "old" value that will be present on the server.
       #
       # @param search_attributes [Hash]
       #   If an attribute is registered as a Datetime, you can pass in a Time: e.g.

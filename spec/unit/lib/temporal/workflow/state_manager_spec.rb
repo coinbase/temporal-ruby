@@ -40,30 +40,38 @@ describe Temporal::Workflow::StateManager do
   end
 
   describe '#search_attributes' do
-    let(:start_workflow_execution_event) do
-      Fabricate(:api_workflow_execution_started_event, search_attributes: {
+    let(:initial_search_attributes) do
+      {
         'CustomAttribute1' => 42,
         'CustomAttribute2' => 10
-      })
+      }
+    end
+    let(:start_workflow_execution_event) do
+      Fabricate(:api_workflow_execution_started_event, search_attributes: initial_search_attributes)
     end
     let(:start_workflow_execution_event_no_search_attributes) do
       Fabricate(:api_workflow_execution_started_event)
     end
     let(:workflow_task_started_event) { Fabricate(:api_workflow_task_started_event, event_id: 2) }
-    let(:upsert_search_attribute_event_1) do
-      Fabricate(:api_upsert_search_attributes_event,
-      search_attributes: {
+    let(:upserted_attributes_1) do
+      {
         'CustomAttribute3' => 'foo',
         'CustomAttribute2' => 8
-      })
+      }
+    end
+    let(:upsert_search_attribute_event_1) do
+      Fabricate(:api_upsert_search_attributes_event, search_attributes: upserted_attributes_1)
+    end
+    let(:usperted_attributes_2) do
+      {
+        'CustomAttribute3' => 'bar',
+        'CustomAttribute4' => 10
+      }
     end
     let(:upsert_search_attribute_event_2) do
       Fabricate(:api_upsert_search_attributes_event,
-      event_id: 4,
-      search_attributes: {
-        'CustomAttribute3' => 'bar',
-        'CustomAttribute4' => 10
-      })
+        event_id: 4,
+        search_attributes: usperted_attributes_2)
     end
     let(:upsert_empty_search_attributes_event) do
       Fabricate(:api_upsert_search_attributes_event, search_attributes: {})
@@ -76,10 +84,16 @@ describe Temporal::Workflow::StateManager do
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
       window.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_1))
 
-      # No command arguments because the arguments do not need to match
-      command = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      command = Temporal::Workflow::Command::UpsertSearchAttributes.new(
+        search_attributes: upserted_attributes_1
+      )
 
       state_manager.schedule(command)
+      # Attributes from command are applied immediately, then merged when
+      # history window is replayed below. This ensures newly upserted
+      # search attributes are available immediately in workflow code.
+      expect(state_manager.search_attributes).to eq(upserted_attributes_1)
+
       state_manager.apply(window)
 
       expect(state_manager.search_attributes).to eq(
@@ -98,8 +112,8 @@ describe Temporal::Workflow::StateManager do
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event_no_search_attributes))
       window.add(Temporal::Workflow::History::Event.new(upsert_empty_search_attributes_event))
 
-      # No command arguments because the arguments do not need to match
-      command = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      command = Temporal::Workflow::Command::UpsertSearchAttributes.new(search_attributes: {})
+      expect(state_manager.search_attributes).to eq({})
 
       state_manager.schedule(command)
       state_manager.apply(window)
@@ -115,15 +129,16 @@ describe Temporal::Workflow::StateManager do
       window_1.add(Temporal::Workflow::History::Event.new(workflow_task_started_event))
       window_1.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_1))
 
-      # No command arguments because the arguments do not need to match
-      command_1 = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      command_1 = Temporal::Workflow::Command::UpsertSearchAttributes.new(search_attributes: upserted_attributes_1)
       state_manager.schedule(command_1)
       state_manager.apply(window_1)
+
+      expect(state_manager.search_attributes).to eq(upserted_attributes_1)
 
       window_2 = Temporal::Workflow::History::Window.new
       window_2.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_2))
 
-      command_2 = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      command_2 = Temporal::Workflow::Command::UpsertSearchAttributes.new(search_attributes: usperted_attributes_2)
       state_manager.schedule(command_2)
       state_manager.apply(window_2)
 

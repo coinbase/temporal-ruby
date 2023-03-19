@@ -53,6 +53,11 @@ module Temporal
             command.workflow_id ||= command_id
           when Command::StartTimer
             command.timer_id ||= command_id
+          when Command::UpsertSearchAttributes
+            # This allows newly upserted search attributes to be read
+            # immediately. Without this, attributes would not be available
+            # until the next history window is applied on replay.
+            search_attributes.merge!(command.search_attributes)
           end
 
         state_machine = command_tracker[command_id]
