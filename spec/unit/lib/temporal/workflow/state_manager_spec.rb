@@ -40,26 +40,98 @@ describe Temporal::Workflow::StateManager do
   end
 
   describe '#search_attributes' do
-    let(:start_workflow_execution_event) { Fabricate(:api_workflow_execution_started_event) }
-    let(:upsert_search_attribute_event) { Fabricate(:api_upsert_search_attributes_event) }
+    let(:start_workflow_execution_event) do
+      Fabricate(:api_workflow_execution_started_event, search_attributes: {
+        'CustomAttribute1' => 42,
+        'CustomAttribute2' => 10
+      })
+    end
+    let(:start_workflow_execution_event_no_search_attributes) do
+      Fabricate(:api_workflow_execution_started_event)
+    end
+    let(:workflow_task_started_event) { Fabricate(:api_workflow_task_started_event, event_id: 2) }
+    let(:upsert_search_attribute_event_1) do
+      Fabricate(:api_upsert_search_attributes_event,
+      search_attributes: {
+        'CustomAttribute3' => 'foo',
+        'CustomAttribute2' => 8
+      })
+    end
+    let(:upsert_search_attribute_event_2) do
+      Fabricate(:api_upsert_search_attributes_event,
+      event_id: 4,
+      search_attributes: {
+        'CustomAttribute3' => 'bar',
+        'CustomAttribute4' => 10
+      })
+    end
+    let(:upsert_empty_search_attributes_event) do
+      Fabricate(:api_upsert_search_attributes_event, search_attributes: {})
+    end
 
     it 'initial merges with upserted' do
       state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
-      window.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event))
+      window.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_1))
 
+      # No command arguments because the arguments do not need to match
       command = Temporal::Workflow::Command::UpsertSearchAttributes.new
-      # No arguments because the arguments do not need to match
 
       state_manager.schedule(command)
       state_manager.apply(window)
 
       expect(state_manager.search_attributes).to eq(
         {
-          'CustomIntAttribute' => 42, # from initial
-          'CustomStringAttribute' => 'foo' # from upsert
+          'CustomAttribute1' => 42, # from initial (not overridden)
+          'CustomAttribute2' => 8, # only from upsert
+          'CustomAttribute3' => 'foo', # overridden by upsert
+        }
+      )
+    end
+
+    it 'initial and upsert treated as empty hash' do
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+
+      window = Temporal::Workflow::History::Window.new
+      window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event_no_search_attributes))
+      window.add(Temporal::Workflow::History::Event.new(upsert_empty_search_attributes_event))
+
+      # No command arguments because the arguments do not need to match
+      command = Temporal::Workflow::Command::UpsertSearchAttributes.new
+
+      state_manager.schedule(command)
+      state_manager.apply(window)
+
+      expect(state_manager.search_attributes).to eq({})
+    end
+
+
+    it 'multiple upserts merge' do
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+
+      window_1 = Temporal::Workflow::History::Window.new
+      window_1.add(Temporal::Workflow::History::Event.new(workflow_task_started_event))
+      window_1.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_1))
+
+      # No command arguments because the arguments do not need to match
+      command_1 = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      state_manager.schedule(command_1)
+      state_manager.apply(window_1)
+
+      window_2 = Temporal::Workflow::History::Window.new
+      window_2.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_2))
+
+      command_2 = Temporal::Workflow::Command::UpsertSearchAttributes.new
+      state_manager.schedule(command_2)
+      state_manager.apply(window_2)
+
+      expect(state_manager.search_attributes).to eq(
+        {
+          'CustomAttribute2' => 8,
+          'CustomAttribute3' => 'bar',
+          'CustomAttribute4' => 10,
         }
       )
     end
