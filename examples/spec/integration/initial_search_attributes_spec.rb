@@ -40,13 +40,12 @@ describe 'starting workflow with initial search attributes', :integration do
     )
 
     # UpsertSearchAttributesWorkflow returns the search attributes it upserted during its execution
-    added_attributes = Temporal.await_workflow_result(
+    attributes_at_end = Temporal.await_workflow_result(
       UpsertSearchAttributesWorkflow,
       workflow_id: workflow_id,
       run_id: run_id,
     )
-    expect(added_attributes[:from_code]).to eq(upserted_search_attributes)
-    expect(added_attributes[:from_context]).to eq(expected_custom_attributes)
+    expect(attributes_at_end).to eq(expected_custom_attributes)
 
     # These attributes are set for the worker in bin/worker
     expected_attributes = {

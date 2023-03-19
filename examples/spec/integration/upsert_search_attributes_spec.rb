@@ -31,8 +31,7 @@ describe 'Temporal::Workflow::Context.upsert_search_attributes', :integration do
       workflow_id: workflow_id,
       run_id: run_id,
     )
-    expect(added_attributes[:from_code]).to eq(expected_added_attributes)
-    expect(added_attributes[:from_context]).to eq(expected_added_attributes)
+    expect(added_attributes).to eq(expected_added_attributes)
 
     # These attributes are set for the worker in bin/worker
     expected_attributes = {
