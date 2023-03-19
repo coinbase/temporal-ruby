@@ -295,7 +295,7 @@ module Temporal
           dispatch(history_target, 'completed')
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
-          search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields))
+          search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
           # no need to track state; this is just a synchronous API call.
           discard_command(history_target)
 
