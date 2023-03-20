@@ -11,6 +11,11 @@ module Temporal
         payload_converter.from_payload(payload)
       end
 
+      def from_search_attribute_payload(payload_map)
+        # skips the payload_codec step because search attributes don't use this pipeline
+        payload_map.map { |key, value| [key, payload_converter.from_payload(value)] }.to_h
+      end
+
       def from_result_payloads(payloads)
         from_payloads(payloads)&.first
       end
@@ -39,6 +44,13 @@ module Temporal
       def to_payload(data)
         payload = payload_converter.to_payload(data)
         payload_codec.encode(payload)
+      end
+
+      def to_search_attribute_payload(_payload_map)
+        # skips the payload_codec step because search attributes don't use this pipeline
+        data.transform_values do |value|
+          payload_converter.to_payload(value)
+        end
       end
 
       def to_result_payloads(data)

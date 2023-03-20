@@ -138,7 +138,7 @@ module Temporal
             fields: to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map(search_attributes || {})
+            indexed_fields: to_search_attribute_payload(search_attributes || {})
           ),
         )
 
@@ -401,7 +401,7 @@ module Temporal
             fields: to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map(search_attributes || {})
+            indexed_fields: to_search_attribute_payload(search_attributes || {})
           ),
         )
 
