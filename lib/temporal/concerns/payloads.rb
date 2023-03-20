@@ -2,10 +2,12 @@ module Temporal
   module Concerns
     module Payloads
       def from_payloads(payloads)
+        payloads = payload_codec.decodes(payloads)
         payload_converter.from_payloads(payloads)
       end
 
       def from_payload(payload)
+        payload = payload_codec.decode(payload)
         payload_converter.from_payload(payload)
       end
 
@@ -30,11 +32,13 @@ module Temporal
       end
 
       def to_payloads(data)
-        payload_converter.to_payloads(data)
+        payloads = payload_converter.to_payloads(data)
+        payload_codec.encodes(payloads)
       end
 
       def to_payload(data)
-        payload_converter.to_payload(data)
+        payload = payload_converter.to_payload(data)
+        payload_codec.encode(payload)
       end
 
       def to_result_payloads(data)
@@ -61,6 +65,10 @@ module Temporal
 
       def payload_converter
         Temporal.configuration.converter
+      end
+
+      def payload_codec
+        Temporal.configuration.payload_codec
       end
     end
   end
