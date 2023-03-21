@@ -19,11 +19,11 @@ module Temporal
             )
           end
 
-          def encode
+          def encode(payload)
             raise NotImplementedError, 'codec converter needs to implement encode'
           end
 
-          def decode
+          def decode(payload)
             raise NotImplementedError, 'codec converter needs to implement decode'
           end
         end

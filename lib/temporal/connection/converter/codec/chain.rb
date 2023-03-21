@@ -13,7 +13,6 @@ module Temporal
           end
 
           def encode(payload)
-            puts "payload_codecs #{payload_codecs}"
             payload_codecs.reverse_each do |payload_codec|
               payload = payload_codec.encode(payload)
             end
