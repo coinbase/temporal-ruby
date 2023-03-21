@@ -5,6 +5,7 @@ require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
 require 'temporal/connection/converter/payload/proto_json'
 require 'temporal/connection/converter/composite'
+require 'temporal/connection/converter/codec/chain'
 
 module Temporal
   class Configuration

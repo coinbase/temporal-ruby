@@ -1,3 +1,5 @@
+require 'temporal/connection/converter/codec/base'
+
 module Temporal
   module Connection
     module Converter
@@ -6,12 +8,12 @@ module Temporal
         # the codecs are applied last to first meaning the earlier encodings wrap the later ones.
         # When decoding, the codecs are applied first to last to reverse the effect.
         class Chain < Base
-          def initialize(payload_codecs)
-            super
+          def initialize(payload_codecs:)
             @payload_codecs = payload_codecs
           end
 
           def encode(payload)
+            puts "payload_codecs #{payload_codecs}"
             payload_codecs.reverse_each do |payload_codec|
               payload = payload_codec.encode(payload)
             end

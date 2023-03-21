@@ -6,14 +6,16 @@ module Temporal
           def encodes(payloads)
             return nil if payloads.nil?
 
-            payloads.payloads.map(&method(:encode))
+            Temporalio::Api::Common::V1::Payloads.new(
+              payloads: payloads.payloads.map(&method(:encode))
+            )
           end
 
-          def decodes(data)
-            return nil if data.nil?
+          def decodes(payloads)
+            return nil if payloads.nil?
 
             Temporalio::Api::Common::V1::Payloads.new(
-              payloads: data.map(&method(:decode))
+              payloads: payloads.payloads.map(&method(:decode))
             )
           end
 
