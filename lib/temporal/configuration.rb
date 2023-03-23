@@ -45,6 +45,11 @@ module Temporal
         Temporal::Connection::Converter::Payload::JSON.new
       ]
     ).freeze
+    
+    # The Payload Codec is an optional step that happens between the wire and the Payload Converter:
+    # Temporal Server <--> Wire <--> Payload Codec <--> Payload Converter <--> User code
+    # which can be useful for transformations such as compression and encryption
+    # more info at https://docs.temporal.io/security#payload-codec
     DEFAULT_PAYLOAD_CODEC = Temporal::Connection::Converter::Codec::Chain.new(
       payload_codecs: []
     ).freeze

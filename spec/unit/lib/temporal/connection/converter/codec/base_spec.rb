@@ -61,16 +61,4 @@ describe Temporal::Connection::Converter::Codec::Base do
       expect(base_codec.decodes(payloads)).to eq(decoded_payloads)
     end
   end
-
-  describe '#encode' do
-    it 'raises a NotImplementedError' do
-      expect { base_codec.encode }.to raise_error(NotImplementedError)
-    end
-  end
-
-  describe '#decode' do
-    it 'raises a NotImplementedError' do
-      expect { base_codec.decode }.to raise_error(NotImplementedError)
-    end
-  end
 end

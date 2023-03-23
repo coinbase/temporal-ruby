@@ -18,7 +18,7 @@ module Temporal
       ]
 
       def self.generate_from(response)
-        search_attributes = response.search_attributes.nil? ? {} : from_search_attribute_payload(response.search_attributes.indexed_fields)
+        search_attributes = response.search_attributes.nil? ? {} : from_payload_map_without_codec(response.search_attributes.indexed_fields)
         new(
           workflow: response.type.name,
           workflow_id: response.execution.workflow_id,

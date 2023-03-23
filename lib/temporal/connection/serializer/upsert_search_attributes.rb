@@ -13,7 +13,7 @@ module Temporal
             upsert_workflow_search_attributes_command_attributes:
               Temporalio::Api::Command::V1::UpsertWorkflowSearchAttributesCommandAttributes.new(
                 search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-                  indexed_fields: to_search_attribute_payload(object.search_attributes || {})
+                  indexed_fields: to_payload_map_without_codec(object.search_attributes || {})
                 ),
               )
           )

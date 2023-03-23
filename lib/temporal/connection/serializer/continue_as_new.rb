@@ -43,7 +43,7 @@ module Temporal
         def serialize_search_attributes(search_attributes)
           return unless search_attributes
 
-          Temporalio::Api::Common::V1::SearchAttributes.new(indexed_fields: to_search_attribute_payload(search_attributes))
+          Temporalio::Api::Common::V1::SearchAttributes.new(indexed_fields: to_payload_map_without_codec(search_attributes))
         end
       end
     end

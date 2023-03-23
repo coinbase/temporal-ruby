@@ -29,7 +29,7 @@ describe Temporal::Connection::Serializer::UpsertSearchAttributes do
     )
     command_attributes = result.upsert_workflow_search_attributes_command_attributes
     expect(command_attributes).not_to be_nil
-    actual_attributes = TestDeserializer.from_search_attribute_payload(command_attributes&.search_attributes&.indexed_fields)
+    actual_attributes = TestDeserializer.from_payload_map_without_codec(command_attributes&.search_attributes&.indexed_fields)
     expect(actual_attributes).to eql(expected_attributes)
 
   end
