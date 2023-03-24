@@ -1,8 +1,11 @@
 require 'securerandom'
+require 'temporal/concerns/payloads'
 
 class TestSerializer
   extend Temporal::Concerns::Payloads
 end
+
+include Temporal::Concerns::Payloads
 
 Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
   event_id { 1 }
@@ -10,14 +13,13 @@ Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent)
 end
 
 Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
-  transient :headers
+  transient :headers, :search_attributes
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED }
   event_time { Time.now }
   workflow_execution_started_event_attributes do |attrs|
-    header_fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
-      h[field] = Temporal.configuration.converter.to_payload(value)
-    end
+    header_fields = to_payload_map(attrs[:headers] || {})
     header = Temporalio::Api::Common::V1::Header.new(fields: header_fields)
+    indexed_fields = attrs[:search_attributes] ? to_payload_map(attrs[:search_attributes]) : nil
 
     Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),
@@ -31,6 +33,9 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
       retry_policy: nil,
       attempt: 0,
       header: header,
+      search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
+        indexed_fields: indexed_fields
+      )
     )
   end
 end
@@ -177,6 +182,20 @@ Fabricator(:api_timer_canceled_event, from: :api_history_event) do
       started_event_id: attrs[:event_id] - 4,
       workflow_task_completed_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host'
+    )
+  end
+end
+
+Fabricator(:api_upsert_search_attributes_event, from: :api_history_event) do
+  transient :search_attributes
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES }
+  upsert_workflow_search_attributes_event_attributes do |attrs|
+    indexed_fields = attrs[:search_attributes] ? to_payload_map(attrs[:search_attributes]) : nil
+    Temporalio::Api::History::V1::UpsertWorkflowSearchAttributesEventAttributes.new(
+      workflow_task_completed_event_id: attrs[:event_id] - 1,
+      search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
+        indexed_fields: indexed_fields
+      )
     )
   end
 end

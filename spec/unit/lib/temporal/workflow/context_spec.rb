@@ -248,6 +248,12 @@ describe Temporal::Workflow::Context do
         workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
       ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
     end
+
+    it 'gets latest search attributes from state_manager' do
+      search_attributes = { 'CustomIntField' => 42 }
+      expect(state_manager).to receive(:search_attributes).and_return(search_attributes)
+      expect(workflow_context.search_attributes).to eq(search_attributes)
+    end
   end
 
   describe '#name' do
