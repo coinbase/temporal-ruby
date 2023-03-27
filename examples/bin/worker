@@ -24,6 +24,10 @@ if !ENV['USE_ERROR_SERIALIZATION_V2'].nil?
   end
 end
 
+Temporal.configure do |config|
+  config.add_header_propagator(SamplePropagator)
+end
+
 worker = Temporal::Worker.new(binary_checksum: `git show HEAD -s --format=%H`.strip)
 
 worker.register_workflow(AsyncActivityWorkflow)
@@ -94,5 +98,7 @@ worker.register_dynamic_activity(DelegatorActivity)
 
 worker.add_workflow_task_middleware(LoggingMiddleware, 'EXAMPLE')
 worker.add_activity_middleware(LoggingMiddleware, 'EXAMPLE')
+worker.add_activity_middleware(SamplePropagator)
+worker.add_workflow_middleware(SamplePropagator)
 
 worker.start

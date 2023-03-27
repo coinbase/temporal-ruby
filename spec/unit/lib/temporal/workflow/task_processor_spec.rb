@@ -4,7 +4,7 @@ require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, config, binary_checksum) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -15,6 +15,7 @@ describe Temporal::Workflow::TaskProcessor do
   let(:workflow_name) { 'TestWorkflow' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
+  let(:workflow_middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { %w[arg1 arg2] }
   let(:config) { Temporal::Configuration.new }
   let(:binary_checksum) { 'v1.0.0' }
