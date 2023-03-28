@@ -26,7 +26,6 @@ module Temporal
   class InternalError; end
   class ClientError; end
   class TimeoutError; end
-  class FailWorkflowTaskError; end
   class ActivityException; end
 
   class ActivityNotRegistered; end

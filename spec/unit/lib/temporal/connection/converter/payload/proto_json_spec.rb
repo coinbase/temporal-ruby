@@ -22,14 +22,4 @@ describe Temporal::Connection::Converter::Payload::ProtoJSON do
 
     expect(subject.to_payload(input)).to be nil
   end
-
-  # DO NOT MERGE THIS UPSTREAM TO COINBASE
-  it 'exemptions' do
-    data = '{"name":"foo"}'
-    Temporal::Connection::Converter::Payload::ProtoJSON::SPECIAL_STRIPE_WORKFLOW_PAYLOAD_TYPES.each do |message_type|
-      fake_payload = Struct.new(:metadata, :data).new({ 'messageType' => message_type }, data)
-      data_out = subject.from_payload(fake_payload)
-      expect(data_out).to eq({ 'name' => 'foo' })
-    end
-  end
 end

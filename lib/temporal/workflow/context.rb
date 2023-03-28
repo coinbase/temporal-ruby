@@ -55,10 +55,6 @@ module Temporal
         metadata.headers
       end
 
-      def memo
-        metadata.memo
-      end
-
       def has_release?(release_name)
         state_manager.release?(release_name.to_s)
       end
@@ -110,7 +106,7 @@ module Temporal
 
         side_effect do
           # TODO: this probably requires a local context implementation
-          context = Activity::Context.new(nil, nil, activity_class.name)
+          context = Activity::Context.new(nil, nil)
           activity_class.execute_in_context(context, input)
         end
       end
@@ -192,12 +188,6 @@ module Temporal
         schedule_command(command)
 
         result
-      end
-
-      # Returns true if workflow execution is currently in the history replay phase. No new
-      # commands will be issued to start activities or timers, or to create history entries.
-      def history_replaying?
-        state_manager.replay?
       end
 
       def sleep(timeout)

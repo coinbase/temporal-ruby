@@ -30,7 +30,7 @@ module Temporal
           'namespace' => namespace,
           'workflow_id' => id,
           'workflow_name' => name,
-          'run_id' => run_id,
+          'workflow_run_id' => run_id,
           'parent_workflow_id' => parent_id,
           'parent_workflow_run_id' => parent_run_id,
           'attempt' => attempt,

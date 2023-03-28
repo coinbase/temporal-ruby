@@ -12,9 +12,8 @@ module Temporal
       port = configuration.port
       credentials = configuration.credentials
       identity = configuration.identity
-      options = configuration.options
 
-      connection_class.new(host, port, identity, credentials, options)
+      connection_class.new(host, port, identity, credentials)
     end
   end
 end

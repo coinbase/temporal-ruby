@@ -6,8 +6,7 @@ describe Temporal::Connection::Serializer::WorkflowIdReusePolicy do
     SYM_TO_PROTO = {
       allow_failed: Temporalio::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
       allow: Temporalio::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-      reject: Temporalio::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-      terminate_if_running: Temporalio::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING
+      reject: Temporalio::Api::Enums::V1::WorkflowIdReusePolicy::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE
     }.freeze
 
     def self.test_valid_policy(policy_sym)
@@ -21,7 +20,6 @@ describe Temporal::Connection::Serializer::WorkflowIdReusePolicy do
     test_valid_policy(:allow)
     test_valid_policy(:allow_failed)
     test_valid_policy(:reject)
-    test_valid_policy(:terminate_if_running)
 
     it "rejects invalid policies" do
       expect do

@@ -11,14 +11,6 @@ module Temporal
         @iterator = @events.each
       end
 
-      def first_workflow_event
-        events.first
-      end
-
-      def last_completed_workflow_task
-        events.select { |event| event.type == 'WORKFLOW_TASK_COMPLETED' }.last
-      end
-      
       def find_event_by_id(id)
         events.find { |event| event.id == id }
       end

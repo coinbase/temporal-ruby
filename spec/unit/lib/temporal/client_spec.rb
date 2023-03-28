@@ -480,8 +480,8 @@ describe Temporal::Client do
     # Unit test, rather than integration test, because we don't support cancellation via the SDK yet.
     # See integration test for other failure conditions.
     it 'raises when the workflow was canceled' do
-      canceled_event = Fabricate(:workflow_canceled_event)
-      response = Fabricate(:workflow_execution_history, events: [canceled_event])
+      completed_event = Fabricate(:workflow_canceled_event)
+      response = Fabricate(:workflow_execution_history, events: [completed_event])
 
       expect(connection)
         .to receive(:get_workflow_execution_history)
@@ -504,7 +504,8 @@ describe Temporal::Client do
       end.to raise_error(Temporal::WorkflowCanceled)
     end
 
-    it 'raises TimeoutError when the client times out' do 
+    it 'raises TimeoutError when the server times out' do 
+      response = Fabricate(:workflow_execution_history, events: [])
       expect(connection)
         .to receive(:get_workflow_execution_history)
         .with(
@@ -524,40 +525,6 @@ describe Temporal::Client do
             timeout: 3,
           )
         end.to raise_error(Temporal::TimeoutError)
-    end
-
-    def test_history_timeout(response)
-      # empty events list implies the server gave up before getting a closed event
-      expect(connection)
-        .to receive(:get_workflow_execution_history)
-        .with(
-          namespace: 'default-test-namespace',
-          workflow_id: workflow_id,
-          run_id: run_id,
-          wait_for_new_event: true,
-          event_type: :close,
-          timeout: 30,
-        )
-        .and_return(response)
-
-        expect do
-          subject.await_workflow_result(
-            TestStartWorkflow,
-            workflow_id: workflow_id,
-            run_id: run_id,
-            timeout: 30,
-          )
-        end.to raise_error(Temporal::TimeoutError)
-    end
-
-    it 'raises TimeoutError when the server times out with empty history' do
-      # empty events list implies the server gave up before getting a closed event
-      test_history_timeout(Fabricate(:workflow_execution_history, events: []))
-    end
-
-    it 'raises TimeoutError when the server times out with no history' do
-      # no history submessage also implies the server gave up before getting a closed event
-      test_history_timeout(Fabricate(:workflow_execution_history, no_history: true))
     end
   end
 

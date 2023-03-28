@@ -112,19 +112,6 @@ describe Temporal::Testing::TemporalOverride do
         expect(workflow).to have_received(:execute)
       end
 
-      it 're-raises FailWorkflowTaskError' do
-        workflow = TestTemporalOverrideWorkflow.new(nil)
-        allow(TestTemporalOverrideWorkflow).to receive(:new).and_return(workflow)
-        allow(workflow).to receive(:execute).and_raise(Temporal::FailWorkflowTaskError, 'failure')
-        allow(Temporal::ErrorHandler).to receive(:handle)
-
-        expect { TestTemporalOverrideWorkflow.execute_locally }
-          .to raise_error(Temporal::FailWorkflowTaskError)
-
-        expect(workflow).to have_received(:execute)
-        expect(Temporal::ErrorHandler).to have_received(:handle)
-      end
-
       it 'restores original context after finishing successfully' do
         TestTemporalOverrideWorkflow.execute_locally
         expect(Temporal::ThreadLocalContext.get).to eq(nil)
@@ -164,40 +151,6 @@ describe Temporal::Testing::TemporalOverride do
         }.to raise_error(NotImplementedError) do |e|
           expect(e.message).to eql("Signals are not available when Temporal::Testing.local! is on")
         end
-      end
-
-      class MetadataCapturingActivity < Temporal::Activity
-        def self.metadata
-          @@metadata
-        end
-
-        def execute
-          @@metadata = activity.metadata
-        end
-      end
-
-      class TestWorkflowWithActivity < Temporal::Workflow
-        namespace 'default-namespace'
-        task_queue 'default-task-queue'
-
-        def execute
-          workflow.execute_activity!(MetadataCapturingActivity)
-        end
-      end
-
-      it 'populates the activity context correctly' do
-        workflow_id = "test-workflow-id"
-        run_id = client.start_workflow(TestWorkflowWithActivity, options: { workflow_id: workflow_id })
-        metadata = MetadataCapturingActivity.metadata
-        expect(metadata.attempt).to eq(1)
-        expect(metadata.headers).to eq({})
-        expect(metadata.id).to eq(1)
-        expect(metadata.name).to eq('MetadataCapturingActivity')
-        expect(metadata.namespace).to eq('default-namespace')
-        expect(metadata.workflow_id).to eq(workflow_id)
-        expect(metadata.workflow_run_id).to eq(run_id)
-        expect(metadata.scheduled_at.to_i).to be > 0
-        expect(metadata.current_attempt_scheduled_at.to_i).to be > 0
       end
 
       describe 'execution control' do

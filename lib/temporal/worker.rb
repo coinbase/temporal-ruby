@@ -40,7 +40,6 @@ module Temporal
         thread_pool_size: workflow_thread_pool_size,
         binary_checksum: binary_checksum
       }
-      @start_stop_mutex = Mutex.new
     end
 
     def register_workflow(workflow_class, options = {})
@@ -96,22 +95,18 @@ module Temporal
     end
 
     def start
-      @start_stop_mutex.synchronize do
-        return if shutting_down? # Handle the case where stop method grabbed the mutex first
-
-        trap_signals
-
-        workflows.each_pair do |(namespace, task_queue), lookup|
-          pollers << workflow_poller_for(namespace, task_queue, lookup)
-        end
-
-        activities.each_pair do |(namespace, task_queue), lookup|
-          pollers << activity_poller_for(namespace, task_queue, lookup)
-        end
-
-        pollers.each(&:start)
+      workflows.each_pair do |(namespace, task_queue), lookup|
+        pollers << workflow_poller_for(namespace, task_queue, lookup)
       end
-      on_started_test_hook
+
+      activities.each_pair do |(namespace, task_queue), lookup|
+        pollers << activity_poller_for(namespace, task_queue, lookup)
+      end
+
+      trap_signals
+
+      pollers.each(&:start)
+
       # keep the main thread alive
       sleep 1 while !shutting_down?
     end
@@ -120,16 +115,12 @@ module Temporal
       @shutting_down = true
 
       Thread.new do
-        @start_stop_mutex.synchronize do
-          pollers.each(&:stop_polling)
-          while_stopping_test_hook
-          # allow workers to drain in-transit tasks.
-          # https://github.com/temporalio/temporal/issues/1058
-          sleep 1
-          pollers.each(&:cancel_pending_requests)
-          pollers.each(&:wait)
-        end
-        on_stopped_test_hook
+        pollers.each(&:stop_polling)
+        # allow workers to drain in-transit tasks.
+        # https://github.com/temporalio/temporal/issues/1058
+        sleep 1
+        pollers.each(&:cancel_pending_requests)
+        pollers.each(&:wait)
       end.join
     end
 
@@ -142,10 +133,6 @@ module Temporal
     def shutting_down?
       @shutting_down
     end
-
-    def on_started_test_hook; end
-    def while_stopping_test_hook; end
-    def on_stopped_test_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
       Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_poller_options)

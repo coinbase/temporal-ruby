@@ -15,9 +15,6 @@ module Temporal
   # Represents any timeout
   class TimeoutError < ClientError; end
 
-  # Indicates the workflow task should be failed
-  class FailWorkflowTaskError < Error; end
-
   # Represents when a child workflow times out
   class ChildWorkflowTimeoutError < Error; end
 
@@ -65,7 +62,7 @@ module Temporal
   # This could happen due to activity futures that aren't awaited before the workflow closes,
   # calling workflow.continue_as_new, workflow.complete, or workflow.fail in the middle of your workflow code,
   # or an internal framework bug.
-  class WorkflowAlreadyCompletingError < FailWorkflowTaskError; end
+  class WorkflowAlreadyCompletingError < InternalError; end
 
   class WorkflowExecutionAlreadyStartedFailure < ApiError
     attr_reader :run_id

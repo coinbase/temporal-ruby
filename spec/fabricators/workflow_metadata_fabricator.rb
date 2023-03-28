@@ -12,8 +12,4 @@ Fabricator(:workflow_metadata, from: :open_struct) do
   run_started_at { Time.now }
   memo { {} }
   headers { {} }
-  namespace { 'ruby_samples' }
-  task_queue { Fabricate(:api_task_queue) }
-  memo { {} }
-  run_started_at { Time.now }
 end
