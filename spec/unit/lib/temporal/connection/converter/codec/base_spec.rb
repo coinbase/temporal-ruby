@@ -12,6 +12,13 @@ describe Temporal::Connection::Converter::Codec::Base do
     )
   end
 
+  let (:encoded_payload) do
+    Temporalio::Api::Common::V1::Payload.new(
+      metadata: { 'encoding' => 'binary/encrypted' },
+          data: 'encrypted-payload'.b
+    )
+  end
+
   let(:base_codec) { described_class.new }
 
   describe '#encodes' do
@@ -20,7 +27,7 @@ describe Temporal::Connection::Converter::Codec::Base do
     end
 
     it 'encodes each payload in payloads' do
-      expect(base_codec).to receive(:encode).with(payloads.payloads[0])
+      expect(base_codec).to receive(:encode).with(payloads.payloads[0]).and_return(encoded_payload)
       base_codec.encodes(payloads)
     end
 
@@ -32,7 +39,7 @@ describe Temporal::Connection::Converter::Codec::Base do
         )]
       )
 
-      allow(base_codec).to receive(:encode).and_return('encoded_payload')
+      allow(base_codec).to receive(:encode).and_return(encoded_payloads.payloads[0])
 
       expect(base_codec.encodes(payloads)).to eq(encoded_payloads)
     end
@@ -44,7 +51,7 @@ describe Temporal::Connection::Converter::Codec::Base do
     end
 
     it 'decodes each payload in payloads' do
-      expect(base_codec).to receive(:decode).with(payloads.payloads[0])
+      expect(base_codec).to receive(:decode).with(payloads.payloads[0]).and_return(payloads.payloads[0])
       base_codec.decodes(payloads)
     end
 
@@ -56,7 +63,7 @@ describe Temporal::Connection::Converter::Codec::Base do
         )]
       )
 
-      allow(base_codec).to receive(:decode).and_return('decoded_payload')
+      allow(base_codec).to receive(:decode).and_return(decoded_payloads.payloads[0])
 
       expect(base_codec.decodes(payloads)).to eq(decoded_payloads)
     end

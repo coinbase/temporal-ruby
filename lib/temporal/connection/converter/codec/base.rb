@@ -20,10 +20,12 @@ module Temporal
           end
 
           def encode(payload)
+            # should return Temporalio::Api::Common::V1::Payload
             raise NotImplementedError, 'codec converter needs to implement encode'
           end
 
           def decode(payload)
+            # should return Temporalio::Api::Common::V1::Payload
             raise NotImplementedError, 'codec converter needs to implement decode'
           end
         end
