@@ -14,12 +14,13 @@ module Temporal
         binary_checksum: nil
       }.freeze
 
-      def initialize(namespace, task_queue, workflow_lookup, config, middleware = [], options = {})
+      def initialize(namespace, task_queue, workflow_lookup, config, middleware = [], workflow_middleware = [], options = {})
         @namespace = namespace
         @task_queue = task_queue
         @workflow_lookup = workflow_lookup
         @config = config
         @middleware = middleware
+        @workflow_middleware = workflow_middleware
         @shutting_down = false
         @options = DEFAULT_OPTIONS.merge(options)
       end
@@ -45,7 +46,7 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :connection, :workflow_lookup, :config, :middleware, :options, :thread
+      attr_reader :namespace, :task_queue, :connection, :workflow_lookup, :config, :middleware, :workflow_middleware, :options, :thread
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
@@ -96,8 +97,9 @@ module Temporal
 
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
+        workflow_middleware_chain = Middleware::Chain.new(workflow_middleware)
 
-        TaskProcessor.new(task, namespace, workflow_lookup, middleware_chain, config, binary_checksum).process
+        TaskProcessor.new(task, namespace, workflow_lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum).process
       end
 
       def thread_pool

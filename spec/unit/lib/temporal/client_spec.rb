@@ -39,6 +39,35 @@ describe Temporal::Client do
 
     before { allow(connection).to receive(:start_workflow_execution).and_return(temporal_response) }
 
+    context 'with header propagator' do
+      class TestHeaderPropagator
+        def inject!(header)
+          header['test'] = 'asdf'
+        end
+      end
+
+      it 'updates the header' do
+        config.add_header_propagator(TestHeaderPropagator)
+        subject.start_workflow(TestStartWorkflow, 42)
+        expect(connection)
+          .to have_received(:start_workflow_execution)
+                .with(
+                  namespace: 'default-test-namespace',
+                  workflow_id: an_instance_of(String),
+                  workflow_name: 'TestStartWorkflow',
+                  task_queue: 'default-test-task-queue',
+                  input: [42],
+                  task_timeout: Temporal.configuration.timeouts[:task],
+                  run_timeout: Temporal.configuration.timeouts[:run],
+                  execution_timeout: Temporal.configuration.timeouts[:execution],
+                  workflow_id_reuse_policy: nil,
+                  headers: { 'test' => 'asdf' },
+                  memo: {},
+                  search_attributes: {},
+                )
+      end
+    end
+
     context 'using a workflow class' do
       it 'returns run_id' do
         result = subject.start_workflow(TestStartWorkflow, 42)

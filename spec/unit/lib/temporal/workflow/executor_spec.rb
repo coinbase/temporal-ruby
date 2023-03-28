@@ -1,3 +1,4 @@
+require 'temporal/middleware/chain'
 require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow'
@@ -5,7 +6,7 @@ require 'temporal/workflow/task_processor'
 require 'temporal/workflow/query_registry'
 
 describe Temporal::Workflow::Executor do
-  subject { described_class.new(workflow, history, workflow_metadata, config, false) }
+  subject { described_class.new(workflow, history, workflow_metadata, config, false, middleware_chain) }
 
   let(:workflow_started_event) { Fabricate(:api_workflow_execution_started_event, event_id: 1) }
   let(:history) do
@@ -19,6 +20,7 @@ describe Temporal::Workflow::Executor do
   let(:workflow) { TestWorkflow }
   let(:workflow_metadata) { Fabricate(:workflow_metadata) }
   let(:config) { Temporal::Configuration.new }
+  let(:middleware_chain) { Temporal::Middleware::Chain.new }
 
   class TestWorkflow < Temporal::Workflow
     def execute
@@ -29,6 +31,7 @@ describe Temporal::Workflow::Executor do
   describe '#run' do
     it 'runs a workflow' do
       allow(workflow).to receive(:execute_in_context).and_call_original
+      expect(middleware_chain).to receive(:invoke).and_call_original
 
       subject.run
 
