@@ -1,3 +1,4 @@
+require 'temporal/activity'
 require 'temporal/workflow'
 require 'temporal/workflow/context'
 require 'temporal/workflow/dispatcher'
@@ -8,6 +9,7 @@ require 'temporal/metadata/workflow'
 require 'time'
 
 class MyTestWorkflow < Temporal::Workflow; end
+class MyTestActivity < Temporal::Activity; end
 
 describe Temporal::Workflow::Context do
   let(:state_manager) { instance_double('Temporal::Workflow::StateManager') }
@@ -19,6 +21,7 @@ describe Temporal::Workflow::Context do
   end
   let(:metadata_hash) { Fabricate(:workflow_metadata).to_h }
   let(:metadata) { Temporal::Metadata::Workflow.new(**metadata_hash) }
+  let(:config) { Temporal.configuration }
 
   let(:workflow_context) do
     Temporal::Workflow::Context.new(
@@ -26,7 +29,7 @@ describe Temporal::Workflow::Context do
       dispatcher,
       MyTestWorkflow,
       metadata,
-      Temporal.configuration,
+      config,
       query_registry,
       track_stack_trace
     )
@@ -59,6 +62,31 @@ describe Temporal::Workflow::Context do
         expect(workflow_context).to_not be(nil) # ensure constructor is called
         stack_trace = query_registry.handle(Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME)
         expect(stack_trace).to eq("Fiber count: 0\n")
+      end
+    end
+  end
+
+  describe '#execute_activity' do
+    context "with header propagation" do
+      class TestHeaderPropagator
+        def inject!(header)
+          header['test'] = 'asdf'
+        end
+      end
+
+      it 'propagates the header' do
+        config.add_header_propagator(TestHeaderPropagator)
+        expect(state_manager).to receive(:schedule).with(Temporal::Workflow::Command::ScheduleActivity.new(
+          activity_id: nil,
+          activity_type: 'MyTestActivity',
+          input: [],
+          task_queue: 'default-task-queue',
+          retry_policy: nil,
+          timeouts: {:execution => 315360000, :run => 315360000, :task => 10, :schedule_to_close => nil, :schedule_to_start => nil, :start_to_close => 30, :heartbeat => nil},
+          headers: { 'test' => 'asdf' }
+        ))
+        allow(dispatcher).to receive(:register_handler)
+        workflow_context.execute_activity(MyTestActivity)
       end
     end
   end
@@ -247,6 +275,12 @@ describe Temporal::Workflow::Context do
       expect(
         workflow_context.upsert_search_attributes({'CustomDatetimeField' => time})
       ).to eq({ 'CustomDatetimeField' => time.utc.iso8601 })
+    end
+
+    it 'gets latest search attributes from state_manager' do
+      search_attributes = { 'CustomIntField' => 42 }
+      expect(state_manager).to receive(:search_attributes).and_return(search_attributes)
+      expect(workflow_context.search_attributes).to eq(search_attributes)
     end
   end
 

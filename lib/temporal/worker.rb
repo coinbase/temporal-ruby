@@ -31,6 +31,7 @@ module Temporal
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
       @workflow_task_middleware = []
+      @workflow_middleware = []
       @activity_middleware = []
       @shutting_down = false
       @activity_poller_options = {
@@ -90,6 +91,10 @@ module Temporal
       @workflow_task_middleware << Middleware::Entry.new(middleware_class, args)
     end
 
+    def add_workflow_middleware(middleware_class, *args)
+      @workflow_middleware << Middleware::Entry.new(middleware_class, args)
+    end
+
     def add_activity_middleware(middleware_class, *args)
       @activity_middleware << Middleware::Entry.new(middleware_class, args)
     end
@@ -128,14 +133,14 @@ module Temporal
 
     attr_reader :config, :activity_poller_options, :workflow_poller_options,
                 :activities, :workflows, :pollers,
-                :workflow_task_middleware, :activity_middleware
+                :workflow_task_middleware, :workflow_middleware, :activity_middleware
 
     def shutting_down?
       @shutting_down
     end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_poller_options)
+      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware, workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)

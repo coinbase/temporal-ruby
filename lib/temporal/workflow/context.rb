@@ -55,6 +55,13 @@ module Temporal
         metadata.headers
       end
 
+      # Retrieves a hash of all current search attributes on this workflow run. Attributes
+      # can be set in a workflow by calling upsert_search_attributes or when starting a
+      # workflow by specifying the search_attributes option.
+      def search_attributes
+        state_manager.search_attributes
+      end
+
       def has_release?(release_name)
         state_manager.release?(release_name.to_s)
       end
@@ -72,7 +79,7 @@ module Temporal
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
           timeouts: execution_options.timeouts,
-          headers: execution_options.headers
+          headers: config.header_propagator_chain.inject(execution_options.headers)
         )
 
         target, cancelation_id = schedule_command(command)
@@ -129,7 +136,7 @@ module Temporal
           retry_policy: execution_options.retry_policy,
           parent_close_policy: parent_close_policy,
           timeouts: execution_options.timeouts,
-          headers: execution_options.headers,
+          headers: config.header_propagator_chain.inject(execution_options.headers),
           cron_schedule: cron_schedule,
           memo: execution_options.memo,
           workflow_id_reuse_policy: workflow_id_reuse_policy,
@@ -254,9 +261,9 @@ module Temporal
           input: input,
           timeouts: execution_options.timeouts,
           retry_policy: execution_options.retry_policy,
-          headers: execution_options.headers,
+          headers: config.header_propagator_chain.inject(execution_options.headers),
           memo: execution_options.memo,
-          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes),
+          search_attributes: Helpers.process_search_attributes(execution_options.search_attributes)
         )
         schedule_command(command)
         completed!
@@ -416,8 +423,18 @@ module Temporal
       end
 
       # Replaces or adds the values of your custom search attributes specified during a workflow's execution.
-      # To use this your server must support Elasticsearch, and the attributes must be pre-configured
+      # To use this your server must enable advanced visibility using SQL starting with version 1.20 or
+      # Elasticsearch on all versions. The attributes must be pre-configured.
       # See https://docs.temporal.io/docs/concepts/what-is-a-search-attribute/
+      #
+      # Do be aware that non-deterministic upserting of search attributes can lead to "phantom"
+      # attributes that are available in code but not on Temporal server. For example, if your code
+      # upserted {"foo" => 1} then changed to upsert {"bar" => 2} without proper versioning, you
+      # will see {"foo" => 1, "bar" => 2} in search attributes in workflow code even though
+      # {"bar" => 2} was never upserted on Temporal server. When the same search attribute
+      # name is used with a different value, you will see a similar case where the new value will
+      # be present until the end of the history window, then change to the old version after that. This
+      # does at least match the "old" value that will be present on the server.
       #
       # @param search_attributes [Hash]
       #   If an attribute is registered as a Datetime, you can pass in a Time: e.g.

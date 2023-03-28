@@ -30,6 +30,10 @@ describe Temporal::Worker do
     def call(_); end
   end
 
+  class TestWorkerWorkflowMiddleware
+    def call(_); end
+  end
+
   class OtherTestWorkerActivity < Temporal::Activity
     namespace 'default-namespace'
     task_queue 'default-task-queue'
@@ -215,6 +219,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           config,
           [],
+          [],
           thread_pool_size: 10,
           binary_checksum: nil
         )
@@ -227,6 +232,7 @@ describe Temporal::Worker do
           'default-task-queue',
           an_instance_of(Temporal::ExecutableLookup),
           config,
+          [],
           [],
           thread_pool_size: 10,
           binary_checksum: nil
@@ -305,6 +311,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
+          [],
           thread_pool_size: 10,
           binary_checksum: binary_checksum
         )
@@ -323,6 +330,7 @@ describe Temporal::Worker do
     context 'when middleware is configured' do
       let(:entry_1) { instance_double(Temporal::Middleware::Entry) }
       let(:entry_2) { instance_double(Temporal::Middleware::Entry) }
+      let(:entry_3) { instance_double(Temporal::Middleware::Entry) }
 
       before do
         allow(Temporal::Middleware::Entry)
@@ -335,8 +343,14 @@ describe Temporal::Worker do
           .with(TestWorkerActivityMiddleware, [])
           .and_return(entry_2)
 
+        allow(Temporal::Middleware::Entry)
+          .to receive(:new)
+          .with(TestWorkerWorkflowMiddleware, [])
+          .and_return(entry_3)
+
         subject.add_workflow_task_middleware(TestWorkerWorkflowTaskMiddleware)
         subject.add_activity_middleware(TestWorkerActivityMiddleware)
+        subject.add_workflow_middleware(TestWorkerWorkflowMiddleware)
       end
 
       it 'starts pollers with correct middleware' do
@@ -350,6 +364,7 @@ describe Temporal::Worker do
             an_instance_of(Temporal::ExecutableLookup),
             config,
             [entry_1],
+            [entry_3],
             thread_pool_size: 10,
             binary_checksum: nil
           )

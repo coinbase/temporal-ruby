@@ -11,6 +11,9 @@ describe Temporal::Workflow::Poller do
   let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
+  let(:workflow_middleware_chain) { instance_double(Temporal::Middleware::Chain) }
+  let(:workflow_middleware) { [] }
+  let(:empty_middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:binary_checksum) { 'v1.0.0' }
 
   subject do
@@ -20,6 +23,7 @@ describe Temporal::Workflow::Poller do
       lookup,
       config,
       middleware,
+      workflow_middleware,
       {
         binary_checksum: binary_checksum
       }
@@ -28,7 +32,9 @@ describe Temporal::Workflow::Poller do
 
   before do
     allow(Temporal::Connection).to receive(:generate).and_return(connection)
-    allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
+    allow(Temporal::Middleware::Chain).to receive(:new).with(workflow_middleware).and_return(workflow_middleware_chain)
+    allow(Temporal::Middleware::Chain).to receive(:new).with(middleware).and_return(middleware_chain)
+    allow(Temporal::Middleware::Chain).to receive(:new).with([]).and_return(empty_middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
     allow(Temporal.metrics).to receive(:increment)
   end
@@ -109,7 +115,7 @@ describe Temporal::Workflow::Poller do
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
+          .with(task, namespace, lookup, empty_middleware_chain, empty_middleware_chain, config, binary_checksum)
         expect(task_processor).to have_received(:process)
       end
 
@@ -137,9 +143,11 @@ describe Temporal::Workflow::Poller do
           def call(_); end
         end
 
+        let(:workflow_middleware) { [entry_1] }
         let(:middleware) { [entry_1, entry_2] }
         let(:entry_1) { Temporal::Middleware::Entry.new(TestPollerMiddleware, '1') }
         let(:entry_2) { Temporal::Middleware::Entry.new(TestPollerMiddleware, '2') }
+
 
         it 'initializes middleware chain and passes it down to TaskProcessor' do
           subject.start
@@ -148,9 +156,10 @@ describe Temporal::Workflow::Poller do
           subject.stop_polling; subject.wait
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
+          expect(Temporal::Middleware::Chain).to have_received(:new).with(workflow_middleware)
           expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, config, binary_checksum)
+            .with(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
         end
       end
     end

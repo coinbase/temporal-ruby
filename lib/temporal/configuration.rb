@@ -1,5 +1,7 @@
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
+require 'temporal/middleware/header_propagator_chain'
+require 'temporal/middleware/entry'
 require 'temporal/connection/converter/payload/nil'
 require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
@@ -13,8 +15,7 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_accessor :connection_type, :converter, :payload_codec, :use_error_serialization_v2, :host, :port,
-                  :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes
+    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators, :payload_codec
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -69,6 +70,7 @@ module Temporal
       @credentials = :this_channel_is_insecure
       @identity = nil
       @search_attributes = {}
+      @header_propagators = []
     end
 
     def on_error(&block)
@@ -105,6 +107,15 @@ module Temporal
         headers: headers,
         search_attributes: search_attributes
       ).freeze
+    end
+
+    def add_header_propagator(propagator_class, *args)
+      raise 'header propagator must implement `def inject!(headers)`' unless propagator_class.method_defined? :inject!
+      @header_propagators << Middleware::Entry.new(propagator_class, args)
+    end
+
+    def header_propagator_chain
+      Middleware::HeaderPropagatorChain.new(header_propagators)
     end
 
     private

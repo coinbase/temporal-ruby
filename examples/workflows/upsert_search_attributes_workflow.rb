@@ -16,6 +16,10 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
     }
     attributes.compact!
     workflow.upsert_search_attributes(attributes)
+    # .dup because the same backing hash may be used throughout the workflow, causing
+    # the equality check at the end to succeed incorrectly
+    attributes_after_upsert = workflow.search_attributes.dup
+
     # The following lines are extra complexity to test if upsert_search_attributes is tracked properly in the internal
     # state machine.
     future = HelloWorldActivity.execute("Moon")
@@ -24,6 +28,12 @@ class UpsertSearchAttributesWorkflow < Temporal::Workflow
     workflow.wait_for_all(future)
 
     HelloWorldActivity.execute!(name)
-    attributes
+
+    attributes_at_end = workflow.search_attributes
+    if attributes_at_end != attributes_after_upsert
+      raise "Attributes at end #{attributes_at_end} don't match after upsert #{attributes_after_upsert}"
+    end
+
+    attributes_at_end
   end
 end

@@ -18,7 +18,7 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time
+      attr_reader :commands, :local_time, :search_attributes
 
       def initialize(dispatcher)
         @dispatcher = dispatcher
@@ -30,6 +30,7 @@ module Temporal
         @last_event_id = 0
         @local_time = nil
         @replay = false
+        @search_attributes = {}
       end
 
       def replay?
@@ -52,6 +53,11 @@ module Temporal
             command.workflow_id ||= command_id
           when Command::StartTimer
             command.timer_id ||= command_id
+          when Command::UpsertSearchAttributes
+            # This allows newly upserted search attributes to be read
+            # immediately. Without this, attributes would not be available
+            # until the next history window is applied on replay.
+            search_attributes.merge!(command.search_attributes)
           end
 
         state_machine = command_tracker[command_id]
@@ -123,6 +129,10 @@ module Temporal
 
         case event.type
         when 'WORKFLOW_EXECUTION_STARTED'
+          unless event.attributes.search_attributes.nil?
+            search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
+          end
+
           state_machine.start
           dispatch(
             History::EventTarget.workflow,
@@ -290,6 +300,7 @@ module Temporal
           dispatch(history_target, 'completed')
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
+          search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
           # no need to track state; this is just a synchronous API call.
           discard_command(history_target)
 
