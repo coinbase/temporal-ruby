@@ -16,8 +16,13 @@ describe Temporal::Workflow::TaskProcessor do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:input) { %w[arg1 arg2] }
-  let(:config) { Temporal::Configuration.new }
+  let(:config) {
+    Temporal::Configuration.new.tap do |config|
+      config.task_queue = task_queue
+    end
+  }
   let(:binary_checksum) { 'v1.0.0' }
+  let(:task_queue) { 'test-task-queue' }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Workflow::Context') }
@@ -69,7 +74,8 @@ describe Temporal::Workflow::TaskProcessor do
           .with(
             Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
             workflow: workflow_name,
-            namespace: namespace
+            namespace: namespace,
+            task_queue: task_queue
           )
       end
     end
@@ -187,7 +193,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 
@@ -202,6 +209,33 @@ describe Temporal::Workflow::TaskProcessor do
               workflow: workflow_name,
               namespace: namespace
             )
+        end
+      end
+
+      context 'when recording the workflow task complete fails' do
+        let(:exception) { GRPC::InvalidArgument.new('workflow task could not be completed') }
+
+        before { allow(connection).to receive(:respond_workflow_task_completed).and_raise(exception) }
+
+        it 'does not try to fail the workflow task' do
+          subject.process
+
+          expect(connection).to_not have_received(:respond_workflow_task_failed)
+        end
+
+        it 'calls error_handlers' do
+          reported_error = nil
+          reported_metadata = nil
+
+          config.on_error do |error, metadata: nil|
+            reported_error = error
+            reported_metadata = metadata
+          end
+
+          subject.process
+
+          expect(reported_error).to be_an_instance_of(GRPC::InvalidArgument)
+          expect(reported_metadata).to be_an_instance_of(Temporal::Metadata::WorkflowTask)
         end
       end
 
@@ -235,7 +269,8 @@ describe Temporal::Workflow::TaskProcessor do
               .with(
                 Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
                 workflow: workflow_name,
-                namespace: namespace
+                namespace: namespace,
+                task_queue: task_queue
               )
           end
         end
@@ -296,7 +331,8 @@ describe Temporal::Workflow::TaskProcessor do
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
               workflow: workflow_name,
-              namespace: namespace
+              namespace: namespace,
+              task_queue: task_queue
             )
         end
 
@@ -339,17 +375,17 @@ describe Temporal::Workflow::TaskProcessor do
       end
 
       context 'when history is paginated' do
-        let(:task) { Fabricate(:api_paginated_workflow_task, workflow_type: api_workflow_type) }
+        let(:page_one) { 'page-1' }
+        let(:task) { Fabricate(:api_workflow_task, workflow_type: api_workflow_type, next_page_token: page_one) }
         let(:event) { Fabricate(:api_workflow_execution_started_event) }
-        let(:history_response) { Fabricate(:workflow_execution_history, events: [event]) }
 
-        before do
+        it 'fetches additional pages' do
+          history_response = Fabricate(:workflow_execution_history, events: [event])
+
           allow(connection)
             .to receive(:get_workflow_execution_history)
             .and_return(history_response)
-        end
 
-        it 'fetches additional pages' do
           subject.process
 
           expect(connection)
@@ -363,21 +399,61 @@ describe Temporal::Workflow::TaskProcessor do
             .once
         end
 
+        # Temporal server sometimes sends empty history pages but with a next_page_token.  Best practice, used
+        # across the various SDKs, is to keep paginating.
         context 'when a page has no events' do
-          let(:history_response) { Fabricate(:workflow_execution_history, events: []) }
 
-          it 'fails a workflow task' do
-            subject.process
+          let(:page_two) { 'page-2' }
+          let(:page_three) { 'page-3' }
+          let(:first_history_response) { Fabricate(:workflow_execution_history, events: [event], _next_page_token: page_two) }
 
-            expect(connection)
-              .to have_received(:respond_workflow_task_failed)
+          let(:empty_history_response) do
+            Fabricate(:workflow_execution_history, events: [], _next_page_token: page_three)
+          end
+          let(:final_event) { Fabricate(:api_workflow_execution_completed_event) }
+          let(:final_history_response) do
+            Fabricate(:workflow_execution_history, events: [final_event])
+          end
+
+          it 'continues asking for the next workflow task and populates all the events in the history' do
+            # page_one: [event], -> page_two
+            # page_two: [], -> page_three
+            # page_three: [final_event]
+            allow(connection)
+              .to receive(:get_workflow_execution_history)
               .with(
                 namespace: namespace,
-                task_token: task.task_token,
-                cause: Temporalio::Api::Enums::V1::WorkflowTaskFailedCause::WORKFLOW_TASK_FAILED_CAUSE_WORKFLOW_WORKER_UNHANDLED_FAILURE,
-                exception: an_instance_of(Temporal::UnexpectedResponse),
-                binary_checksum: binary_checksum
+                workflow_id: task.workflow_execution.workflow_id,
+                run_id: task.workflow_execution.run_id,
+                next_page_token: page_one,
               )
+              .and_return(first_history_response)
+
+            allow(connection)
+              .to receive(:get_workflow_execution_history)
+              .with(
+                namespace: namespace,
+                workflow_id: task.workflow_execution.workflow_id,
+                run_id: task.workflow_execution.run_id,
+                next_page_token: page_two,
+              )
+              .and_return(empty_history_response)
+
+            allow(connection)
+              .to receive(:get_workflow_execution_history)
+              .with(
+                namespace: namespace,
+                workflow_id: task.workflow_execution.workflow_id,
+                run_id: task.workflow_execution.run_id,
+                next_page_token: page_three,
+              )
+              .and_return(final_history_response)
+
+            allow(Temporal::Workflow::History).to receive(:new)
+
+            subject.process
+
+            expect(Temporal::Workflow::History).to have_received(:new).with([event, final_event])
           end
         end
       end

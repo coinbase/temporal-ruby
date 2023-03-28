@@ -27,6 +27,7 @@ module Temporal
                  :fetch_workflow_execution_info,
                  :complete_activity,
                  :fail_activity,
+                 :get_cron_schedule,
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions,
                  :query_workflow_executions,
@@ -41,7 +42,6 @@ module Temporal
     end
 
     def configuration
-      warn '[DEPRECATION] This method is now deprecated without a substitution'
       config
     end
 
@@ -52,6 +52,11 @@ module Temporal
     def metrics
       @metrics ||= Metrics.new(config.metrics_adapter)
     end
+
+    class ResultConverter
+      extend Concerns::Payloads
+    end
+    private_constant :ResultConverter
 
     private
 

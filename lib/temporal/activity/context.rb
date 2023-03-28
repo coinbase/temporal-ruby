@@ -7,10 +7,13 @@ require 'temporal/activity/async_token'
 module Temporal
   class Activity
     class Context
-      def initialize(connection, metadata)
+      attr_reader :metadata
+
+      def initialize(connection, metadata, activity_name)
         @connection = connection
         @metadata = metadata
         @async = false
+        @name = activity_name
       end
 
       def async
@@ -64,7 +67,7 @@ module Temporal
 
       private
 
-      attr_reader :connection, :metadata
+      attr_reader :connection
 
       def task_token
         metadata.task_token

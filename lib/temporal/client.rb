@@ -5,6 +5,7 @@ require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/history'
+require 'temporal/workflow/history/event'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
 require 'temporal/workflow/status'
@@ -82,7 +83,7 @@ module Temporal
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
           signal_name: signal_name,
-          signal_input: signal_input
+          signal_input: signal_input,
         )
       end
 
@@ -113,6 +114,7 @@ module Temporal
 
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       workflow_id = options[:workflow_id] || SecureRandom.uuid
+      memo = options[:memo] || {}
 
       response = connection.start_workflow_execution(
         namespace: execution_options.namespace,
@@ -236,7 +238,18 @@ module Temporal
           event_type: :close,
           timeout: timeout || max_timeout,
         )
-      rescue GRPC::DeadlineExceeded => e
+      rescue GRPC::DeadlineExceeded
+        closed_event = nil
+      else
+        first_history_event = history_response.history&.events&.first
+        closed_event = if first_history_event.nil?
+          nil
+        else
+          Workflow::History::Event.new(first_history_event)
+        end
+      end
+
+      if closed_event.nil?
         message = if timeout
           "Timed out after your specified limit of timeout: #{timeout} seconds"
         else
@@ -244,8 +257,7 @@ module Temporal
         end
         raise TimeoutError.new(message)
       end
-      history = Workflow::History.new(history_response.history.events)
-      closed_event = history.events.first
+
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
@@ -407,6 +419,31 @@ module Temporal
 
     def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+    end
+
+    # TODO: (calum, 2022-06-01) remove this once we have a better understanding of the how to do pagination on these temporal-ruby APIs
+    def list_workflow_executions_paginated(namespace, query, next_page_token: nil, max_page_size: nil)
+      response = connection.list_workflow_executions(namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size)
+
+      executions = response.executions.map do |raw_execution|
+        Temporal::Workflow::ExecutionInfo.generate_from(raw_execution)
+      end
+
+      {
+        executions: executions,
+        next_page_token: response.next_page_token
+      }
+    end
+  
+    def get_cron_schedule(namespace, workflow_id, run_id: nil)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      history = Workflow::History.new(history_response.history.events)
+      cron_schedule = history.first_workflow_event.attributes.cron_schedule
+      cron_schedule != '' ? cron_schedule : nil
     end
 
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above

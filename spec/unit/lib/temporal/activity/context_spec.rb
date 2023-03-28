@@ -7,7 +7,7 @@ describe Temporal::Activity::Context do
   let(:metadata) { Temporal::Metadata::Activity.new(**metadata_hash) }
   let(:task_token) { SecureRandom.uuid }
 
-  subject { described_class.new(client, metadata) }
+  subject { described_class.new(client, metadata, 'MyActivity') }
 
   describe '#heartbeat' do
     before { allow(client).to receive(:record_activity_task_heartbeat) }
@@ -45,7 +45,7 @@ describe Temporal::Activity::Context do
 
   describe '#async?' do
     subject { context.async? }
-    let(:context) { described_class.new(client, metadata) }
+    let(:context) { described_class.new(client, metadata, 'MyActivity') }
 
     context 'when context is sync' do
       it { is_expected.to eq(false) }

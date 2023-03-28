@@ -39,6 +39,9 @@ module Temporal
       end
 
       def wait
+        if !shutting_down?
+          raise "Workflow poller waiting for shutdown completion without being in shutting_down state!"
+        end
         thread.join
         thread_pool.shutdown
       end
@@ -112,7 +115,7 @@ module Temporal
       end
 
       def binary_checksum
-        @options[:binary_checksum]
+        options[:binary_checksum]
       end
     end
   end

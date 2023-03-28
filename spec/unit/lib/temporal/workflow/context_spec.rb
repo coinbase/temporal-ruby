@@ -257,6 +257,18 @@ describe Temporal::Workflow::Context do
     end
   end
 
+  describe '#history_replaying?' do
+    it 'when true' do
+      expect(state_manager).to receive(:replay?).and_return(true)
+      expect(workflow_context.history_replaying?).to be(true)
+    end
+
+    it 'when false' do
+      expect(state_manager).to receive(:replay?).and_return(false)
+      expect(workflow_context.history_replaying?).to be(false)
+    end
+  end
+
   describe '#wait_for_all' do
     let(:target_1) { 'target1' }
     let(:future_1) { Temporal::Workflow::Future.new(target_1, workflow_context) }

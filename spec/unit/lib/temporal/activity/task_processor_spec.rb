@@ -20,8 +20,13 @@ describe Temporal::Activity::TaskProcessor do
   let(:activity_name) { 'TestActivity' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
-  let(:config) { Temporal::Configuration.new }
+  let(:config) { 
+    Temporal::Configuration.new.tap do |config|
+      config.task_queue = task_queue
+    end
+  }
   let(:input) { %w[arg1 arg2] }
+  let(:task_queue) { 'test-task-queue' }
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Activity::Context', async?: false) }
@@ -35,7 +40,7 @@ describe Temporal::Activity::TaskProcessor do
         .to receive(:generate_activity_metadata)
         .with(task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata).and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, 'TestActivity').and_return(context)
 
       allow(connection).to receive(:respond_activity_task_completed)
       allow(connection).to receive(:respond_activity_task_failed)
@@ -133,7 +138,8 @@ describe Temporal::Activity::TaskProcessor do
               an_instance_of(Integer),
               activity: activity_name,
               namespace: namespace,
-              workflow: workflow_name
+              workflow: workflow_name,
+              task_queue: task_queue
             )
         end
 
@@ -224,7 +230,8 @@ describe Temporal::Activity::TaskProcessor do
               an_instance_of(Integer),
               activity: activity_name,
               namespace: namespace,
-              workflow: workflow_name
+              workflow: workflow_name,
+              task_queue: task_queue
             )
         end
 

@@ -40,7 +40,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Workflow task", metadata.to_h)
-        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace, task_queue: config.task_queue)
 
         if !workflow_class
           raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
@@ -102,11 +102,6 @@ module Temporal
             run_id: task.workflow_execution.run_id,
             next_page_token: next_page_token
           )
-
-          if response.history.events.empty?
-            raise Temporal::UnexpectedResponse, 'Received empty history page'
-          end
-
           events += response.history.events.to_a
           next_page_token = response.next_page_token
         end
@@ -139,6 +134,19 @@ module Temporal
           binary_checksum: binary_checksum,
           query_results: query_results
         )
+      rescue StandardError => error
+        # We rescue the error here to avoid failing the task in the process
+        # function above. One common cause of errors here is if the current
+        # workflow task is invalidated by a concurrent signal arriving while it
+        # tries to complete the workflow. In this case we do not need to and
+        # should not fail the workflow task.
+        #
+        # Not failing the workflow task will still result it being retried after
+        # a delay which is the behavior we'd want in cases like the above but
+        # also for ephemeral issues like network outages.
+        Temporal.logger.error("Unable to complete the workflow task", metadata.to_h.merge(error: error.inspect))
+
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
       end
 
       def complete_query(result)
@@ -156,7 +164,7 @@ module Temporal
       end
 
       def fail_task(error)
-        Temporal.metrics.increment(Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.increment(Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED, workflow: workflow_name, namespace: namespace, task_queue: config.task_queue)
         Temporal.logger.error('Workflow task failed', metadata.to_h.merge(error: error.inspect))
         Temporal.logger.debug(error.backtrace.join("\n"))
 

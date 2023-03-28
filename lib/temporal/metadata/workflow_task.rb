@@ -27,7 +27,7 @@ module Temporal
           'workflow_task_id' => id,
           'workflow_name' => workflow_name,
           'workflow_id' => workflow_id,
-          'workflow_run_id' => workflow_run_id,
+          'run_id' => workflow_run_id,
           'attempt' => attempt
         }
       end

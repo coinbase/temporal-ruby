@@ -11,6 +11,7 @@ describe Temporal::Metadata::Workflow do
       expect(subject.name).to eq(args.name)
       expect(subject.run_id).to eq(args.run_id)
       expect(subject.attempt).to eq(args.attempt)
+      expect(subject.namespace).to eq(args.namespace)
       expect(subject.headers).to eq(args.headers)
     end
 
@@ -31,7 +32,7 @@ describe Temporal::Metadata::Workflow do
         'workflow_id' => subject.id,
         'attempt' => subject.attempt,
         'workflow_name' => subject.name,
-        'workflow_run_id' => subject.run_id,
+        'run_id' => subject.run_id,
         'parent_workflow_id' => nil,
         'parent_workflow_run_id' => nil,
         'task_queue' => subject.task_queue,

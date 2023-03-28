@@ -9,12 +9,14 @@ require 'temporal/connection/converter/codec/chain'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :options, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_accessor :connection_type, :converter, :payload_codec, :use_error_serialization_v2, :host, :port,
-                  :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes
+
+    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
+                  :logger, :metrics_adapter, :namespace, :task_queue, :headers, :max_page_size, :connection_options,
+                  :search_attributes, :payload_codec
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -66,6 +68,7 @@ module Temporal
       @payload_codec = DEFAULT_PAYLOAD_CODEC
       @use_error_serialization_v2 = false
       @error_handlers = []
+      @connection_options = {}
       @credentials = :this_channel_is_insecure
       @identity = nil
       @search_attributes = {}
@@ -93,7 +96,10 @@ module Temporal
         host: host,
         port: port,
         credentials: credentials,
-        identity: identity || default_identity
+        identity: identity || default_identity,
+        options: {
+          max_page_size: max_page_size
+        }.merge(connection_options)
       ).freeze
     end
 

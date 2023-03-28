@@ -47,6 +47,12 @@ module Temporal
         max_page_size: 100
       }.freeze
 
+      # Temporal's other clients have to override grpc's default client-side payload limit of 4mb.
+      # Java uses 25mb, go uses 64mb. Most temporal API responses aren't large, but
+      # PollWorkflowTaskQueueResponse contains a workflow's full history, which can be large. We
+      # match the golang sdk just because it's bigger.
+      MAX_RECEIVED_MESSAGE_LENGTH = 64 * 1024 * 1024
+
       CONNECTION_TIMEOUT_SECONDS = 60
 
       def initialize(host, port, identity, credentials, options = {})
@@ -611,7 +617,9 @@ module Temporal
         @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
-          timeout: CONNECTION_TIMEOUT_SECONDS
+          timeout: CONNECTION_TIMEOUT_SECONDS,
+          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
+          interceptors: options.fetch(:interceptors, [])
         )
       end
 
@@ -619,7 +627,9 @@ module Temporal
         @operator_client ||= Temporalio::Api::OperatorService::V1::OperatorService::Stub.new(
           url,
           credentials,
-          timeout: CONNECTION_TIMEOUT_SECONDS
+          timeout: CONNECTION_TIMEOUT_SECONDS,
+          channel_args: { 'grpc.max_receive_message_length' => MAX_RECEIVED_MESSAGE_LENGTH },
+          interceptors: options.fetch(:interceptors, [])
         )
       end
 
