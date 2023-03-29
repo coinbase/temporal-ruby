@@ -12,6 +12,8 @@ module Temporal
     METADATA_ENCODING = 'binary/encrypted'.freeze
 
     def encode(payload)
+      return nil if payload.nil?
+
       key_id = get_key_id
       key = get_key(key_id)
 
@@ -19,6 +21,8 @@ module Temporal
     end
     
     def decode(payload)
+      return nil if payload.nil?
+
       if payload.metadata[METADATA_ENCODING_KEY] == METADATA_ENCODING
         payload = decrypt_payload(payload)
       end
