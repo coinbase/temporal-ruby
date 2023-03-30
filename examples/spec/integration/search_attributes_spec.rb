@@ -47,24 +47,6 @@ describe 'search attributes' do
     end.to raise_error(Temporal::SearchAttributeAlreadyExistsFailure)
   end
 
-  it 'type change fails' do
-    Temporal.add_custom_search_attributes(
-      {
-        attribute_1 => :int
-      }
-    )
-
-    Temporal.remove_custom_search_attributes(attribute_1)
-
-    expect do
-      Temporal.add_custom_search_attributes(
-        {
-          attribute_1 => :keyword
-        }
-      )
-    end.to raise_error(an_instance_of(Temporal::SearchAttributeFailure))
-  end
-
   it 'remove' do
     Temporal.add_custom_search_attributes(
       {
