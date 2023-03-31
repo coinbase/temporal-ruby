@@ -20,7 +20,8 @@ module Temporal
               Temporal.logger.error(
                 "Could not serialize exception because it's too large, so we are using a fallback that may not "\
                   "deserialize correctly on the client.  First #{@max_bytes} bytes:\n" \
-                "#{details.payloads.first.data[0..@max_bytes - 1]}"
+                "#{details.payloads.first.data[0..@max_bytes - 1]}",
+                {unserializable_error: object.class.name}
               )
               # Fallback to a more conservative serialization if the payload is too big to avoid
               # sending a huge amount of data to temporal and putting it in the history.

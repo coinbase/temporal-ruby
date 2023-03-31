@@ -87,7 +87,9 @@ describe Temporal::Connection::Serializer::Failure do
         .to have_received(:error)
         .with(
           "Could not serialize exception because it's too large, so we are using a fallback that may not deserialize "\
-          "correctly on the client.  First #{max_bytes} bytes:\n{\"^o\":\"MyBigError\",\"big_payload\":\"1234567890123456")
+          "correctly on the client.  First #{max_bytes} bytes:\n{\"^o\":\"MyBigError\",\"big_payload\":\"1234567890123456",
+          { unserializable_error: 'MyBigError' }
+        )
 
     end
 
