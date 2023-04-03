@@ -78,7 +78,6 @@ module Temporal
   class NamespaceAlreadyExistsFailure < ApiError; end
   class CancellationAlreadyRequestedFailure < ApiError; end
   class QueryFailed < ApiError; end
-  class UnexpectedResponse < ApiError; end
 
   class SearchAttributeAlreadyExistsFailure < ApiError; end
   class SearchAttributeFailure < ApiError; end

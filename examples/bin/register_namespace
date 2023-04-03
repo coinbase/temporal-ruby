@@ -4,7 +4,7 @@ require_relative '../init'
 namespace = ARGV[0]
 description = ARGV[1]
 
-fail 'Missing namespace name, please run register_namespace <namespace_name>' unless namespace
+raise 'Missing namespace name, please run register_namespace <namespace_name>' unless namespace
 
 begin
   Temporal.register_namespace(namespace, description)
@@ -13,4 +13,17 @@ rescue Temporal::NamespaceAlreadyExistsFailure
   Temporal.logger.info 'Namespace already exists', { namespace: namespace }
 end
 
-
+# Register a variety of search attributes for ease of integration testing
+attributes_to_add = {
+  'CustomStringField' => :text,
+  'CustomDoubleField' => :double,
+  'CustomBoolField' => :bool,
+  'CustomIntField' => :int,
+  'CustomDatetimeField' => :datetime
+}
+begin
+  Temporal.add_custom_search_attributes(attributes_to_add)
+  Temporal.logger.info('Registered search attributes', { namespace: namespace, attributes: attributes_to_add })
+rescue Temporal::SearchAttributeAlreadyExistsFailure
+  Temporal.logger.info('Default search attributes already exist for namespace', { namespace: namespace })
+end
