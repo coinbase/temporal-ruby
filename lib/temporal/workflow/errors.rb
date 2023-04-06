@@ -38,9 +38,11 @@ module Temporal
             message = "#{exception_class}: #{message}"
             exception = default_exception_class.new(message)
             Temporal.logger.error(
-              "Could not instantiate original error. Defaulting to StandardError. It's likely that your error's " \
-              "initializer takes something more than just one positional argument. If so, make sure the worker running "\
-              "your activities is setting Temporal.configuration.use_error_serialization_v2 to support this.",
+              "Could not instantiate original error. Defaulting to StandardError. Make sure the worker running " \
+              "your activities is setting Temporal.configuration.use_error_serialization_v2. If so, make sure the " \
+              "original error serialized by searching your logs for 'unserializable_error'. If not, you're using "\
+              "legacy serialization, and it's likely that "\
+              "your error's initializer takes something other than exactly one positional argument.",
               {
                 original_error: error_type,
                 serialized_error: details.payloads.first.data,
