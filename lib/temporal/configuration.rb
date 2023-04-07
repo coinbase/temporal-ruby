@@ -7,6 +7,7 @@ require 'temporal/connection/converter/payload/bytes'
 require 'temporal/connection/converter/payload/json'
 require 'temporal/connection/converter/payload/proto_json'
 require 'temporal/connection/converter/composite'
+require 'temporal/connection/converter/codec/chain'
 
 module Temporal
   class Configuration
@@ -14,7 +15,7 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators
+    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators, :payload_codec
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -45,6 +46,14 @@ module Temporal
         Temporal::Connection::Converter::Payload::JSON.new
       ]
     ).freeze
+    
+    # The Payload Codec is an optional step that happens between the wire and the Payload Converter:
+    # Temporal Server <--> Wire <--> Payload Codec <--> Payload Converter <--> User code
+    # which can be useful for transformations such as compression and encryption
+    # more info at https://docs.temporal.io/security#payload-codec
+    DEFAULT_PAYLOAD_CODEC = Temporal::Connection::Converter::Codec::Chain.new(
+      payload_codecs: []
+    ).freeze
 
     def initialize
       @connection_type = :grpc
@@ -55,6 +64,7 @@ module Temporal
       @task_queue = DEFAULT_TASK_QUEUE
       @headers = DEFAULT_HEADERS
       @converter = DEFAULT_CONVERTER
+      @payload_codec = DEFAULT_PAYLOAD_CODEC
       @use_error_serialization_v2 = false
       @error_handlers = []
       @credentials = :this_channel_is_insecure

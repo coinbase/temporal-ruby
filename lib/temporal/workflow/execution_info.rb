@@ -3,7 +3,8 @@ require 'temporal/workflow/status'
 
 module Temporal
   class Workflow
-    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status, :history_length, :memo, :search_attributes, keyword_init: true)
+    class ExecutionInfo < Struct.new(:workflow, :workflow_id, :run_id, :start_time, :close_time, :status,
+                                     :history_length, :memo, :search_attributes, keyword_init: true)
       extend Concerns::Payloads
 
       STATUSES = [
@@ -13,11 +14,11 @@ module Temporal
         Temporal::Workflow::Status::CANCELED,
         Temporal::Workflow::Status::TERMINATED,
         Temporal::Workflow::Status::CONTINUED_AS_NEW,
-        Temporal::Workflow::Status::TIMED_OUT,
+        Temporal::Workflow::Status::TIMED_OUT
       ]
 
       def self.generate_from(response)
-        search_attributes = response.search_attributes.nil? ? {} : self.from_payload_map(response.search_attributes.indexed_fields)
+        search_attributes = response.search_attributes.nil? ? {} : from_payload_map_without_codec(response.search_attributes.indexed_fields)
         new(
           workflow: response.type.name,
           workflow_id: response.execution.workflow_id,
@@ -26,8 +27,8 @@ module Temporal
           close_time: response.close_time&.to_time,
           status: Temporal::Workflow::Status::API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
-          memo: self.from_payload_map(response.memo.fields),
-          search_attributes: search_attributes,
+          memo: from_payload_map(response.memo.fields),
+          search_attributes: search_attributes
         ).freeze
       end
 

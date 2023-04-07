@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require_relative '../init'
-require_relative '../lib/cryptconverter'
+require_relative '../lib/crypt_payload_codec'
 
 require 'temporal/worker'
 
@@ -11,8 +11,10 @@ Dir[File.expand_path('../middleware/*.rb', __dir__)].each { |f| require f }
 if !ENV['USE_ENCRYPTION'].nil?
   Temporal.configure do |config|
     config.task_queue = 'crypt'
-    config.converter = Temporal::CryptConverter.new(
-      payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
+    config.payload_codec = Temporal::Connection::Converter::Codec::Chain.new(
+      payload_codecs: [
+        Temporal::CryptPayloadCodec.new
+      ]
     )
   end
 end

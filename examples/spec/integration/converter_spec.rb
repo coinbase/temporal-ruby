@@ -1,5 +1,5 @@
 require 'workflows/hello_world_workflow'
-require 'lib/cryptconverter'
+require 'lib/crypt_payload_codec'
 require 'grpc/errors'
 
 describe 'Converter', :integration do
@@ -8,8 +8,10 @@ describe 'Converter', :integration do
 
     Temporal.configure do |config|
       config.task_queue = 'crypt'
-      config.converter = Temporal::CryptConverter.new(
-        payload_converter: Temporal::Configuration::DEFAULT_CONVERTER
+      config.payload_codec = Temporal::Connection::Converter::Codec::Chain.new(
+        payload_codecs: [
+          Temporal::CryptPayloadCodec.new
+        ]
       )
     end
 
@@ -65,8 +67,8 @@ describe 'Converter', :integration do
     completion_event = events[:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED].first
     result = completion_event.workflow_execution_completed_event_attributes.result
 
-    converter = Temporal.configuration.converter
+    payload_codec = Temporal.configuration.payload_codec
 
-    expect(converter.from_payloads(result)&.first).to eq('Hello World, Tom')
+    expect(payload_codec.decodes(result).payloads.first.data).to eq('"Hello World, Tom"')
   end
 end
