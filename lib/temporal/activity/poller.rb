@@ -105,7 +105,7 @@ module Temporal
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool).process
+        TaskProcessor.new(task, task_queue, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool).process
       end
 
       def poll_retry_seconds

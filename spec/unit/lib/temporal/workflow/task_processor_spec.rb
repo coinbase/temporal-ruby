@@ -4,9 +4,10 @@ require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum) }
+  subject { described_class.new(task, task_queue, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum) }
 
   let(:namespace) { 'test-namespace' }
+  let(:task_queue) { 'test-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
   let(:query) { nil }
   let(:queries) { nil }
@@ -69,8 +70,10 @@ describe Temporal::Workflow::TaskProcessor do
           .to have_received(:increment)
           .with(
             Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
-            workflow: workflow_name,
-            namespace: namespace
+            hash_including({
+              workflow: workflow_name,
+              namespace: namespace
+            })
           )
       end
     end
@@ -187,8 +190,10 @@ describe Temporal::Workflow::TaskProcessor do
             .with(
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
-              workflow: workflow_name,
-              namespace: namespace
+              hash_including({
+                workflow: workflow_name,
+                namespace: namespace
+              })
             )
         end
 
@@ -200,8 +205,10 @@ describe Temporal::Workflow::TaskProcessor do
             .with(
               Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
               an_instance_of(Integer),
-              workflow: workflow_name,
-              namespace: namespace
+              hash_including({
+                workflow: workflow_name,
+                namespace: namespace
+              })
             )
         end
       end
@@ -235,8 +242,10 @@ describe Temporal::Workflow::TaskProcessor do
               .to have_received(:increment)
               .with(
                 Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED,
-                workflow: workflow_name,
-                namespace: namespace
+                hash_including({
+                  workflow: workflow_name,
+                  namespace: namespace
+                })
               )
           end
         end
@@ -296,8 +305,10 @@ describe Temporal::Workflow::TaskProcessor do
             .with(
               Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME,
               an_instance_of(Integer),
-              workflow: workflow_name,
-              namespace: namespace
+              hash_including({
+                workflow: workflow_name,
+                namespace: namespace
+              })
             )
         end
 
@@ -309,8 +320,10 @@ describe Temporal::Workflow::TaskProcessor do
             .with(
               Temporal::MetricKeys::WORKFLOW_TASK_LATENCY,
               an_instance_of(Integer),
-              workflow: workflow_name,
-              namespace: namespace
+              hash_including({
+                workflow: workflow_name,
+                namespace: namespace
+              })
             )
         end
       end

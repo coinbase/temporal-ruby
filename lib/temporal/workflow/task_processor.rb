@@ -24,8 +24,9 @@ module Temporal
       MAX_FAILED_ATTEMPTS = 1
       LEGACY_QUERY_KEY = :legacy_query
 
-      def initialize(task, namespace, workflow_lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
+      def initialize(task, task_queue, namespace, workflow_lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
         @task = task
+        @task_queue = task_queue
         @namespace = namespace
         @metadata = Metadata.generate_workflow_task_metadata(task, namespace)
         @task_token = task.task_token
@@ -41,7 +42,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Workflow task", metadata.to_h)
-        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, metric_tags)
 
         if !workflow_class
           raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker'
@@ -73,13 +74,21 @@ module Temporal
         fail_task(error)
       ensure
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_LATENCY, time_diff_ms, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_LATENCY, time_diff_ms, metric_tags)
         Temporal.logger.debug("Workflow task processed", metadata.to_h.merge(execution_time: time_diff_ms))
+      end
+
+      def metric_tags
+        {
+          workflow: workflow_name,
+          namespace: namespace,
+          task_queue: task_queue
+        }
       end
 
       private
 
-      attr_reader :task, :namespace, :task_token, :workflow_name, :workflow_class,
+      attr_reader :task, :task_queue, :namespace, :task_token, :workflow_name, :workflow_class,
         :middleware_chain, :workflow_middleware_chain, :metadata, :config, :binary_checksum
 
       def connection
@@ -152,7 +161,7 @@ module Temporal
       end
 
       def fail_task(error)
-        Temporal.metrics.increment(Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED, workflow: workflow_name, namespace: namespace)
+        Temporal.metrics.increment(Temporal::MetricKeys::WORKFLOW_TASK_EXECUTION_FAILED, metric_tags)
         Temporal.logger.error('Workflow task failed', metadata.to_h.merge(error: error.inspect))
         Temporal.logger.debug(error.backtrace.join("\n"))
 
