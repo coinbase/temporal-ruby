@@ -12,10 +12,14 @@ bundle install
 
 Modify the `init.rb` file to point to your Temporal cluster.
 
-Start a worker process:
+Start the three worker processes. Each of these uses a different task queue because there are differences
+in how their payloads are serialized. You typically want to do this by running each line in a separate
+terminal or via tmux or similar.
 
 ```sh
 bin/worker
+USE_ENCRYPTION=1 bin/worker
+USE_ERROR_SERIALIZATION_V2=1 bin/worker
 ```
 
 Use this command to trigger one of the example workflows from the `workflows` directory:
@@ -25,11 +29,13 @@ bin/trigger NAME_OF_THE_WORKFLOW [argument_1, argument_2, ...]
 ```
 ## Testing
 
-To run tests, make sure the temporal server and the worker process are already running:
+To run tests, make sure the temporal server is running:
 ```shell
 docker-compose up
-bin/worker
 ```
+
+Follow the instructions above to start the three worker proceses.
+
 To execute the tests, run:
 ```shell
 bundle exec rspec
