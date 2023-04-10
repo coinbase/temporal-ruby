@@ -15,7 +15,9 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers
-    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity, :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators, :payload_codec
+    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
+                  :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
+                  :payload_codec
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -32,7 +34,12 @@ module Temporal
       # See       # https://docs.temporal.io/blog/activity-timeouts/#schedule-to-start-timeout
       schedule_to_start: nil,
       start_to_close: 30,     # Time spent processing an activity
-      heartbeat: nil          # Max time between heartbeats (off by default)
+      heartbeat: nil,         # Max time between heartbeats (off by default)
+      # If a heartbeat timeout is specified, 80% of that value will be used for throttling. If not specified, this
+      # value will be used.
+      default_heartbeat_throttle_interval: 30,
+      # Heartbeat throttling interval will always be capped by this value
+      max_heartbeat_throttle_interval: 60
     }.freeze
 
     DEFAULT_HEADERS = {}.freeze

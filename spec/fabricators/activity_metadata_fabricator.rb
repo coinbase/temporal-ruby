@@ -13,4 +13,5 @@ Fabricator(:activity_metadata, from: :open_struct) do
   heartbeat_details nil
   scheduled_at { Time.now }
   current_attempt_scheduled_at { Time.now }
+  heartbeat_timeout 0
 end

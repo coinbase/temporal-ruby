@@ -1,9 +1,10 @@
-require 'temporal/connection'
-require 'temporal/thread_pool'
-require 'temporal/middleware/chain'
 require 'temporal/activity/task_processor'
+require 'temporal/connection'
 require 'temporal/error_handler'
 require 'temporal/metric_keys'
+require 'temporal/middleware/chain'
+require 'temporal/scheduled_thread_pool'
+require 'temporal/thread_pool'
 
 module Temporal
   class Activity
@@ -44,6 +45,7 @@ module Temporal
 
         thread.join
         thread_pool.shutdown
+        heartbeat_thread_pool.shutdown
       end
 
       private
@@ -103,7 +105,11 @@ module Temporal
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, namespace, activity_lookup, middleware_chain, config).process
+        TaskProcessor.new(task, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool).process
+      end
+
+      def poll_retry_seconds
+        @options[:poll_retry_seconds]
       end
 
       def thread_pool
@@ -117,8 +123,15 @@ module Temporal
         )
       end
 
-      def poll_retry_seconds
-        @options[:poll_retry_seconds]
+      def heartbeat_thread_pool
+        @heartbeat_thread_pool ||= ScheduledThreadPool.new(
+          options[:thread_pool_size],
+          {
+            pool_name: 'heartbeat',
+            namespace: namespace,
+            task_queue: task_queue
+          }
+        )
       end
     end
   end

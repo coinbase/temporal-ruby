@@ -19,4 +19,5 @@ Fabricator(:api_activity_task, from: Temporalio::Api::WorkflowService::V1::PollA
     end
     Temporalio::Api::Common::V1::Header.new(fields: fields)
   end
+  heartbeat_timeout { Google::Protobuf::Duration.new }
 end

@@ -63,6 +63,7 @@ module Temporal
           heartbeat_details: nil,
           scheduled_at: Time.now,
           current_attempt_scheduled_at: Time.now,
+          heartbeat_timeout: 0
         )
         context = LocalActivityContext.new(metadata)
 
@@ -113,6 +114,7 @@ module Temporal
           heartbeat_details: nil,
           scheduled_at: Time.now,
           current_attempt_scheduled_at: Time.now,
+          heartbeat_timeout: 0
         )
         context = LocalActivityContext.new(metadata)
 
