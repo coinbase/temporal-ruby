@@ -8,6 +8,7 @@ describe LoopWorkflow do
     }
     headers = {
         'my-header' => 'bar',
+        'test-header' => 'test',
     }
     run_id = Temporal.start_workflow(
       LoopWorkflow,
