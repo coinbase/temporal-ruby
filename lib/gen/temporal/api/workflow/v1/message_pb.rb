@@ -29,6 +29,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :task_queue, :string, 13
       optional :state_transition_count, :int64, 14
       optional :history_size_bytes, :int64, 15
+      optional :most_recent_worker_version_stamp, :message, 16, "temporal.api.common.v1.WorkerVersionStamp"
     end
     add_message "temporal.api.workflow.v1.WorkflowExecutionConfig" do
       optional :task_queue, :message, 1, "temporal.api.taskqueue.v1.TaskQueue"
