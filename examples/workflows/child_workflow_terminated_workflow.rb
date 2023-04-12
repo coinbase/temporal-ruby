@@ -12,6 +12,9 @@ class ChildWorkflowTerminatedWorkflow < Temporal::Workflow
       child_workflow_execution.run_id
     )
 
+    # Give time for termination to propagate
+    workflow.sleep(1)
+
     # check that the result is now 'failed'
     {
       child_workflow_terminated: result.failed?, # terminated is represented as failed? with the Terminated Error

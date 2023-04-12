@@ -1,0 +1,85 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test_gem:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.3
+          bundler-cache: true
+
+      - name: Run tests
+        run: |
+          bundle exec rspec
+
+  test_examples:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Start dependencies
+        run: |
+          docker-compose \
+            -f examples/docker-compose.yml \
+            up -d
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.3
+
+      - name: Bundle install
+        run: |
+          cd examples && bundle install --path vendor/bundle
+
+      - name: Wait for dependencies to settle
+        run: |
+          sleep 10
+
+      - name: Register namespace
+        run: |
+          cd examples && bin/register_namespace ruby-samples
+
+      - name: Wait for namespace to settle
+        run: |
+          sleep 10
+
+      - name: Boot up worker
+        run: |
+          cd examples && bin/worker &
+
+      - name: Boot up crypt worker
+        env:
+          USE_ENCRYPTION: 1
+        run: |
+          cd examples && bin/worker &
+
+      - name: Boot up worker for v2 error serialization tests
+        env:
+          USE_ERROR_SERIALIZATION_V2: 1
+        run: |
+          cd examples && bin/worker &
+
+      - name: Run RSpec
+        env:
+          USE_ERROR_SERIALIZATION_V2: 1
+        run: |
+          cd examples && bundle exec rspec
