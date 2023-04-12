@@ -54,7 +54,11 @@ describe Temporal::Connection::Converter::Composite do
         metadata: { 'encoding' => 'fake' }
       )
 
-      expect { subject.from_payload(payload) }.to raise_error(Temporal::Connection::Converter::Composite::ConverterNotFound)
+      expect do
+        subject.from_payload(payload)
+      end.to raise_error(Temporal::Connection::Converter::Composite::ConverterNotFound) do |e|
+        expect(e.message).to eq('Could not find PayloadConverter for fake')
+      end
     end
   end
 end

@@ -46,6 +46,16 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :maximum_attempts, :int32, 4
       repeated :non_retryable_error_types, :string, 5
     end
+    add_message "temporal.api.common.v1.MeteringMetadata" do
+      optional :nonfirst_local_activity_execution_attempts, :uint32, 13
+    end
+    add_message "temporal.api.common.v1.WorkerVersionStamp" do
+      optional :build_id, :string, 1
+      optional :bundle_id, :string, 2
+    end
+    add_message "temporal.api.common.v1.WorkerVersionCapabilities" do
+      optional :build_id, :string, 1
+    end
   end
 end
 
@@ -63,6 +73,9 @@ module Temporalio
         WorkflowType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.WorkflowType").msgclass
         ActivityType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.ActivityType").msgclass
         RetryPolicy = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.RetryPolicy").msgclass
+        MeteringMetadata = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.MeteringMetadata").msgclass
+        WorkerVersionStamp = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.WorkerVersionStamp").msgclass
+        WorkerVersionCapabilities = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.WorkerVersionCapabilities").msgclass
       end
     end
   end

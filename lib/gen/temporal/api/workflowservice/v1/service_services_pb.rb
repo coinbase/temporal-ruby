@@ -288,20 +288,29 @@ module Temporalio
             rpc :DeleteSchedule, ::Temporalio::Api::WorkflowService::V1::DeleteScheduleRequest, ::Temporalio::Api::WorkflowService::V1::DeleteScheduleResponse
             # List all schedules in a namespace.
             rpc :ListSchedules, ::Temporalio::Api::WorkflowService::V1::ListSchedulesRequest, ::Temporalio::Api::WorkflowService::V1::ListSchedulesResponse
-            # Allows users to specify a graph of worker build id based versions on a
-            # per task queue basis. Versions are ordered, and may be either compatible
-            # with some extant version, or a new incompatible version.
+            # Allows users to specify sets of worker build id versions on a per task queue basis. Versions
+            # are ordered, and may be either compatible with some extant version, or a new incompatible
+            # version, forming sets of ids which are incompatible with each other, but whose contained
+            # members are compatible with one another.
+            #
             # (-- api-linter: core::0134::response-message-name=disabled
-            #     aip.dev/not-precedent: UpdateWorkerBuildIdOrdering RPC doesn't follow Google API format. --)
+            #     aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow Google API format. --)
             # (-- api-linter: core::0134::method-signature=disabled
-            #     aip.dev/not-precedent: UpdateWorkerBuildIdOrdering RPC doesn't follow Google API format. --)
-            rpc :UpdateWorkerBuildIdOrdering, ::Temporalio::Api::WorkflowService::V1::UpdateWorkerBuildIdOrderingRequest, ::Temporalio::Api::WorkflowService::V1::UpdateWorkerBuildIdOrderingResponse
-            # Fetches the worker build id versioning graph for some task queue.
-            rpc :GetWorkerBuildIdOrdering, ::Temporalio::Api::WorkflowService::V1::GetWorkerBuildIdOrderingRequest, ::Temporalio::Api::WorkflowService::V1::GetWorkerBuildIdOrderingResponse
+            #     aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow Google API format. --)
+            rpc :UpdateWorkerBuildIdCompatibility, ::Temporalio::Api::WorkflowService::V1::UpdateWorkerBuildIdCompatibilityRequest, ::Temporalio::Api::WorkflowService::V1::UpdateWorkerBuildIdCompatibilityResponse
+            # Fetches the worker build id versioning sets for some task queue and related metadata.
+            rpc :GetWorkerBuildIdCompatibility, ::Temporalio::Api::WorkflowService::V1::GetWorkerBuildIdCompatibilityRequest, ::Temporalio::Api::WorkflowService::V1::GetWorkerBuildIdCompatibilityResponse
             # Invokes the specified update function on user workflow code.
             # (-- api-linter: core::0134=disabled
             #     aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format --)
             rpc :UpdateWorkflowExecution, ::Temporalio::Api::WorkflowService::V1::UpdateWorkflowExecutionRequest, ::Temporalio::Api::WorkflowService::V1::UpdateWorkflowExecutionResponse
+            # Polls a workflow execution for the outcome of a workflow execution update
+            # previously issued through the UpdateWorkflowExecution RPC. The effective
+            # timeout on this call will be shorter of the the caller-supplied gRPC
+            # timeout and the server's configured long-poll timeout.
+            # (-- api-linter: core::0134=disabled
+            #     aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format --)
+            rpc :PollWorkflowExecutionUpdate, ::Temporalio::Api::WorkflowService::V1::PollWorkflowExecutionUpdateRequest, ::Temporalio::Api::WorkflowService::V1::PollWorkflowExecutionUpdateResponse
             # StartBatchOperation starts a new batch operation
             rpc :StartBatchOperation, ::Temporalio::Api::WorkflowService::V1::StartBatchOperationRequest, ::Temporalio::Api::WorkflowService::V1::StartBatchOperationResponse
             # StopBatchOperation stops a batch operation

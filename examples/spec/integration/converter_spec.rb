@@ -19,7 +19,7 @@ describe 'Converter', :integration do
   ensure
     Temporal.configure do |config|
       config.task_queue = task_queue
-      config.converter = Temporal::Configuration::DEFAULT_CONVERTER
+      config.payload_codec = Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
     end
   end
 

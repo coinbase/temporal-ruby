@@ -14,6 +14,7 @@ require 'temporal/api/failure/v1/message_pb'
 require 'temporal/api/taskqueue/v1/message_pb'
 require 'temporal/api/update/v1/message_pb'
 require 'temporal/api/workflow/v1/message_pb'
+require 'temporal/api/sdk/v1/task_complete_metadata_pb'
 
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/history/v1/message.proto", :syntax => :proto3) do
@@ -94,7 +95,9 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :started_event_id, :int64, 2
       optional :identity, :string, 3
       optional :binary_checksum, :string, 4
-      optional :worker_versioning_id, :message, 5, "temporal.api.taskqueue.v1.VersionId"
+      optional :worker_version, :message, 5, "temporal.api.common.v1.WorkerVersionStamp"
+      optional :sdk_metadata, :message, 6, "temporal.api.sdk.v1.WorkflowTaskCompletedMetadata"
+      optional :metering_metadata, :message, 13, "temporal.api.common.v1.MeteringMetadata"
     end
     add_message "temporal.api.history.v1.WorkflowTaskTimedOutEventAttributes" do
       optional :scheduled_event_id, :int64, 1
@@ -199,6 +202,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :input, :message, 2, "temporal.api.common.v1.Payloads"
       optional :identity, :string, 3
       optional :header, :message, 4, "temporal.api.common.v1.Header"
+      optional :skip_generate_workflow_task, :bool, 5
     end
     add_message "temporal.api.history.v1.WorkflowExecutionTerminatedEventAttributes" do
       optional :reason, :string, 1

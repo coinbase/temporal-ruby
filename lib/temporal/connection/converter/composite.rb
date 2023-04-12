@@ -25,7 +25,7 @@ module Temporal
           converter = payload_converters_by_encoding[encoding]
 
           if converter.nil?
-            raise ConverterNotFound
+            raise ConverterNotFound, "Could not find PayloadConverter for #{encoding}"
           end
 
           converter.from_payload(payload)

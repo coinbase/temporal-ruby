@@ -8,6 +8,7 @@ require 'google/protobuf/timestamp_pb'
 require 'google/protobuf/wrappers_pb'
 require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/task_queue_pb'
+require 'temporal/api/common/v1/message_pb'
 
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("temporal/api/taskqueue/v1/message.proto", :syntax => :proto3) do
@@ -37,19 +38,15 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :last_access_time, :message, 1, "google.protobuf.Timestamp"
       optional :identity, :string, 2
       optional :rate_per_second, :double, 3
-      optional :worker_versioning_id, :message, 4, "temporal.api.taskqueue.v1.VersionId"
+      optional :worker_version_capabilities, :message, 4, "temporal.api.common.v1.WorkerVersionCapabilities"
     end
     add_message "temporal.api.taskqueue.v1.StickyExecutionAttributes" do
       optional :worker_task_queue, :message, 1, "temporal.api.taskqueue.v1.TaskQueue"
       optional :schedule_to_start_timeout, :message, 2, "google.protobuf.Duration"
     end
-    add_message "temporal.api.taskqueue.v1.VersionIdNode" do
-      optional :version, :message, 1, "temporal.api.taskqueue.v1.VersionId"
-      optional :previous_compatible, :message, 2, "temporal.api.taskqueue.v1.VersionIdNode"
-      optional :previous_incompatible, :message, 3, "temporal.api.taskqueue.v1.VersionIdNode"
-    end
-    add_message "temporal.api.taskqueue.v1.VersionId" do
-      optional :worker_build_id, :string, 1
+    add_message "temporal.api.taskqueue.v1.CompatibleVersionSet" do
+      optional :version_set_id, :string, 1
+      repeated :build_ids, :string, 2
     end
   end
 end
@@ -65,8 +62,7 @@ module Temporalio
         TaskQueuePartitionMetadata = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.TaskQueuePartitionMetadata").msgclass
         PollerInfo = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.PollerInfo").msgclass
         StickyExecutionAttributes = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.StickyExecutionAttributes").msgclass
-        VersionIdNode = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.VersionIdNode").msgclass
-        VersionId = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.VersionId").msgclass
+        CompatibleVersionSet = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.taskqueue.v1.CompatibleVersionSet").msgclass
       end
     end
   end
