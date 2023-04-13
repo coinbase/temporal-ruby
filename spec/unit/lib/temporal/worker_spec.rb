@@ -290,6 +290,11 @@ describe Temporal::Worker do
         )
         .and_return(activity_poller)
 
+      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
+      expect(Temporal::Workflow::Poller)
+        .to receive(:new)
+              .and_return(workflow_poller)
+
       worker = Temporal::Worker.new(activity_thread_pool_size: 10)
       allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
@@ -301,6 +306,11 @@ describe Temporal::Worker do
     end
 
     it 'can have a worklow poller with a binary checksum' do
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      expect(Temporal::Activity::Poller)
+        .to receive(:new)
+              .and_return(activity_poller)
+
       workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
       binary_checksum = 'abc123'
       expect(Temporal::Workflow::Poller)
@@ -403,7 +413,10 @@ describe Temporal::Worker do
 
     describe 'signal handling' do
       before do
-        @thread = Thread.new { subject.start }
+        @thread = Thread.new do
+          @worker_pid = Process.pid
+          subject.start
+        end
         sleep THREAD_SYNC_DELAY # give worker time to start
       end
 
@@ -420,14 +433,14 @@ describe Temporal::Worker do
       end
 
       it 'traps TERM signal' do
-        Process.kill('TERM', 0)
+        Process.kill('TERM', @worker_pid)
         sleep THREAD_SYNC_DELAY
 
         expect(@thread).not_to be_alive
       end
 
       it 'traps INT signal' do
-        Process.kill('INT', 0)
+        Process.kill('INT', @worker_pid)
         sleep THREAD_SYNC_DELAY
 
         expect(@thread).not_to be_alive
