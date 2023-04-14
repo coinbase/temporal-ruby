@@ -376,6 +376,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
+          [],
           {binary_checksum: nil, poll_retry_seconds: 10, thread_pool_size: 10}
         )
         .and_return(workflow_poller)

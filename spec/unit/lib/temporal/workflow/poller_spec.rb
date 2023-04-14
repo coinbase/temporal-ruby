@@ -207,6 +207,7 @@ describe Temporal::Workflow::Poller do
           lookup,
           config,
           middleware,
+          workflow_middleware,
           {
             binary_checksum: binary_checksum,
             poll_retry_seconds: 5
