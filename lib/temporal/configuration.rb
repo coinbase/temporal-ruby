@@ -36,9 +36,11 @@ module Temporal
       start_to_close: 30,     # Time spent processing an activity
       heartbeat: nil,         # Max time between heartbeats (off by default)
       # If a heartbeat timeout is specified, 80% of that value will be used for throttling. If not specified, this
-      # value will be used.
+      # value will be used. This default comes from the Go SDK.
+      # https://github.com/temporalio/sdk-go/blob/eaa3802876de77500164f80f378559c51d6bb0e2/internal/internal_task_handlers.go#L65
       default_heartbeat_throttle_interval: 30,
-      # Heartbeat throttling interval will always be capped by this value
+      # Heartbeat throttling interval will always be capped by this value. This default comes from the Go SDK.
+      # https://github.com/temporalio/sdk-go/blob/eaa3802876de77500164f80f378559c51d6bb0e2/internal/internal_task_handlers.go#L66
       max_heartbeat_throttle_interval: 60
     }.freeze
 

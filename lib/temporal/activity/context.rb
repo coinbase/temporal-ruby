@@ -117,6 +117,8 @@ module Temporal
       end
 
       def heartbeat_throttle_interval
+        # This is a port of logic in the Go SDK
+        # https://github.com/temporalio/sdk-go/blob/eaa3802876de77500164f80f378559c51d6bb0e2/internal/internal_task_handlers.go#L1990
         interval = if metadata.heartbeat_timeout > 0
           metadata.heartbeat_timeout * 0.8
         else
