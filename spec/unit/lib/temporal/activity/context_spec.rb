@@ -74,6 +74,17 @@ describe Temporal::Activity::Context do
             .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 4 })
         end
       end
+
+      it 'no heartbeat check scheduled when max interval is zero' do
+        config.timeouts = { max_heartbeat_throttle_interval: 0 }
+        subject.heartbeat
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+
+        expect(subject.heartbeat_check_scheduled).to be_nil
+      end
     end
   end
 

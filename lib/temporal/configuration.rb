@@ -41,6 +41,8 @@ module Temporal
       default_heartbeat_throttle_interval: 30,
       # Heartbeat throttling interval will always be capped by this value. This default comes from the Go SDK.
       # https://github.com/temporalio/sdk-go/blob/eaa3802876de77500164f80f378559c51d6bb0e2/internal/internal_task_handlers.go#L66
+      #
+      # To disable heartbeat throttling, set this timeout to 0.
       max_heartbeat_throttle_interval: 60
     }.freeze
 
