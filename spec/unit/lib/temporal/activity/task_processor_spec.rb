@@ -26,8 +26,8 @@ describe Temporal::Activity::TaskProcessor do
   let(:input) { %w[arg1 arg2] }
 
   describe '#process' do
-    let(:heartbeat_scheduled) { nil }
-    let(:context) { instance_double('Temporal::Activity::Context', async?: false, heartbeat_scheduled: heartbeat_scheduled) }
+    let(:heartbeat_check_scheduled) { nil }
+    let(:context) { instance_double('Temporal::Activity::Context', async?: false, heartbeat_check_scheduled: heartbeat_check_scheduled) }
 
     before do
       allow(Temporal::Connection)
@@ -119,11 +119,11 @@ describe Temporal::Activity::TaskProcessor do
         end
 
         context 'when there is an outstanding scheduled heartbeat' do
-          let(:heartbeat_scheduled) { Temporal::ScheduledThreadPool::ScheduledItem.new(id: :foo, canceled: false) }
+          let(:heartbeat_check_scheduled) { Temporal::ScheduledThreadPool::ScheduledItem.new(id: :foo, canceled: false) }
           it 'it gets canceled' do
             subject.process
 
-            expect(heartbeat_scheduled.canceled).to eq(true)
+            expect(heartbeat_check_scheduled.canceled).to eq(true)
           end
         end
 

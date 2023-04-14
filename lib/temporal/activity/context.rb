@@ -13,13 +13,13 @@ module Temporal
         @config = config
         @heartbeat_thread_pool = heartbeat_thread_pool
         @last_heartbeat_details = [] # an array to differentiate nil hearbeat from no heartbeat queued
-        @heartbeat_scheduled = nil
+        @heartbeat_check_scheduled = nil
         @heartbeat_mutex = Mutex.new
         @async = false
         @cancel_requested = false
       end
 
-      attr_reader :heartbeat_scheduled, :cancel_requested
+      attr_reader :heartbeat_check_scheduled, :cancel_requested
 
       def async
         @async = true
@@ -66,10 +66,10 @@ module Temporal
         # ...
 
         heartbeat_mutex.synchronize do
-          if heartbeat_scheduled.nil?
+          if heartbeat_check_scheduled.nil?
             send_heartbeat(details)
             @last_heartbeat_details = []
-            @heartbeat_scheduled = schedule_heartbeat(heartbeat_throttle_interval)
+            @heartbeat_check_scheduled = schedule_check_heartbeat(heartbeat_throttle_interval)
           else
             logger.debug('Throttling heartbeat for sending later', metadata.to_h)
             @last_heartbeat_details = [details]
@@ -144,14 +144,17 @@ module Temporal
         end
       end
 
-      def schedule_heartbeat(delay)
+      def schedule_check_heartbeat(delay)
         heartbeat_thread_pool.schedule([metadata.workflow_run_id, metadata.id, metadata.attempt], delay) do
           details = heartbeat_mutex.synchronize do
-            @heartbeat_scheduled = nil
+            @heartbeat_check_scheduled = nil
+            # Check to see if there is a saved heartbeat. If heartbeat was not called while this was waiting,
+            # this will be empty and there's no need to send anything or to scheduled another heartbeat
+            # check.
             last_heartbeat_details
           end
           begin
-            if !details.nil?
+            unless details.empty?
               heartbeat(details.first)
             end
           rescue
