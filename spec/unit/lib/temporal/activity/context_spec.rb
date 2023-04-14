@@ -55,12 +55,12 @@ describe Temporal::Activity::Context do
       end
 
       context 'resumes' do
-        let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 1).to_h }
+        let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 0.1).to_h }
         it 'more heartbeats after time passes' do
           subject.heartbeat(iteration: 1)
           subject.heartbeat(iteration: 2) # skipped because 3 will overwrite
           subject.heartbeat(iteration: 3)
-          sleep 1
+          sleep 0.1
           subject.heartbeat(iteration: 4)
 
           # Shutdown to drain remaining threads
