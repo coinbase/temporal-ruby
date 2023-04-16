@@ -55,7 +55,7 @@ describe Temporal::Workflow::Executor do
     end
 
     it 'generates workflow metadata' do
-      allow(Temporal::Metadata::Workflow).to receive(:new).and_call_original
+      allow(Temporal::Metadata::Workflow).to receive(:new)
       payload = Temporalio::Api::Common::V1::Payload.new(
         metadata: { 'encoding' => 'json/plain' },
         data: '"bar"'.b
@@ -70,19 +70,19 @@ describe Temporal::Workflow::Executor do
       event_attributes = workflow_started_event.workflow_execution_started_event_attributes
       expect(Temporal::Metadata::Workflow)
         .to have_received(:new)
-              .with(
-                namespace: workflow_metadata.namespace,
-                id: workflow_metadata.workflow_id,
-                name: event_attributes.workflow_type.name,
-                run_id: event_attributes.original_execution_run_id,
-                parent_id: nil,
-                parent_run_id: nil,
-                attempt: event_attributes.attempt,
-                task_queue: event_attributes.task_queue.name,
-                run_started_at: workflow_started_event.event_time.to_time,
-                memo: {},
-                headers: {'Foo' => 'bar'}
-              )
+          .with(
+            namespace: workflow_metadata.namespace,
+            id: workflow_metadata.workflow_id,
+            name: event_attributes.workflow_type.name,
+            run_id: event_attributes.original_execution_run_id,
+            parent_id: nil,
+            parent_run_id: nil,
+            attempt: event_attributes.attempt,
+            task_queue: event_attributes.task_queue.name,
+            headers: {'Foo' => 'bar'},
+            run_started_at: workflow_started_event.event_time.to_time,
+            memo: {},
+          )
     end
   end
 
