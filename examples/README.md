@@ -34,6 +34,12 @@ To run tests, make sure the temporal server is running:
 docker-compose up
 ```
 
+Run the register_namespace script to ensure the ruby-samples namespace and necessary
+search attributes have been created:
+```shell
+bin/register_namespace
+```
+
 Follow the instructions above to start the three worker proceses.
 
 To execute the tests, run:

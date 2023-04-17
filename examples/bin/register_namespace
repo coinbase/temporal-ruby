@@ -1,16 +1,26 @@
 #!/usr/bin/env ruby
 require_relative '../init'
 
-namespace = ARGV[0]
+namespace = ARGV[0] || 'ruby-samples'
 description = ARGV[1]
-
-raise 'Missing namespace name, please run register_namespace <namespace_name>' unless namespace
 
 begin
   Temporal.register_namespace(namespace, description)
   Temporal.logger.info 'Namespace created', { namespace: namespace }
 rescue Temporal::NamespaceAlreadyExistsFailure
   Temporal.logger.info 'Namespace already exists', { namespace: namespace }
+end
+
+loop do
+  begin
+    Temporal.list_custom_search_attributes(namespace: namespace)
+    Temporal.logger.info("Namespace is ready", { namespace: namespace })
+    break
+  rescue GRPC::NotFound
+    Temporal.logger.info("Namespace not yet found, waiting and retrying", { namespace: namespace })
+    sleep 1
+    next
+  end
 end
 
 # Register a variety of search attributes for ease of integration testing
@@ -21,9 +31,12 @@ attributes_to_add = {
   'CustomIntField' => :int,
   'CustomDatetimeField' => :datetime
 }
-begin
-  Temporal.add_custom_search_attributes(attributes_to_add)
-  Temporal.logger.info('Registered search attributes', { namespace: namespace, attributes: attributes_to_add })
-rescue Temporal::SearchAttributeAlreadyExistsFailure
-  Temporal.logger.info('Default search attributes already exist for namespace', { namespace: namespace })
+
+attributes_to_add.each do |name, type|
+  begin
+    Temporal.add_custom_search_attributes({name: type})
+    Temporal.logger.info("Registered search attributes #{name} = #{type}", { namespace: namespace })
+  rescue Temporal::SearchAttributeAlreadyExistsFailure
+    Temporal.logger.info("Default search attribute #{name} already exist for namespace", { namespace: namespace })
+  end
 end
