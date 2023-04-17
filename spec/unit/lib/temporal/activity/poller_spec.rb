@@ -159,6 +159,7 @@ describe Temporal::Activity::Poller do
       before do
         allow(subject).to receive(:shutting_down?).and_return(false, true)
         allow(connection).to receive(:poll_activity_task_queue).and_raise(StandardError)
+        allow(subject).to receive(:sleep).and_return(nil)
       end
 
       it 'logs' do
@@ -173,6 +174,45 @@ describe Temporal::Activity::Poller do
           .to have_received(:error)
           .with('Unable to poll activity task queue', { namespace: 'test-namespace', task_queue: 'test-task-queue', error: '#<StandardError: StandardError>' })
       end
+
+      it 'does not sleep' do
+        subject.start
+
+        # stop poller before inspecting
+        subject.stop_polling; subject.wait
+
+        expect(subject).to have_received(:sleep).with(0).once
+      end
+    end
+  end
+
+  context 'when connection is unable to poll and poll_retry_seconds is set' do
+    subject do
+      described_class.new(
+        namespace,
+        task_queue,
+        lookup,
+        config,
+        middleware,
+        {
+          poll_retry_seconds: 5
+        }
+      )
+    end
+
+    before do
+      allow(subject).to receive(:shutting_down?).and_return(false, true)
+      allow(connection).to receive(:poll_activity_task_queue).and_raise(StandardError)
+      allow(subject).to receive(:sleep).and_return(nil)
+    end
+
+    it 'sleeps' do
+      subject.start
+
+      # stop poller before inspecting
+      subject.stop_polling; subject.wait
+
+      expect(subject).to have_received(:sleep).with(5).once
     end
   end
 

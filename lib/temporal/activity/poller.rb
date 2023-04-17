@@ -9,7 +9,8 @@ module Temporal
   class Activity
     class Poller
       DEFAULT_OPTIONS = {
-        thread_pool_size: 20
+        thread_pool_size: 20,
+        poll_retry_seconds: 0
       }.freeze
 
       def initialize(namespace, task_queue, activity_lookup, config, middleware = [], options = {})
@@ -90,6 +91,8 @@ module Temporal
 
         Temporal::ErrorHandler.handle(error, config)
 
+        sleep(poll_retry_seconds)
+
         nil
       end
 
@@ -108,6 +111,10 @@ module Temporal
             task_queue: task_queue
           }
         )
+      end
+
+      def poll_retry_seconds
+        @options[:poll_retry_seconds]
       end
     end
   end

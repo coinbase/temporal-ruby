@@ -82,6 +82,18 @@ worker.register_activity(HelloActivity)
 worker.start # runs forever
 ```
 
+You can add several options when initializing worker (here defaults are provided as values):
+
+```ruby
+Temporal::Worker.new(
+  activity_thread_pool_size: 20, # how many threads poll for activities
+  workflow_thread_pool_size: 10, # how many threads poll for workflows
+  binary_checksum: nil, # identifies the version of workflow worker code
+  activity_poll_retry_seconds: 0, # how many seconds to wait after unsuccessful poll for activities
+  workflow_poll_retry_seconds: 0  # how many seconds to wait after unsuccessful poll for workflows
+)
+```
+
 And finally start your workflow in another terminal shell:
 
 ```ruby
