@@ -410,18 +410,21 @@ module Temporal
     end
 
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
-    def add_custom_search_attributes(attributes)
-      connection.add_custom_search_attributes(attributes)
+    # @param namespace String, required for SQL enhanced visibility, ignored for elastic search
+    def add_custom_search_attributes(attributes, namespace: nil)
+      connection.add_custom_search_attributes(attributes, namespace || config.default_execution_options.namespace)
     end
 
+    # @param namespace String, required for SQL enhanced visibility, ignored for elastic search
     # @return Hash[String, Symbol] name to symbol for type, see INDEXED_VALUE_TYPE above
-    def list_custom_search_attributes
-      connection.list_custom_search_attributes
+    def list_custom_search_attributes(namespace: nil)
+      connection.list_custom_search_attributes(namespace || config.default_execution_options.namespace)
     end
 
     # @param attribute_names [Array[String]] Attributes to remove
-    def remove_custom_search_attributes(*attribute_names)
-      connection.remove_custom_search_attributes(attribute_names)
+    # @param namespace String, required for SQL enhanced visibility, ignored for elastic search
+    def remove_custom_search_attributes(*attribute_names, namespace: nil)
+      connection.remove_custom_search_attributes(attribute_names, namespace || config.default_execution_options.namespace)
     end
 
     def connection
