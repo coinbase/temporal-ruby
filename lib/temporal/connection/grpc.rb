@@ -494,7 +494,7 @@ module Temporal
         client.count_workflow_executions(request)
       end
 
-      def add_custom_search_attributes(attributes)
+      def add_custom_search_attributes(attributes, namespace)
         attributes.each_value do |symbol_type|
           next if SYMBOL_TO_INDEXED_VALUE_TYPE.include?(symbol_type)
 
@@ -504,7 +504,8 @@ module Temporal
         end
 
         request = Temporalio::Api::OperatorService::V1::AddSearchAttributesRequest.new(
-          search_attributes: attributes.map { |name, type| [name, SYMBOL_TO_INDEXED_VALUE_TYPE[type]] }.to_h
+          search_attributes: attributes.map { |name, type| [name, SYMBOL_TO_INDEXED_VALUE_TYPE[type]] }.to_h,
+          namespace: namespace
         )
         begin
           operator_client.add_search_attributes(request)
@@ -518,15 +519,18 @@ module Temporal
         end
       end
 
-      def list_custom_search_attributes
-        request = Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest.new
+      def list_custom_search_attributes(namespace)
+        request = Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest.new(
+          namespace: namespace
+        )
         response = operator_client.list_search_attributes(request)
         response.custom_attributes.map { |name, type| [name, INDEXED_VALUE_TYPE_TO_SYMBOL[type]] }.to_h
       end
 
-      def remove_custom_search_attributes(attribute_names)
+      def remove_custom_search_attributes(attribute_names, namespace)
         request = Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest.new(
-          search_attributes: attribute_names
+          search_attributes: attribute_names,
+          namespace: namespace
         )
         begin
           operator_client.remove_search_attributes(request)

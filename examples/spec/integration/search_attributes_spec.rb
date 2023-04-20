@@ -6,8 +6,9 @@ describe 'search attributes' do
 
   def cleanup
     custom_attributes = Temporal.list_custom_search_attributes
-    Temporal.remove_custom_search_attributes(attribute_1) if custom_attributes.include?(attribute_1)
-    Temporal.remove_custom_search_attributes(attribute_2) if custom_attributes.include?(attribute_2)
+    custom_attributes.keys.intersection([attribute_1, attribute_2]).each do |attribute|
+      Temporal.remove_custom_search_attributes(attribute)
+    end
   end
 
   before do
@@ -18,13 +19,20 @@ describe 'search attributes' do
     cleanup
   end
 
+  # Depending on the visibility storage backend of the server, recreating a search attribute
+  # is either ignored so long as the tpe is the same (Elastic Search) or it raises
+  # an error (SQL). This function ensures consistent state upon exit.
+  def safe_add(attributes)
+    begin
+      Temporal.add_custom_search_attributes(attributes)
+    rescue => e
+      # This won't always throw but when it does it needs to be of this type
+      expect(e).to be_instance_of(Temporal::SearchAttributeAlreadyExistsFailure)
+    end
+  end
+
   it 'add' do
-    Temporal.add_custom_search_attributes(
-      {
-        attribute_1 => :int,
-        attribute_2 => :keyword
-      }
-    )
+    safe_add({ attribute_1 => :int, attribute_2 => :keyword })
 
     custom_attributes = Temporal.list_custom_search_attributes
     expect(custom_attributes).to include(attribute_1 => :int)
@@ -32,12 +40,9 @@ describe 'search attributes' do
   end
 
   it 'add duplicate fails' do
-    Temporal.add_custom_search_attributes(
-      {
-        attribute_1 => :int
-      }
-    )
+    safe_add({ attribute_1 => :int })
 
+    # This, however, will always throw
     expect do
       Temporal.add_custom_search_attributes(
         {
@@ -48,12 +53,7 @@ describe 'search attributes' do
   end
 
   it 'remove' do
-    Temporal.add_custom_search_attributes(
-      {
-        attribute_1 => :int,
-        attribute_2 => :keyword
-      }
-    )
+    safe_add({ attribute_1 => :int, attribute_2 => :keyword })
 
     Temporal.remove_custom_search_attributes(attribute_1, attribute_2)
 

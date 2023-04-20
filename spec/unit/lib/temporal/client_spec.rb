@@ -8,7 +8,7 @@ require 'temporal/connection/grpc'
 describe Temporal::Client do
   subject { described_class.new(config) }
 
-  let(:config) { Temporal::Configuration.new }
+  let(:config) { Temporal::Configuration.new.tap { |c| c.namespace = namespace } }
   let(:connection) { instance_double(Temporal::Connection::GRPC) }
   let(:namespace) { 'default-test-namespace' }
   let(:workflow_id) { SecureRandom.uuid }
@@ -826,7 +826,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:add_custom_search_attributes)
-        .with(attributes)
+        .with(attributes, namespace)
     end
   end
 
@@ -853,7 +853,7 @@ describe Temporal::Client do
 
       expect(connection)
         .to have_received(:remove_custom_search_attributes)
-        .with(%i[SomeTextField SomeIntField])
+        .with(%i[SomeTextField SomeIntField], namespace)
     end
   end
 

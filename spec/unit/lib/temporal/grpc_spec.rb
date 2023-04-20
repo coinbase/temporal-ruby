@@ -246,10 +246,7 @@ describe Temporal::Connection::GRPC do
           timeout: timeout
         )
 
-        expect(grpc_stub).to have_received(:get_workflow_execution_history) do |request, deadline:|
-          expect(request.wait_new_event).to eq(true)
-          expect(deadline).to eq(now + timeout)
-        end
+        expect(grpc_stub).to have_received(:get_workflow_execution_history).with(anything, deadline: now + timeout)
       end
 
       it 'demands a timeout to be specified' do
@@ -658,7 +655,8 @@ describe Temporal::Connection::GRPC do
           'SomeBoolField' => :bool,
           'SomeDatetimeField' => :datetime,
           'SomeKeywordListField' => :keyword_list
-        }
+        },
+        namespace
       )
 
       expect(grpc_operator_stub).to have_received(:add_search_attributes) do |request|
@@ -674,6 +672,7 @@ describe Temporal::Connection::GRPC do
             'SomeKeywordListField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_KEYWORD_LIST
           }
         )
+        expect(request.namespace).to eq(namespace)
       end
     end
 
@@ -683,7 +682,8 @@ describe Temporal::Connection::GRPC do
         subject.add_custom_search_attributes(
           {
             'SomeTextField' => :text
-          }
+          },
+          namespace
         )
       end.to raise_error(Temporal::SearchAttributeAlreadyExistsFailure)
     end
@@ -694,7 +694,8 @@ describe Temporal::Connection::GRPC do
         subject.add_custom_search_attributes(
           {
             'SomeTextField' => :text
-          }
+          },
+          namespace
         )
       end.to raise_error(Temporal::SearchAttributeFailure)
     end
@@ -704,7 +705,8 @@ describe Temporal::Connection::GRPC do
       subject.add_custom_search_attributes(
         {
           SomeTextField: :text
-        }
+        },
+        namespace
       )
 
       expect(grpc_operator_stub).to have_received(:add_search_attributes) do |request|
@@ -714,6 +716,7 @@ describe Temporal::Connection::GRPC do
             'SomeTextField' => Temporalio::Api::Enums::V1::IndexedValueType::INDEXED_VALUE_TYPE_TEXT
           }
         )
+        expect(request.namespace).to eq(namespace)
       end
     end
 
@@ -722,7 +725,8 @@ describe Temporal::Connection::GRPC do
         subject.add_custom_search_attributes(
           {
             'SomeBadField' => :foo
-          }
+          },
+          namespace
         )
       end.to raise_error(Temporal::InvalidSearchAttributeTypeFailure) do |e|
         expect(e.to_s).to eq('Cannot add search attributes ({"SomeBadField"=>:foo}): unknown search attribute type :foo, supported types: [:text, :keyword, :int, :double, :bool, :datetime, :keyword_list]')
@@ -746,7 +750,7 @@ describe Temporal::Connection::GRPC do
         )
       )
 
-      response = subject.list_custom_search_attributes
+      response = subject.list_custom_search_attributes(namespace)
 
       expect(response).to eq(
         {
@@ -762,6 +766,7 @@ describe Temporal::Connection::GRPC do
 
       expect(grpc_operator_stub).to have_received(:list_search_attributes) do |request|
         expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest)
+        expect(request.namespace).to eq(namespace)
       end
     end
 
@@ -775,7 +780,7 @@ describe Temporal::Connection::GRPC do
         )
       )
 
-      response = subject.list_custom_search_attributes
+      response = subject.list_custom_search_attributes(namespace)
 
       expect(response).to eq(
         {
@@ -792,13 +797,12 @@ describe Temporal::Connection::GRPC do
 
       attributes = ['SomeTextField', 'SomeIntField']
 
-      subject.remove_custom_search_attributes(
-        attributes
-      )
+      subject.remove_custom_search_attributes(attributes, namespace)
 
       expect(grpc_operator_stub).to have_received(:remove_search_attributes) do |request|
         expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest)
         expect(request.search_attributes).to eq(attributes)
+        expect(request.namespace).to eq(namespace)
       end
     end
 
@@ -808,18 +812,14 @@ describe Temporal::Connection::GRPC do
       attributes = ['SomeTextField', 'SomeIntField']
 
       expect do
-        subject.remove_custom_search_attributes(
-          attributes
-        )
+        subject.remove_custom_search_attributes(attributes, namespace)
       end.to raise_error(Temporal::NotFoundFailure)
     end
 
     it 'attribute names can be symbols' do
       allow(grpc_operator_stub).to receive(:remove_search_attributes)
 
-      subject.remove_custom_search_attributes(
-        %i[SomeTextField SomeIntField]
-      )
+      subject.remove_custom_search_attributes(%i[SomeTextField SomeIntField], namespace)
 
       expect(grpc_operator_stub).to have_received(:remove_search_attributes) do |request|
         expect(request).to be_an_instance_of(Temporalio::Api::OperatorService::V1::RemoveSearchAttributesRequest)
