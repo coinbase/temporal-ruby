@@ -8,6 +8,7 @@ require 'temporal/client'
 require 'temporal/metrics'
 require 'temporal/json'
 require 'temporal/errors'
+require 'temporal/version'
 require 'temporal/workflow/errors'
 
 module Temporal
