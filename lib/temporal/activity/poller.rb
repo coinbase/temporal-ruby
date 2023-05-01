@@ -21,16 +21,21 @@ module Temporal
         @config = config
         @middleware = middleware
         @shutting_down = false
+        @shutting_down_mutex = Mutex.new
         @options = DEFAULT_OPTIONS.merge(options)
       end
 
       def start
-        @shutting_down = false
+        @shutting_down_mutex.synchronize do
+          @shutting_down = false
+        end
         @thread = Thread.new(&method(:poll_loop))
       end
 
       def stop_polling
-        @shutting_down = true
+        @shutting_down_mutex.synchronize do
+          @shutting_down = true
+        end
         Temporal.logger.info('Shutting down activity poller', { namespace: namespace, task_queue: task_queue })
       end
 
@@ -48,16 +53,18 @@ module Temporal
         heartbeat_thread_pool.shutdown
       end
 
+      def shutting_down?
+        @shutting_down_mutex.synchronize do
+          @shutting_down
+        end
+      end
+
       private
 
       attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :thread
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
-      end
-
-      def shutting_down?
-        @shutting_down
       end
 
       def poll_loop
@@ -105,7 +112,15 @@ module Temporal
       def process(task)
         middleware_chain = Middleware::Chain.new(middleware)
 
-        TaskProcessor.new(task, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool).process
+        TaskProcessor.new(
+          task,
+          namespace,
+          activity_lookup,
+          middleware_chain,
+          config,
+          heartbeat_thread_pool,
+          proc { shutting_down? }
+        ).process
       end
 
       def poll_retry_seconds

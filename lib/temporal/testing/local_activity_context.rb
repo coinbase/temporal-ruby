@@ -6,7 +6,7 @@ module Temporal
   module Testing
     class LocalActivityContext < Activity::Context
       def initialize(metadata)
-        super(nil, metadata, nil, nil)
+        super(nil, metadata, nil, nil, proc { false })
       end
 
       def heartbeat(details = nil)

@@ -1,8 +1,16 @@
 class LongRunningActivity < Temporal::Activity
   class Canceled < Temporal::ActivityException; end
+  class ShuttingDown < Temporal::ActivityException; end
 
   def execute(cycles, interval)
     cycles.times do
+      if activity.shutting_down?
+        # This error will be reported to Temporal server for this activity. It is also
+        # possible to return a success for this activity, in which case it will not be
+        # retried.
+        raise ShuttingDown, 'worker is shutting down'
+      end
+
       if activity.timed_out?
         # Because the activity has timed out, any success or failure result will be rejected by
         # Temporal server. You will see a GRPC::NotFound error in your logs with a message like

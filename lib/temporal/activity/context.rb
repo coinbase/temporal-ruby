@@ -7,7 +7,7 @@ require 'temporal/activity/async_token'
 module Temporal
   class Activity
     class Context
-      def initialize(connection, metadata, config, heartbeat_thread_pool)
+      def initialize(connection, metadata, config, heartbeat_thread_pool, is_shutting_down)
         @connection = connection
         @metadata = metadata
         @config = config
@@ -19,6 +19,7 @@ module Temporal
         @async = false
         @cancel_requested = false
         @last_heartbeat_throttled = false
+        @is_shutting_down = is_shutting_down
       end
 
       attr_reader :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
@@ -42,6 +43,10 @@ module Temporal
 
       def timed_out?
         !start_to_close_deadline.nil? && Time.now > start_to_close_deadline
+      end
+
+      def shutting_down?
+        @is_shutting_down.call
       end
 
       def heartbeat(details = nil)

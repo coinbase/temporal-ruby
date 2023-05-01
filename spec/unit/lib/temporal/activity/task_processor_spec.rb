@@ -5,7 +5,7 @@ require 'temporal/middleware/chain'
 require 'temporal/scheduled_thread_pool'
 
 describe Temporal::Activity::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool, is_shutting_down) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -24,6 +24,7 @@ describe Temporal::Activity::TaskProcessor do
   let(:config) { Temporal::Configuration.new }
   let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(2, {}) }
   let(:input) { %w[arg1 arg2] }
+  let(:is_shutting_down) { proc { false } }
 
   describe '#process' do
     let(:heartbeat_check_scheduled) { nil }
@@ -38,7 +39,7 @@ describe Temporal::Activity::TaskProcessor do
         .to receive(:generate_activity_metadata)
         .with(task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config, heartbeat_thread_pool).and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config, heartbeat_thread_pool, is_shutting_down).and_return(context)
 
       allow(connection).to receive(:respond_activity_task_completed)
       allow(connection).to receive(:respond_activity_task_failed)

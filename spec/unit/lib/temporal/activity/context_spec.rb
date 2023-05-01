@@ -10,8 +10,9 @@ describe Temporal::Activity::Context do
   let(:task_token) { SecureRandom.uuid }
   let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(1, {}) }
   let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response) }
+  let(:is_shutting_down_proc) { proc { false } }
 
-  subject { described_class.new(client, metadata, config, heartbeat_thread_pool) }
+  subject { described_class.new(client, metadata, config, heartbeat_thread_pool, is_shutting_down_proc) }
 
   describe '#heartbeat' do
     before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
@@ -132,7 +133,7 @@ describe Temporal::Activity::Context do
 
   describe '#async?' do
     subject { context.async? }
-    let(:context) { described_class.new(client, metadata, nil, nil) }
+    let(:context) { described_class.new(client, metadata, nil, nil, nil) }
 
     context 'when context is sync' do
       it { is_expected.to eq(false) }
@@ -209,6 +210,22 @@ describe Temporal::Activity::Context do
       expect(subject.timed_out?).to be(false)
       sleep 0.1
       expect(subject.timed_out?).to be(true)
+    end
+  end
+
+  describe '#shutting_down?' do
+    context 'is not shutting down' do
+      it 'false' do
+        expect(subject.shutting_down?).to be(false)
+      end
+    end
+
+    context 'is shutting down' do
+      let(:is_shutting_down_proc) { proc { true } }
+
+      it 'true' do
+        expect(subject.shutting_down?).to be(true)
+      end
     end
   end
 end
