@@ -1,10 +1,11 @@
 require 'activities/long_running_activity'
 
 class LongWorkflow < Temporal::Workflow
-  def execute(cycles = 10, interval = 1, activity_start_to_close_timeout = 30)
+  def execute(cycles = 10, interval = 1, activity_start_to_close_timeout = 30, raise_on_heartbeat = false)
     future = LongRunningActivity.execute(
       cycles,
       interval,
+      raise_on_heartbeat,
       options: {
         timeouts: {
           heartbeat: interval * 2,

@@ -79,13 +79,48 @@ describe Temporal::Activity::Context do
 
       it 'no heartbeat check scheduled when max interval is zero' do
         config.timeouts = { max_heartbeat_throttle_interval: 0 }
+      end
+    end
+
+    it 'not interrupted, raise flag true' do
+      subject.heartbeat(raise_when_interrupted: true)
+
+      expect(client)
+        .to have_received(:record_activity_task_heartbeat)
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+    end
+
+    it 'not interrupted, raise flag true, with details' do
+      subject.heartbeat(foo: :bar, raise_when_interrupted: true)
+
+      expect(client)
+        .to have_received(:record_activity_task_heartbeat)
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
+    end
+
+    describe 'timed out' do
+      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.1).to_h }
+
+      it 'interrupted, raise flag true' do
+        subject.heartbeat(raise_when_interrupted: true)
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+
+        sleep 0.1
+        expect do
+          subject.heartbeat(raise_when_interrupted: true)
+        end.to raise_error(Temporal::ActivityExecutionTimedOut)
+      end
+
+      it 'not interrupted, raise flag false' do
+        subject.heartbeat
+        sleep 0.1
         subject.heartbeat
 
         expect(client)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-
-        expect(subject.heartbeat_check_scheduled).to be_nil
       end
     end
   end
@@ -113,6 +148,51 @@ describe Temporal::Activity::Context do
           subject.heartbeat
         end
         expect(subject.timed_out?).to be(true)
+      end
+    end
+
+    describe 'canceled' do
+      let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response, cancel_requested: true) }
+
+      it 'interrupted, raise flag true' do
+        expect do
+          subject.heartbeat(raise_when_interrupted: true)
+        end.to raise_error(Temporal::ActivityExecutionCanceled)
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+      end
+
+      it 'not interrupted, raise flag false' do
+        response = subject.heartbeat
+        expect(response.cancel_requested).to be(true)
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+      end
+    end
+
+    describe 'shutting down' do
+      let(:is_shutting_down_proc) { proc { true } }
+
+      it 'interrupted, raise flag true' do
+        expect do
+          subject.heartbeat(raise_when_interrupted: true)
+        end.to raise_error(Temporal::ActivityWorkerShuttingDown)
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+      end
+
+      it 'not interrupted, raise flag false' do
+        subject.heartbeat
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
       end
     end
   end

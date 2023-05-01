@@ -30,6 +30,12 @@ module Temporal
   # Represents cancellation of a non-started activity
   class ActivityCanceled < ActivityException; end
 
+  # Activities may be interrupted by three causes: cancellation, shut down, or time out
+  class ActivityInterrupted < ActivityException; end
+  class ActivityExecutionCanceled < ActivityInterrupted ; end
+  class ActivityWorkerShuttingDown < ActivityInterrupted ; end
+  class ActivityExecutionTimedOut < ActivityInterrupted ; end
+
   class ActivityNotRegistered < ClientError; end
   class WorkflowNotRegistered < ClientError; end
   class SecondDynamicActivityError < ClientError; end

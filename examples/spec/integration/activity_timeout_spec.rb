@@ -1,22 +1,34 @@
 require 'securerandom'
+require 'temporal/errors'
 require 'temporal/worker'
 
 class TimeoutActivity < Temporal::Activity
   def initialize(context)
     super(context)
     @@timed_out = false
+    @@exception = false
   end
 
   def self.saw_time_out?
     @@timed_out
   end
 
+  def self.saw_exception?
+    @@exception
+  end
+
   def execute
     10.times do
-      if activity.timed_out?
-        logger.warn('Activity has timed out')
-        @@timed_out = true
-        return
+      begin
+        activity.heartbeat(raise_when_interrupted: true)
+      rescue Temporal::ActivityExecutionTimedOut => e
+        @@exception = true
+        if activity.timed_out?
+          logger.warn('Activity has timed out')
+          @@timed_out = true
+        end
+
+        raise e
       end
 
       sleep 1
@@ -67,5 +79,6 @@ describe 'Activity start to close timeout', :integration do
     end
 
     expect(TimeoutActivity.saw_time_out?).to be(true)
+    expect(TimeoutActivity.saw_exception?).to be(true)
   end
 end

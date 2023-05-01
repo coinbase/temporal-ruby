@@ -43,6 +43,12 @@ module Temporal
 
         # Do not complete asynchronous activities, these should be completed manually
         respond_completed(result) unless context.async?
+      rescue ActivityExecutionCanceled, ActivityExecutionTimedOut => error
+        # Temporal server will reject results for canceled or timed out activity
+        # attempts. Log the error, report to error handler, and return without
+        # responding failed since this will only result in a rejected response.
+        Temporal::ErrorHandler.handle(error, config, metadata: metadata)
+        Temporal.logger.error("Activity task failed", metadata.to_h.merge(error: error.inspect))
       rescue StandardError, ScriptError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
 

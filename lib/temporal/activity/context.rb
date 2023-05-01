@@ -1,6 +1,7 @@
 # This context class is available in the activity implementation
 # and provides context and methods for interacting with Temporal
 #
+require 'temporal/errors'
 require 'temporal/uuid'
 require 'temporal/activity/async_token'
 
@@ -49,8 +50,28 @@ module Temporal
         @is_shutting_down.call
       end
 
-      def heartbeat(details = nil)
+      # Send an activity heartbeat using an optional details payload
+      #
+      # If raise_when_interrupted is true, a subclass of ActivityInterrupted error will be raised if the
+      # activity has been canceled, start-to-close timeout exceeded, or if the worker is
+      # shutting down. This flag defaults to false, in which these states can be detected by
+      # inspecting the heartbeat response for cancelation, or calling timed_out? or shutting_down?
+      # methods.
+      def heartbeat(details = nil, **kwargs)
         logger.debug('Activity heartbeat', metadata.to_h)
+
+        raise_when_interrupted = kwargs.delete(:raise_when_interrupted)
+
+        details = if kwargs.empty?
+          details
+        else
+          kwargs
+        end
+
+        if raise_when_interrupted && timed_out?
+          raise ActivityExecutionTimedOut, "Activity start-to-close timeout of #{metadata.start_to_close_timeout} exceeded"
+        end
+
         # Heartbeat throttling limits the number of calls made to Temporal server, reducing load on the server
         # and improving activity performance. The first heartbeat in an activity will always be sent immediately.
         # After that, a timer is scheduled on a background thread. While this check heartbeat thread is scheduled,
@@ -87,6 +108,14 @@ module Temporal
             @last_heartbeat_details = [details]
             @last_heartbeat_throttled = true
           end
+        end
+
+        if raise_when_interrupted && cancel_requested
+          raise ActivityExecutionCanceled, "Activity cancellation requested by server"
+        end
+
+        if raise_when_interrupted && shutting_down?
+          raise ActivityWorkerShuttingDown, "Worker is shutting down"
         end
 
         # Return back the context so that .cancel_requested works similarly to before when the

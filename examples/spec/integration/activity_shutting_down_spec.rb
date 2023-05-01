@@ -1,15 +1,18 @@
 require 'securerandom'
+require 'temporal/errors'
 require 'temporal/worker'
 
 class ShuttingDownActivity < Temporal::Activity
   class ShuttingDown < Temporal::ActivityException; end
   def execute
     10.times do
-      if activity.shutting_down?
+      begin
+        activity.heartbeat(raise_when_interrupted: true)
+      rescue Temporal::ActivityWorkerShuttingDown => e
         # This error will be reported to Temporal server for this activity. It is also
         # possible to return a success for this activity, in which case it will not be
         # retried.
-        raise ShuttingDown, 'worker is shutting down'
+        raise ShuttingDown, "worker is shutting down, shutting_down?=#{activity.shutting_down?}"
       end
 
       sleep 1
@@ -25,7 +28,6 @@ class ShuttingDownWorkflow < Temporal::Workflow
       options: {
         retry_policy: {
           max_attempts: 1,
-          non_retriable_errors: [ShuttingDownActivity::ShuttingDown]
         },
         task_queue: activity_task_queue
       })
@@ -69,7 +71,7 @@ describe 'Activity shutdown', :integration do
             workflow_id: workflow_id,
             run_id: run_id,
         )
-      end.to raise_error(ShuttingDownActivity::ShuttingDown, 'worker is shutting down')
+      end.to raise_error(ShuttingDownActivity::ShuttingDown, 'worker is shutting down, shutting_down?=true')
     ensure
       workflow_worker.stop
     end

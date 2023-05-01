@@ -9,7 +9,7 @@ module Temporal
         super(nil, metadata, nil, nil, proc { false })
       end
 
-      def heartbeat(details = nil)
+      def heartbeat(details = nil, **kwargs)
         # behavior is not yet testable in local mode
       end
     end
