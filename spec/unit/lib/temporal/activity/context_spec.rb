@@ -102,6 +102,18 @@ describe Temporal::Activity::Context do
       subject.heartbeat(iteration: 3)
       expect(subject.last_heartbeat_throttled).to be(true)
     end
+
+    context 'start to close timeout' do
+      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.01).to_h }
+      it 'timed_out? true when start to close exceeded' do
+        expect(subject.timed_out?).to be(false)
+        sleep 0.01
+        expect do
+          subject.heartbeat
+        end
+        expect(subject.timed_out?).to be(true)
+      end
+    end
   end
 
   describe '#heartbeat_details' do
@@ -186,6 +198,17 @@ describe Temporal::Activity::Context do
   describe '#name' do
     it 'returns the class name of the activity' do
       expect(subject.name).to eq('TestActivity')
+    end
+  end
+
+  describe '#timed_out?' do
+    let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.1).to_h }
+
+    it 'becomes true when start to close exceeded' do
+      # Starts out as false
+      expect(subject.timed_out?).to be(false)
+      sleep 0.1
+      expect(subject.timed_out?).to be(true)
     end
   end
 end

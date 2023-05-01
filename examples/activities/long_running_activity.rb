@@ -3,6 +3,18 @@ class LongRunningActivity < Temporal::Activity
 
   def execute(cycles, interval)
     cycles.times do
+      if activity.timed_out?
+        # Because the activity has timed out, any success or failure result will be rejected by
+        # Temporal server. You will see a GRPC::NotFound error in your logs with a message like
+        # "invalid activityID or activity already timed out or invoking workflow is completed"
+        # after this activity returns or raises, and temporal-ruby attempts to report it. Do
+        # be aware that while this code is running, another attempt of your activity could already
+        # have started if the retry policy allows it.
+        logger.warn('Activity has timed out')
+
+        return
+      end
+
       # To detect if the activity has been canceled, you can check activity.cancel_requested or
       # simply heartbeat in which case an ActivityCanceled error will be raised. Cancellation
       # is only detected through heartbeating, but the setting of this bit can be delayed by
@@ -10,6 +22,9 @@ class LongRunningActivity < Temporal::Activity
       activity.logger.info("activity.cancel_requested: #{activity.cancel_requested}")
 
       activity.heartbeat
+
+      # Activity cancellation because the workflow canceled the activity or because the workflow
+      # was terminated, is only communicated back to the activity by heartbeating.
       if activity.cancel_requested
         raise Canceled, 'cancel activity request received'
       end

@@ -20,4 +20,5 @@ Fabricator(:api_activity_task, from: Temporalio::Api::WorkflowService::V1::PollA
     Temporalio::Api::Common::V1::Header.new(fields: fields)
   end
   heartbeat_timeout { Google::Protobuf::Duration.new }
+  start_to_close_timeout { Google::Protobuf::Duration.new }
 end
