@@ -1,4 +1,5 @@
 require 'grpc'
+require 'temporal/version'
 
 module Temporal
   module Connection
