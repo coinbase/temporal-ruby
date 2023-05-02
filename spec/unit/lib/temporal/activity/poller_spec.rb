@@ -28,9 +28,9 @@ describe Temporal::Activity::Poller do
 
   # poller will receive task times times, and nil thereafter.
   # poller will be shut down after that
-  def poll(poller, client, task, times: 1)
+  def poll(task, times: 1)
     polled_times = 0
-    allow(client).to receive(:poll_activity_task_queue) do
+    allow(connection).to receive(:poll_activity_task_queue) do
       polled_times += 1
       if polled_times <= times
         task
@@ -39,25 +39,25 @@ describe Temporal::Activity::Poller do
       end
     end
 
-    poller.start
+    subject.start
 
     while polled_times < times
       sleep(busy_wait_delay)
     end
     # stop poller before inspecting
-    poller.stop_polling; poller.wait
+    subject.stop_polling; subject.wait
     polled_times
   end
 
   describe '#start' do
     it 'measures time between polls' do
       # if it doesn't poll, this test will loop forever
-      times = poll(subject, connection, nil, times: 2)
+      times = poll(nil, times: 2)
       expect(times).to be >= 2
     end
 
     it 'reports time since last poll' do
-      poll(subject, connection, nil, times: 2)
+      poll(nil, times: 2)
 
       expect(Temporal.metrics)
         .to have_received(:timing)
@@ -71,7 +71,7 @@ describe Temporal::Activity::Poller do
     end
 
     it 'reports polling completed with received_task false' do
-      poll(subject, connection, nil, times: 2)
+      poll(nil, times: 2)
 
       expect(Temporal.metrics)
         .to have_received(:increment)
@@ -96,13 +96,13 @@ describe Temporal::Activity::Poller do
       end
 
       it 'schedules task processing using a ThreadPool' do
-        poll(subject, connection, task)
+        poll(task)
 
         expect(thread_pool).to have_received(:schedule)
       end
 
       it 'uses TaskProcessor to process tasks' do
-        poll(subject, connection, task)
+        poll(task)
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
@@ -111,7 +111,7 @@ describe Temporal::Activity::Poller do
       end
 
       it 'reports polling completed with received_task true' do
-        poll(subject, connection, task)
+        poll(task)
 
         expect(Temporal.metrics)
           .to have_received(:increment)
@@ -136,7 +136,7 @@ describe Temporal::Activity::Poller do
         let(:entry_2) { Temporal::Middleware::Entry.new(TestPollerMiddleware, '2') }
 
         it 'initializes middleware chain and passes it down to TaskProcessor' do
-          poll(subject, connection, task)
+          poll(task)
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)

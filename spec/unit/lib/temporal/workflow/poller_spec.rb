@@ -33,9 +33,9 @@ describe Temporal::Workflow::Poller do
 
   # poller will receive task times times, and nil thereafter.
   # poller will be shut down after that
-  def poll(poller, client, task, times: 1)
+  def poll(task, times: 1)
     polled_times = 0
-    allow(client).to receive(:poll_workflow_task_queue) do
+    allow(connection).to receive(:poll_workflow_task_queue) do
       polled_times += 1
       if polled_times <= times
         task
@@ -44,13 +44,13 @@ describe Temporal::Workflow::Poller do
       end
     end
 
-    poller.start
+    subject.start
 
     while polled_times < times
       sleep(busy_wait_delay)
     end
     # stop poller before inspecting
-    poller.stop_polling; poller.wait
+    subject.stop_polling; subject.wait
     polled_times
   end
 
@@ -66,12 +66,12 @@ describe Temporal::Workflow::Poller do
   describe '#start' do
     it 'polls for workflow tasks' do
       subject.start
-      times = poll(subject, connection, nil, times: 2)
+      times = poll(nil, times: 2)
       expect(times).to be >=(2)
     end
 
     it 'reports time since last poll' do
-      poll(subject, connection, nil)
+      poll(nil)
 
       expect(Temporal.metrics)
         .to have_received(:timing)
@@ -85,7 +85,7 @@ describe Temporal::Workflow::Poller do
     end
 
     it 'reports polling completed with received_task false' do
-      poll(subject, connection, nil)
+      poll(nil)
 
       expect(Temporal.metrics)
         .to have_received(:increment)
@@ -109,7 +109,7 @@ describe Temporal::Workflow::Poller do
       end
 
       it 'uses TaskProcessor to process tasks' do
-        poll(subject, connection, task)
+        poll(task)
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
@@ -118,7 +118,7 @@ describe Temporal::Workflow::Poller do
       end
 
       it 'reports polling completed with received_task true' do
-        poll(subject, connection, task)
+        poll(task)
 
         expect(Temporal.metrics)
           .to have_received(:increment)
@@ -145,7 +145,7 @@ describe Temporal::Workflow::Poller do
 
 
         it 'initializes middleware chain and passes it down to TaskProcessor' do
-          poll(subject, connection, task)
+          poll(task)
 
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Middleware::Chain).to have_received(:new).with(workflow_middleware)
