@@ -228,8 +228,6 @@ describe Temporal::Workflow::Poller do
       end
 
       before do
-        allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(connection).to receive(:poll_workflow_task_queue).and_raise(StandardError)
         allow(subject).to receive(:sleep).and_return(nil)
       end
 

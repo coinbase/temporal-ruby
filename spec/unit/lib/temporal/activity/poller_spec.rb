@@ -89,8 +89,6 @@ describe Temporal::Activity::Poller do
       let(:task) { Fabricate(:api_activity_task) }
 
       before do
-        allow(subject).to receive(:shutting_down?).and_return(false, true)
-        allow(connection).to receive(:poll_activity_task_queue).and_return(task)
         allow(Temporal::Activity::TaskProcessor).to receive(:new).and_return(task_processor)
         allow(thread_pool).to receive(:schedule).and_yield
       end
