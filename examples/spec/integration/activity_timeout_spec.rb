@@ -20,7 +20,7 @@ class TimeoutActivity < Temporal::Activity
   def execute
     10.times do
       begin
-        activity.heartbeat(raise_when_interrupted: true)
+        activity.heartbeat_interrupted
       rescue Temporal::ActivityExecutionTimedOut => e
         @@exception = true
         if activity.timed_out?

@@ -83,7 +83,7 @@ describe Temporal::Activity::Context do
     end
 
     it 'not interrupted, raise flag true' do
-      subject.heartbeat(raise_when_interrupted: true)
+      subject.heartbeat_interrupted
 
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
@@ -91,7 +91,7 @@ describe Temporal::Activity::Context do
     end
 
     it 'not interrupted, raise flag true, with details' do
-      subject.heartbeat(foo: :bar, raise_when_interrupted: true)
+      subject.heartbeat_interrupted(foo: :bar)
 
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
@@ -102,14 +102,14 @@ describe Temporal::Activity::Context do
       let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.1).to_h }
 
       it 'interrupted, raise flag true' do
-        subject.heartbeat(raise_when_interrupted: true)
+        subject.heartbeat_interrupted
         expect(client)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
 
         sleep 0.1
         expect do
-          subject.heartbeat(raise_when_interrupted: true)
+          subject.heartbeat_interrupted
         end.to raise_error(Temporal::ActivityExecutionTimedOut)
       end
 
@@ -156,7 +156,7 @@ describe Temporal::Activity::Context do
 
       it 'interrupted, raise flag true' do
         expect do
-          subject.heartbeat(raise_when_interrupted: true)
+          subject.heartbeat_interrupted
         end.to raise_error(Temporal::ActivityExecutionCanceled)
 
         expect(client)
@@ -179,7 +179,7 @@ describe Temporal::Activity::Context do
 
       it 'interrupted, raise flag true' do
         expect do
-          subject.heartbeat(raise_when_interrupted: true)
+          subject.heartbeat_interrupted
         end.to raise_error(Temporal::ActivityWorkerShuttingDown)
 
         expect(client)

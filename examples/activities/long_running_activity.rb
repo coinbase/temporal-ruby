@@ -8,7 +8,7 @@ class LongRunningActivity < Temporal::Activity
         # Setting this will cause heartbeat to automatically raise exceptions
         # for all the cases below. This is a convenient way to handle activity
         # interruption in most cases.
-        activity.heartbeat(raise_when_interrupted: true)
+        activity.heartbeat_interrupted
       else
         if activity.shutting_down?
           # This error will be reported to Temporal server for this activity. It is also

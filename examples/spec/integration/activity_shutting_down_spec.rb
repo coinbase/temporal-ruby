@@ -7,8 +7,8 @@ class ShuttingDownActivity < Temporal::Activity
   def execute
     10.times do
       begin
-        activity.heartbeat(raise_when_interrupted: true)
-      rescue Temporal::ActivityWorkerShuttingDown => e
+        activity.heartbeat_interrupted
+      rescue Temporal::ActivityWorkerShuttingDown
         # This error will be reported to Temporal server for this activity. It is also
         # possible to return a success for this activity, in which case it will not be
         # retried.
