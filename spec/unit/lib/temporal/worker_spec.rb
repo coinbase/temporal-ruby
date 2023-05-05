@@ -203,11 +203,11 @@ describe Temporal::Worker do
   end
 
   def start_and_stop(worker)
-    allow(worker).to receive(:on_started_test_hook) {
+    allow(worker).to receive(:on_started_hook) {
       worker.stop
     }
     stopped = false
-    allow(worker).to receive(:on_stopped_test_hook) {
+    allow(worker).to receive(:on_stopped_hook) {
       stopped = true
     }
 
@@ -338,7 +338,7 @@ describe Temporal::Worker do
       subject.register_workflow(TestWorkerWorkflow)
       subject.register_activity(TestWorkerActivity)
 
-      allow(subject).to receive(:while_stopping_test_hook) do
+      allow(subject).to receive(:while_stopping_hook) do
         # This callback is within a mutex, so this new thread shouldn't
         # do anything until Worker.stop is complete.
         Thread.new {subject.start}

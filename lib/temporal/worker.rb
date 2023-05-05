@@ -120,7 +120,7 @@ module Temporal
 
         pollers.each(&:start)
       end
-      on_started_test_hook
+      on_started_hook
 
       # keep the main thread alive
       sleep 1 while !shutting_down?
@@ -132,14 +132,14 @@ module Temporal
       Thread.new do
         @start_stop_mutex.synchronize do
           pollers.each(&:stop_polling)
-          while_stopping_test_hook
+          while_stopping_hook
           # allow workers to drain in-transit tasks.
           # https://github.com/temporalio/temporal/issues/1058
           sleep 1
           pollers.each(&:cancel_pending_requests)
           pollers.each(&:wait)
         end
-        on_stopped_test_hook
+        on_stopped_hook
       end.join
     end
 
@@ -153,9 +153,9 @@ module Temporal
       @shutting_down
     end
 
-    def on_started_test_hook; end
-    def while_stopping_test_hook; end
-    def on_stopped_test_hook; end
+    def on_started_hook; end
+    def while_stopping_hook; end
+    def on_stopped_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
       Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware, workflow_poller_options)
