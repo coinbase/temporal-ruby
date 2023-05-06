@@ -202,15 +202,41 @@ describe Temporal::Worker do
     end
   end
 
+  def start_and_stop(worker)
+    allow(worker).to receive(:on_started_hook) {
+      worker.stop
+    }
+    stopped = false
+    allow(worker).to receive(:on_stopped_hook) {
+      stopped = true
+    }
+
+    thread = Thread.new {worker.start}
+    while !stopped
+      sleep(THREAD_SYNC_DELAY)
+    end
+    thread
+  end
+
+  describe 'start and stop' do
+    it 'can stop before starting' do
+      expect(Temporal::Workflow::Poller)
+        .to_not receive(:new)
+      expect(Temporal::Activity::Poller)
+        .to_not receive(:new)
+      t = Thread.new {subject.stop}
+      subject.start
+      t.join
+    end
+  end
+
   describe '#start' do
-    let(:workflow_poller_1) { instance_double(Temporal::Workflow::Poller, start: nil) }
-    let(:workflow_poller_2) { instance_double(Temporal::Workflow::Poller, start: nil) }
-    let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil) }
-    let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil) }
+    let(:workflow_poller_1) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let(:workflow_poller_2) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
 
     it 'starts a poller for each namespace/task list combination' do
-      allow(subject).to receive(:shutting_down?).and_return(true)
-
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
         .with(
@@ -272,7 +298,7 @@ describe Temporal::Worker do
       subject.register_activity(TestWorkerActivity)
       subject.register_activity(TestWorkerActivity, task_queue: 'other-task-queue')
 
-      subject.start
+      start_and_stop(subject)
 
       expect(workflow_poller_1).to have_received(:start)
       expect(workflow_poller_2).to have_received(:start)
@@ -281,7 +307,7 @@ describe Temporal::Worker do
     end
 
     it 'can have an activity poller with a different thread pool size' do
-      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
         .with(
@@ -294,28 +320,40 @@ describe Temporal::Worker do
         )
         .and_return(activity_poller)
 
-      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
+      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       expect(Temporal::Workflow::Poller)
         .to receive(:new)
               .and_return(workflow_poller)
 
       worker = Temporal::Worker.new(activity_thread_pool_size: 10)
-      allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
-      worker.start
+      start_and_stop(worker)
 
       expect(activity_poller).to have_received(:start)
     end
 
+    it 'is mutually exclusive with stop' do
+      subject.register_workflow(TestWorkerWorkflow)
+      subject.register_activity(TestWorkerActivity)
+
+      allow(subject).to receive(:while_stopping_hook) do
+        # This callback is within a mutex, so this new thread shouldn't
+        # do anything until Worker.stop is complete.
+        Thread.new {subject.start}
+        sleep(THREAD_SYNC_DELAY) # give it a little time to do damage if it's going to
+      end
+      subject.stop
+    end
+
     it 'can have a worklow poller with a binary checksum' do
-      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
               .and_return(activity_poller)
 
-      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
+      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       binary_checksum = 'abc123'
       expect(Temporal::Workflow::Poller)
         .to receive(:new)
@@ -333,17 +371,16 @@ describe Temporal::Worker do
         .and_return(workflow_poller)
 
       worker = Temporal::Worker.new(binary_checksum: binary_checksum)
-      allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
-      worker.start
+      start_and_stop(worker)
 
       expect(workflow_poller).to have_received(:start)
     end
 
     it 'can have an activity poller that sleeps after unsuccessful poll' do
-      activity_poller = instance_double(Temporal::Activity::Poller, start: nil)
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       expect(Temporal::Activity::Poller)
         .to receive(:new)
         .with(
@@ -357,17 +394,16 @@ describe Temporal::Worker do
         .and_return(activity_poller)
 
       worker = Temporal::Worker.new(activity_poll_retry_seconds: 10)
-      allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
-      worker.start
+      start_and_stop(worker)
 
       expect(activity_poller).to have_received(:start)
     end
 
     it 'can have a workflow poller sleeping after unsuccessful poll' do
-      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil)
+      workflow_poller = instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
       expect(Temporal::Workflow::Poller)
         .to receive(:new)
         .with(
@@ -382,11 +418,10 @@ describe Temporal::Worker do
         .and_return(workflow_poller)
 
       worker = Temporal::Worker.new(workflow_poll_retry_seconds: 10)
-      allow(worker).to receive(:shutting_down?).and_return(true)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
-      worker.start
+      start_and_stop(worker)
 
       expect(workflow_poller).to have_received(:start)
     end
@@ -418,8 +453,6 @@ describe Temporal::Worker do
       end
 
       it 'starts pollers with correct middleware' do
-        allow(subject).to receive(:shutting_down?).and_return(true)
-
         allow(Temporal::Workflow::Poller)
           .to receive(:new)
           .with(
@@ -451,7 +484,7 @@ describe Temporal::Worker do
         subject.register_workflow(TestWorkerWorkflow)
         subject.register_activity(TestWorkerActivity)
 
-        subject.start
+        start_and_stop(subject)
 
         expect(workflow_poller_1).to have_received(:start)
         expect(activity_poller_1).to have_received(:start)
@@ -459,12 +492,11 @@ describe Temporal::Worker do
     end
 
     it 'sleeps while waiting for the shutdown' do
-      allow(subject).to receive(:shutting_down?).and_return(false, false, false, true)
       allow(subject).to receive(:sleep).and_return(nil)
 
-      subject.start
+      start_and_stop(subject)
 
-      expect(subject).to have_received(:sleep).with(1).exactly(3).times
+      expect(subject).to have_received(:sleep).with(1).once
     end
 
     describe 'signal handling' do
@@ -530,17 +562,12 @@ describe Temporal::Worker do
 
       subject.register_workflow(TestWorkerWorkflow)
       subject.register_activity(TestWorkerActivity)
-
-      @thread = Thread.new { subject.start }
-      sleep THREAD_SYNC_DELAY # allow worker to start
     end
 
     it 'stops the pollers and cancels pending requests' do
-      subject.stop
+      thread = start_and_stop(subject)
 
-      sleep THREAD_SYNC_DELAY # wait for the worker to stop
-
-      expect(@thread).not_to be_alive
+      expect(thread).not_to be_alive
       expect(workflow_poller).to have_received(:stop_polling)
       expect(workflow_poller).to have_received(:cancel_pending_requests)
       expect(activity_poller).to have_received(:stop_polling)
@@ -548,11 +575,9 @@ describe Temporal::Worker do
     end
 
     it 'waits for the pollers to stop' do
-      subject.stop
+      thread = start_and_stop(subject)
 
-      sleep THREAD_SYNC_DELAY # wait for worker to stop
-
-      expect(@thread).not_to be_alive
+      expect(thread).not_to be_alive
       expect(workflow_poller).to have_received(:wait)
       expect(activity_poller).to have_received(:wait)
     end
