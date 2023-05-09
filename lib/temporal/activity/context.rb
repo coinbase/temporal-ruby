@@ -17,9 +17,10 @@ module Temporal
         @heartbeat_mutex = Mutex.new
         @async = false
         @cancel_requested = false
+        @last_heartbeat_throttled = false
       end
 
-      attr_reader :heartbeat_check_scheduled, :cancel_requested
+      attr_reader :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
 
       def async
         @async = true
@@ -69,10 +70,12 @@ module Temporal
           if heartbeat_check_scheduled.nil?
             send_heartbeat(details)
             @last_heartbeat_details = []
+            @last_heartbeat_throttled = false
             @heartbeat_check_scheduled = schedule_check_heartbeat(heartbeat_throttle_interval)
           else
             logger.debug('Throttling heartbeat for sending later', metadata.to_h)
             @last_heartbeat_details = [details]
+            @last_heartbeat_throttled = true
           end
         end
 

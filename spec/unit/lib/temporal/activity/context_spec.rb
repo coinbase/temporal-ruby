@@ -51,6 +51,7 @@ describe Temporal::Activity::Context do
           expect(client)
             .to have_received(:record_activity_task_heartbeat)
             .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 0 })
+            .once
         end
       end
 
@@ -85,6 +86,21 @@ describe Temporal::Activity::Context do
 
         expect(subject.heartbeat_check_scheduled).to be_nil
       end
+    end
+  end
+
+  describe '#last_heartbeat_throttled' do
+    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+
+    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 10).to_h }
+
+    it 'true when throttled, false when not' do
+      subject.heartbeat(iteration: 1)
+      expect(subject.last_heartbeat_throttled).to be(false)
+      subject.heartbeat(iteration: 2)
+      expect(subject.last_heartbeat_throttled).to be(true)
+      subject.heartbeat(iteration: 3)
+      expect(subject.last_heartbeat_throttled).to be(true)
     end
   end
 
