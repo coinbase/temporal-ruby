@@ -16,7 +16,6 @@ module Temporal
         @last_heartbeat_details = [] # an array to differentiate nil hearbeat from no heartbeat queued
         @heartbeat_check_scheduled = nil
         @heartbeat_mutex = Mutex.new
-        @start_to_close_deadline = metadata.start_to_close_timeout > 0 ? Time.now + metadata.start_to_close_timeout : nil
         @async = false
         @cancel_requested = false
         @last_heartbeat_throttled = false
@@ -196,6 +195,14 @@ module Temporal
             # Can swallow any errors here since this only runs on a background thread. Any error will be
             # sent to the error handler above in send_heartbeat.
           end
+        end
+      end
+
+      def start_to_close_deadline
+        if metadata.start_to_close_timeout.positive?
+          metadata.started_at + metadata.start_to_close_timeout
+        else
+          nil
         end
       end
     end

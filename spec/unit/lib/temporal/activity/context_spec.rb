@@ -99,28 +99,24 @@ describe Temporal::Activity::Context do
     end
 
     describe 'timed out' do
-      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.1).to_h }
-
-      it 'interrupted, raise flag true' do
-        subject.heartbeat_interrupted
-        expect(client)
-          .to have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-
-        sleep 0.1
+      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
+      it 'raise flag true' do
         expect do
           subject.heartbeat_interrupted
         end.to raise_error(Temporal::ActivityExecutionTimedOut)
+
+        expect(client)
+          .to_not have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
       end
 
-      it 'not interrupted, raise flag false' do
-        subject.heartbeat
-        sleep 0.1
+      it 'raise flag false' do
         subject.heartbeat
 
         expect(client)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+          .once
       end
     end
   end
@@ -283,13 +279,20 @@ describe Temporal::Activity::Context do
   end
 
   describe '#timed_out?' do
-    let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.1).to_h }
+    context 'is timed out' do
+      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
 
-    it 'becomes true when start to close exceeded' do
-      # Starts out as false
-      expect(subject.timed_out?).to be(false)
-      sleep 0.1
-      expect(subject.timed_out?).to be(true)
+      it 'true when start to close exceeded' do
+        expect(subject.timed_out?).to be(true)
+      end
+    end
+
+    context 'is not timed out' do
+      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 5).to_h }
+
+      it 'false when start to close not exceeded' do
+        expect(subject.timed_out?).to be(false)
+      end
     end
   end
 
