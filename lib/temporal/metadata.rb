@@ -22,6 +22,7 @@ module Temporal
           workflow_name: task.workflow_type.name,
           headers: from_payload_map(task.header&.fields || {}),
           heartbeat_details: from_details_payloads(task.heartbeat_details),
+          started_at: task.started_time.to_time,
           scheduled_at: task.scheduled_time.to_time,
           current_attempt_scheduled_at: task.current_attempt_scheduled_time.to_time,
           heartbeat_timeout: task.heartbeat_timeout.seconds,

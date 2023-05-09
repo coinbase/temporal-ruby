@@ -16,6 +16,7 @@ describe Temporal::Metadata::Activity do
       expect(subject.workflow_name).to eq(args.workflow_name)
       expect(subject.headers).to eq(args.headers)
       expect(subject.heartbeat_details).to eq(args.heartbeat_details)
+      expect(subject.started_at).to eq(args.started_at)
       expect(subject.scheduled_at).to eq(args.scheduled_at)
       expect(subject.current_attempt_scheduled_at).to eq(args.current_attempt_scheduled_at)
     end
@@ -39,6 +40,7 @@ describe Temporal::Metadata::Activity do
         'workflow_id' => subject.workflow_id,
         'workflow_name' => subject.workflow_name,
         'workflow_run_id' => subject.workflow_run_id,
+        'started_at' => subject.started_at.to_s,
         'scheduled_at' => subject.scheduled_at.to_s,
         'current_attempt_scheduled_at' => subject.current_attempt_scheduled_at.to_s
       })
