@@ -40,7 +40,7 @@ describe Temporal::Metadata::Activity do
         'workflow_name' => subject.workflow_name,
         'workflow_run_id' => subject.workflow_run_id,
         'scheduled_at' => subject.scheduled_at.to_s,
-        'current_attempt_scheduled_at' => subject.current_attempt_scheduled_at.to_s,
+        'current_attempt_scheduled_at' => subject.current_attempt_scheduled_at.to_s
       })
     end
   end

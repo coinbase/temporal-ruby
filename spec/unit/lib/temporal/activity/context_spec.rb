@@ -1,16 +1,20 @@
 require 'temporal/activity/context'
 require 'temporal/metadata/activity'
+require 'temporal/scheduled_thread_pool'
 
 describe Temporal::Activity::Context do
   let(:client) { instance_double('Temporal::Client::GRPCClient') }
   let(:metadata_hash) { Fabricate(:activity_metadata).to_h }
   let(:metadata) { Temporal::Metadata::Activity.new(**metadata_hash) }
+  let(:config) { Temporal::Configuration.new }
   let(:task_token) { SecureRandom.uuid }
+  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(1, {}) }
+  let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response) }
 
-  subject { described_class.new(client, metadata) }
+  subject { described_class.new(client, metadata, config, heartbeat_thread_pool) }
 
   describe '#heartbeat' do
-    before { allow(client).to receive(:record_activity_task_heartbeat) }
+    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
 
     it 'records heartbeat' do
       subject.heartbeat
@@ -26,6 +30,77 @@ describe Temporal::Activity::Context do
       expect(client)
         .to have_received(:record_activity_task_heartbeat)
         .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
+    end
+
+    context 'cancellation' do
+      let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response, cancel_requested: true) }
+      it 'sets when cancelled' do
+        subject.heartbeat
+        expect(subject.cancel_requested).to be(true)
+      end
+    end
+
+    context 'throttling' do
+      context 'skips after the first heartbeat' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 30).to_h }
+        it 'discard duplicates after first when quickly completes' do
+          10.times do |i|
+            subject.heartbeat(iteration: i)
+          end
+
+          expect(client)
+            .to have_received(:record_activity_task_heartbeat)
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 0 })
+            .once
+        end
+      end
+
+      context 'resumes' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 0.1).to_h }
+        it 'more heartbeats after time passes' do
+          subject.heartbeat(iteration: 1)
+          subject.heartbeat(iteration: 2) # skipped because 3 will overwrite
+          subject.heartbeat(iteration: 3)
+          sleep 0.1
+          subject.heartbeat(iteration: 4)
+
+          # Shutdown to drain remaining threads
+          heartbeat_thread_pool.shutdown
+
+          expect(client)
+            .to have_received(:record_activity_task_heartbeat)
+            .ordered
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 1 })
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 3 })
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 4 })
+        end
+      end
+
+      it 'no heartbeat check scheduled when max interval is zero' do
+        config.timeouts = { max_heartbeat_throttle_interval: 0 }
+        subject.heartbeat
+
+        expect(client)
+          .to have_received(:record_activity_task_heartbeat)
+          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+
+        expect(subject.heartbeat_check_scheduled).to be_nil
+      end
+    end
+  end
+
+  describe '#last_heartbeat_throttled' do
+    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+
+    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 10).to_h }
+
+    it 'true when throttled, false when not' do
+      subject.heartbeat(iteration: 1)
+      expect(subject.last_heartbeat_throttled).to be(false)
+      subject.heartbeat(iteration: 2)
+      expect(subject.last_heartbeat_throttled).to be(true)
+      subject.heartbeat(iteration: 3)
+      expect(subject.last_heartbeat_throttled).to be(true)
     end
   end
 
@@ -45,7 +120,7 @@ describe Temporal::Activity::Context do
 
   describe '#async?' do
     subject { context.async? }
-    let(:context) { described_class.new(client, metadata) }
+    let(:context) { described_class.new(client, metadata, nil, nil) }
 
     context 'when context is sync' do
       it { is_expected.to eq(false) }

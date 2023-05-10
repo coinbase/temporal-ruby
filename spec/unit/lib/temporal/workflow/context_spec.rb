@@ -82,7 +82,7 @@ describe Temporal::Workflow::Context do
           input: [],
           task_queue: 'default-task-queue',
           retry_policy: nil,
-          timeouts: {:execution => 315360000, :run => 315360000, :task => 10, :schedule_to_close => nil, :schedule_to_start => nil, :start_to_close => 30, :heartbeat => nil},
+          timeouts: {execution: 315360000, run: 315360000, task: 10, schedule_to_close: nil, schedule_to_start: nil, start_to_close: 30, heartbeat: nil, default_heartbeat_throttle_interval: 30, max_heartbeat_throttle_interval: 60},
           headers: { 'test' => 'asdf' }
         ))
         allow(dispatcher).to receive(:register_handler)

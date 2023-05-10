@@ -12,7 +12,7 @@ module Temporal
     class TaskProcessor
       include Concerns::Payloads
 
-      def initialize(task, namespace, activity_lookup, middleware_chain, config)
+      def initialize(task, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool)
         @task = task
         @namespace = namespace
         @metadata = Metadata.generate_activity_metadata(task, namespace)
@@ -21,6 +21,7 @@ module Temporal
         @activity_class = activity_lookup.find(activity_name)
         @middleware_chain = middleware_chain
         @config = config
+        @heartbeat_thread_pool = heartbeat_thread_pool
       end
 
       def process
@@ -29,7 +30,7 @@ module Temporal
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
         Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME, queue_time_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
 
-        context = Activity::Context.new(connection, metadata)
+        context = Activity::Context.new(connection, metadata, config, heartbeat_thread_pool)
 
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
@@ -46,6 +47,10 @@ module Temporal
 
         respond_failed(error)
       ensure
+        unless context.heartbeat_check_scheduled.nil?
+          heartbeat_thread_pool.cancel(context.heartbeat_check_scheduled)
+        end
+
         time_diff_ms = ((Time.now - start_time) * 1000).round
         Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_LATENCY, time_diff_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
         Temporal.logger.debug("Activity task processed", metadata.to_h.merge(execution_time: time_diff_ms))
@@ -54,7 +59,7 @@ module Temporal
       private
 
       attr_reader :task, :namespace, :task_token, :activity_name, :activity_class,
-      :middleware_chain, :metadata, :config
+      :middleware_chain, :metadata, :config, :heartbeat_thread_pool
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)

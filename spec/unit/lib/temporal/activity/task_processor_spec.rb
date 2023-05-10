@@ -2,9 +2,10 @@ require 'temporal/activity/task_processor'
 require 'temporal/configuration'
 require 'temporal/metric_keys'
 require 'temporal/middleware/chain'
+require 'temporal/scheduled_thread_pool'
 
 describe Temporal::Activity::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, config) }
+  subject { described_class.new(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool) }
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
@@ -21,10 +22,12 @@ describe Temporal::Activity::TaskProcessor do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:config) { Temporal::Configuration.new }
+  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(2, {}) }
   let(:input) { %w[arg1 arg2] }
 
   describe '#process' do
-    let(:context) { instance_double('Temporal::Activity::Context', async?: false) }
+    let(:heartbeat_check_scheduled) { nil }
+    let(:context) { instance_double('Temporal::Activity::Context', async?: false, heartbeat_check_scheduled: heartbeat_check_scheduled) }
 
     before do
       allow(Temporal::Connection)
@@ -35,7 +38,7 @@ describe Temporal::Activity::TaskProcessor do
         .to receive(:generate_activity_metadata)
         .with(task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata).and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config, heartbeat_thread_pool).and_return(context)
 
       allow(connection).to receive(:respond_activity_task_completed)
       allow(connection).to receive(:respond_activity_task_failed)
@@ -113,6 +116,15 @@ describe Temporal::Activity::TaskProcessor do
           expect(connection)
             .to have_received(:respond_activity_task_completed)
             .with(namespace: namespace, task_token: task.task_token, result: 'result')
+        end
+
+        context 'when there is an outstanding scheduled heartbeat' do
+          let(:heartbeat_check_scheduled) { Temporal::ScheduledThreadPool::ScheduledItem.new(id: :foo, canceled: false) }
+          it 'it gets canceled' do
+            subject.process
+
+            expect(heartbeat_check_scheduled.canceled).to eq(true)
+          end
         end
 
         it 'ignores connection exception' do

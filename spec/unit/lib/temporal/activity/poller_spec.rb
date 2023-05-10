@@ -11,6 +11,9 @@ describe Temporal::Activity::Poller do
   let(:thread_pool) do
     instance_double(Temporal::ThreadPool, wait_for_available_threads: nil, shutdown: nil)
   end
+  let(:heartbeat_thread_pool) do
+    instance_double(Temporal::ScheduledThreadPool, shutdown: nil)
+  end
   let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { instance_double(Temporal::Middleware::Chain) }
   let(:middleware) { [] }
@@ -21,6 +24,7 @@ describe Temporal::Activity::Poller do
   before do
     allow(Temporal::Connection).to receive(:generate).and_return(connection)
     allow(Temporal::ThreadPool).to receive(:new).and_return(thread_pool)
+    allow(Temporal::ScheduledThreadPool).to receive(:new).and_return(heartbeat_thread_pool)
     allow(Temporal::Middleware::Chain).to receive(:new).and_return(middleware_chain)
     allow(Temporal.metrics).to receive(:timing)
     allow(Temporal.metrics).to receive(:increment)
@@ -104,7 +108,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, middleware_chain, config)
+          .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool)
         expect(task_processor).to have_received(:process)
       end
 
@@ -139,7 +143,7 @@ describe Temporal::Activity::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, config)
+            .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool)
         end
       end
     end
