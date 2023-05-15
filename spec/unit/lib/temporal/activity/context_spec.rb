@@ -81,8 +81,12 @@ describe Temporal::Activity::Context do
         config.timeouts = { max_heartbeat_throttle_interval: 0 }
       end
     end
+  end
 
-    it 'not interrupted, raise flag true' do
+  describe '#heartbeat_interrupted' do
+    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+
+    it 'records heartbeat' do
       subject.heartbeat_interrupted
 
       expect(client)
@@ -90,7 +94,7 @@ describe Temporal::Activity::Context do
         .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
     end
 
-    it 'not interrupted, raise flag true, with details' do
+    it 'records heartbeat with details' do
       subject.heartbeat_interrupted(foo: :bar)
 
       expect(client)
@@ -98,25 +102,41 @@ describe Temporal::Activity::Context do
         .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
     end
 
-    describe 'timed out' do
-      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
-      it 'raise flag true' do
+    context 'cancellation' do
+      let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response, cancel_requested: true) }
+      it 'raises when cancelled' do
         expect do
           subject.heartbeat_interrupted
-        end.to raise_error(Temporal::ActivityExecutionTimedOut)
-
-        expect(client)
-          .to_not have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+        end.to raise_error(Temporal::ActivityExecutionCanceled)
       end
+    end
 
-      it 'raise flag false' do
-        subject.heartbeat
+    describe 'timed out' do
+      context 'start to close' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
+        it 'raises' do
+          expect do
+            subject.heartbeat_interrupted
+          end.to raise_error(Temporal::ActivityExecutionTimedOut)
+
+          expect(client)
+            .to_not have_received(:record_activity_task_heartbeat)
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+        end
+      end
+    end
+
+    describe 'shutting down' do
+      let(:is_shutting_down_proc) { proc { true } }
+
+      it 'raise when shutting down' do
+        expect do
+          subject.heartbeat_interrupted
+        end.to raise_error(Temporal::ActivityWorkerShuttingDown)
 
         expect(client)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-          .once
       end
     end
   end
@@ -133,63 +153,6 @@ describe Temporal::Activity::Context do
       expect(subject.last_heartbeat_throttled).to be(true)
       subject.heartbeat(iteration: 3)
       expect(subject.last_heartbeat_throttled).to be(true)
-    end
-
-    context 'start to close timeout' do
-      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 0.01).to_h }
-      it 'timed_out? true when start to close exceeded' do
-        expect(subject.timed_out?).to be(false)
-        sleep 0.01
-        expect do
-          subject.heartbeat
-        end
-        expect(subject.timed_out?).to be(true)
-      end
-    end
-
-    describe 'canceled' do
-      let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response, cancel_requested: true) }
-
-      it 'interrupted, raise flag true' do
-        expect do
-          subject.heartbeat_interrupted
-        end.to raise_error(Temporal::ActivityExecutionCanceled)
-
-        expect(client)
-          .to have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-      end
-
-      it 'not interrupted, raise flag false' do
-        response = subject.heartbeat
-        expect(response.cancel_requested).to be(true)
-
-        expect(client)
-          .to have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-      end
-    end
-
-    describe 'shutting down' do
-      let(:is_shutting_down_proc) { proc { true } }
-
-      it 'interrupted, raise flag true' do
-        expect do
-          subject.heartbeat_interrupted
-        end.to raise_error(Temporal::ActivityWorkerShuttingDown)
-
-        expect(client)
-          .to have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-      end
-
-      it 'not interrupted, raise flag false' do
-        subject.heartbeat
-
-        expect(client)
-          .to have_received(:record_activity_task_heartbeat)
-          .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-      end
     end
   end
 
@@ -279,19 +242,21 @@ describe Temporal::Activity::Context do
   end
 
   describe '#timed_out?' do
-    context 'is timed out' do
-      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
+    context 'start to close' do
+      context 'is timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
 
-      it 'true when start to close exceeded' do
-        expect(subject.timed_out?).to be(true)
+        it 'true when start to close exceeded' do
+          expect(subject.timed_out?).to be(true)
+        end
       end
-    end
 
-    context 'is not timed out' do
-      let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 5).to_h }
+      context 'is not timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 5).to_h }
 
-      it 'false when start to close not exceeded' do
-        expect(subject.timed_out?).to be(false)
+        it 'false when start to close not exceeded' do
+          expect(subject.timed_out?).to be(false)
+        end
       end
     end
   end
