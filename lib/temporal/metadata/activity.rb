@@ -5,11 +5,11 @@ module Temporal
     class Activity < Base
       attr_reader :namespace, :id, :name, :task_token, :attempt, :workflow_run_id, :workflow_id, :workflow_name,
                   :heartbeat_details, :started_at, :scheduled_at, :current_attempt_scheduled_at,
-                  :heartbeat_timeout, :start_to_close_timeout, :headers
+                  :heartbeat_timeout, :start_to_close_timeout, :schedule_to_close_timeout, :headers
 
       def initialize(namespace:, id:, name:, task_token:, attempt:, workflow_run_id:, workflow_id:, workflow_name:,
                      heartbeat_details:, started_at:, scheduled_at:, current_attempt_scheduled_at:,
-                     heartbeat_timeout:, start_to_close_timeout:, headers: {})
+                     heartbeat_timeout:, start_to_close_timeout:, schedule_to_close_timeout:, headers: {})
         @namespace = namespace
         @id = id
         @name = name
@@ -25,6 +25,7 @@ module Temporal
         @current_attempt_scheduled_at = current_attempt_scheduled_at
         @heartbeat_timeout = heartbeat_timeout
         @start_to_close_timeout = start_to_close_timeout
+        @schedule_to_close_timeout = schedule_to_close_timeout
 
         freeze
       end

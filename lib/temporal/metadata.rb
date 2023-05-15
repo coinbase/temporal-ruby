@@ -26,7 +26,8 @@ module Temporal
           scheduled_at: task.scheduled_time.to_time,
           current_attempt_scheduled_at: task.current_attempt_scheduled_time.to_time,
           heartbeat_timeout: task.heartbeat_timeout.seconds,
-          start_to_close_timeout: task.start_to_close_timeout.seconds
+          start_to_close_timeout: task.start_to_close_timeout.seconds,
+          schedule_to_close_timeout: task.schedule_to_close_timeout.seconds
         )
       end
 

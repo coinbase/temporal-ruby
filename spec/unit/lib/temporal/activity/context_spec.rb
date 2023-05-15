@@ -124,6 +124,27 @@ describe Temporal::Activity::Context do
             .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
         end
       end
+
+      context 'schedule to close' do
+        let(:metadata_hash) do
+          Fabricate(
+            :activity_metadata,
+            schedule_to_close_timeout: 60,
+            start_to_close_timeout: 10,
+            scheduled_at: Time.now - 120,
+            started_at: Time.now - 5
+          ).to_h
+        end
+        it 'raises' do
+          expect do
+            subject.heartbeat_interrupted
+          end.to raise_error(Temporal::ActivityExecutionTimedOut)
+
+          expect(client)
+            .to_not have_received(:record_activity_task_heartbeat)
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+        end
+      end
     end
 
     describe 'shutting down' do
@@ -253,6 +274,24 @@ describe Temporal::Activity::Context do
 
       context 'is not timed out' do
         let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 5).to_h }
+
+        it 'false when start to close not exceeded' do
+          expect(subject.timed_out?).to be(false)
+        end
+      end
+    end
+
+    context 'schedule to close' do
+      context 'is timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, schedule_to_close_timeout: 10, scheduled_at: Time.now - 15).to_h }
+
+        it 'true when start to close exceeded' do
+          expect(subject.timed_out?).to be(true)
+        end
+      end
+
+      context 'is not timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, schedule_to_close_timeout: 10, scheduled_at: Time.now - 5).to_h }
 
         it 'false when start to close not exceeded' do
           expect(subject.timed_out?).to be(false)

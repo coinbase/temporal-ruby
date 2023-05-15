@@ -16,4 +16,5 @@ Fabricator(:activity_metadata, from: :open_struct) do
   current_attempt_scheduled_at { Time.now }
   heartbeat_timeout 0
   start_to_close_timeout 0
+  schedule_to_close_timeout 0
 end

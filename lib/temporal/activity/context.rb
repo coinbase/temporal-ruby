@@ -48,9 +48,9 @@ module Temporal
         @cancel_requested
       end
 
-      # Returns true if the activity has breached its start-to-close timeout
+      # Returns true if the activity has breached its start-to-close or schedule-to-close timeout
       def timed_out?
-        !start_to_close_deadline.nil? && Time.now > start_to_close_deadline
+        deadline_exceeded?(start_to_close_deadline) || deadline_exceeded?(schedule_to_close_deadline)
       end
 
       # This returns true if the worker has started shutting down upon receiving a
@@ -113,7 +113,12 @@ module Temporal
       # inspecting the heartbeat response for cancelation, or calling timed_out? or shutting_down?
       # methods.
       def heartbeat_interrupted(details = nil)
-        if timed_out?
+        if deadline_exceeded?(schedule_to_close_deadline)
+          raise ActivityExecutionTimedOut,
+                "Activity schedule-to-close timeout of #{metadata.schedule_to_close_timeout} exceeded"
+        end
+
+        if deadline_exceeded?(start_to_close_deadline)
           raise ActivityExecutionTimedOut,
                 "Activity start-to-close timeout of #{metadata.start_to_close_timeout} exceeded"
         end
@@ -153,7 +158,7 @@ module Temporal
 
       private
 
-      attr_reader :connection, :metadata, :heartbeat_thread_pool, :config, :heartbeat_mutex, :last_heartbeat_details, :start_to_close_deadline
+      attr_reader :connection, :metadata, :heartbeat_thread_pool, :config, :heartbeat_mutex, :last_heartbeat_details
 
       def task_token
         metadata.task_token
@@ -215,6 +220,18 @@ module Temporal
         else
           nil
         end
+      end
+
+      def schedule_to_close_deadline
+        if metadata.schedule_to_close_timeout.positive?
+          metadata.scheduled_at + metadata.schedule_to_close_timeout
+        else
+          nil
+        end
+      end
+
+      def deadline_exceeded?(deadline)
+        !deadline.nil? && Time.now > deadline
       end
     end
   end

@@ -47,7 +47,7 @@ module Temporal
   class ActivityWorkerShuttingDown < ActivityInterrupted; end
 
   # Raised by Activity.heartbeat_interrupt if the activity has breached its start-to-close
-  # timeout.
+  # or schedule-to-close timeout.
   class ActivityExecutionTimedOut < ActivityInterrupted; end
 
   class ActivityNotRegistered < ClientError; end
