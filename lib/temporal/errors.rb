@@ -30,11 +30,25 @@ module Temporal
   # Represents cancellation of a non-started activity
   class ActivityCanceled < ActivityException; end
 
-  # Activities may be interrupted by three causes: cancellation, shut down, or time out
+  # Activities may be interrupted by three causes: cancellation, shut down, or time out. You can
+  # rescue the more specific error classes below if you want to vary behavior in different
+  # interruption situations. If you are not sure, don't rescue this error and simply allow it
+  # to fail your activity, which will then be retried according to its retry policy.
   class ActivityInterrupted < ActivityException; end
-  class ActivityExecutionCanceled < ActivityInterrupted ; end
-  class ActivityWorkerShuttingDown < ActivityInterrupted ; end
-  class ActivityExecutionTimedOut < ActivityInterrupted ; end
+
+  # Raised by Activity.heartbeat_interrupt if the activity has been canceled directly by its
+  # workflow or indirectly by its workflow being terminated.
+  class ActivityExecutionCanceled < ActivityInterrupted; end
+
+  # Raised by Activity.heartbeat_interrupt if the worker has started shutting down upon receiving a
+  # TERM or INT signal. Once this happens, your activity should finishing processing quickly or
+  # raise an error to fail the activity attempt. You can easily do the latter by simply not
+  # rescuing this error.
+  class ActivityWorkerShuttingDown < ActivityInterrupted; end
+
+  # Raised by Activity.heartbeat_interrupt if the activity has breached its start-to-close
+  # timeout.
+  class ActivityExecutionTimedOut < ActivityInterrupted; end
 
   class ActivityNotRegistered < ClientError; end
   class WorkflowNotRegistered < ClientError; end

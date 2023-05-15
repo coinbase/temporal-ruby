@@ -22,7 +22,7 @@ module Temporal
         @is_shutting_down = is_shutting_down
       end
 
-      attr_reader :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
+      attr_reader :heartbeat_check_scheduled, :last_heartbeat_throttled
 
       def async
         @async = true
@@ -41,10 +41,21 @@ module Temporal
         )
       end
 
+      # Returns true if the activity has been canceled directly by its workflow or indirectly by
+      # its workflow being terminated. This will only be set following a call to heartbeat that is
+      # not throttled.
+      def cancel_requested
+        @cancel_requested
+      end
+
+      # Returns true if the activity has breached its start-to-close timeout
       def timed_out?
         !start_to_close_deadline.nil? && Time.now > start_to_close_deadline
       end
 
+      # This returns true if the worker has started shutting down upon receiving a
+      # TERM or INT signal. Once this happens, your activity should finishing processing
+      # quickly or raise an error to fail the activity attempt.
       def shutting_down?
         @is_shutting_down.call
       end
