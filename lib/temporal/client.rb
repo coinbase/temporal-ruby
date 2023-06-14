@@ -405,7 +405,9 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
-    def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
+    def query_workflow_executions(namespace, query, filter: {}, next_page_token: nil, max_page_size: nil)
+      validate_filter(filter, :status, :workflow, :workflow_id)
+      
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
