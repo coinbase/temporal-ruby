@@ -595,7 +595,7 @@ module Temporal
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          task_queue_type: Temporalio::Api::Enums::V1::TaskQueueType::Workflow,
+          task_queue_type: Temporalio::Api::Enums::V1::TaskQueueType::TASK_QUEUE_TYPE_WORKFLOW,
           include_task_queue_status: true
         )
         client.describe_task_queue(request)
