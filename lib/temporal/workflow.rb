@@ -1,3 +1,4 @@
+require 'temporal/callable'
 require 'temporal/concerns/executable'
 require 'temporal/workflow/convenience_methods'
 require 'temporal/thread_local_context'
@@ -13,7 +14,9 @@ module Temporal
       Temporal::ThreadLocalContext.set(context)
 
       workflow = new(context)
-      result = workflow.execute(*input)
+      callable = Temporal::Callable.new(method: workflow.method(:execute))
+
+      result = callable.call(input)
 
       context.complete(result) unless context.completed?
     rescue StandardError, ScriptError => error
