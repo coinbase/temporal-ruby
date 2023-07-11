@@ -271,7 +271,7 @@ module Temporal
     # Reset a workflow
     #
     # @note More on resetting a workflow here —
-    #   https://docs.temporal.io/docs/system-tools/tctl/#restart-reset-workflow
+    #   https://docs.temporal.io/tctl-v1/workflow#reset
     #
     # @param namespace [String]
     # @param workflow_id [String]
@@ -281,9 +281,13 @@ module Temporal
     # @param workflow_task_id [Integer, nil] A specific event ID to reset to. The event has to
     #   be of a type WorkflowTaskCompleted, WorkflowTaskFailed or WorkflowTaskTimedOut
     # @param reason [String] a reset reason to be recorded in workflow's history for reference
+    # @param request_id [String, nil] an idempotency key for the Reset request or `nil` to use
+    #   an auto-generated, unique value
+    # @param reset_reapply_type [Symbol, nil] one of the Temporal::ResetReapplyType values or `nil`
+    #   to use the server default
     #
     # @return [String] run_id of the new workflow execution
-    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset')
+    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset', request_id: nil, reset_reapply_type: nil)
       # Pick default strategy for backwards-compatibility
       strategy ||= :last_workflow_task unless workflow_task_id
 
@@ -299,7 +303,9 @@ module Temporal
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
-        workflow_task_event_id: workflow_task_id
+        workflow_task_event_id: workflow_task_id,
+        request_id: request_id,
+        reset_reapply_type: reset_reapply_type
       )
 
       response.run_id
