@@ -298,6 +298,14 @@ module Temporal
       workflow_task_id ||= find_workflow_task(namespace, workflow_id, run_id, strategy)&.id
       raise Error, 'Could not find an event to reset to' unless workflow_task_id
 
+      if request_id.nil?
+        # Generate a request ID if one is not provided.
+        # This is consistent with the Go SDK:
+        # https://github.com/temporalio/sdk-go/blob/e1d76b7c798828302980d483f0981128c97a20c2/internal/internal_workflow_client.go#L952-L972
+
+        request_id = SecureRandom.uuid
+      end
+
       response = connection.reset_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
