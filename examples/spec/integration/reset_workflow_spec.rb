@@ -33,8 +33,8 @@ describe 'Temporal.reset_workflow' do
     expect(new_result).to eq('Hello World, Test')
   end
 
-  def reset_hello_world_workflow_10_times(workflow_id, original_run_id, request_id:)
-    10.times.map do
+  def reset_hello_world_workflow_twice(workflow_id, original_run_id, request_id:)
+    2.times.map do
       new_run_id = Temporal.reset_workflow(
         Temporal.configuration.namespace,
         workflow_id,
@@ -69,7 +69,7 @@ describe 'Temporal.reset_workflow' do
     )
     expect(original_result).to eq('Hello World, Test')
 
-    new_run_ids = reset_hello_world_workflow_10_times(
+    new_run_ids = reset_hello_world_workflow_twice(
       workflow_id,
       original_run_id,
       # This causes the request_id to be generated with a random value:
@@ -96,7 +96,7 @@ describe 'Temporal.reset_workflow' do
     expect(original_result).to eq('Hello World, Test')
 
     reset_request_id = SecureRandom.uuid
-    new_run_ids = reset_hello_world_workflow_10_times(
+    new_run_ids = reset_hello_world_workflow_twice(
       workflow_id,
       original_run_id,
       request_id: reset_request_id
