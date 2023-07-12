@@ -283,11 +283,11 @@ module Temporal
     # @param reason [String] a reset reason to be recorded in workflow's history for reference
     # @param request_id [String, nil] an idempotency key for the Reset request or `nil` to use
     #   an auto-generated, unique value
-    # @param reset_reapply_type [Symbol, nil] one of the Temporal::ResetReapplyType values or `nil`
-    #   to use the server default
+    # @param reset_reapply_type [Symbol] one of the Temporal::ResetReapplyType values. Defaults
+    #   to SIGNAL.
     #
     # @return [String] run_id of the new workflow execution
-    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset', request_id: nil, reset_reapply_type: nil)
+    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset', request_id: nil, reset_reapply_type: Temporal::ResetReapplyType::SIGNAL)
       # Pick default strategy for backwards-compatibility
       strategy ||= :last_workflow_task unless workflow_task_id
 

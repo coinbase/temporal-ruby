@@ -414,7 +414,7 @@ module Temporal
         client.signal_with_start_workflow_execution(request)
       end
 
-      def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:, request_id:, reset_reapply_type: nil)
+      def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:, request_id:, reset_reapply_type: Temporal::ResetReapplyType::SIGNAL)
         request = Temporalio::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: namespace,
           workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
