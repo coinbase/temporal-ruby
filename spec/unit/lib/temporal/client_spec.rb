@@ -612,8 +612,9 @@ describe Temporal::Client do
           run_id: '1234',
           reason: 'Test reset',
           workflow_task_event_id: workflow_task_id,
-          request_id: nil,
-          reset_reapply_type: nil
+          # The request ID will be a random UUID:
+          request_id: anything,
+          reset_reapply_type: :signal
         )
       end
 
@@ -661,8 +662,9 @@ describe Temporal::Client do
           run_id: run_id,
           reason: 'manual reset',
           workflow_task_event_id: 16,
-          request_id: nil,
-          reset_reapply_type: nil
+          # The request ID will be a random UUID:
+          request_id: instance_of(String),
+          reset_reapply_type: :signal
         )
       end
     end
@@ -692,8 +694,9 @@ describe Temporal::Client do
             run_id: run_id,
             reason: 'manual reset',
             workflow_task_event_id: 16,
-            request_id: nil,
-            reset_reapply_type: nil
+            # The request ID will be a random UUID:
+            request_id: instance_of(String),
+            reset_reapply_type: :signal
           )
         end
       end
@@ -708,8 +711,9 @@ describe Temporal::Client do
             run_id: run_id,
             reason: 'manual reset',
             workflow_task_event_id: 4,
-            request_id: nil,
-            reset_reapply_type: nil
+            # The request ID will be a random UUID:
+            request_id: instance_of(String),
+            reset_reapply_type: :signal
           )
         end
       end
@@ -725,8 +729,9 @@ describe Temporal::Client do
             run_id: run_id,
             reason: 'manual reset',
             workflow_task_event_id: 10,
-            request_id: nil,
-            reset_reapply_type: nil
+            # The request ID will be a random UUID:
+            request_id: instance_of(String),
+            reset_reapply_type: :signal
           )
         end
       end
