@@ -58,6 +58,8 @@ describe 'starting workflow with initial search attributes', :integration do
       workflow_id,
       nil
     )
-    expect(execution_info.search_attributes).to eq(expected_attributes)
+    # Temporal might add new built-in search attributes, so just assert that
+    # the expected attributes are a subset of the actual attributes:
+    expect(execution_info.search_attributes).to be >= expected_attributes
   end
 end
