@@ -44,6 +44,11 @@ module Temporal
         [Temporalio::Api::Enums::V1::IndexedValueType.lookup(int_value), symbol]
       end.to_h.freeze
 
+      SYMBOL_TO_RESET_REAPPLY_TYPE = {
+        signal: Temporalio::Api::Enums::V1::ResetReapplyType::RESET_REAPPLY_TYPE_SIGNAL,
+        none: Temporalio::Api::Enums::V1::ResetReapplyType::RESET_REAPPLY_TYPE_NONE,
+      }
+
       DEFAULT_OPTIONS = {
         max_page_size: 100
       }.freeze
@@ -409,7 +414,7 @@ module Temporal
         client.signal_with_start_workflow_execution(request)
       end
 
-      def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:)
+      def reset_workflow_execution(namespace:, workflow_id:, run_id:, reason:, workflow_task_event_id:, request_id:, reset_reapply_type: Temporal::ResetReapplyType::SIGNAL)
         request = Temporalio::Api::WorkflowService::V1::ResetWorkflowExecutionRequest.new(
           namespace: namespace,
           workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(
@@ -417,8 +422,17 @@ module Temporal
             run_id: run_id,
           ),
           reason: reason,
-          workflow_task_finish_event_id: workflow_task_event_id
+          workflow_task_finish_event_id: workflow_task_event_id,
+          request_id: request_id
         )
+
+        if reset_reapply_type
+          reapply_type = SYMBOL_TO_RESET_REAPPLY_TYPE[reset_reapply_type]
+          raise Client::ArgumentError, 'Unknown reset_reapply_type specified' unless reapply_type
+
+          request.reset_reapply_type = reapply_type
+        end
+
         client.reset_workflow_execution(request)
       end
 
