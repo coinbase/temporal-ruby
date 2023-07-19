@@ -47,7 +47,7 @@ module Temporal
 
         respond_failed(error)
       ensure
-        unless context.heartbeat_check_scheduled.nil?
+        unless context&.heartbeat_check_scheduled.nil?
           heartbeat_thread_pool.cancel(context.heartbeat_check_scheduled)
         end
 
