@@ -23,6 +23,37 @@ describe Temporal::ThreadPool do
       expect(times).to eq(1)
     end
 
+    it 'handles error without exiting' do
+      times = 0
+
+      thread_pool.schedule do
+        times += 1
+        raise 'failure'
+      end
+
+      thread_pool.shutdown
+
+      expect(times).to eq(1)
+    end
+
+    it 'handles exception with exiting' do
+      Thread.report_on_exception = false
+      times = 0
+
+      thread_pool.schedule do
+        times += 1
+        raise Exception, 'crash'
+      end
+
+      begin
+        thread_pool.shutdown
+      rescue Exception => e
+        'ok'
+      end
+
+      expect(times).to eq(1)
+    end
+
     it 'reports thread available metrics' do
       thread_pool.schedule do
       end

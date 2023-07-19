@@ -40,6 +40,38 @@ describe Temporal::ScheduledThreadPool do
       expect(answers.pop).to eq(:first)
       expect(answers.pop).to eq(:second)
     end
+
+    it 'error does not exit' do
+      times = 0
+
+      thread_pool.schedule(:foo, 0) do
+        times += 1
+        raise 'foo'
+      end
+
+      thread_pool.shutdown
+
+      expect(times).to eq(1)
+    end
+
+    it 'exception does exit' do
+      Thread.report_on_exception = false
+      times = 0
+
+      thread_pool.schedule(:foo, 0) do
+        times += 1
+        raise Exception, 'crash'
+      end
+
+      begin
+        thread_pool.shutdown
+        raise 'should not be reached'
+      rescue Exception => e
+        'ok'
+      end
+
+      expect(times).to eq(1)
+    end
   end
 
   describe '#cancel' do
