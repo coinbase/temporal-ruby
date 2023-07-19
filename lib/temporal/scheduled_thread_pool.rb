@@ -66,6 +66,8 @@ module Temporal
     EXIT_SYMBOL = :exit
 
     def poll
+      Thread.current.abort_on_exception = true
+
       loop do
         item = @queue.pop
         if item == EXIT_SYMBOL
