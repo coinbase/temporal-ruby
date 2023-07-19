@@ -61,5 +61,19 @@ describe Temporal::Configuration do
       subject.identity = new_identity
       expect(subject.for_connection).to have_attributes(identity: new_identity)
     end
+
+    it 'default credentials' do
+      expect(subject.for_connection).to have_attributes(credentials: :this_channel_is_insecure)
+    end
+
+    it 'override credentials' do
+      subject.credentials = :test_credentials
+      expect(subject.for_connection).to have_attributes(credentials: :test_credentials)
+    end
+
+    it 'override credentials with lambda' do
+      subject.credentials = -> { :test_credentials }
+      expect(subject.for_connection).to have_attributes(credentials: :test_credentials)
+    end
   end
 end
