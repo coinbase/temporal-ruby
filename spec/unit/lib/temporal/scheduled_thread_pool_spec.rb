@@ -5,9 +5,10 @@ describe Temporal::ScheduledThreadPool do
     allow(Temporal.metrics).to receive(:gauge)
   end
 
+  let(:config) { Temporal::Configuration.new }
   let(:size) { 2 }
   let(:tags) { { foo: 'bar', bat: 'baz' } }
-  let(:thread_pool) { described_class.new(size, tags) }
+  let(:thread_pool) { described_class.new(size, config, tags) }
 
   describe '#schedule' do
     it 'executes one task with zero delay on a thread and exits' do

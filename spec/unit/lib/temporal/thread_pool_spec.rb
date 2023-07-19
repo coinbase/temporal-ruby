@@ -5,9 +5,10 @@ describe Temporal::ThreadPool do
     allow(Temporal.metrics).to receive(:gauge)
   end
 
+  let(:config) { Temporal::Configuration.new }
   let(:size) { 2 }
   let(:tags) { { foo: 'bar', bat: 'baz' } }
-  let(:thread_pool) { described_class.new(size, tags) }
+  let(:thread_pool) { described_class.new(size, config, tags) }
 
   describe '#new' do
     it 'executes one task on a thread and exits' do

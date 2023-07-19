@@ -115,6 +115,7 @@ module Temporal
       def thread_pool
         @thread_pool ||= ThreadPool.new(
           options[:thread_pool_size],
+          @config,
           {
             pool_name: 'activity_task_poller',
             namespace: namespace,
@@ -126,6 +127,7 @@ module Temporal
       def heartbeat_thread_pool
         @heartbeat_thread_pool ||= ScheduledThreadPool.new(
           options[:thread_pool_size],
+          @config,
           {
             pool_name: 'heartbeat',
             namespace: namespace,
