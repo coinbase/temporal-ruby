@@ -5,6 +5,7 @@ require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
+require 'temporal/workflow/sdk_flags'
 require 'temporal/workflow/signal'
 
 module Temporal
@@ -18,9 +19,9 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes
+      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags
 
-      def initialize(dispatcher)
+      def initialize(dispatcher, config)
         @dispatcher = dispatcher
         @commands = []
         @marker_ids = Set.new
@@ -31,6 +32,13 @@ module Temporal
         @local_time = nil
         @replay = false
         @search_attributes = {}
+        @config = config
+
+        # Current flags in use, built up from workflow task completed history entries
+        @sdk_flags = Set.new
+
+        # New flags used when not replaying
+        @new_sdk_flags = Set.new
       end
 
       def replay?
@@ -83,20 +91,61 @@ module Temporal
         @replay = history_window.replay?
         @local_time = history_window.local_time
         @last_event_id = history_window.last_event_id
+        history_window.sdk_flags.each { |flag| sdk_flags.add(flag) }
 
-        # handle markers first since their data is needed for processing events
-        history_window.markers.each do |event|
-          apply_event(event)
-        end
-
-        history_window.events.each do |event|
+        order_events(history_window.events).each do |event|
           apply_event(event)
         end
       end
 
+      def self.event_order(event, signals_first)
+        if event.type == 'MARKER_RECORDED'
+          # markers always come first
+          0
+        elsif event.type == 'WORKFLOW_EXECUTION_STARTED'
+          # This always comes next if present
+          1
+        elsif signals_first && signal_event?(event)
+          # signals come next if we are in signals first mode
+          2
+        else
+          # then everything else
+          3
+        end
+      end
+
+      def self.signal_event?(event)
+        event.type == 'WORKFLOW_EXECUTION_SIGNALED'
+      end
+
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases
+      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :sdk_flags
+
+      def order_events(raw_events)
+        signals_first =
+          # If signals were handled first when this task or a previous one in this run were first
+          # played, we must continue to do so in order to ensure determinism. The configuration
+          # value can be ignored.
+          sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) ||
+          # If this is being played for the first time, use the configuration flag to choose
+          (!replay? && !@config.legacy_signals)
+
+        # Only add the flag when it's used and not already present
+        if !replay? &&
+           signals_first &&
+           raw_events.any? { |event| StateManager.signal_event?(event) } &&
+           !sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) &&
+           !new_sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST)
+          new_sdk_flags << SDKFlags::HANDLE_SIGNALS_FIRST
+          sdk_flags << SDKFlags::HANDLE_SIGNALS_FIRST
+        end
+
+        # sort_by is not stable, so include index for sort then remove
+        raw_events.sort_by.with_index do |event, index|
+          [StateManager.event_order(event, signals_first), index]
+        end
+      end
 
       def next_event_id
         @last_event_id += 1

@@ -17,7 +17,7 @@ module Temporal
     attr_reader :timeouts, :error_handlers
     attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
-                  :payload_codec
+                  :payload_codec, :legacy_signals
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -82,6 +82,14 @@ module Temporal
       @identity = nil
       @search_attributes = {}
       @header_propagators = []
+
+      # Signals previously were incorrectly replayed in order within a workflow task, rather than
+      # at the beginning. Correcting this changes the determinism of any workflow with signals. This
+      # flag exists to preserve this legacy behavior while rolling out the new order. When adopting
+      # the first version of the library with this mode, set this to true, fully deploy your worker,
+      # then do a second deployment with this flag returned to the default value of false. New use
+      # cases should simply leave this as the default.
+      @legacy_signals = false
     end
 
     def on_error(&block)

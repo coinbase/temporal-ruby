@@ -46,9 +46,10 @@ describe Temporal::Workflow::Executor do
     it 'returns a complete workflow decision' do
       decisions = subject.run
 
-      expect(decisions.length).to eq(1)
+      expect(decisions.commands.length).to eq(1)
+      expect(decisions.new_sdk_flags.length).to eq(0)
 
-      decision_id, decision = decisions.first
+      decision_id, decision = decisions.commands.first
       expect(decision_id).to eq(history.events.length + 1)
       expect(decision).to be_an_instance_of(Temporal::Workflow::Command::CompleteWorkflow)
       expect(decision.result).to eq('test')

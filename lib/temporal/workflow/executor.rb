@@ -11,16 +11,19 @@ require 'temporal/metadata'
 module Temporal
   class Workflow
     class Executor
+      RunResult = Struct.new(:commands, :new_sdk_flags, keyword_init: true)
+
       # @param workflow_class [Class]
       # @param history [Workflow::History]
       # @param task_metadata [Metadata::WorkflowTask]
       # @param config [Configuration]
       # @param track_stack_trace [Boolean]
+      # @return [RunResult]
       def initialize(workflow_class, history, task_metadata, config, track_stack_trace, middleware_chain)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @query_registry = QueryRegistry.new
-        @state_manager = StateManager.new(dispatcher)
+        @state_manager = StateManager.new(dispatcher, config)
         @history = history
         @task_metadata = task_metadata
         @config = config
@@ -39,7 +42,7 @@ module Temporal
           state_manager.apply(window)
         end
 
-        return state_manager.commands
+        RunResult.new(commands: state_manager.commands, new_sdk_flags: state_manager.new_sdk_flags)
       end
 
       # Process queries using the pre-registered query handlers

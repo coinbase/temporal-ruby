@@ -56,7 +56,7 @@ module Temporal
         # TODO: For sticky workflows we need to cache the Executor instance
         executor = Workflow::Executor.new(workflow_class, history, metadata, config, track_stack_trace, workflow_middleware_chain)
 
-        commands = middleware_chain.invoke(metadata) do
+        run_result = middleware_chain.invoke(metadata) do
           executor.run
         end
 
@@ -65,7 +65,7 @@ module Temporal
         if legacy_query_task?
           complete_query(query_results[LEGACY_QUERY_KEY])
         else
-          complete_task(commands, query_results)
+          complete_task(run_result, query_results)
         end
       rescue StandardError => error
         Temporal::ErrorHandler.handle(error, config, metadata: metadata)
@@ -125,15 +125,16 @@ module Temporal
         end
       end
 
-      def complete_task(commands, query_results)
+      def complete_task(run_result, query_results)
         Temporal.logger.info("Workflow task completed", metadata.to_h)
 
         connection.respond_workflow_task_completed(
           namespace: namespace,
           task_token: task_token,
-          commands: commands,
+          commands: run_result.commands,
           binary_checksum: binary_checksum,
-          query_results: query_results
+          query_results: query_results,
+          new_sdk_flags: run_result.new_sdk_flags
         )
       end
 

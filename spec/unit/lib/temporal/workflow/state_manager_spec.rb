@@ -24,7 +24,7 @@ describe Temporal::Workflow::StateManager do
       ),
     ].each do |terminal_command|
       it "fails to validate if #{terminal_command.class} is not the last command scheduled" do
-        state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+        state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
 
         next_command = Temporal::Workflow::Command::RecordMarker.new(
           name: Temporal::Workflow::StateManager::RELEASE_MARKER,
@@ -78,7 +78,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'initial merges with upserted' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
@@ -106,7 +106,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'initial and upsert treated as empty hash' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event_no_search_attributes))
@@ -123,7 +123,7 @@ describe Temporal::Workflow::StateManager do
 
 
     it 'multiple upserts merge' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
 
       window_1 = Temporal::Workflow::History::Window.new
       window_1.add(Temporal::Workflow::History::Event.new(workflow_task_started_event))

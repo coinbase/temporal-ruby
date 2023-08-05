@@ -79,11 +79,13 @@ describe Temporal::Workflow::TaskProcessor do
       let(:workflow_class) { double('Temporal::Workflow', execute_in_context: nil) }
       let(:executor) { double('Temporal::Workflow::Executor') }
       let(:commands) { double('commands') }
+      let(:new_sdk_flags) { double('new_sdk_flags') }
+      let(:run_result) { Temporal::Workflow::Executor::RunResult.new(commands: commands, new_sdk_flags: new_sdk_flags) }
 
       before do
         allow(lookup).to receive(:find).with(workflow_name).and_return(workflow_class)
         allow(Temporal::Workflow::Executor).to receive(:new).and_return(executor)
-        allow(executor).to receive(:run) { workflow_class.execute_in_context(context, input); commands }
+        allow(executor).to receive(:run) { workflow_class.execute_in_context(context, input) }.and_return(run_result)
         allow(executor).to receive(:process_queries)
       end
 
@@ -130,7 +132,8 @@ describe Temporal::Workflow::TaskProcessor do
                 task_token: task.task_token,
                 commands: commands,
                 binary_checksum: binary_checksum,
-                query_results: { query_id => query_result }
+                query_results: { query_id => query_result },
+                new_sdk_flags: new_sdk_flags
               )
           end
         end
@@ -167,7 +170,14 @@ describe Temporal::Workflow::TaskProcessor do
             expect(connection).to_not have_received(:respond_query_task_completed)
             expect(connection)
               .to have_received(:respond_workflow_task_completed)
-              .with(namespace: namespace, task_token: task.task_token, commands: commands, query_results: nil, binary_checksum: binary_checksum)
+              .with(
+                namespace: namespace,
+                task_token: task.task_token,
+                commands: commands,
+                query_results: nil,
+                binary_checksum: binary_checksum,
+                new_sdk_flags: new_sdk_flags
+              )
           end
 
           it 'ignores connection exception' do

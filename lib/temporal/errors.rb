@@ -9,6 +9,9 @@ module Temporal
   # a non-deterministic workflow implementation or the gem's bug
   class NonDeterministicWorkflowError < InternalError; end
 
+  # Indicates a workflow task was encountered that used an unknown SDK flag
+  class UnknownSDKFlagError < InternalError; end
+
   # Superclass for misconfiguration/misuse on the client (user) side
   class ClientError < Error; end
 

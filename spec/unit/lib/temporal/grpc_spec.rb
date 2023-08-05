@@ -588,7 +588,8 @@ describe Temporal::Connection::GRPC do
           task_token: task_token,
           commands: [],
           query_results: query_results,
-          binary_checksum: binary_checksum
+          binary_checksum: binary_checksum,
+          new_sdk_flags: [1]
         )
 
         expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|
@@ -612,6 +613,8 @@ describe Temporal::Connection::GRPC do
             Temporalio::Api::Enums::V1::QueryResultType::QUERY_RESULT_TYPE_FAILED)
           )
           expect(request.query_results['2'].error_message).to eq('Test query failure')
+
+          expect(request.sdk_metadata.lang_used_flags).to eq([1])
         end
       end
     end

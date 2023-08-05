@@ -221,7 +221,7 @@ module Temporal
         client.respond_query_task_completed(request)
       end
 
-      def respond_workflow_task_completed(namespace:, task_token:, commands:, binary_checksum:, query_results: {})
+      def respond_workflow_task_completed(namespace:, task_token:, commands:, binary_checksum:, new_sdk_flags:, query_results: {})
         request = Temporalio::Api::WorkflowService::V1::RespondWorkflowTaskCompletedRequest.new(
           namespace: namespace,
           identity: identity,
@@ -230,6 +230,12 @@ module Temporal
           query_results: query_results.transform_values { |value| Serializer.serialize(value) },
           binary_checksum: binary_checksum
         )
+
+        if new_sdk_flags.any?
+          request.sdk_metadata = Temporalio::Api::Sdk::V1::WorkflowTaskCompletedMetadata.new(
+            lang_used_flags: new_sdk_flags.to_a
+          )
+        end
 
         client.respond_workflow_task_completed(request)
       end
