@@ -66,13 +66,14 @@ module Temporal
         result = query_registry.handle(query.query_type, query.query_args)
 
         QueryResult.answer(result)
-      rescue StandardError => error
-        QueryResult.failure(error)
+      rescue StandardError => e
+        QueryResult.failure(e)
       end
 
       def execute_workflow(input, workflow_started_event)
         metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
-        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config, query_registry, track_stack_trace)
+        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config, query_registry,
+                                        track_stack_trace)
 
         Fiber.new do
           middleware_chain.invoke(metadata) do

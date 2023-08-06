@@ -4,13 +4,17 @@ require 'temporal/middleware/chain'
 require 'temporal/workflow/task_processor'
 
 describe Temporal::Workflow::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum) }
+  subject do
+    described_class.new(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
+  end
 
   let(:namespace) { 'test-namespace' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
   let(:query) { nil }
   let(:queries) { nil }
-  let(:task) { Fabricate(:api_workflow_task, { workflow_type: api_workflow_type, query: query, queries: queries }.compact) }
+  let(:task) do
+    Fabricate(:api_workflow_task, { workflow_type: api_workflow_type, query: query, queries: queries }.compact)
+  end
   let(:api_workflow_type) { Fabricate(:api_workflow_type, name: workflow_name) }
   let(:workflow_name) { 'TestWorkflow' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
@@ -90,7 +94,7 @@ describe Temporal::Workflow::TaskProcessor do
       end
 
       context 'when workflow task completes' do
-        # Note: This is a bit of a pointless test because I short circuit this with stubs.
+        # NOTE: This is a bit of a pointless test because I short circuit this with stubs.
         # The code does not drop down into the state machine and so forth.
         it 'runs the specified task' do
           subject.process
@@ -379,7 +383,9 @@ describe Temporal::Workflow::TaskProcessor do
         context 'when a page has no events' do
           let(:page_two) { 'page-2' }
           let(:page_three) { 'page-3' }
-          let(:first_history_response) { Fabricate(:workflow_execution_history, events: [event], _next_page_token: page_two) }
+          let(:first_history_response) do
+            Fabricate(:workflow_execution_history, events: [event], _next_page_token: page_two)
+          end
 
           let(:empty_history_response) do
             Fabricate(:workflow_execution_history, events: [], _next_page_token: page_three)

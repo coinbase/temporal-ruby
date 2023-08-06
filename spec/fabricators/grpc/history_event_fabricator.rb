@@ -52,7 +52,7 @@ end
 
 Fabricator(:api_workflow_task_scheduled_event, from: :api_history_event) do
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_SCHEDULED }
-  workflow_task_scheduled_event_attributes do |attrs|
+  workflow_task_scheduled_event_attributes do |_attrs|
     Temporalio::Api::History::V1::WorkflowTaskScheduledEventAttributes.new(
       task_queue: Fabricate(:api_task_queue),
       start_to_close_timeout: 15,
@@ -127,7 +127,7 @@ Fabricator(:api_activity_task_failed_event, from: :api_history_event) do
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_FAILED }
   activity_task_failed_event_attributes do |attrs|
     Temporalio::Api::History::V1::ActivityTaskFailedEventAttributes.new(
-      failure: Temporalio::Api::Failure::V1::Failure.new(message: "Activity failed"),
+      failure: Temporalio::Api::Failure::V1::Failure.new(message: 'Activity failed'),
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host'
@@ -152,7 +152,7 @@ Fabricator(:api_activity_task_cancel_requested_event, from: :api_history_event) 
   activity_task_cancel_requested_event_attributes do |attrs|
     Temporalio::Api::History::V1::ActivityTaskCancelRequestedEventAttributes.new(
       scheduled_event_id: attrs[:event_id] - 1,
-      workflow_task_completed_event_id: attrs[:event_id] - 2,
+      workflow_task_completed_event_id: attrs[:event_id] - 2
     )
   end
 end

@@ -49,9 +49,7 @@ module Temporal
         # Fast-forward event IDs to skip all the markers (version markers can
         # be removed, so we can't rely on them being scheduled during a replay)
         command_id = next_event_id
-        while marker_ids.include?(command_id) do
-          command_id = next_event_id
-        end
+        command_id = next_event_id while marker_ids.include?(command_id)
 
         cancelation_id =
           case command
@@ -74,7 +72,7 @@ module Temporal
         validate_append_command(command)
         commands << [command_id, command]
 
-        return [event_target_from(command_id, command), cancelation_id]
+        [event_target_from(command_id, command), cancelation_id]
       end
 
       def release?(release_name)
@@ -153,22 +151,21 @@ module Temporal
 
       def validate_append_command(command)
         return if commands.last.nil?
+
         _, previous_command = commands.last
         case previous_command
         when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
           context_string = case previous_command
-          when Command::CompleteWorkflow
-            "The workflow completed"
-          when Command::FailWorkflow
-            "The workflow failed"
-          when Command::ContinueAsNew
-            "The workflow continued as new"
-          end
-          raise Temporal::WorkflowAlreadyCompletingError.new(
-            "You cannot do anything in a Workflow after it completes. #{context_string}, "\
+                           when Command::CompleteWorkflow
+                             'The workflow completed'
+                           when Command::FailWorkflow
+                             'The workflow failed'
+                           when Command::ContinueAsNew
+                             'The workflow continued as new'
+                           end
+          raise Temporal::WorkflowAlreadyCompletingError, "You cannot do anything in a Workflow after it completes. #{context_string}, "\
             "but then it sent a new command: #{command.class}.  This can happen, for example, if you've "\
-            "not waited for all of your Activity futures before finishing the Workflow."
-          )
+            'not waited for all of your Activity futures before finishing the Workflow.'
         end
       end
 
@@ -187,7 +184,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            event,
+            event
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'
@@ -227,7 +224,8 @@ module Temporal
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
+          dispatch(history_target, 'failed',
+                   Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
@@ -244,7 +242,8 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(history_target, 'failed', Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
+          dispatch(history_target, 'failed',
+                   Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -286,7 +285,8 @@ module Temporal
         when 'WORKFLOW_EXECUTION_SIGNALED'
           # relies on Signal#== for matching in Dispatcher
           signal_target = Signal.new(event.attributes.signal_name)
-          dispatch(signal_target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
+          dispatch(signal_target, 'signaled', event.attributes.signal_name,
+                   from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -323,7 +323,8 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          dispatch(history_target, 'failed', ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding'))
+          dispatch(history_target, 'failed',
+                   ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding'))
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
           state_machine.terminated
@@ -396,16 +397,16 @@ module Temporal
         # Pop the first command from the list, it is expected to match
         replay_command_id, replay_command = commands.shift
 
-        if !replay_command_id
+        unless replay_command_id
           raise NonDeterministicWorkflowError,
-            "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
+                "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
         end
 
         replay_target = event_target_from(replay_command_id, replay_command)
         if history_target != replay_target
           raise NonDeterministicWorkflowError,
-            "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
-            "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
+                "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+                "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
         end
       end
 
@@ -431,7 +432,6 @@ module Temporal
           schedule(Command::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
         end
       end
-
     end
   end
 end

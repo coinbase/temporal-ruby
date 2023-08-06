@@ -7,7 +7,6 @@ require 'temporal/workflow/state_manager'
 require 'temporal/errors'
 
 describe Temporal::Workflow::StateManager do
-
   describe '#schedule' do
     class MyWorkflow < Temporal::Workflow; end
 
@@ -15,21 +14,21 @@ describe Temporal::Workflow::StateManager do
     [
       Temporal::Workflow::Command::ContinueAsNew.new(
         workflow_type: MyWorkflow,
-        task_queue: 'dummy',
+        task_queue: 'dummy'
       ),
       Temporal::Workflow::Command::FailWorkflow.new(
-        exception: StandardError.new('dummy'),
+        exception: StandardError.new('dummy')
       ),
       Temporal::Workflow::Command::CompleteWorkflow.new(
-        result: 5,
-      ),
+        result: 5
+      )
     ].each do |terminal_command|
       it "fails to validate if #{terminal_command.class} is not the last command scheduled" do
         state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
 
         next_command = Temporal::Workflow::Command::RecordMarker.new(
           name: Temporal::Workflow::StateManager::RELEASE_MARKER,
-          details: 'dummy',
+          details: 'dummy'
         )
 
         state_manager.schedule(terminal_command)
@@ -313,8 +312,8 @@ describe Temporal::Workflow::StateManager do
     end
     let(:upsert_search_attribute_event_2) do
       Fabricate(:api_upsert_search_attributes_event,
-        event_id: 4,
-        search_attributes: upserted_attributes_2)
+                event_id: 4,
+                search_attributes: upserted_attributes_2)
     end
     let(:upsert_empty_search_attributes_event) do
       Fabricate(:api_upsert_search_attributes_event, search_attributes: {})
@@ -343,7 +342,7 @@ describe Temporal::Workflow::StateManager do
         {
           'CustomAttribute1' => 42, # from initial (not overridden)
           'CustomAttribute2' => 8, # only from upsert
-          'CustomAttribute3' => 'foo', # overridden by upsert
+          'CustomAttribute3' => 'foo' # overridden by upsert
         }
       )
     end
@@ -363,7 +362,6 @@ describe Temporal::Workflow::StateManager do
 
       expect(state_manager.search_attributes).to eq({})
     end
-
 
     it 'multiple upserts merge' do
       state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
@@ -389,7 +387,7 @@ describe Temporal::Workflow::StateManager do
         {
           'CustomAttribute2' => 8,
           'CustomAttribute3' => 'bar',
-          'CustomAttribute4' => 10,
+          'CustomAttribute4' => 10
         }
       )
     end
