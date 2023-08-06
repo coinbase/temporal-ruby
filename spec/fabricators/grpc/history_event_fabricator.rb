@@ -73,6 +73,7 @@ Fabricator(:api_workflow_task_started_event, from: :api_history_event) do
 end
 
 Fabricator(:api_workflow_task_completed_event, from: :api_history_event) do
+  transient :sdk_flags
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_COMPLETED }
   workflow_task_completed_event_attributes do |attrs|
     Temporalio::Api::History::V1::WorkflowTaskCompletedEventAttributes.new(
@@ -80,6 +81,9 @@ Fabricator(:api_workflow_task_completed_event, from: :api_history_event) do
       started_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host',
       binary_checksum: 'v1.0.0',
+      sdk_metadata: Temporalio::Api::Sdk::V1::WorkflowTaskCompletedMetadata.new(
+        lang_used_flags: attrs[:sdk_flags] || []
+      )
     )
   end
 end
@@ -196,6 +200,28 @@ Fabricator(:api_upsert_search_attributes_event, from: :api_history_event) do
       search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
         indexed_fields: indexed_fields
       )
+    )
+  end
+end
+
+Fabricator(:api_marker_recorded_event, from: :api_history_event) do
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_MARKER_RECORDED }
+  marker_recorded_event_attributes do |attrs|
+    Temporalio::Api::History::V1::MarkerRecordedEventAttributes.new(
+      workflow_task_completed_event_id: attrs[:event_id] - 1,
+      marker_name: 'SIDE_EFFECT',
+      details: to_payload_map({})
+    )
+  end
+end
+
+Fabricator(:api_workflow_execution_signaled_event, from: :api_history_event) do
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED }
+  workflow_execution_signaled_event_attributes do
+    Temporalio::Api::History::V1::WorkflowExecutionSignaledEventAttributes.new(
+      signal_name: 'a_signal',
+      input: nil,
+      identity: 'test-worker@test-host'
     )
   end
 end
