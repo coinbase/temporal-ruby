@@ -62,7 +62,7 @@ describe Temporal::Workflow::StateManager do
     let(:upsert_search_attribute_event_1) do
       Fabricate(:api_upsert_search_attributes_event, search_attributes: upserted_attributes_1)
     end
-    let(:usperted_attributes_2) do
+    let(:upserted_attributes_2) do
       {
         'CustomAttribute3' => 'bar',
         'CustomAttribute4' => 10
@@ -71,7 +71,7 @@ describe Temporal::Workflow::StateManager do
     let(:upsert_search_attribute_event_2) do
       Fabricate(:api_upsert_search_attributes_event,
         event_id: 4,
-        search_attributes: usperted_attributes_2)
+        search_attributes: upserted_attributes_2)
     end
     let(:upsert_empty_search_attributes_event) do
       Fabricate(:api_upsert_search_attributes_event, search_attributes: {})
@@ -138,7 +138,7 @@ describe Temporal::Workflow::StateManager do
       window_2 = Temporal::Workflow::History::Window.new
       window_2.add(Temporal::Workflow::History::Event.new(upsert_search_attribute_event_2))
 
-      command_2 = Temporal::Workflow::Command::UpsertSearchAttributes.new(search_attributes: usperted_attributes_2)
+      command_2 = Temporal::Workflow::Command::UpsertSearchAttributes.new(search_attributes: upserted_attributes_2)
       state_manager.schedule(command_2)
       state_manager.apply(window_2)
 
