@@ -1,3 +1,4 @@
+require 'temporal/errors'
 require 'temporal/workflow/poller'
 require 'temporal/activity/poller'
 require 'temporal/execution_options'
@@ -105,6 +106,10 @@ module Temporal
     end
 
     def start
+      if workflows.any?
+        check_signals_first_support
+      end
+
       @start_stop_mutex.synchronize do
         return if shutting_down? # Handle the case where stop method grabbed the mutex first
 
@@ -177,5 +182,25 @@ module Temporal
       end
     end
 
+    def check_signals_first_support
+      if config.legacy_signals
+        Temporal.logger.debug('Running in legacy signals mode')
+        return
+      end
+
+      connection = Temporal::Connection.generate(config.for_connection)
+      system_info = connection.get_system_info
+      Temporal.logger.debug("Connected to Temporal server running version #{system_info.server_version}")
+
+      if system_info&.capabilities&.sdk_metadata
+        Temporal.logger.debug('Running in signals first mode. Server supports SDK metadata.')
+        return
+      end
+
+      raise SDKMetadatNotSupportedError,
+            'Signals first ordering requires a Temporal server that supports SDK metadata. Set ' \
+            'Temporal::Configuration.legacy_signals to true or upgrade to Temporal server 1.20 ' \
+            'or newer.'
+    end
   end
 end

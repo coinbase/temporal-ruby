@@ -12,6 +12,12 @@ module Temporal
   # Indicates a workflow task was encountered that used an unknown SDK flag
   class UnknownSDKFlagError < InternalError; end
 
+  # Indicates the worker has connected to a Temporal server that does not
+  # support SDK metadata, and therefore only legacy signal mode can be used.
+  # Set the .legacy_signals option in your Temporal::Configuration or upgrade
+  # Temporal server to 1.20 or newer.
+  class SDKMetadatNotSupportedError < InternalError; end
+
   # Superclass for misconfiguration/misuse on the client (user) side
   class ClientError < Error; end
 

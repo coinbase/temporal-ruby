@@ -618,6 +618,10 @@ module Temporal
         end
       end
 
+      def get_system_info
+        client.get_system_info(Temporalio::Api::WorkflowService::V1::GetSystemInfoRequest.new)
+      end
+
       private
 
       attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request

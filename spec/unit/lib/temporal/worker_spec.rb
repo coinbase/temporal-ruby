@@ -6,6 +6,19 @@ require 'temporal/configuration'
 describe Temporal::Worker do
   subject { described_class.new(config) }
   let(:config) { Temporal::Configuration.new }
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
+  let(:sdk_metadata_enabled) { true }
+  before do
+    allow(Temporal::Connection).to receive(:generate).and_return(connection)
+    allow(connection).to receive(:get_system_info).and_return(
+      Temporalio::Api::WorkflowService::V1::GetSystemInfoResponse.new(
+        server_version: 'test',
+        capabilities: Temporalio::Api::WorkflowService::V1::GetSystemInfoResponse::Capabilities.new(
+          sdk_metadata: sdk_metadata_enabled
+        )
+      )
+    )
+  end
 
   class TestWorkerWorkflow < Temporal::Workflow
     namespace 'default-namespace'
@@ -211,7 +224,11 @@ describe Temporal::Worker do
       stopped = true
     }
 
-    thread = Thread.new {worker.start}
+    thread = Thread.new do
+      Thread.current.abort_on_exception = true
+      worker.start
+    end
+
     while !stopped
       sleep(THREAD_SYNC_DELAY)
     end
@@ -235,6 +252,58 @@ describe Temporal::Worker do
     let(:workflow_poller_2) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
     let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
     let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+
+    context 'no SDK metadata support' do
+      let(:sdk_metadata_enabled) { false }
+      it 'fails' do
+        allow(Temporal::Workflow::Poller)
+          .to receive(:new)
+          .with(
+            'default-namespace',
+            'default-task-queue',
+            an_instance_of(Temporal::ExecutableLookup),
+            config,
+            [],
+            [],
+            thread_pool_size: 10,
+            binary_checksum: nil,
+            poll_retry_seconds: 0
+          )
+          .and_return(workflow_poller_1)
+        subject.register_workflow(TestWorkerWorkflow)
+
+        expect do
+          subject.start
+        end.to raise_error(Temporal::SDKMetadatNotSupportedError)
+
+        expect(workflow_poller_1).not_to have_received(:start)
+      end
+
+      context 'legacy signal mode' do
+        let(:config) { Temporal::Configuration.new.tap { |c| c.legacy_signals = true } }
+        it 'ok' do
+          allow(Temporal::Workflow::Poller)
+            .to receive(:new)
+            .with(
+              'default-namespace',
+              'default-task-queue',
+              an_instance_of(Temporal::ExecutableLookup),
+              config,
+              [],
+              [],
+              thread_pool_size: 10,
+              binary_checksum: nil,
+              poll_retry_seconds: 0
+            )
+            .and_return(workflow_poller_1)
+          subject.register_workflow(TestWorkerWorkflow)
+
+          start_and_stop(subject)
+
+          expect(workflow_poller_1).to have_received(:start)
+        end
+      end
+    end
 
     it 'starts a poller for each namespace/task list combination' do
       allow(Temporal::Workflow::Poller)
@@ -341,7 +410,7 @@ describe Temporal::Worker do
       allow(subject).to receive(:while_stopping_hook) do
         # This callback is within a mutex, so this new thread shouldn't
         # do anything until Worker.stop is complete.
-        Thread.new {subject.start}
+        Thread.new { subject.start }
         sleep(THREAD_SYNC_DELAY) # give it a little time to do damage if it's going to
       end
       subject.stop
@@ -394,7 +463,6 @@ describe Temporal::Worker do
         .and_return(activity_poller)
 
       worker = Temporal::Worker.new(activity_poll_retry_seconds: 10)
-      worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
       start_and_stop(worker)
@@ -419,7 +487,6 @@ describe Temporal::Worker do
 
       worker = Temporal::Worker.new(workflow_poll_retry_seconds: 10)
       worker.register_workflow(TestWorkerWorkflow)
-      worker.register_activity(TestWorkerActivity)
 
       start_and_stop(worker)
 
