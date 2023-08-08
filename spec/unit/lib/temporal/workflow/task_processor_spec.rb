@@ -83,8 +83,10 @@ describe Temporal::Workflow::TaskProcessor do
       let(:workflow_class) { double('Temporal::Workflow', execute_in_context: nil) }
       let(:executor) { double('Temporal::Workflow::Executor') }
       let(:commands) { double('commands') }
-      let(:new_sdk_flags) { double('new_sdk_flags') }
-      let(:run_result) { Temporal::Workflow::Executor::RunResult.new(commands: commands, new_sdk_flags: new_sdk_flags) }
+      let(:new_sdk_flags_used) { double('new_sdk_flags_used') }
+      let(:run_result) do
+        Temporal::Workflow::Executor::RunResult.new(commands: commands, new_sdk_flags_used: new_sdk_flags_used)
+      end
 
       before do
         allow(lookup).to receive(:find).with(workflow_name).and_return(workflow_class)
@@ -137,7 +139,7 @@ describe Temporal::Workflow::TaskProcessor do
                 commands: commands,
                 binary_checksum: binary_checksum,
                 query_results: { query_id => query_result },
-                new_sdk_flags: new_sdk_flags
+                new_sdk_flags_used: new_sdk_flags_used
               )
           end
         end
@@ -180,7 +182,7 @@ describe Temporal::Workflow::TaskProcessor do
                 commands: commands,
                 query_results: nil,
                 binary_checksum: binary_checksum,
-                new_sdk_flags: new_sdk_flags
+                new_sdk_flags_used: new_sdk_flags_used
               )
           end
 

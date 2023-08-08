@@ -589,7 +589,7 @@ describe Temporal::Connection::GRPC do
           commands: [],
           query_results: query_results,
           binary_checksum: binary_checksum,
-          new_sdk_flags: [1]
+          new_sdk_flags_used: [1]
         )
 
         expect(grpc_stub).to have_received(:respond_workflow_task_completed) do |request|

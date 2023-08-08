@@ -265,7 +265,7 @@ describe Temporal::Workflow::StateManager do
         it 'signal inline' do
           test_order(false)
 
-          expect(state_manager.new_sdk_flags).to be_empty
+          expect(state_manager.new_sdk_flags_used).to be_empty
         end
       end
 
@@ -275,7 +275,7 @@ describe Temporal::Workflow::StateManager do
         it 'signal first' do
           test_order(true)
 
-          expect(state_manager.new_sdk_flags).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
+          expect(state_manager.new_sdk_flags_used).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
         end
       end
     end

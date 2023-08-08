@@ -11,7 +11,7 @@ require 'temporal/metadata'
 module Temporal
   class Workflow
     class Executor
-      RunResult = Struct.new(:commands, :new_sdk_flags, keyword_init: true)
+      RunResult = Struct.new(:commands, :new_sdk_flags_used, keyword_init: true)
 
       # @param workflow_class [Class]
       # @param history [Workflow::History]
@@ -42,7 +42,7 @@ module Temporal
           state_manager.apply(window)
         end
 
-        RunResult.new(commands: state_manager.commands, new_sdk_flags: state_manager.new_sdk_flags)
+        RunResult.new(commands: state_manager.commands, new_sdk_flags_used: state_manager.new_sdk_flags_used)
       end
 
       # Process queries using the pre-registered query handlers

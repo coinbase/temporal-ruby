@@ -19,8 +19,7 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags
-
+      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
         @commands = []
@@ -38,7 +37,7 @@ module Temporal
         @sdk_flags = Set.new
 
         # New flags used when not replaying
-        @new_sdk_flags = Set.new
+        @new_sdk_flags_used = Set.new
       end
 
       def replay?
@@ -129,19 +128,23 @@ module Temporal
           # If this is being played for the first time, use the configuration flag to choose
           (!replay? && !@config.legacy_signals)
 
-        # Only add the flag when it's used and not already present
-        if !replay? &&
-           signals_first &&
-           raw_events.any? { |event| StateManager.signal_event?(event) } &&
-           !sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) &&
-           !new_sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST)
-          new_sdk_flags << SDKFlags::HANDLE_SIGNALS_FIRST
-          sdk_flags << SDKFlags::HANDLE_SIGNALS_FIRST
+        if signals_first && raw_events.any? { |event| StateManager.signal_event?(event) }
+          report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
         end
 
-        # sort_by is not stable, so include index for sort then remove
         raw_events.sort_by.with_index do |event, index|
+          # sort_by is not stable, so include index to preserve order
           [StateManager.event_order(event, signals_first), index]
+        end
+      end
+
+      def report_flag_used(flag)
+        # Only add the flag if it's not already present and we are not replaying
+        if !replay? &&
+           !sdk_flags.include?(flag) &&
+           !new_sdk_flags_used.include?(flag)
+          new_sdk_flags_used << flag
+          sdk_flags << flag
         end
       end
 

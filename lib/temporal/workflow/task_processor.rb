@@ -135,7 +135,7 @@ module Temporal
           commands: run_result.commands,
           binary_checksum: binary_checksum,
           query_results: query_results,
-          new_sdk_flags: run_result.new_sdk_flags
+          new_sdk_flags_used: run_result.new_sdk_flags_used
         )
       end
 

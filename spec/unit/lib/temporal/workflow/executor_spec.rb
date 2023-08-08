@@ -47,7 +47,7 @@ describe Temporal::Workflow::Executor do
       decisions = subject.run
 
       expect(decisions.commands.length).to eq(1)
-      expect(decisions.new_sdk_flags).to be_empty
+      expect(decisions.new_sdk_flags_used).to be_empty
 
       decision_id, decision = decisions.commands.first
       expect(decision_id).to eq(history.events.length + 1)
@@ -70,7 +70,7 @@ describe Temporal::Workflow::Executor do
           decisions = subject.run
 
           expect(decisions.commands.length).to eq(1)
-          expect(decisions.new_sdk_flags).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
+          expect(decisions.new_sdk_flags_used).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
         end
       end
 
@@ -80,7 +80,7 @@ describe Temporal::Workflow::Executor do
           decisions = subject.run
 
           expect(decisions.commands.length).to eq(1)
-          expect(decisions.new_sdk_flags).to be_empty
+          expect(decisions.new_sdk_flags_used).to be_empty
         end
       end
     end
