@@ -7,8 +7,7 @@ details on why this is necessary for correct handling of signals.
 
 **IMPORTANT: ** This feature requires Temporal server 1.20.0 or newer. If you are running an older
 version of the server, you must either upgrade to at least this version, or you can set the
-`.legacy_signals` configuration option to true until you can upgrade. **If you run with default
-settings on 1.19 or earlier, your worker will raise an error on start.**
+`.legacy_signals` configuration option to true until you can upgrade.
 
 If you do not have existing workflows with signals running or are standing up a worker service
 for the first time, you can ignore all the below instructions.

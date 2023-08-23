@@ -66,9 +66,9 @@ module Temporal
         @workflows[namespace_and_task_queue].add_dynamic(execution_options.name, workflow_class)
       rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
         raise Temporal::SecondDynamicWorkflowError,
-          "Temporal::Worker#register_dynamic_workflow: cannot register #{execution_options.name} "\
-          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
-          "'#{execution_options.task_queue}', and there can be only one."
+              "Temporal::Worker#register_dynamic_workflow: cannot register #{execution_options.name} "\
+              "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+              "'#{execution_options.task_queue}', and there can be only one."
       end
     end
 
@@ -87,9 +87,9 @@ module Temporal
         @activities[namespace_and_task_queue].add_dynamic(execution_options.name, activity_class)
       rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
         raise Temporal::SecondDynamicActivityError,
-          "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
-          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
-          "'#{execution_options.task_queue}', and there can be only one."
+              "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
+              "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+              "'#{execution_options.task_queue}', and there can be only one."
       end
     end
 
@@ -106,10 +106,6 @@ module Temporal
     end
 
     def start
-      if workflows.any?
-        check_signals_first_support
-      end
-
       @start_stop_mutex.synchronize do
         return if shutting_down? # Handle the case where stop method grabbed the mutex first
 
@@ -128,7 +124,7 @@ module Temporal
       on_started_hook
 
       # keep the main thread alive
-      sleep 1 while !shutting_down?
+      sleep 1 until shutting_down?
     end
 
     def stop
@@ -163,7 +159,8 @@ module Temporal
     def on_stopped_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware, workflow_poller_options)
+      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware,
+                           workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
@@ -180,27 +177,6 @@ module Temporal
       %w[TERM INT].each do |signal|
         Signal.trap(signal) { stop }
       end
-    end
-
-    def check_signals_first_support
-      if config.legacy_signals
-        Temporal.logger.debug('Running in legacy signals mode')
-        return
-      end
-
-      connection = Temporal::Connection.generate(config.for_connection)
-      system_info = connection.get_system_info
-      Temporal.logger.debug("Connected to Temporal server running version #{system_info.server_version}")
-
-      if system_info&.capabilities&.sdk_metadata
-        Temporal.logger.debug('Running in signals first mode. Server supports SDK metadata.')
-        return
-      end
-
-      raise SDKMetadatNotSupportedError,
-            'Signals first ordering requires a Temporal server that supports SDK metadata. Set ' \
-            'Temporal::Configuration.legacy_signals to true or upgrade to Temporal server 1.20 ' \
-            'or newer.'
     end
   end
 end

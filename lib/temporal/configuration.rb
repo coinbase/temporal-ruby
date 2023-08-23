@@ -1,3 +1,4 @@
+require 'temporal/capabilities'
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
 require 'temporal/middleware/header_propagator_chain'
@@ -14,7 +15,7 @@ module Temporal
     Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
-    attr_reader :timeouts, :error_handlers
+    attr_reader :timeouts, :error_handlers, :capabilities
     attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
                   :payload_codec, :legacy_signals
@@ -57,7 +58,7 @@ module Temporal
         Temporal::Connection::Converter::Payload::JSON.new
       ]
     ).freeze
-    
+
     # The Payload Codec is an optional step that happens between the wire and the Payload Converter:
     # Temporal Server <--> Wire <--> Payload Codec <--> Payload Converter <--> User code
     # which can be useful for transformations such as compression and encryption
@@ -82,13 +83,14 @@ module Temporal
       @identity = nil
       @search_attributes = {}
       @header_propagators = []
+      @capabilities = Capabilities.new(self)
 
-      # Signals previously were incorrectly replayed in order within a workflow task, rather than
-      # at the beginning. Correcting this changes the determinism of any workflow with signals. This
-      # flag exists to preserve this legacy behavior while rolling out the new order. When adopting
-      # the first version of the library with this mode, set this to true, fully deploy your worker,
-      # then do a second deployment with this flag returned to the default value of false. New use
-      # cases should simply leave this as the default.
+      # Signals previously were incorrectly replayed in order within a workflow task window, rather
+      # than at the beginning. Correcting this changes the determinism of any workflow with signals.
+      # This flag exists to force this legacy behavior to gradually roll out the new ordering.
+      # Because this feature depends on the SDK Metadata capability which only became available
+      # in Temporal server 1.20, it is ignored when connected to older versions and effectively
+      # treated as true.
       @legacy_signals = false
     end
 
@@ -130,6 +132,7 @@ module Temporal
 
     def add_header_propagator(propagator_class, *args)
       raise 'header propagator must implement `def inject!(headers)`' unless propagator_class.method_defined? :inject!
+
       @header_propagators << Middleware::Entry.new(propagator_class, args)
     end
 

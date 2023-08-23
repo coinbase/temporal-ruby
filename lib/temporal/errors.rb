@@ -12,12 +12,6 @@ module Temporal
   # Indicates a workflow task was encountered that used an unknown SDK flag
   class UnknownSDKFlagError < InternalError; end
 
-  # Indicates the worker has connected to a Temporal server that does not
-  # support SDK metadata, and therefore only legacy signal mode can be used.
-  # Set the .legacy_signals option in your Temporal::Configuration or upgrade
-  # Temporal server to 1.20 or newer.
-  class SDKMetadatNotSupportedError < InternalError; end
-
   # Superclass for misconfiguration/misuse on the client (user) side
   class ClientError < Error; end
 
@@ -58,8 +52,10 @@ module Temporal
 
   # Errors where the workflow run didn't complete but not an error for the whole workflow.
   class WorkflowRunError < Error; end
+
   class WorkflowRunContinuedAsNew < WorkflowRunError
     attr_reader :new_run_id
+
     def initialize(new_run_id:)
       super
       @new_run_id = new_run_id
@@ -81,6 +77,7 @@ module Temporal
       @run_id = run_id
     end
   end
+
   class NamespaceNotActiveFailure < ApiError; end
   class ClientVersionNotSupportedFailure < ApiError; end
   class FeatureVersionNotSupportedFailure < ApiError; end

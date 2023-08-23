@@ -253,58 +253,6 @@ describe Temporal::Worker do
     let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
     let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
 
-    context 'no SDK metadata support' do
-      let(:sdk_metadata_enabled) { false }
-      it 'fails' do
-        allow(Temporal::Workflow::Poller)
-          .to receive(:new)
-          .with(
-            'default-namespace',
-            'default-task-queue',
-            an_instance_of(Temporal::ExecutableLookup),
-            config,
-            [],
-            [],
-            thread_pool_size: 10,
-            binary_checksum: nil,
-            poll_retry_seconds: 0
-          )
-          .and_return(workflow_poller_1)
-        subject.register_workflow(TestWorkerWorkflow)
-
-        expect do
-          subject.start
-        end.to raise_error(Temporal::SDKMetadatNotSupportedError)
-
-        expect(workflow_poller_1).not_to have_received(:start)
-      end
-
-      context 'legacy signal mode' do
-        let(:config) { Temporal::Configuration.new.tap { |c| c.legacy_signals = true } }
-        it 'ok' do
-          allow(Temporal::Workflow::Poller)
-            .to receive(:new)
-            .with(
-              'default-namespace',
-              'default-task-queue',
-              an_instance_of(Temporal::ExecutableLookup),
-              config,
-              [],
-              [],
-              thread_pool_size: 10,
-              binary_checksum: nil,
-              poll_retry_seconds: 0
-            )
-            .and_return(workflow_poller_1)
-          subject.register_workflow(TestWorkerWorkflow)
-
-          start_and_stop(subject)
-
-          expect(workflow_poller_1).to have_received(:start)
-        end
-      end
-    end
-
     it 'starts a poller for each namespace/task list combination' do
       allow(Temporal::Workflow::Poller)
         .to receive(:new)

@@ -20,6 +20,7 @@ module Temporal
       class UnsupportedMarkerType < Temporal::InternalError; end
 
       attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used
+
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
         @commands = []
@@ -119,18 +120,25 @@ module Temporal
 
       attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :sdk_flags
 
-      def order_events(raw_events)
-        signals_first =
+      def use_signals_first(raw_events)
+        raw_events.any? { |event| StateManager.signal_event?(event) } &&
           # If signals were handled first when this task or a previous one in this run were first
-          # played, we must continue to do so in order to ensure determinism. The configuration
-          # value can be ignored.
-          sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) ||
-          # If this is being played for the first time, use the configuration flag to choose
-          (!replay? && !@config.legacy_signals)
+          # played, we must continue to do so in order to ensure determinism regardless of what
+          # the configuration value is set to.
+          (
+            sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) ||
+            # If this is being played for the first time, use the configuration flag to choose
+            (!replay? && !@config.legacy_signals)
+          ) &&
+          # In order to preserve determinism, the server must support SDK metadata to order signals
+          # first
+          @config.capabilities.sdk_metadata
+      end
 
-        if signals_first && raw_events.any? { |event| StateManager.signal_event?(event) }
-          report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
-        end
+      def order_events(raw_events)
+        signals_first = use_signals_first(raw_events)
+
+        report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST) if signals_first
 
         raw_events.sort_by.with_index do |event, index|
           # sort_by is not stable, so include index to preserve order

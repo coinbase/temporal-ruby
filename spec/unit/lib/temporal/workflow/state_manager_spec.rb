@@ -45,6 +45,12 @@ describe Temporal::Workflow::StateManager do
       Temporal::Workflow::StateManager.new(dispatcher, config)
     end
     let(:config) { Temporal::Configuration.new }
+    let(:connection) { instance_double('Temporal::Connection::GRPC') }
+    let(:system_info) { Fabricate(:api_get_system_info) }
+
+    before do
+      allow(Temporal::Connection).to receive(:generate).and_return(connection)
+    end
 
     context 'workflow execution started' do
       let(:history) do
@@ -71,6 +77,8 @@ describe Temporal::Workflow::StateManager do
       end
 
       it 'dispatcher invoked for start' do
+        allow(connection).to receive(:get_system_info).and_return(system_info)
+
         # While markers do come before the workflow execution started event, signals do not
         expect(dispatcher).to receive(:dispatch).with(
           Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
@@ -236,7 +244,18 @@ describe Temporal::Workflow::StateManager do
           )
         end
         it 'signal first' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
           test_order(true)
+        end
+
+        context 'even with legacy config enabled' do
+          let(:config) { Temporal::Configuration.new.tap { |c| c.legacy_signals = true } }
+          it 'signal first' do
+            allow(connection).to receive(:get_system_info).and_return(system_info)
+
+            test_order(true)
+          end
         end
       end
     end
@@ -273,6 +292,8 @@ describe Temporal::Workflow::StateManager do
         let(:config) { Temporal::Configuration.new }
 
         it 'signal first' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
           test_order(true)
 
           expect(state_manager.new_sdk_flags_used).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))

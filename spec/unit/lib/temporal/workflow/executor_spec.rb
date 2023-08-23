@@ -8,6 +8,7 @@ require 'temporal/workflow/query_registry'
 describe Temporal::Workflow::Executor do
   subject { described_class.new(workflow, history, workflow_metadata, config, false, middleware_chain) }
 
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:workflow_started_event) { Fabricate(:api_workflow_execution_started_event, event_id: 1) }
   let(:history) do
     Temporal::Workflow::History.new([
@@ -21,6 +22,10 @@ describe Temporal::Workflow::Executor do
   let(:workflow_metadata) { Fabricate(:workflow_metadata) }
   let(:config) { Temporal::Configuration.new }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
+
+  before do
+    allow(Temporal::Connection).to receive(:generate).and_return(connection)
+  end
 
   class TestWorkflow < Temporal::Workflow
     def execute
@@ -64,9 +69,12 @@ describe Temporal::Workflow::Executor do
                                           Fabricate(:api_workflow_task_started_event, event_id: 4)
                                         ])
       end
+      let(:system_info) { Fabricate(:api_get_system_info) }
 
       context 'signals first config enabled' do
         it 'set signals first sdk flag' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
           decisions = subject.run
 
           expect(decisions.commands.length).to eq(1)
