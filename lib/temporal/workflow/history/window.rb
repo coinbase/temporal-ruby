@@ -1,3 +1,4 @@
+require 'set'
 require 'temporal/workflow/sdk_flags'
 
 module Temporal

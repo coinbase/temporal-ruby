@@ -1,3 +1,5 @@
+require 'set'
+
 module Temporal
   class Workflow
     module SDKFlags
