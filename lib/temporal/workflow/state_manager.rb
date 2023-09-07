@@ -3,6 +3,7 @@ require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
+require 'temporal/workflow/history/size'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
 require 'temporal/workflow/sdk_flags'
@@ -90,6 +91,8 @@ module Temporal
         @local_time = history_window.local_time
         @last_event_id = history_window.last_event_id
         history_window.sdk_flags.each { |flag| sdk_flags.add(flag) }
+        @history_size_bytes = history_window.history_size_bytes
+        @suggest_continue_as_new = history_window.suggest_continue_as_new
 
         order_events(history_window.events).each do |event|
           apply_event(event)
@@ -114,6 +117,14 @@ module Temporal
 
       def self.signal_event?(event)
         event.type == 'WORKFLOW_EXECUTION_SIGNALED'
+      end
+
+      def history_size
+        History::Size.new(
+          events: @last_event_id,
+          bytes: @history_size_bytes,
+          suggest_continue_as_new: @suggest_continue_as_new
+        ).freeze
       end
 
       private

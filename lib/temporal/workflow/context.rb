@@ -67,6 +67,12 @@ module Temporal
         state_manager.release?(release_name.to_s)
       end
 
+      # Returns information about the workflow run's history up to this point. This can be used to
+      # determine when to continue as new.
+      def history_size
+        state_manager.history_size
+      end
+
       def execute_activity(activity_class, *input, **args)
         options = args.delete(:options) || {}
         input << args unless args.empty?
