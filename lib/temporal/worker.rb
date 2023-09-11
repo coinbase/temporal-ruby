@@ -1,3 +1,4 @@
+require 'temporal/errors'
 require 'temporal/workflow/poller'
 require 'temporal/activity/poller'
 require 'temporal/execution_options'
@@ -65,9 +66,9 @@ module Temporal
         @workflows[namespace_and_task_queue].add_dynamic(execution_options.name, workflow_class)
       rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
         raise Temporal::SecondDynamicWorkflowError,
-          "Temporal::Worker#register_dynamic_workflow: cannot register #{execution_options.name} "\
-          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
-          "'#{execution_options.task_queue}', and there can be only one."
+              "Temporal::Worker#register_dynamic_workflow: cannot register #{execution_options.name} "\
+              "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+              "'#{execution_options.task_queue}', and there can be only one."
       end
     end
 
@@ -86,9 +87,9 @@ module Temporal
         @activities[namespace_and_task_queue].add_dynamic(execution_options.name, activity_class)
       rescue Temporal::ExecutableLookup::SecondDynamicExecutableError => e
         raise Temporal::SecondDynamicActivityError,
-          "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
-          "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
-          "'#{execution_options.task_queue}', and there can be only one."
+              "Temporal::Worker#register_dynamic_activity: cannot register #{execution_options.name} "\
+              "dynamically; #{e.previous_executable_name} was already registered dynamically for task queue "\
+              "'#{execution_options.task_queue}', and there can be only one."
       end
     end
 
@@ -123,7 +124,7 @@ module Temporal
       on_started_hook
 
       # keep the main thread alive
-      sleep 1 while !shutting_down?
+      sleep 1 until shutting_down?
     end
 
     def stop
@@ -158,7 +159,8 @@ module Temporal
     def on_stopped_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware, workflow_poller_options)
+      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware,
+                           workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
@@ -176,6 +178,5 @@ module Temporal
         Signal.trap(signal) { stop }
       end
     end
-
   end
 end

@@ -11,16 +11,19 @@ require 'temporal/metadata'
 module Temporal
   class Workflow
     class Executor
+      RunResult = Struct.new(:commands, :new_sdk_flags_used, keyword_init: true)
+
       # @param workflow_class [Class]
       # @param history [Workflow::History]
       # @param task_metadata [Metadata::WorkflowTask]
       # @param config [Configuration]
       # @param track_stack_trace [Boolean]
+      # @return [RunResult]
       def initialize(workflow_class, history, task_metadata, config, track_stack_trace, middleware_chain)
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @query_registry = QueryRegistry.new
-        @state_manager = StateManager.new(dispatcher)
+        @state_manager = StateManager.new(dispatcher, config)
         @history = history
         @task_metadata = task_metadata
         @config = config
@@ -39,7 +42,7 @@ module Temporal
           state_manager.apply(window)
         end
 
-        return state_manager.commands
+        RunResult.new(commands: state_manager.commands, new_sdk_flags_used: state_manager.new_sdk_flags_used)
       end
 
       # Process queries using the pre-registered query handlers
@@ -63,13 +66,14 @@ module Temporal
         result = query_registry.handle(query.query_type, query.query_args)
 
         QueryResult.answer(result)
-      rescue StandardError => error
-        QueryResult.failure(error)
+      rescue StandardError => e
+        QueryResult.failure(e)
       end
 
       def execute_workflow(input, workflow_started_event)
         metadata = Metadata.generate_workflow_metadata(workflow_started_event, task_metadata)
-        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config, query_registry, track_stack_trace)
+        context = Workflow::Context.new(state_manager, dispatcher, workflow_class, metadata, config, query_registry,
+                                        track_stack_trace)
 
         Fiber.new do
           middleware_chain.invoke(metadata) do
