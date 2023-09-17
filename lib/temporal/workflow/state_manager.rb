@@ -19,7 +19,7 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used
+      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
 
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
@@ -39,6 +39,17 @@ module Temporal
 
         # New flags used when not replaying
         @new_sdk_flags_used = Set.new
+
+        # Because signals must be processed first and a signal handler cannot be registered
+        # until workflow code runs, this dispatcher handler will save these signals for
+        # when a callback is first registered.
+        @first_task_signals = []
+        @first_task_signal_handler = dispatcher.register_handler(
+          Dispatcher::WILDCARD,
+          'signaled'
+        ) do |name, input|
+          @first_task_signals << [name, input]
+        end
       end
 
       def replay?
@@ -94,13 +105,19 @@ module Temporal
         order_events(history_window.events).each do |event|
           apply_event(event)
         end
+
+        if @first_task_signal_handler
+          @first_task_signal_handler.unregister
+          @first_task_signals = []
+          @first_task_signal_handler = nil
+        end
       end
 
-      def self.event_order(event, signals_first)
+      def self.event_order(event, signals_first, before_execution_started)
         if event.type == 'MARKER_RECORDED'
           # markers always come first
           0
-        elsif event.type == 'WORKFLOW_EXECUTION_STARTED'
+        elsif !before_execution_started && workflow_execution_started_event?(event)
           # This always comes next if present
           1
         elsif signals_first && signal_event?(event)
@@ -116,9 +133,13 @@ module Temporal
         event.type == 'WORKFLOW_EXECUTION_SIGNALED'
       end
 
+      def self.workflow_execution_started_event?(event)
+        event.type == 'WORKFLOW_EXECUTION_STARTED'
+      end
+
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :sdk_flags
+      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases
 
       def use_signals_first(raw_events)
         if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST)
@@ -135,6 +156,11 @@ module Temporal
               # time it's called in the worker process.
               @config.capabilities.sdk_metadata
           report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
+
+          if raw_events.any? { |event| StateManager.workflow_execution_started_event?(event) }
+            report_flag_used(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+          end
+
           true
         else
           false
@@ -143,10 +169,11 @@ module Temporal
 
       def order_events(raw_events)
         signals_first = use_signals_first(raw_events)
+        before_execution_started = sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
 
         raw_events.sort_by.with_index do |event, index|
           # sort_by is not stable, so include index to preserve order
-          [StateManager.event_order(event, signals_first), index]
+          [StateManager.event_order(event, signals_first, before_execution_started), index]
         end
       end
 
