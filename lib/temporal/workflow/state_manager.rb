@@ -106,19 +106,18 @@ module Temporal
           apply_event(event)
         end
 
-        if @first_task_signal_handler
-          @first_task_signal_handler.unregister
-          @first_task_signals = []
-          @first_task_signal_handler = nil
-        end
+        return unless @first_task_signal_handler
+
+        @first_task_signal_handler.unregister
+        @first_task_signals = []
+        @first_task_signal_handler = nil
       end
 
-      def self.event_order(event, signals_first, before_execution_started)
+      def self.event_order(event, signals_first, execution_started_before_signals)
         if event.type == 'MARKER_RECORDED'
           # markers always come first
           0
-        elsif !before_execution_started && workflow_execution_started_event?(event)
-          # This always comes next if present
+        elsif !execution_started_before_signals && workflow_execution_started_event?(event)
           1
         elsif signals_first && signal_event?(event)
           # signals come next if we are in signals first mode
@@ -169,11 +168,11 @@ module Temporal
 
       def order_events(raw_events)
         signals_first = use_signals_first(raw_events)
-        before_execution_started = sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+        execution_started_before_signals = sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
 
         raw_events.sort_by.with_index do |event, index|
           # sort_by is not stable, so include index to preserve order
-          [StateManager.event_order(event, signals_first, before_execution_started), index]
+          [StateManager.event_order(event, signals_first, execution_started_before_signals), index]
         end
       end
 
@@ -445,11 +444,11 @@ module Temporal
         end
 
         replay_target = event_target_from(replay_command_id, replay_command)
-        if history_target != replay_target
-          raise NonDeterministicWorkflowError,
-                "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
-                "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
-        end
+        return unless history_target != replay_target
+
+        raise NonDeterministicWorkflowError,
+              "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+              "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
       end
 
       def handle_marker(id, type, details)
