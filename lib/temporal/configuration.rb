@@ -18,7 +18,7 @@ module Temporal
     attr_reader :timeouts, :error_handlers, :capabilities
     attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
-                  :payload_codec, :legacy_signals
+                  :payload_codec, :legacy_signals, :no_signals_in_first_task
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -92,6 +92,10 @@ module Temporal
       # in Temporal server 1.20, it is ignored when connected to older versions and effectively
       # treated as true.
       @legacy_signals = false
+
+      # This is a legacy behavior that is incorrect, but which existing workflow code may rely on. Only
+      # set to true until you can fix your workflow code.
+      @no_signals_in_first_task = false
     end
 
     def on_error(&block)
