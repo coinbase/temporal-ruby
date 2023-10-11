@@ -15,6 +15,13 @@ describe Temporal::Connection::Converter::Payload::ProtoJSON do
 
       expect(subject.from_payload(subject.to_payload(input))).to eq(input)
     end
+
+    it 'encodes special characters' do
+      input = Temporalio::Api::Common::V1::Payload.new(
+        metadata: { 'it’ll work!' => 'bytebytebyte' },
+      )
+      expect(subject.from_payload(subject.to_payload(input))).to eq(input)
+    end
   end
 
   it 'skips if not proto message' do

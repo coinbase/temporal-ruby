@@ -25,7 +25,7 @@ module Temporal
                 'encoding' => ENCODING,
                 'messageType' => data.class.descriptor.name,
               },
-              data: data.to_json,
+              data: data.to_json.b,
             )
           end
         end
