@@ -421,13 +421,12 @@ describe Temporal::Workflow::StateManager do
 
         it 'signal first' do
           test_order_one_task(
-            Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST,
             Temporal::Workflow::SDKFlags::SAVE_FIRST_TASK_SIGNALS
           )
         end
       end
 
-      context 'no signals in first task enabled' do
+      context 'signals in first task disabled' do
         let(:config) { Temporal::Configuration.new.tap { |c| c.no_signals_in_first_task = true } }
         it 'signal inline' do
           test_order_one_task(Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST)

@@ -141,7 +141,8 @@ module Temporal
       attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
 
       def use_signals_first(raw_events)
-        if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST)
+        # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST
+        if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) || sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
           # If signals were handled first when this task or a previous one in this run were first
           # played, we must continue to do so in order to ensure determinism regardless of what
           # the configuration value is set to. Even the capabilities can be ignored because the
@@ -149,15 +150,16 @@ module Temporal
           true
         elsif raw_events.any? { |event| StateManager.signal_event?(event) } &&
               # If this is being played for the first time, use the configuration flag to choose
-              (!replay? && !config.legacy_signals) &&
+              !replay? && !config.legacy_signals &&
               # In order to preserve determinism, the server must support SDK metadata to order signals
               # first. This is checked last because it will result in a Temporal server call the first
               # time it's called in the worker process.
               config.capabilities.sdk_metadata
-          report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
 
           if raw_events.any? { |event| StateManager.workflow_execution_started_event?(event) } && !config.no_signals_in_first_task
             report_flag_used(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+          else
+            report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
           end
 
           true
