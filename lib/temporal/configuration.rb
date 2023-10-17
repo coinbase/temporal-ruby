@@ -12,13 +12,13 @@ require 'temporal/connection/converter/codec/chain'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :connection_options, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers, :capabilities
     attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
-                  :payload_codec, :legacy_signals, :no_signals_in_first_task
+                  :payload_codec, :legacy_signals, :no_signals_in_first_task, :connection_options
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -84,6 +84,7 @@ module Temporal
       @search_attributes = {}
       @header_propagators = []
       @capabilities = Capabilities.new(self)
+      @connection_options = {}
 
       # Signals previously were incorrectly replayed in order within a workflow task window, rather
       # than at the beginning. Correcting this changes the determinism of any workflow with signals.
@@ -120,7 +121,8 @@ module Temporal
         host: host,
         port: port,
         credentials: credentials,
-        identity: identity || default_identity
+        identity: identity || default_identity,
+        connection_options: connection_options
       ).freeze
     end
 
