@@ -425,6 +425,10 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
+    def count_workflow_executions(namespace, query)
+      connection.count_workflow_executions(namespace: namespace, query: query)
+    end
+
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
     # @param namespace String, required for SQL enhanced visibility, ignored for elastic search
     def add_custom_search_attributes(attributes, namespace: nil)

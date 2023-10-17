@@ -1102,4 +1102,28 @@ describe Temporal::Client do
       end
     end
   end
+
+  describe '#count_workflow_executions' do
+    let(:response) do
+      Temporalio::Api::WorkflowService::V1::CountWorkflowExecutionsResponse.new(
+        count: 5
+      )
+    end
+
+    before do
+      allow(connection)
+        .to receive(:count_workflow_executions)
+        .and_return(response)
+    end
+
+    it 'returns the count' do
+      resp = subject.count_workflow_executions(namespace, '')
+
+      expect(connection)
+        .to have_received(:count_workflow_executions)
+        .with(namespace: namespace, query: '')
+
+      expect(resp.count).to eq(5)
+    end
+  end
 end
