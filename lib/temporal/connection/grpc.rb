@@ -795,11 +795,21 @@ module Temporal
       attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
-        @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
+        return @client if @client
+
+        channel_args = {}
+
+        if options[:keepalive_time_ms]
+          channel_args["grpc.keepalive_time_ms"] = options[:keepalive_time_ms]
+        end
+
+        @client = Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
           timeout: CONNECTION_TIMEOUT_SECONDS,
-          interceptors: [ClientNameVersionInterceptor.new]
+          interceptors: [ClientNameVersionInterceptor.new],
+          channel_args: channel_args
+
         )
       end
 
