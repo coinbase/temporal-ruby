@@ -4,6 +4,7 @@ require 'temporal/activity'
 require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/context_helpers'
+require 'temporal/workflow/count_workflows_aggregation'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
@@ -426,7 +427,8 @@ module Temporal
     end
 
     def count_workflow_executions(namespace, query)
-      connection.count_workflow_executions(namespace: namespace, query: query)
+      response = connection.count_workflow_executions(namespace: namespace, query: query)
+      Temporal::Workflow::CountWorkflowAggregation.new(count: response.count)
     end
 
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
