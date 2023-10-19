@@ -3,6 +3,7 @@ require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
+require 'temporal/workflow/history/size'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
 require 'temporal/workflow/sdk_flags'
@@ -101,6 +102,8 @@ module Temporal
         @local_time = history_window.local_time
         @last_event_id = history_window.last_event_id
         history_window.sdk_flags.each { |flag| sdk_flags.add(flag) }
+        @history_size_bytes = history_window.history_size_bytes
+        @suggest_continue_as_new = history_window.suggest_continue_as_new
 
         order_events(history_window.events).each do |event|
           apply_event(event)
@@ -136,6 +139,14 @@ module Temporal
         event.type == 'WORKFLOW_EXECUTION_STARTED'
       end
 
+      def history_size
+        History::Size.new(
+          events: @last_event_id,
+          bytes: @history_size_bytes,
+          suggest_continue_as_new: @suggest_continue_as_new
+        ).freeze
+      end
+
       private
 
       attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
@@ -156,7 +167,9 @@ module Temporal
               # time it's called in the worker process.
               config.capabilities.sdk_metadata
 
-          if raw_events.any? { |event| StateManager.workflow_execution_started_event?(event) } && !config.no_signals_in_first_task
+          if raw_events.any? do |event|
+               StateManager.workflow_execution_started_event?(event)
+             end && !config.no_signals_in_first_task
             report_flag_used(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
           else
             report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)

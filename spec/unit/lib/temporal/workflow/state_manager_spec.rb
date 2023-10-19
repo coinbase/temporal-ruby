@@ -435,6 +435,40 @@ describe Temporal::Workflow::StateManager do
     end
   end
 
+  describe '#history_size' do
+    let(:config) { Temporal::Configuration.new }
+    let(:history_size_bytes) { 27 }
+    let(:suggest_continue_as_new) { true }
+    let(:start_workflow_execution_event) { Fabricate(:api_workflow_execution_started_event) }
+    let(:workflow_task_scheduled_event) { Fabricate(:api_workflow_task_scheduled_event, event_id: 2) }
+    let(:workflow_task_started_event) do
+      Fabricate(
+        :api_workflow_task_started_event,
+        event_id: 3,
+        history_size_bytes: history_size_bytes,
+        suggest_continue_as_new: suggest_continue_as_new)
+    end
+
+    it 'has correct event count' do
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, config)
+
+      window = Temporal::Workflow::History::Window.new
+      window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
+      window.add(Temporal::Workflow::History::Event.new(workflow_task_scheduled_event))
+      window.add(Temporal::Workflow::History::Event.new(workflow_task_started_event))
+
+      state_manager.apply(window)
+
+      expect(state_manager.history_size).to eq(
+        Temporal::Workflow::History::Size.new(
+          events: 4, # comes from event id of started + 1
+          bytes: history_size_bytes,
+          suggest_continue_as_new: suggest_continue_as_new
+        )
+      )
+    end
+  end
+
   describe '#search_attributes' do
     let(:initial_search_attributes) do
       {
