@@ -433,9 +433,7 @@ module Temporal
     #
     # @return [Temporal::Workflow::CountWorkflowAggregation] an integer count of workflows matching the query
     def count_workflow_executions(namespace, query: nil)
-      print('@@@ HARSH TESTING2 @@@ ', query)
       response = connection.count_workflow_executions(namespace: namespace, query: query)
-      print('@@@ HARSH TESTING3 @@@ ', response)
       Workflow::CountWorkflowsResult.new(count: response.count)
     end
 
