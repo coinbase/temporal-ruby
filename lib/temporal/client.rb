@@ -4,7 +4,7 @@ require 'temporal/activity'
 require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/context_helpers'
-require 'temporal/workflow/count_workflows_aggregation'
+require 'temporal/workflow/count_workflows_result'
 require 'temporal/workflow/history'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
@@ -426,9 +426,17 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
-    def count_workflow_executions(namespace, query)
+    # Count the number of workflows matching the provided query
+    # 
+    # @param namespace [String]
+    # @param query [String]
+    #
+    # @return [Temporal::Workflow::CountWorkflowAggregation] an integer count of workflows matching the query
+    def count_workflow_executions(namespace, query: nil)
+      print('@@@ HARSH TESTING2 @@@ ', query)
       response = connection.count_workflow_executions(namespace: namespace, query: query)
-      Temporal::Workflow::CountWorkflowAggregation.new(count: response.count)
+      print('@@@ HARSH TESTING3 @@@ ', response)
+      Workflow::CountWorkflowsResult.new(count: response.count)
     end
 
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above

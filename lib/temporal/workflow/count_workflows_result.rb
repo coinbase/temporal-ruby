@@ -1,6 +1,6 @@
 module Temporal
   class Workflow
-    class CountWorkflowAggregation
+    class CountWorkflowsResult
       def initialize(count:)
         @count = count
       end
