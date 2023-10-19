@@ -5,7 +5,7 @@ module Temporal
   class Workflow
     class History
       class Window
-        attr_reader :local_time, :last_event_id, :events, :sdk_flags
+        attr_reader :local_time, :last_event_id, :events, :sdk_flags, :history_size_bytes, :suggest_continue_as_new
 
         def initialize
           @local_time = nil
@@ -13,6 +13,8 @@ module Temporal
           @events = []
           @replay = false
           @sdk_flags = Set.new
+          @history_size_bytes = 0
+          @suggest_continue_as_new = false
         end
 
         def replay?
@@ -24,6 +26,8 @@ module Temporal
           when 'WORKFLOW_TASK_STARTED'
             @last_event_id = event.id + 1 # one for completed
             @local_time = event.timestamp
+            @history_size_bytes = event.attributes.history_size_bytes
+            @suggest_continue_as_new = event.attributes.suggest_continue_as_new
           when 'WORKFLOW_TASK_FAILED', 'WORKFLOW_TASK_TIMED_OUT'
             @last_event_id = nil
             @local_time = nil

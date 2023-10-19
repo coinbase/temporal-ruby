@@ -62,12 +62,15 @@ Fabricator(:api_workflow_task_scheduled_event, from: :api_history_event) do
 end
 
 Fabricator(:api_workflow_task_started_event, from: :api_history_event) do
+  transient :history_size_bytes, :suggest_continue_as_new
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_STARTED }
   workflow_task_started_event_attributes do |attrs|
     Temporalio::Api::History::V1::WorkflowTaskStartedEventAttributes.new(
       scheduled_event_id: attrs[:event_id] - 1,
       identity: 'test-worker@test-host',
-      request_id: SecureRandom.uuid
+      request_id: SecureRandom.uuid,
+      history_size_bytes: attrs[:history_size_bytes],
+      suggest_continue_as_new: attrs[:suggest_continue_as_new]
     )
   end
 end
