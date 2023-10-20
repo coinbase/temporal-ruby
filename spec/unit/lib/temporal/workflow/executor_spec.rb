@@ -78,7 +78,10 @@ describe Temporal::Workflow::Executor do
           decisions = subject.run
 
           expect(decisions.commands.length).to eq(1)
-          expect(decisions.new_sdk_flags_used).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
+          expect(decisions.new_sdk_flags_used).to eq(
+            Set.new([
+              Temporal::Workflow::SDKFlags::SAVE_FIRST_TASK_SIGNALS
+            ]))
         end
       end
 

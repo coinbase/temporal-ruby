@@ -20,7 +20,7 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used
+      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
 
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
@@ -40,6 +40,17 @@ module Temporal
 
         # New flags used when not replaying
         @new_sdk_flags_used = Set.new
+
+        # Because signals must be processed first and a signal handler cannot be registered
+        # until workflow code runs, this dispatcher handler will save these signals for
+        # when a callback is first registered.
+        @first_task_signals = []
+        @first_task_signal_handler = dispatcher.register_handler(
+          Dispatcher::WILDCARD,
+          'signaled'
+        ) do |name, input|
+          @first_task_signals << [name, input]
+        end
       end
 
       def replay?
@@ -97,14 +108,19 @@ module Temporal
         order_events(history_window.events).each do |event|
           apply_event(event)
         end
+
+        return unless @first_task_signal_handler
+
+        @first_task_signal_handler.unregister
+        @first_task_signals = []
+        @first_task_signal_handler = nil
       end
 
-      def self.event_order(event, signals_first)
+      def self.event_order(event, signals_first, execution_started_before_signals)
         if event.type == 'MARKER_RECORDED'
           # markers always come first
           0
-        elsif event.type == 'WORKFLOW_EXECUTION_STARTED'
-          # This always comes next if present
+        elsif !execution_started_before_signals && workflow_execution_started_event?(event)
           1
         elsif signals_first && signal_event?(event)
           # signals come next if we are in signals first mode
@@ -119,6 +135,10 @@ module Temporal
         event.type == 'WORKFLOW_EXECUTION_SIGNALED'
       end
 
+      def self.workflow_execution_started_event?(event)
+        event.type == 'WORKFLOW_EXECUTION_STARTED'
+      end
+
       def history_size
         History::Size.new(
           events: @last_event_id,
@@ -129,10 +149,11 @@ module Temporal
 
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :sdk_flags
+      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
 
       def use_signals_first(raw_events)
-        if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST)
+        # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST
+        if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) || sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
           # If signals were handled first when this task or a previous one in this run were first
           # played, we must continue to do so in order to ensure determinism regardless of what
           # the configuration value is set to. Even the capabilities can be ignored because the
@@ -140,12 +161,20 @@ module Temporal
           true
         elsif raw_events.any? { |event| StateManager.signal_event?(event) } &&
               # If this is being played for the first time, use the configuration flag to choose
-              (!replay? && !@config.legacy_signals) &&
+              !replay? && !config.legacy_signals &&
               # In order to preserve determinism, the server must support SDK metadata to order signals
               # first. This is checked last because it will result in a Temporal server call the first
               # time it's called in the worker process.
-              @config.capabilities.sdk_metadata
-          report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
+              config.capabilities.sdk_metadata
+
+          if raw_events.any? do |event|
+               StateManager.workflow_execution_started_event?(event)
+             end && !config.no_signals_in_first_task
+            report_flag_used(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+          else
+            report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
+          end
+
           true
         else
           false
@@ -154,10 +183,11 @@ module Temporal
 
       def order_events(raw_events)
         signals_first = use_signals_first(raw_events)
+        execution_started_before_signals = sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
 
         raw_events.sort_by.with_index do |event, index|
           # sort_by is not stable, so include index to preserve order
-          [StateManager.event_order(event, signals_first), index]
+          [StateManager.event_order(event, signals_first, execution_started_before_signals), index]
         end
       end
 
@@ -429,11 +459,11 @@ module Temporal
         end
 
         replay_target = event_target_from(replay_command_id, replay_command)
-        if history_target != replay_target
-          raise NonDeterministicWorkflowError,
-                "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
-                "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
-        end
+        return unless history_target != replay_target
+
+        raise NonDeterministicWorkflowError,
+              "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+              "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
       end
 
       def handle_marker(id, type, details)

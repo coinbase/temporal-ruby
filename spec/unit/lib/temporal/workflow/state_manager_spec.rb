@@ -79,10 +79,6 @@ describe Temporal::Workflow::StateManager do
       it 'dispatcher invoked for start' do
         allow(connection).to receive(:get_system_info).and_return(system_info)
 
-        # While markers do come before the workflow execution started event, signals do not
-        expect(dispatcher).to receive(:dispatch).with(
-          Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
-        ).once.ordered
         expect(dispatcher).to receive(:dispatch).with(
           Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
           'signaled',
@@ -91,8 +87,97 @@ describe Temporal::Workflow::StateManager do
             signal_entry.workflow_execution_signaled_event_attributes.input
           ]
         ).once.ordered
+        expect(dispatcher).to receive(:dispatch).with(
+          Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+        ).once.ordered
 
         state_manager.apply(history.next_window)
+      end
+    end
+
+    context 'workflow execution started with signal, replaying without flag' do
+      let(:signal_entry) { Fabricate(:api_workflow_execution_signaled_event, event_id: 2) }
+      let(:history) do
+        Temporal::Workflow::History.new(
+          [
+            Fabricate(:api_workflow_execution_started_event, event_id: 1),
+            signal_entry,
+            Fabricate(:api_workflow_task_scheduled_event, event_id: 3),
+            Fabricate(:api_workflow_task_started_event, event_id: 4),
+            Fabricate(
+              :api_workflow_task_completed_event,
+              event_id: 5,
+              sdk_flags: sdk_flags
+            )
+          ]
+        )
+      end
+
+      context 'replaying without HANDLE_SIGNALS_FIRST sdk flag' do
+        let(:sdk_flags) { [] }
+        it 'dispatcher invokes start before signal' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+          ).once.ordered
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
+            'signaled',
+            [
+              signal_entry.workflow_execution_signaled_event_attributes.signal_name,
+              signal_entry.workflow_execution_signaled_event_attributes.input
+            ]
+          ).once.ordered
+
+          state_manager.apply(history.next_window)
+        end
+      end
+
+      context 'replaying without SAVE_FIRST_TASK_SIGNALS sdk flag' do
+        let(:sdk_flags) { [Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST] }
+        it 'dispatcher invokes start before signal' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+          ).once.ordered
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
+            'signaled',
+            [
+              signal_entry.workflow_execution_signaled_event_attributes.signal_name,
+              signal_entry.workflow_execution_signaled_event_attributes.input
+            ]
+          ).once.ordered
+
+          state_manager.apply(history.next_window)
+        end
+      end
+
+      context 'replaying with SAVE_FIRST_TASK_SIGNALS sdk flag' do
+        let(:sdk_flags) do [
+            Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST,
+            Temporal::Workflow::SDKFlags::SAVE_FIRST_TASK_SIGNALS
+          ]
+        end
+        it 'dispatcher invokes signal before start' do
+          allow(connection).to receive(:get_system_info).and_return(system_info)
+
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
+            'signaled',
+            [
+              signal_entry.workflow_execution_signaled_event_attributes.signal_name,
+              signal_entry.workflow_execution_signaled_event_attributes.input
+            ]
+          ).once.ordered
+          expect(dispatcher).to receive(:dispatch).with(
+            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+          ).once.ordered
+
+          state_manager.apply(history.next_window)
+        end
       end
     end
 
@@ -297,6 +382,54 @@ describe Temporal::Workflow::StateManager do
           test_order(true)
 
           expect(state_manager.new_sdk_flags_used).to eq(Set.new([Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST]))
+        end
+      end
+    end
+
+    context 'not replaying with a signal in the first workflow task' do
+      let(:signal_entry) { Fabricate(:api_workflow_execution_signaled_event, event_id: 2) }
+      let(:history) do
+        Temporal::Workflow::History.new(
+          [
+            Fabricate(:api_workflow_execution_started_event, event_id: 1),
+            signal_entry,
+            Fabricate(:api_workflow_task_scheduled_event, event_id: 3)
+          ]
+        )
+      end
+
+      def test_order_one_task(*expected_sdk_flags)
+        allow(connection).to receive(:get_system_info).and_return(system_info)
+        signaled = false
+
+        dispatcher.register_handler(
+          Temporal::Workflow::Signal.new(
+            signal_entry.workflow_execution_signaled_event_attributes.signal_name
+          ),
+          'signaled'
+        ) do
+          signaled = true
+        end
+
+        state_manager.apply(history.next_window)
+        expect(state_manager.new_sdk_flags_used).to eq(Set.new(expected_sdk_flags))
+        expect(signaled).to eq(true)
+      end
+
+      context 'default config' do
+        let(:config) { Temporal::Configuration.new }
+
+        it 'signal first' do
+          test_order_one_task(
+            Temporal::Workflow::SDKFlags::SAVE_FIRST_TASK_SIGNALS
+          )
+        end
+      end
+
+      context 'signals in first task disabled' do
+        let(:config) { Temporal::Configuration.new.tap { |c| c.no_signals_in_first_task = true } }
+        it 'signal inline' do
+          test_order_one_task(Temporal::Workflow::SDKFlags::HANDLE_SIGNALS_FIRST)
         end
       end
     end

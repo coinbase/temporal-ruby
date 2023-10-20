@@ -13,7 +13,9 @@ class SignalWithStartWorkflow < Temporal::Workflow
       end
     end
 
-    # Do something to get descheduled so the signal handler has a chance to run
+    # Wait for the activity in signal callbacks to complete. The workflow will
+    # not automatically wait for any blocking calls made in callbacks to complete
+    # before returning.
     workflow.wait_until { received != initial_value }
     received
   end
