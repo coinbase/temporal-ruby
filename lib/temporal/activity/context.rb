@@ -1,13 +1,14 @@
 # This context class is available in the activity implementation
 # and provides context and methods for interacting with Temporal
 #
+require 'temporal/errors'
 require 'temporal/uuid'
 require 'temporal/activity/async_token'
 
 module Temporal
   class Activity
     class Context
-      def initialize(connection, metadata, config, heartbeat_thread_pool)
+      def initialize(connection, metadata, config, heartbeat_thread_pool, is_shutting_down)
         @connection = connection
         @metadata = metadata
         @config = config
@@ -18,9 +19,10 @@ module Temporal
         @async = false
         @cancel_requested = false
         @last_heartbeat_throttled = false
+        @is_shutting_down = is_shutting_down
       end
 
-      attr_reader :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
+      attr_reader :heartbeat_check_scheduled, :last_heartbeat_throttled
 
       def async
         @async = true
@@ -39,8 +41,29 @@ module Temporal
         )
       end
 
+      # Returns true if the activity has been canceled directly by its workflow or indirectly by
+      # its workflow being terminated. This will only be set following a call to heartbeat that is
+      # not throttled.
+      def cancel_requested
+        @cancel_requested
+      end
+
+      # Returns true if the activity has breached its start-to-close or schedule-to-close timeout
+      def timed_out?
+        deadline_exceeded?(start_to_close_deadline) || deadline_exceeded?(schedule_to_close_deadline)
+      end
+
+      # This returns true if the worker has started shutting down upon receiving a
+      # TERM or INT signal. Once this happens, your activity should finishing processing
+      # quickly or raise an error to fail the activity attempt.
+      def shutting_down?
+        @is_shutting_down.call
+      end
+
+      # Send an activity heartbeat using an optional details payload
       def heartbeat(details = nil)
         logger.debug('Activity heartbeat', metadata.to_h)
+
         # Heartbeat throttling limits the number of calls made to Temporal server, reducing load on the server
         # and improving activity performance. The first heartbeat in an activity will always be sent immediately.
         # After that, a timer is scheduled on a background thread. While this check heartbeat thread is scheduled,
@@ -82,6 +105,28 @@ module Temporal
         # Return back the context so that .cancel_requested works similarly to before when the
         # GRPC response was returned back directly
         self
+      end
+
+      # Like heartbeat, but a subclass of ActivityInterrupted error will be raised if the
+      # activity has been canceled, start-to-close timeout exceeded, or if the worker is
+      # shutting down. This flag defaults to false, in which these states can be detected by
+      # inspecting the heartbeat response for cancelation, or calling timed_out? or shutting_down?
+      # methods.
+      def heartbeat_interrupted(details = nil)
+        if deadline_exceeded?(schedule_to_close_deadline)
+          raise ActivityExecutionTimedOut,
+                "Activity schedule-to-close timeout of #{metadata.schedule_to_close_timeout} exceeded"
+        end
+
+        if deadline_exceeded?(start_to_close_deadline)
+          raise ActivityExecutionTimedOut,
+                "Activity start-to-close timeout of #{metadata.start_to_close_timeout} exceeded"
+        end
+
+        heartbeat(details)
+
+        raise ActivityExecutionCanceled, 'Activity cancellation requested by server' if cancel_requested
+        raise ActivityWorkerShuttingDown, 'Worker is shutting down' if shutting_down?
       end
 
       def heartbeat_details
@@ -167,6 +212,26 @@ module Temporal
             # sent to the error handler above in send_heartbeat.
           end
         end
+      end
+
+      def start_to_close_deadline
+        if metadata.start_to_close_timeout.positive?
+          metadata.started_at + metadata.start_to_close_timeout
+        else
+          nil
+        end
+      end
+
+      def schedule_to_close_deadline
+        if metadata.schedule_to_close_timeout.positive?
+          metadata.scheduled_at + metadata.schedule_to_close_timeout
+        else
+          nil
+        end
+      end
+
+      def deadline_exceeded?(deadline)
+        !deadline.nil? && Time.now > deadline
       end
     end
   end

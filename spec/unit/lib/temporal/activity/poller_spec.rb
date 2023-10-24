@@ -60,6 +60,19 @@ describe Temporal::Activity::Poller do
       expect(times).to be >= 2
     end
 
+    it 'shutting down changes to true after stop polling' do
+      allow(connection).to receive(:poll_activity_task_queue).and_return(nil)
+
+      subject.start
+      expect(subject.shutting_down?).to be(false)
+
+      subject.stop_polling
+      expect(subject.shutting_down?).to be(true)
+
+      subject.wait
+      expect(subject.shutting_down?).to be(true)
+    end
+
     it 'reports time since last poll' do
       poll(nil, times: 2)
 
@@ -108,7 +121,7 @@ describe Temporal::Activity::Poller do
 
         expect(Temporal::Activity::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool)
+          .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool, instance_of(Proc))
         expect(task_processor).to have_received(:process)
       end
 
@@ -143,7 +156,7 @@ describe Temporal::Activity::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(middleware)
           expect(Temporal::Activity::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool)
+            .with(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool, instance_of(Proc))
         end
       end
     end
@@ -239,14 +252,17 @@ describe Temporal::Activity::Poller do
   end
 
   describe '#cancel_pending_requests' do
-    before { subject.start }
     after { subject.wait }
 
     it 'tells connection to cancel polling requests' do
+      allow(connection).to receive(:poll_activity_task_queue).and_return(nil)
+      subject.start
+
       subject.stop_polling
       subject.cancel_pending_requests
 
       expect(connection).to have_received(:cancel_polling_request)
+      allow(connection).to receive(:poll_activity_task_queue)
     end
   end
 

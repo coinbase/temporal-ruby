@@ -10,8 +10,9 @@ describe Temporal::Activity::Context do
   let(:task_token) { SecureRandom.uuid }
   let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(1, {}) }
   let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response) }
+  let(:is_shutting_down_proc) { proc { false } }
 
-  subject { described_class.new(client, metadata, config, heartbeat_thread_pool) }
+  subject { described_class.new(client, metadata, config, heartbeat_thread_pool, is_shutting_down_proc) }
 
   describe '#heartbeat' do
     before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
@@ -78,13 +79,85 @@ describe Temporal::Activity::Context do
 
       it 'no heartbeat check scheduled when max interval is zero' do
         config.timeouts = { max_heartbeat_throttle_interval: 0 }
-        subject.heartbeat
+      end
+    end
+  end
+
+  describe '#heartbeat_interrupted' do
+    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+
+    it 'records heartbeat' do
+      subject.heartbeat_interrupted
+
+      expect(client)
+        .to have_received(:record_activity_task_heartbeat)
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+    end
+
+    it 'records heartbeat with details' do
+      subject.heartbeat_interrupted(foo: :bar)
+
+      expect(client)
+        .to have_received(:record_activity_task_heartbeat)
+        .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
+    end
+
+    context 'cancellation' do
+      let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response, cancel_requested: true) }
+      it 'raises when cancelled' do
+        expect do
+          subject.heartbeat_interrupted
+        end.to raise_error(Temporal::ActivityExecutionCanceled)
+      end
+    end
+
+    describe 'timed out' do
+      context 'start to close' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
+        it 'raises' do
+          expect do
+            subject.heartbeat_interrupted
+          end.to raise_error(Temporal::ActivityExecutionTimedOut)
+
+          expect(client)
+            .to_not have_received(:record_activity_task_heartbeat)
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+        end
+      end
+
+      context 'schedule to close' do
+        let(:metadata_hash) do
+          Fabricate(
+            :activity_metadata,
+            schedule_to_close_timeout: 60,
+            start_to_close_timeout: 10,
+            scheduled_at: Time.now - 120,
+            started_at: Time.now - 5
+          ).to_h
+        end
+        it 'raises' do
+          expect do
+            subject.heartbeat_interrupted
+          end.to raise_error(Temporal::ActivityExecutionTimedOut)
+
+          expect(client)
+            .to_not have_received(:record_activity_task_heartbeat)
+            .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
+        end
+      end
+    end
+
+    describe 'shutting down' do
+      let(:is_shutting_down_proc) { proc { true } }
+
+      it 'raise when shutting down' do
+        expect do
+          subject.heartbeat_interrupted
+        end.to raise_error(Temporal::ActivityWorkerShuttingDown)
 
         expect(client)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
-
-        expect(subject.heartbeat_check_scheduled).to be_nil
       end
     end
   end
@@ -120,7 +193,7 @@ describe Temporal::Activity::Context do
 
   describe '#async?' do
     subject { context.async? }
-    let(:context) { described_class.new(client, metadata, nil, nil) }
+    let(:context) { described_class.new(client, metadata, nil, nil, nil) }
 
     context 'when context is sync' do
       it { is_expected.to eq(false) }
@@ -186,6 +259,60 @@ describe Temporal::Activity::Context do
   describe '#name' do
     it 'returns the class name of the activity' do
       expect(subject.name).to eq('TestActivity')
+    end
+  end
+
+  describe '#timed_out?' do
+    context 'start to close' do
+      context 'is timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 15).to_h }
+
+        it 'true when start to close exceeded' do
+          expect(subject.timed_out?).to be(true)
+        end
+      end
+
+      context 'is not timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, start_to_close_timeout: 10, started_at: Time.now - 5).to_h }
+
+        it 'false when start to close not exceeded' do
+          expect(subject.timed_out?).to be(false)
+        end
+      end
+    end
+
+    context 'schedule to close' do
+      context 'is timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, schedule_to_close_timeout: 10, scheduled_at: Time.now - 15).to_h }
+
+        it 'true when start to close exceeded' do
+          expect(subject.timed_out?).to be(true)
+        end
+      end
+
+      context 'is not timed out' do
+        let(:metadata_hash) { Fabricate(:activity_metadata, schedule_to_close_timeout: 10, scheduled_at: Time.now - 5).to_h }
+
+        it 'false when start to close not exceeded' do
+          expect(subject.timed_out?).to be(false)
+        end
+      end
+    end
+  end
+
+  describe '#shutting_down?' do
+    context 'is not shutting down' do
+      it 'false' do
+        expect(subject.shutting_down?).to be(false)
+      end
+    end
+
+    context 'is shutting down' do
+      let(:is_shutting_down_proc) { proc { true } }
+
+      it 'true' do
+        expect(subject.shutting_down?).to be(true)
+      end
     end
   end
 end

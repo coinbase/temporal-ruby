@@ -516,11 +516,17 @@ describe Temporal::Worker do
 
     describe 'signal handling' do
       before do
+        # This queue synchronizes worker startup by ensuring @worker_pid has been
+        # set before this block returns, preventing a race condition in the
+        # specs below that read this value to signal the process.
+        pid_queue = Queue.new
         @thread = Thread.new do
           @worker_pid = Process.pid
+          pid_queue << 'ready'
           subject.start
         end
         sleep THREAD_SYNC_DELAY # give worker time to start
+        pid_queue.pop
       end
 
       around do |example|
