@@ -431,7 +431,7 @@ module Temporal
     # @param namespace [String]
     # @param query [String]
     #
-    # @return [Temporal::Workflow::CountWorkflowAggregation] an integer count of workflows matching the query
+    # @return [Temporal::Workflow::CountWorkflowsResult] an integer count of workflows matching the query
     def count_workflow_executions(namespace, query: nil)
       response = connection.count_workflow_executions(namespace: namespace, query: query)
       Workflow::CountWorkflowsResult.new(count: response.count)
