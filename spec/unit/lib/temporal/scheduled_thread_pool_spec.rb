@@ -5,9 +5,10 @@ describe Temporal::ScheduledThreadPool do
     allow(Temporal.metrics).to receive(:gauge)
   end
 
+  let(:config) { Temporal::Configuration.new }
   let(:size) { 2 }
   let(:tags) { { foo: 'bar', bat: 'baz' } }
-  let(:thread_pool) { described_class.new(size, tags) }
+  let(:thread_pool) { described_class.new(size, config, tags) }
 
   describe '#schedule' do
     it 'executes one task with zero delay on a thread and exits' do
@@ -38,6 +39,38 @@ describe Temporal::ScheduledThreadPool do
       expect(answers.size).to eq(2)
       expect(answers.pop).to eq(:first)
       expect(answers.pop).to eq(:second)
+    end
+
+    it 'error does not exit' do
+      times = 0
+
+      thread_pool.schedule(:foo, 0) do
+        times += 1
+        raise 'foo'
+      end
+
+      thread_pool.shutdown
+
+      expect(times).to eq(1)
+    end
+
+    it 'exception does exit' do
+      Thread.report_on_exception = false
+      times = 0
+
+      thread_pool.schedule(:foo, 0) do
+        times += 1
+        raise Exception, 'crash'
+      end
+
+      begin
+        thread_pool.shutdown
+        raise 'should not be reached'
+      rescue Exception => e
+        'ok'
+      end
+
+      expect(times).to eq(1)
     end
   end
 

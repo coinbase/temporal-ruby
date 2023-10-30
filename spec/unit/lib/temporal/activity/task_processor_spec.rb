@@ -22,12 +22,15 @@ describe Temporal::Activity::TaskProcessor do
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:config) { Temporal::Configuration.new }
-  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(2, {}) }
+  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(2, config, {}) }
   let(:input) { %w[arg1 arg2] }
 
   describe '#process' do
     let(:heartbeat_check_scheduled) { nil }
-    let(:context) { instance_double('Temporal::Activity::Context', async?: false, heartbeat_check_scheduled: heartbeat_check_scheduled) }
+    let(:context) do
+      instance_double('Temporal::Activity::Context', async?: false,
+                                                     heartbeat_check_scheduled: heartbeat_check_scheduled)
+    end
 
     before do
       allow(Temporal::Connection)
@@ -38,7 +41,8 @@ describe Temporal::Activity::TaskProcessor do
         .to receive(:generate_activity_metadata)
         .with(task, namespace)
         .and_return(metadata)
-      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config, heartbeat_thread_pool).and_return(context)
+      allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config,
+                                                               heartbeat_thread_pool).and_return(context)
 
       allow(connection).to receive(:respond_activity_task_completed)
       allow(connection).to receive(:respond_activity_task_failed)
@@ -119,7 +123,9 @@ describe Temporal::Activity::TaskProcessor do
         end
 
         context 'when there is an outstanding scheduled heartbeat' do
-          let(:heartbeat_check_scheduled) { Temporal::ScheduledThreadPool::ScheduledItem.new(id: :foo, canceled: false) }
+          let(:heartbeat_check_scheduled) do
+            Temporal::ScheduledThreadPool::ScheduledItem.new(id: :foo, canceled: false)
+          end
           it 'it gets canceled' do
             subject.process
 

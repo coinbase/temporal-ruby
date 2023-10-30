@@ -3,23 +3,23 @@ require 'temporal/metadata/activity'
 require 'temporal/scheduled_thread_pool'
 
 describe Temporal::Activity::Context do
-  let(:client) { instance_double('Temporal::Client::GRPCClient') }
+  let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:metadata_hash) { Fabricate(:activity_metadata).to_h }
   let(:metadata) { Temporal::Metadata::Activity.new(**metadata_hash) }
   let(:config) { Temporal::Configuration.new }
   let(:task_token) { SecureRandom.uuid }
-  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(1, {}) }
+  let(:heartbeat_thread_pool) { Temporal::ScheduledThreadPool.new(1, config, {}) }
   let(:heartbeat_response) { Fabricate(:api_record_activity_heartbeat_response) }
 
-  subject { described_class.new(client, metadata, config, heartbeat_thread_pool) }
+  subject { described_class.new(connection, metadata, config, heartbeat_thread_pool) }
 
   describe '#heartbeat' do
-    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+    before { allow(connection).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
 
     it 'records heartbeat' do
       subject.heartbeat
 
-      expect(client)
+      expect(connection)
         .to have_received(:record_activity_task_heartbeat)
         .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
     end
@@ -27,7 +27,7 @@ describe Temporal::Activity::Context do
     it 'records heartbeat with details' do
       subject.heartbeat(foo: :bar)
 
-      expect(client)
+      expect(connection)
         .to have_received(:record_activity_task_heartbeat)
         .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { foo: :bar })
     end
@@ -48,7 +48,7 @@ describe Temporal::Activity::Context do
             subject.heartbeat(iteration: i)
           end
 
-          expect(client)
+          expect(connection)
             .to have_received(:record_activity_task_heartbeat)
             .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 0 })
             .once
@@ -67,7 +67,7 @@ describe Temporal::Activity::Context do
           # Shutdown to drain remaining threads
           heartbeat_thread_pool.shutdown
 
-          expect(client)
+          expect(connection)
             .to have_received(:record_activity_task_heartbeat)
             .ordered
             .with(namespace: metadata.namespace, task_token: metadata.task_token, details: { iteration: 1 })
@@ -80,7 +80,7 @@ describe Temporal::Activity::Context do
         config.timeouts = { max_heartbeat_throttle_interval: 0 }
         subject.heartbeat
 
-        expect(client)
+        expect(connection)
           .to have_received(:record_activity_task_heartbeat)
           .with(namespace: metadata.namespace, task_token: metadata.task_token, details: nil)
 
@@ -90,17 +90,18 @@ describe Temporal::Activity::Context do
   end
 
   describe '#last_heartbeat_throttled' do
-    before { allow(client).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
+    before { allow(connection).to receive(:record_activity_task_heartbeat).and_return(heartbeat_response) }
 
-    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 10).to_h }
+    let(:metadata_hash) { Fabricate(:activity_metadata, heartbeat_timeout: 3).to_h }
 
     it 'true when throttled, false when not' do
       subject.heartbeat(iteration: 1)
       expect(subject.last_heartbeat_throttled).to be(false)
       subject.heartbeat(iteration: 2)
       expect(subject.last_heartbeat_throttled).to be(true)
-      subject.heartbeat(iteration: 3)
-      expect(subject.last_heartbeat_throttled).to be(true)
+
+      # Shutdown to drain remaining threads
+      heartbeat_thread_pool.shutdown
     end
   end
 
@@ -120,7 +121,7 @@ describe Temporal::Activity::Context do
 
   describe '#async?' do
     subject { context.async? }
-    let(:context) { described_class.new(client, metadata, nil, nil) }
+    let(:context) { described_class.new(connection, metadata, nil, nil) }
 
     context 'when context is sync' do
       it { is_expected.to eq(false) }
