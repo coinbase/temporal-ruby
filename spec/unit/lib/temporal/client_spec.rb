@@ -1123,7 +1123,7 @@ describe Temporal::Client do
         .to have_received(:count_workflow_executions)
         .with(namespace: namespace, query: 'ExecutionStatus="Running"')
 
-      expect(resp.count).to eq(5)
+      expect(resp).to eq(5)
     end
   end
 end

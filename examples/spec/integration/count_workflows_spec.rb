@@ -26,11 +26,11 @@ describe 'Temporal.count_workflow_executions', :integration do
         'ruby-samples', query: query
       )
 
-      break if result.count.positive?
+      break if result.positive?
 
       sleep 1
     end
 
-    expect(result.count).to eq(1)
+    expect(result).to eq(1)
   end
 end
