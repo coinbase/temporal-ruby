@@ -33,4 +33,19 @@ describe 'Activity cancellation', :integration do
     expect(result).to be_a(Temporal::ActivityCanceled)
     expect(result.message).to eq('ACTIVITY_ID_NOT_STARTED')
   end
+
+  it 'cancels a running activity around the time it completes' do
+    workflow_id, run_id = run_workflow(LongWorkflow, 1, 0.5)
+
+    sleep 0.4
+    Temporal.signal_workflow(LongWorkflow, :CANCEL, workflow_id, run_id)
+
+    result = Temporal.await_workflow_result(
+      LongWorkflow,
+      workflow_id: workflow_id,
+      run_id: run_id,
+    )
+
+    expect(result).to be_nil
+  end
 end

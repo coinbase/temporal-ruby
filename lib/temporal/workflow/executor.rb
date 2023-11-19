@@ -42,7 +42,7 @@ module Temporal
           state_manager.apply(window)
         end
 
-        RunResult.new(commands: state_manager.commands, new_sdk_flags_used: state_manager.new_sdk_flags_used)
+        RunResult.new(commands: state_manager.final_commands, new_sdk_flags_used: state_manager.new_sdk_flags_used)
       end
 
       # Process queries using the pre-registered query handlers
