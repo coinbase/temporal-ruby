@@ -43,7 +43,10 @@ module Temporal
                  :update_schedule,
                  :trigger_schedule,
                  :pause_schedule,
-                 :unpause_schedule
+                 :unpause_schedule,
+                 :get_workflow_history,
+                 :get_workflow_history_json,
+                 :get_workflow_history_protobuf
 
   class << self
     def configure(&block)

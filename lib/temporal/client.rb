@@ -1,3 +1,4 @@
+require 'json'
 require 'temporal/execution_options'
 require 'temporal/connection'
 require 'temporal/activity'
@@ -397,14 +398,56 @@ module Temporal
     # @param run_id [String]
     #
     # @return [Temporal::Workflow::History] workflow's execution history
-    def get_workflow_history(namespace:, workflow_id:, run_id:)
+    def get_workflow_history(namespace: nil, workflow_id:, run_id:)
       history_response = connection.get_workflow_execution_history(
-        namespace: namespace,
+        namespace: namespace || config.default_execution_options.namespace,
         workflow_id: workflow_id,
         run_id: run_id
       )
 
       Workflow::History.new(history_response.history.events)
+    end
+
+    # Fetch workflow's execution history as JSON. This output can be used for replay testing.
+    #
+    # @param namespace [String]
+    # @param workflow_id [String]
+    # @param run_id [String] optional
+    # @param pretty_print [Boolean] optional
+    #
+    # @return a JSON string representation of the history
+    def get_workflow_history_json(namespace: nil, workflow_id:, run_id: nil, pretty_print: true)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace || config.default_execution_options.namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+      json = history_response.history.to_json
+      if pretty_print
+        # pretty print JSON to make it more debuggable
+        ::JSON.pretty_generate(::JSON.load(json))
+      else
+        json
+      end
+    end
+
+    # Fetch workflow's execution history as protobuf binary. This output can be used for replay testing.
+    #
+    # @param namespace [String]
+    # @param workflow_id [String]
+    # @param run_id [String] optional
+    #
+    # @return a binary string representation of the history
+    def get_workflow_history_protobuf(namespace: nil, workflow_id:, run_id: nil)
+      history_response = connection.get_workflow_execution_history(
+        namespace: namespace || config.default_execution_options.namespace,
+        workflow_id: workflow_id,
+        run_id: run_id
+      )
+
+      # Protobuf for Ruby unfortunately does not support textproto. Plain binary provides
+      # a less debuggable, but compact option.
+      history_response.history.to_proto
     end
 
     def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
