@@ -2,6 +2,7 @@ require 'grpc'
 require 'time'
 require 'google/protobuf/well_known_types'
 require 'securerandom'
+require 'json'
 require 'gen/temporal/api/filter/v1/message_pb'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 require 'gen/temporal/api/operatorservice/v1/service_services_pb'
@@ -803,13 +804,35 @@ module Temporal
           channel_args["grpc.keepalive_time_ms"] = options[:keepalive_time_ms]
         end
 
+        if options[:retry_connection]
+          channel_args["grpc.enable_retries"] = 1
+
+          channel_args["grpc.service_config"] = ::JSON.generate(
+            methodConfig: [
+              {
+                name: [
+                  {
+                    service: "temporal.api.workflowservice.v1.WorkflowService",
+                  }
+                ],
+                retryPolicy: {
+                  retryableStatusCodes: ["UNAVAILABLE"],
+                  maxAttempts: 3,
+                  initialBackoff: "0.1s",
+                  backoffMultiplier: 2.0,
+                  maxBackoff: "0.3s"
+                }
+              }
+            ]
+          )
+        end
+
         @client = Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
           timeout: CONNECTION_TIMEOUT_SECONDS,
           interceptors: [ClientNameVersionInterceptor.new],
           channel_args: channel_args
-
         )
       end
 
