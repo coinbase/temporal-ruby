@@ -489,8 +489,8 @@ describe Temporal::Workflow::StateManager do
       )
       state_manager.schedule(cancel_activity_command)
 
-      cancel_timer_command = Temporal::Workflow::Command::RequestActivityCancellation.new(
-        activity_id: start_timer_command.timer_id
+      cancel_timer_command = Temporal::Workflow::Command::CancelTimer.new(
+        timer_id: start_timer_command.timer_id
       )
       state_manager.schedule(cancel_timer_command)
 
