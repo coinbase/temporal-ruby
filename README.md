@@ -346,7 +346,27 @@ A call to `worker.start` will take over the current process and will keep it unn
 or `INT` signal is received. By only registering a subset of your workflows/activities with a given
 worker you can split processing across as many workers as you need.
 
+## Worker Options
 
+- `task_queues`: hash (optional)
+
+This field let you customize the behavior per `task_queue`. Currently it's supporting only `task_queue_activities_per_second`.
+```rb
+worker = Worker.new(
+  task_queues: {
+    "30_rps" => { task_queue_activities_per_second: 30 },
+    "default" => { task_queue_activities_per_second: 100_000 }
+  }
+)
+
+# in your activity
+class ActivityA < Temporal::Activity
+  task_queue "30_rps"
+end
+```
+
+This will rate limit the number of `ActivityA` executions that can be started per second.
+	
 ## Starting a workflow
 
 All communication is handled via Temporal service, so in order to start a workflow you need to send
