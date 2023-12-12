@@ -27,12 +27,14 @@ module Temporal
       workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum],
       activity_poll_retry_seconds: Temporal::Activity::Poller::DEFAULT_OPTIONS[:poll_retry_seconds],
-      workflow_poll_retry_seconds: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:poll_retry_seconds]
+      workflow_poll_retry_seconds: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:poll_retry_seconds],
+      task_queues: {}
     )
       @config = config
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @activities = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
       @pollers = []
+      @task_queues = task_queues
       @workflow_task_middleware = []
       @workflow_middleware = []
       @activity_middleware = []
@@ -147,7 +149,7 @@ module Temporal
     private
 
     attr_reader :config, :activity_poller_options, :workflow_poller_options,
-                :activities, :workflows, :pollers,
+                :activities, :workflows, :pollers, :task_queues,
                 :workflow_task_middleware, :workflow_middleware, :activity_middleware
 
     def shutting_down?
@@ -164,7 +166,8 @@ module Temporal
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
+      options = activity_poller_options.merge(task_queues.fetch(task_queue, {}))
+      Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, options)
     end
 
     def executable_registration(executable_class, options)

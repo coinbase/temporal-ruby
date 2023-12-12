@@ -259,6 +259,9 @@ module Temporal
           namespace: namespace,
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
+          ),
+          task_queue_metadata: Temporalio::Api::TaskQueue::V1::TaskQueueMetadata.new(
+            max_tasks_per_second: Google::Protobuf::DoubleValue.new(value: max_tasks_per_second)
           )
         )
 
