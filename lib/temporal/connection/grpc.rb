@@ -253,7 +253,7 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_activity_task_queue(namespace:, task_queue:)
+      def poll_activity_task_queue(namespace:, task_queue:, max_tasks_per_second:)
         request = Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
