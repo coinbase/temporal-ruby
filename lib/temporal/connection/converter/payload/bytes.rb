@@ -1,10 +1,11 @@
 require 'temporal/json'
+require_relative 'base'
 
 module Temporal
   module Connection
     module Converter
       module Payload
-        class Bytes
+        class Bytes < Base
           ENCODING = 'binary/plain'.freeze
 
           def encoding

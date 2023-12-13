@@ -1,10 +1,11 @@
 require 'temporal/json'
+require_relative 'base'
 
 module Temporal
   module Connection
     module Converter
       module Payload
-        class ProtoJSON
+        class ProtoJSON < Base
           ENCODING = 'json/protobuf'.freeze
 
           def encoding

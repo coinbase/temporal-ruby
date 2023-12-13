@@ -55,13 +55,14 @@ module Temporal
 
       CONNECTION_TIMEOUT_SECONDS = 60
 
-      def initialize(host, port, identity, credentials, options = {})
+      def initialize(host, port, identity, credentials, client_config, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
         @credentials = credentials
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
+        @client_config = client_config
         @options = DEFAULT_OPTIONS.merge(options)
       end
 
@@ -633,15 +634,22 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request, :client_config
 
       def client
-        @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
-          url,
-          credentials,
-          timeout: CONNECTION_TIMEOUT_SECONDS,
-          interceptors: [ClientNameVersionInterceptor.new]
-        )
+        @client ||= begin
+          default_client_config = {
+            timeout: CONNECTION_TIMEOUT_SECONDS,
+            interceptors: [ClientNameVersionInterceptor.new]
+          }
+          client_config_hash = default_client_config.merge(client_config.to_hash)
+
+          Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
+            url,
+            credentials,
+            **client_config_hash
+          )
+        end
       end
 
       def operator_client

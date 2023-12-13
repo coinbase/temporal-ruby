@@ -9,12 +9,12 @@ module Temporal
       float_precision: 0
     }.freeze
 
-    def self.serialize(value)
-      Oj.dump(value, OJ_OPTIONS)
+    def self.serialize(value, options = {})
+      Oj.dump(value, OJ_OPTIONS.merge(options))
     end
 
-    def self.deserialize(value)
-      Oj.load(value.to_s, OJ_OPTIONS)
+    def self.deserialize(value, options = {})
+      Oj.load(value.to_s, OJ_OPTIONS.merge(options))
     end
   end
 end

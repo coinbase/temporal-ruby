@@ -1,8 +1,10 @@
+require_relative 'base'
+
 module Temporal
   module Connection
     module Converter
       module Payload
-        class Nil
+        class Nil < Base
           ENCODING = 'binary/null'.freeze
 
           def encoding
