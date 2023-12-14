@@ -178,6 +178,43 @@ Temporal.configure do |config|
 end
 ```
 
+## Using gRPC client configurations
+
+The SDK exposes an interface for us to customize the configuration for the gRPC client. For the full list of supported configurations, please refer to [original gRPC gem](https://github.com/grpc/grpc/blob/a04188b29f6f3165e54cff9e9586ab570421a6b0/src/ruby/lib/grpc/generic/client_stub.rb#L98)
+
+```ruby
+Temporal.configure do |config|
+  config.client_config = {
+    channel_args: {
+      ::GRPC::Core::Channel::SSL_TARGET => ENV["TEMPORAL_SERVER_NAME"]
+    }
+    # more configs for the client go here
+  }
+end
+```
+
+## Using payload converters configurations
+
+The SDK exposes an interface for us to customize the configuration for the payload converters. To understand more about Temporal data conversion, please to [the official document](https://docs.temporal.io/dataconversion)
+
+The SDK supports four types of data encoding:
+  - `json/plain`
+  - `binary/plain`
+  - `binary/null`
+  - `json/protobuf`
+
+```ruby
+Temporal.configure do |config|
+  config.payload_converters_options = {
+    'json/plain' => {
+      circular: true
+      # more configs for JSON converter go here
+    }
+   # more configs for other converter go here
+  }
+end
+```
+
 ## Workflows
 
 A workflow is defined using pure Ruby code, however it should contain only a high-level
@@ -366,7 +403,7 @@ end
 ```
 
 This will rate limit the number of `ActivityA` executions that can be started per second.
-	
+
 ## Starting a workflow
 
 All communication is handled via Temporal service, so in order to start a workflow you need to send

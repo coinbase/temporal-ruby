@@ -10,17 +10,31 @@ describe Temporal::Connection::GRPC do
   let(:workflow_id) { SecureRandom.uuid }
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
+  let(:host) { 'testhost' }
+  let(:port) { '6969' }
+  let(:credentials) { :this_channel_is_insecure }
+  let(:client_config) { Temporal::Configuration::GRPCConfig.new(channel_args: { 'foo' => 'again' }) }
+  let(:url) { 'testhost:6969' }
+  let(:client_config_hash) do
+    {
+      timeout: Temporal::Connection::GRPC::CONNECTION_TIMEOUT_SECONDS,
+      interceptors: [be_a(Temporal::Connection::ClientNameVersionInterceptor)],
+      channel_args: { 'foo' => 'again' }
+    }
+  end
 
-  subject { Temporal::Connection::GRPC.new(nil, nil, identity, :this_channel_is_insecure) }
+  subject { Temporal::Connection::GRPC.new(host, port, identity, credentials, client_config) }
 
   class TestDeserializer
     extend Temporal::Concerns::Payloads
   end
 
   before do
-    allow(subject).to receive(:client).and_return(grpc_stub)
-    allow(subject).to receive(:operator_client).and_return(grpc_operator_stub)
+    allow(Temporalio::Api::WorkflowService::V1::WorkflowService::Stub).to receive(:new)
+      .with(url, credentials, **client_config_hash)
+      .and_return(grpc_stub)
 
+    allow(subject).to receive(:operator_client).and_return(grpc_operator_stub)
     allow(Time).to receive(:now).and_return(now)
   end
 

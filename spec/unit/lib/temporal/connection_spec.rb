@@ -10,6 +10,16 @@ describe Temporal::Connection do
     config
   end
 
+  context 'client_config' do
+    let(:client_config) { { channel_args: { 'foo' => 'again' } } }
+    let(:expected_client_config) { Temporal::Configuration::GRPCConfig.new(client_config) }
+
+    it 'overrides' do
+      config.client_config = client_config
+      expect(subject.send(:client_config)).to eq(expected_client_config)
+    end
+  end
+
   context 'identity' do
     let(:identity) { 'my_identity' }
     it 'overrides' do

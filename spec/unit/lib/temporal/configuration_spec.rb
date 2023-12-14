@@ -51,15 +51,22 @@ describe Temporal::Configuration do
   end
 
   describe '#for_connection' do
-    let (:new_identity) { 'new_identity' }
+    let(:new_identity) { 'new_identity' }
+    let(:client_config) { { channel_args: { 'foo' => 'again' } } }
+    let(:expected_client_config) { Temporal::Configuration::GRPCConfig.new(client_config) }
 
-    it 'default identity' do
+    it 'default identity and client_config' do
       expect(subject.for_connection).to have_attributes(identity: "#{Process.pid}@#{`hostname`}")
     end
 
     it 'override identity' do
       subject.identity = new_identity
       expect(subject.for_connection).to have_attributes(identity: new_identity)
+    end
+
+    it 'override client_config' do
+      subject.client_config = client_config
+      expect(subject.for_connection).to have_attributes(client_config: expected_client_config)
     end
   end
 end
