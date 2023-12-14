@@ -501,6 +501,24 @@ module Temporal
       )
     end
 
+    # Delete a schedule in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param schedule_id [String] schedule id
+    def delete_schedule(namespace, schedule_id)
+      connection.delete_schedule(namespace: namespace, schedule_id: schedule_id)
+    end
+
+    # Update a schedule in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param schedule_id [String] schedule id
+    # @param schedule [Temporal::Schedule::Schedule] schedule to update. All fields in the schedule will be replaced completely by this updated schedule.
+    # @param conflict_token [String] a token that was returned by a previous describe_schedule call. If provided and does not match the current schedule's token, the update will fail.
+    def update_schedule(namespace, schedule_id, schedule, conflict_token: nil)
+      connection.update_schedule(namespace: namespace, schedule_id: schedule_id, schedule: schedule, conflict_token: conflict_token)
+    end
+
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end

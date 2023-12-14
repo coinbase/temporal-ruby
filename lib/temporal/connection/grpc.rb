@@ -714,6 +714,38 @@ module Temporal
         client.create_schedule(request)
       end
 
+      def delete_schedule(namespace:, schedule_id:)
+        request = Temporalio::Api::WorkflowService::V1::DeleteScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          identity: identity
+        )
+
+        begin
+          client.delete_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+      def update_schedule(namespace:, schedule_id:, schedule:, conflict_token: nil)
+        request = Temporalio::Api::WorkflowService::V1::UpdateScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          schedule: Temporal::Connection::Serializer::Schedule.new(schedule).to_proto,
+          conflict_token: conflict_token,
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.update_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+
       private
 
       attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
