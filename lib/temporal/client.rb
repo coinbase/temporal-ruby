@@ -519,6 +519,33 @@ module Temporal
       connection.update_schedule(namespace: namespace, schedule_id: schedule_id, schedule: schedule, conflict_token: conflict_token)
     end
 
+    # Trigger one action of a schedule to run immediately
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param overlap_policy [Symbol] Should be one of :skip, :buffer_one, :buffer_all, :cancel_other, :terminate_other, :allow_all
+    def trigger_schedule(namespace, schedule_id, overlap_policy: nil)
+      connection.trigger_schedule(namespace: namespace, schedule_id: schedule_id, overlap_policy: overlap_policy)
+    end
+
+    # Pause a schedule so actions will not run
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param note [String] an optional note to explain why the schedule was paused
+    def pause_schedule(namespace, schedule_id, note: nil)
+      connection.pause_schedule(namespace: namespace, schedule_id: schedule_id, should_pause: true, note: note)
+    end
+
+    # Unpause a schedule so actions will run
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param note [String] an optional note to explain why the schedule was unpaused
+    def unpause_schedule(namespace, schedule_id, note: nil)
+      connection.pause_schedule(namespace: namespace, schedule_id: schedule_id, should_pause: false, note: note)
+    end
+
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end

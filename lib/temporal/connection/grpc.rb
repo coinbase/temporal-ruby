@@ -745,6 +745,50 @@ module Temporal
         end
       end
 
+      def trigger_schedule(namespace:, schedule_id:, overlap_policy: nil)
+        request = Temporalio::Api::WorkflowService::V1::PatchScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          patch: Temporalio::Api::Schedule::V1::SchedulePatch.new(
+            trigger_immediately: Temporalio::Api::Schedule::V1::TriggerImmediatelyRequest.new(
+              overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(
+                overlap_policy
+              ).to_proto
+            ),
+          ),
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.patch_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+      def pause_schedule(namespace:, schedule_id:, should_pause:, note: nil)
+        patch = Temporalio::Api::Schedule::V1::SchedulePatch.new
+        if should_pause
+          patch.pause = note || 'Paused by temporal-ruby'
+        else
+          patch.unpause = note || 'Unpaused by temporal-ruby'
+        end
+
+        request = Temporalio::Api::WorkflowService::V1::PatchScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          patch: patch,
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.patch_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
 
       private
 
