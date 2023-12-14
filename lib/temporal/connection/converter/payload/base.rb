@@ -11,7 +11,7 @@ module Temporal
             raise NotImplementedError
           end
 
-          def from_payload(__payload)
+          def from_payload(_payload)
             raise NotImplementedError
           end
 

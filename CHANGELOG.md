@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+Expose two new configurations
+  - `client_config`: define the configurations for the workflow client
+  - `payload_converters_options`: define the configuration for the payload converters
+
 ## 0.1.1
 Allows signals to be processed within the first workflow task.
 
