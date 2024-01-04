@@ -20,7 +20,7 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
+      attr_reader :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
 
       def initialize(dispatcher, config)
         @dispatcher = dispatcher
@@ -87,6 +87,24 @@ module Temporal
         [event_target_from(command_id, command), cancelation_id]
       end
 
+      def final_commands
+        # Filter out any activity or timer cancellation commands if the underlying activity or
+        # timer has completed. This can occur when an activity or timer completes while a
+        # workflow task is being processed that would otherwise cancel this time or activity.
+        commands.filter do |command_pair|
+          case command_pair.last
+          when Command::CancelTimer
+            state_machine = command_tracker[command_pair.last.timer_id]
+            !state_machine.closed?
+          when Command::RequestActivityCancellation
+            state_machine = command_tracker[command_pair.last.activity_id]
+            !state_machine.closed?
+          else
+            true
+          end
+        end
+      end
+
       def release?(release_name)
         track_release(release_name) unless releases.key?(release_name)
 
@@ -149,7 +167,7 @@ module Temporal
 
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
+      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
 
       def use_signals_first(raw_events)
         # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST

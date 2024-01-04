@@ -469,6 +469,89 @@ describe Temporal::Workflow::StateManager do
     end
   end
 
+  describe "#final_commands" do
+    let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
+    let(:state_manager) do
+      Temporal::Workflow::StateManager.new(dispatcher, config)
+    end
+
+    let(:config) { Temporal::Configuration.new }
+
+    it "preserves canceled activity or timer commands when not completed" do
+      schedule_activity_command = Temporal::Workflow::Command::ScheduleActivity.new
+      state_manager.schedule(schedule_activity_command)
+
+      start_timer_command = Temporal::Workflow::Command::StartTimer.new
+      state_manager.schedule(start_timer_command)
+
+      cancel_activity_command = Temporal::Workflow::Command::RequestActivityCancellation.new(
+        activity_id: schedule_activity_command.activity_id
+      )
+      state_manager.schedule(cancel_activity_command)
+
+      cancel_timer_command = Temporal::Workflow::Command::CancelTimer.new(
+        timer_id: start_timer_command.timer_id
+      )
+      state_manager.schedule(cancel_timer_command)
+
+      expect(state_manager.final_commands).to(
+        eq(
+          [
+            [1, schedule_activity_command],
+            [2, start_timer_command],
+            [3, cancel_activity_command],
+            [4, cancel_timer_command]
+          ]
+        )
+      )
+    end
+
+    it "drop cancel activity command when completed" do
+      schedule_activity_command = Temporal::Workflow::Command::ScheduleActivity.new
+      state_manager.schedule(schedule_activity_command)
+
+      cancel_command = Temporal::Workflow::Command::RequestActivityCancellation.new(
+        activity_id: schedule_activity_command.activity_id
+      )
+      state_manager.schedule(cancel_command)
+
+      # Fake completing the activity
+      window = Temporal::Workflow::History::Window.new
+      # The fake assumes an activity event completed two events ago, so fix the event id to +2
+      window.add(
+        Temporal::Workflow::History::Event.new(
+          Fabricate(:api_activity_task_completed_event, event_id: schedule_activity_command.activity_id + 2)
+        )
+      )
+      state_manager.apply(window)
+
+      expect(state_manager.final_commands).to(eq([[1, schedule_activity_command]]))
+    end
+
+    it "drop cancel timer command when completed" do
+      start_timer_command = Temporal::Workflow::Command::StartTimer.new
+      state_manager.schedule(start_timer_command)
+
+      cancel_command = Temporal::Workflow::Command::CancelTimer.new(
+        timer_id: start_timer_command.timer_id
+      )
+      state_manager.schedule(cancel_command)
+
+      # Fake completing the timer
+      window = Temporal::Workflow::History::Window.new
+      # The fake assumes an activity event completed four events ago, so fix the event id to +4
+      window.add(
+        Temporal::Workflow::History::Event.new(
+          Fabricate(:api_timer_fired_event, event_id: start_timer_command.timer_id + 4)
+        )
+      )
+      state_manager.apply(window)
+
+      expect(state_manager.final_commands).to(eq([[1, start_timer_command]]))
+    end
+  end
+
+
   describe '#search_attributes' do
     let(:initial_search_attributes) do
       {
