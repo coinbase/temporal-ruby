@@ -11,6 +11,8 @@ require 'temporal/connection/errors'
 require 'temporal/connection/interceptors/client_name_version_interceptor'
 require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
+require 'temporal/connection/serializer/backfill'
+require 'temporal/connection/serializer/schedule'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
 require 'temporal/concerns/payloads'
 
@@ -626,6 +628,166 @@ module Temporal
 
       def get_system_info
         client.get_system_info(Temporalio::Api::WorkflowService::V1::GetSystemInfoRequest.new)
+      end
+
+      def list_schedules(namespace:, maximum_page_size:, next_page_token:)
+        request = Temporalio::Api::WorkflowService::V1::ListSchedulesRequest.new(
+          namespace: namespace,
+          maximum_page_size: maximum_page_size,
+          next_page_token: next_page_token
+        )
+        resp = client.list_schedules(request)
+
+        Temporal::Schedule::ListSchedulesResponse.new(
+          schedules: resp.schedules.map do |schedule|
+            Temporal::Schedule::ScheduleListEntry.new(
+              schedule_id: schedule.schedule_id,
+              memo: from_payload_map(schedule.memo&.fields || {}),
+              search_attributes: from_payload_map_without_codec(schedule.search_attributes&.indexed_fields || {}),
+              info: schedule.info
+            )
+          end,
+          next_page_token: resp.next_page_token,
+        )
+      end
+
+      def describe_schedule(namespace:, schedule_id:)
+        request = Temporalio::Api::WorkflowService::V1::DescribeScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id
+        )
+
+        resp = nil
+        begin
+          resp = client.describe_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+
+        Temporal::Schedule::DescribeScheduleResponse.new(
+          schedule: resp.schedule,
+          info: resp.info,
+          memo: from_payload_map(resp.memo&.fields || {}),
+          search_attributes: from_payload_map_without_codec(resp.search_attributes&.indexed_fields || {}),
+          conflict_token: resp.conflict_token
+        )
+      end
+
+      def create_schedule(
+        namespace:,
+        schedule_id:,
+        schedule:,
+        trigger_immediately: nil,
+        backfill: nil,
+        memo: nil,
+        search_attributes: nil
+      )
+        initial_patch = nil
+        if trigger_immediately || backfill
+          initial_patch = Temporalio::Api::Schedule::V1::SchedulePatch.new
+          if trigger_immediately
+            initial_patch.trigger_immediately = Temporalio::Api::Schedule::V1::TriggerImmediatelyRequest.new(
+              overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(
+                schedule.policies&.overlap_policy
+              ).to_proto
+            )
+          end
+
+          if backfill
+            initial_patch.backfill_request += [Temporal::Connection::Serializer::Backfill.new(backfill).to_proto]
+          end
+        end
+
+        request = Temporalio::Api::WorkflowService::V1::CreateScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          schedule: Temporal::Connection::Serializer::Schedule.new(schedule).to_proto,
+          identity: identity,
+          request_id: SecureRandom.uuid,
+          memo: Temporalio::Api::Common::V1::Memo.new(
+            fields: to_payload_map(memo || {})
+          ),
+          search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
+            indexed_fields: to_payload_map_without_codec(search_attributes || {})
+          )
+        )
+        client.create_schedule(request)
+      end
+
+      def delete_schedule(namespace:, schedule_id:)
+        request = Temporalio::Api::WorkflowService::V1::DeleteScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          identity: identity
+        )
+
+        begin
+          client.delete_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+      def update_schedule(namespace:, schedule_id:, schedule:, conflict_token: nil)
+        request = Temporalio::Api::WorkflowService::V1::UpdateScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          schedule: Temporal::Connection::Serializer::Schedule.new(schedule).to_proto,
+          conflict_token: conflict_token,
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.update_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+      def trigger_schedule(namespace:, schedule_id:, overlap_policy: nil)
+        request = Temporalio::Api::WorkflowService::V1::PatchScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          patch: Temporalio::Api::Schedule::V1::SchedulePatch.new(
+            trigger_immediately: Temporalio::Api::Schedule::V1::TriggerImmediatelyRequest.new(
+              overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(
+                overlap_policy
+              ).to_proto
+            ),
+          ),
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.patch_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
+      end
+
+      def pause_schedule(namespace:, schedule_id:, should_pause:, note: nil)
+        patch = Temporalio::Api::Schedule::V1::SchedulePatch.new
+        if should_pause
+          patch.pause = note || 'Paused by temporal-ruby'
+        else
+          patch.unpause = note || 'Unpaused by temporal-ruby'
+        end
+
+        request = Temporalio::Api::WorkflowService::V1::PatchScheduleRequest.new(
+          namespace: namespace,
+          schedule_id: schedule_id,
+          patch: patch,
+          identity: identity,
+          request_id: SecureRandom.uuid
+        )
+
+        begin
+          client.patch_schedule(request)
+        rescue ::GRPC::NotFound => e
+          raise Temporal::NotFoundFailure, e
+        end
       end
 
       private
