@@ -11,11 +11,12 @@ module Temporal
   class ThreadPool
     attr_reader :size
 
-    def initialize(size, metrics_tags)
+    def initialize(size, config, metrics_tags)
       @size = size
       @metrics_tags = metrics_tags
       @queue = Queue.new
       @mutex = Mutex.new
+      @config = config
       @availability = ConditionVariable.new
       @available_threads = size
       @pool = Array.new(size) do |_i|
@@ -55,10 +56,21 @@ module Temporal
     EXIT_SYMBOL = :exit
 
     def poll
+      Thread.current.abort_on_exception = true
+
       catch(EXIT_SYMBOL) do
         loop do
           job = @queue.pop
-          job.call
+          begin
+            job.call
+          rescue StandardError => e
+            Temporal.logger.error('Error reached top of thread pool thread', { error: e.inspect })
+            Temporal::ErrorHandler.handle(e, @config)
+          rescue Exception => ex
+            Temporal.logger.error('Exception reached top of thread pool thread', { error: ex.inspect })
+            Temporal::ErrorHandler.handle(ex, @config)
+            raise
+          end
           @mutex.synchronize do
             @available_threads += 1
             @availability.signal

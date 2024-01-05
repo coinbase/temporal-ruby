@@ -271,7 +271,7 @@ module Temporal
     # Reset a workflow
     #
     # @note More on resetting a workflow here —
-    #   https://docs.temporal.io/docs/system-tools/tctl/#restart-reset-workflow
+    #   https://docs.temporal.io/tctl-v1/workflow#reset
     #
     # @param namespace [String]
     # @param workflow_id [String]
@@ -281,9 +281,13 @@ module Temporal
     # @param workflow_task_id [Integer, nil] A specific event ID to reset to. The event has to
     #   be of a type WorkflowTaskCompleted, WorkflowTaskFailed or WorkflowTaskTimedOut
     # @param reason [String] a reset reason to be recorded in workflow's history for reference
+    # @param request_id [String, nil] an idempotency key for the Reset request or `nil` to use
+    #   an auto-generated, unique value
+    # @param reset_reapply_type [Symbol] one of the Temporal::ResetReapplyType values. Defaults
+    #   to SIGNAL.
     #
     # @return [String] run_id of the new workflow execution
-    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset')
+    def reset_workflow(namespace, workflow_id, run_id, strategy: nil, workflow_task_id: nil, reason: 'manual reset', request_id: nil, reset_reapply_type: Temporal::ResetReapplyType::SIGNAL)
       # Pick default strategy for backwards-compatibility
       strategy ||= :last_workflow_task unless workflow_task_id
 
@@ -294,12 +298,22 @@ module Temporal
       workflow_task_id ||= find_workflow_task(namespace, workflow_id, run_id, strategy)&.id
       raise Error, 'Could not find an event to reset to' unless workflow_task_id
 
+      if request_id.nil?
+        # Generate a request ID if one is not provided.
+        # This is consistent with the Go SDK:
+        # https://github.com/temporalio/sdk-go/blob/e1d76b7c798828302980d483f0981128c97a20c2/internal/internal_workflow_client.go#L952-L972
+
+        request_id = SecureRandom.uuid
+      end
+
       response = connection.reset_workflow_execution(
         namespace: namespace,
         workflow_id: workflow_id,
         run_id: run_id,
         reason: reason,
-        workflow_task_event_id: workflow_task_id
+        workflow_task_event_id: workflow_task_id,
+        request_id: request_id,
+        reset_reapply_type: reset_reapply_type
       )
 
       response.run_id
@@ -405,8 +419,21 @@ module Temporal
       Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
-    def query_workflow_executions(namespace, query, next_page_token: nil, max_page_size: nil)
+    def query_workflow_executions(namespace, query, filter: {}, next_page_token: nil, max_page_size: nil)
+      validate_filter(filter, :status, :workflow, :workflow_id)
+      
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+    end
+
+    # Count the number of workflows matching the provided query
+    # 
+    # @param namespace [String]
+    # @param query [String]
+    #
+    # @return [Integer] an integer count of workflows matching the query
+    def count_workflow_executions(namespace, query: nil)
+      response = connection.count_workflow_executions(namespace: namespace, query: query)
+      response.count
     end
 
     # @param attributes [Hash[String, Symbol]] name to symbol for type, see INDEXED_VALUE_TYPE above
@@ -425,6 +452,98 @@ module Temporal
     # @param namespace String, required for SQL enhanced visibility, ignored for elastic search
     def remove_custom_search_attributes(*attribute_names, namespace: nil)
       connection.remove_custom_search_attributes(attribute_names, namespace || config.default_execution_options.namespace)
+    end
+
+    # List all schedules in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param maximum_page_size [Integer] number of namespace results to return per page.
+    # @param next_page_token [String] a optional pagination token returned by a previous list_namespaces call
+    def list_schedules(namespace, maximum_page_size:, next_page_token: '')
+      connection.list_schedules(namespace: namespace, maximum_page_size: maximum_page_size, next_page_token: next_page_token)
+    end
+ 
+    # Describe a schedule in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param schedule_id [String] schedule id
+    def describe_schedule(namespace, schedule_id)
+      connection.describe_schedule(namespace: namespace, schedule_id: schedule_id)
+    end
+
+    # Create a new schedule
+    #
+    #
+    # @param namespace [String] namespace to create schedule in
+    # @param schedule_id [String] schedule id
+    # @param schedule [Temporal::Schedule::Schedule] schedule to create
+    # @param trigger_immediately [Boolean] If set, trigger one action to run immediately
+    # @param backfill [Temporal::Schedule::Backfill] If set, run through the backfill schedule and trigger actions.
+    # @param memo [Hash] optional key-value memo map to attach to the schedule
+    # @param search attributes [Hash] optional key-value search attributes to attach to the schedule
+    def create_schedule(
+      namespace,
+      schedule_id,
+      schedule,
+      trigger_immediately: false,
+      backfill: nil,
+      memo: nil,
+      search_attributes: nil
+    )
+      connection.create_schedule(
+        namespace: namespace,
+        schedule_id: schedule_id,
+        schedule: schedule,
+        trigger_immediately: trigger_immediately,
+        backfill: backfill,
+        memo: memo,
+        search_attributes: search_attributes
+      )
+    end
+
+    # Delete a schedule in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param schedule_id [String] schedule id
+    def delete_schedule(namespace, schedule_id)
+      connection.delete_schedule(namespace: namespace, schedule_id: schedule_id)
+    end
+
+    # Update a schedule in a namespace
+    #
+    # @param namespace [String] namespace to list schedules in
+    # @param schedule_id [String] schedule id
+    # @param schedule [Temporal::Schedule::Schedule] schedule to update. All fields in the schedule will be replaced completely by this updated schedule.
+    # @param conflict_token [String] a token that was returned by a previous describe_schedule call. If provided and does not match the current schedule's token, the update will fail.
+    def update_schedule(namespace, schedule_id, schedule, conflict_token: nil)
+      connection.update_schedule(namespace: namespace, schedule_id: schedule_id, schedule: schedule, conflict_token: conflict_token)
+    end
+
+    # Trigger one action of a schedule to run immediately
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param overlap_policy [Symbol] Should be one of :skip, :buffer_one, :buffer_all, :cancel_other, :terminate_other, :allow_all
+    def trigger_schedule(namespace, schedule_id, overlap_policy: nil)
+      connection.trigger_schedule(namespace: namespace, schedule_id: schedule_id, overlap_policy: overlap_policy)
+    end
+
+    # Pause a schedule so actions will not run
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param note [String] an optional note to explain why the schedule was paused
+    def pause_schedule(namespace, schedule_id, note: nil)
+      connection.pause_schedule(namespace: namespace, schedule_id: schedule_id, should_pause: true, note: note)
+    end
+
+    # Unpause a schedule so actions will run
+    #
+    # @param namespace [String] namespace
+    # @param schedule_id [String] schedule id
+    # @param note [String] an optional note to explain why the schedule was unpaused
+    def unpause_schedule(namespace, schedule_id, note: nil)
+      connection.pause_schedule(namespace: namespace, schedule_id: schedule_id, should_pause: false, note: note)
     end
 
     def connection

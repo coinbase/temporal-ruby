@@ -9,11 +9,12 @@ module Temporal
 
     ScheduledItem = Struct.new(:id, :job, :fire_at, :canceled, keyword_init: true)
 
-    def initialize(size, metrics_tags)
+    def initialize(size, config, metrics_tags)
       @size = size
       @metrics_tags = metrics_tags
       @queue = Queue.new
       @mutex = Mutex.new
+      @config = config
       @available_threads = size
       @occupied_threads = {}
       @pool = Array.new(size) do |_i|
@@ -66,6 +67,8 @@ module Temporal
     EXIT_SYMBOL = :exit
 
     def poll
+      Thread.current.abort_on_exception = true
+
       loop do
         item = @queue.pop
         if item == EXIT_SYMBOL
@@ -90,7 +93,16 @@ module Temporal
           # reliably be stopped once running. It's still in the begin/rescue block
           # so that it won't be executed if the thread gets canceled.
           if !item.canceled
-            item.job.call
+            begin
+              item.job.call
+            rescue StandardError => e
+              Temporal.logger.error('Error reached top of thread pool thread', { error: e.inspect })
+              Temporal::ErrorHandler.handle(e, @config)
+            rescue Exception => ex
+              Temporal.logger.error('Exception reached top of thread pool thread', { error: ex.inspect })
+              Temporal::ErrorHandler.handle(ex, @config)
+              raise
+            end
           end
         rescue CancelError
         end

@@ -3,8 +3,10 @@ require 'temporal/errors'
 require 'temporal/workflow/command'
 require 'temporal/workflow/command_state_machine'
 require 'temporal/workflow/history/event_target'
+require 'temporal/workflow/history/size'
 require 'temporal/concerns/payloads'
 require 'temporal/workflow/errors'
+require 'temporal/workflow/sdk_flags'
 require 'temporal/workflow/signal'
 
 module Temporal
@@ -18,9 +20,9 @@ module Temporal
       class UnsupportedEvent < Temporal::InternalError; end
       class UnsupportedMarkerType < Temporal::InternalError; end
 
-      attr_reader :commands, :local_time, :search_attributes
+      attr_reader :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
 
-      def initialize(dispatcher)
+      def initialize(dispatcher, config)
         @dispatcher = dispatcher
         @commands = []
         @marker_ids = Set.new
@@ -31,6 +33,24 @@ module Temporal
         @local_time = nil
         @replay = false
         @search_attributes = {}
+        @config = config
+
+        # Current flags in use, built up from workflow task completed history entries
+        @sdk_flags = Set.new
+
+        # New flags used when not replaying
+        @new_sdk_flags_used = Set.new
+
+        # Because signals must be processed first and a signal handler cannot be registered
+        # until workflow code runs, this dispatcher handler will save these signals for
+        # when a callback is first registered.
+        @first_task_signals = []
+        @first_task_signal_handler = dispatcher.register_handler(
+          Dispatcher::WILDCARD,
+          'signaled'
+        ) do |name, input|
+          @first_task_signals << [name, input]
+        end
       end
 
       def replay?
@@ -41,9 +61,7 @@ module Temporal
         # Fast-forward event IDs to skip all the markers (version markers can
         # be removed, so we can't rely on them being scheduled during a replay)
         command_id = next_event_id
-        while marker_ids.include?(command_id) do
-          command_id = next_event_id
-        end
+        command_id = next_event_id while marker_ids.include?(command_id)
 
         cancelation_id =
           case command
@@ -66,7 +84,25 @@ module Temporal
         validate_append_command(command)
         commands << [command_id, command]
 
-        return [event_target_from(command_id, command), cancelation_id]
+        [event_target_from(command_id, command), cancelation_id]
+      end
+
+      def final_commands
+        # Filter out any activity or timer cancellation commands if the underlying activity or
+        # timer has completed. This can occur when an activity or timer completes while a
+        # workflow task is being processed that would otherwise cancel this time or activity.
+        commands.filter do |command_pair|
+          case command_pair.last
+          when Command::CancelTimer
+            state_machine = command_tracker[command_pair.last.timer_id]
+            !state_machine.closed?
+          when Command::RequestActivityCancellation
+            state_machine = command_tracker[command_pair.last.activity_id]
+            !state_machine.closed?
+          else
+            true
+          end
+        end
       end
 
       def release?(release_name)
@@ -83,20 +119,105 @@ module Temporal
         @replay = history_window.replay?
         @local_time = history_window.local_time
         @last_event_id = history_window.last_event_id
+        history_window.sdk_flags.each { |flag| sdk_flags.add(flag) }
+        @history_size_bytes = history_window.history_size_bytes
+        @suggest_continue_as_new = history_window.suggest_continue_as_new
 
-        # handle markers first since their data is needed for processing events
-        history_window.markers.each do |event|
+        order_events(history_window.events).each do |event|
           apply_event(event)
         end
 
-        history_window.events.each do |event|
-          apply_event(event)
+        return unless @first_task_signal_handler
+
+        @first_task_signal_handler.unregister
+        @first_task_signals = []
+        @first_task_signal_handler = nil
+      end
+
+      def self.event_order(event, signals_first, execution_started_before_signals)
+        if event.type == 'MARKER_RECORDED'
+          # markers always come first
+          0
+        elsif !execution_started_before_signals && workflow_execution_started_event?(event)
+          1
+        elsif signals_first && signal_event?(event)
+          # signals come next if we are in signals first mode
+          2
+        else
+          # then everything else
+          3
         end
+      end
+
+      def self.signal_event?(event)
+        event.type == 'WORKFLOW_EXECUTION_SIGNALED'
+      end
+
+      def self.workflow_execution_started_event?(event)
+        event.type == 'WORKFLOW_EXECUTION_STARTED'
+      end
+
+      def history_size
+        History::Size.new(
+          events: @last_event_id,
+          bytes: @history_size_bytes,
+          suggest_continue_as_new: @suggest_continue_as_new
+        ).freeze
       end
 
       private
 
-      attr_reader :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases
+      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
+
+      def use_signals_first(raw_events)
+        # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST
+        if sdk_flags.include?(SDKFlags::HANDLE_SIGNALS_FIRST) || sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+          # If signals were handled first when this task or a previous one in this run were first
+          # played, we must continue to do so in order to ensure determinism regardless of what
+          # the configuration value is set to. Even the capabilities can be ignored because the
+          # server must have returned SDK metadata for this to be true.
+          true
+        elsif raw_events.any? { |event| StateManager.signal_event?(event) } &&
+              # If this is being played for the first time, use the configuration flag to choose
+              !replay? && !config.legacy_signals &&
+              # In order to preserve determinism, the server must support SDK metadata to order signals
+              # first. This is checked last because it will result in a Temporal server call the first
+              # time it's called in the worker process.
+              config.capabilities.sdk_metadata
+
+          if raw_events.any? do |event|
+               StateManager.workflow_execution_started_event?(event)
+             end && !config.no_signals_in_first_task
+            report_flag_used(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+          else
+            report_flag_used(SDKFlags::HANDLE_SIGNALS_FIRST)
+          end
+
+          true
+        else
+          false
+        end
+      end
+
+      def order_events(raw_events)
+        signals_first = use_signals_first(raw_events)
+        execution_started_before_signals = sdk_flags.include?(SDKFlags::SAVE_FIRST_TASK_SIGNALS)
+
+        raw_events.sort_by.with_index do |event, index|
+          # sort_by is not stable, so include index to preserve order
+          [StateManager.event_order(event, signals_first, execution_started_before_signals), index]
+        end
+      end
+
+      def report_flag_used(flag)
+        # Only add the flag if it's not already present and we are not replaying
+        if !replay? &&
+           !sdk_flags.include?(flag) &&
+           !new_sdk_flags_used.include?(flag)
+          new_sdk_flags_used << flag
+          sdk_flags << flag
+        end
+      end
 
       def next_event_id
         @last_event_id += 1
@@ -104,22 +225,21 @@ module Temporal
 
       def validate_append_command(command)
         return if commands.last.nil?
+
         _, previous_command = commands.last
         case previous_command
         when Command::CompleteWorkflow, Command::FailWorkflow, Command::ContinueAsNew
           context_string = case previous_command
-          when Command::CompleteWorkflow
-            "The workflow completed"
-          when Command::FailWorkflow
-            "The workflow failed"
-          when Command::ContinueAsNew
-            "The workflow continued as new"
-          end
-          raise Temporal::WorkflowAlreadyCompletingError.new(
-            "You cannot do anything in a Workflow after it completes. #{context_string}, "\
+                           when Command::CompleteWorkflow
+                             'The workflow completed'
+                           when Command::FailWorkflow
+                             'The workflow failed'
+                           when Command::ContinueAsNew
+                             'The workflow continued as new'
+                           end
+          raise Temporal::WorkflowAlreadyCompletingError, "You cannot do anything in a Workflow after it completes. #{context_string}, "\
             "but then it sent a new command: #{command.class}.  This can happen, for example, if you've "\
-            "not waited for all of your Activity futures before finishing the Workflow."
-          )
+            'not waited for all of your Activity futures before finishing the Workflow.'
         end
       end
 
@@ -138,7 +258,7 @@ module Temporal
             History::EventTarget.workflow,
             'started',
             from_payloads(event.attributes.input),
-            event,
+            event
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'
@@ -178,7 +298,8 @@ module Temporal
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
+          dispatch(history_target, 'failed',
+                   Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
@@ -195,7 +316,8 @@ module Temporal
 
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
-          dispatch(history_target, 'failed', Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
+          dispatch(history_target, 'failed',
+                   Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -237,7 +359,8 @@ module Temporal
         when 'WORKFLOW_EXECUTION_SIGNALED'
           # relies on Signal#== for matching in Dispatcher
           signal_target = Signal.new(event.attributes.signal_name)
-          dispatch(signal_target, 'signaled', event.attributes.signal_name, from_signal_payloads(event.attributes.input))
+          dispatch(signal_target, 'signaled', event.attributes.signal_name,
+                   from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -274,7 +397,8 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
-          dispatch(history_target, 'failed', ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding'))
+          dispatch(history_target, 'failed',
+                   ChildWorkflowTimeoutError.new('The child workflow timed out before succeeding'))
 
         when 'CHILD_WORKFLOW_EXECUTION_TERMINATED'
           state_machine.terminated
@@ -347,17 +471,17 @@ module Temporal
         # Pop the first command from the list, it is expected to match
         replay_command_id, replay_command = commands.shift
 
-        if !replay_command_id
+        unless replay_command_id
           raise NonDeterministicWorkflowError,
-            "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
+                "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
         end
 
         replay_target = event_target_from(replay_command_id, replay_command)
-        if history_target != replay_target
-          raise NonDeterministicWorkflowError,
-            "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
-            "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
-        end
+        return unless history_target != replay_target
+
+        raise NonDeterministicWorkflowError,
+              "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+              "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
       end
 
       def handle_marker(id, type, details)
@@ -382,7 +506,6 @@ module Temporal
           schedule(Command::RecordMarker.new(name: RELEASE_MARKER, details: release_name))
         end
       end
-
     end
   end
 end

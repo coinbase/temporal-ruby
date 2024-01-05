@@ -41,8 +41,8 @@ module Temporal
       end
 
       def wait
-        if !shutting_down?
-          raise "Workflow poller waiting for shutdown completion without being in shutting_down state!"
+        unless shutting_down?
+          raise 'Workflow poller waiting for shutdown completion without being in shutting_down state!'
         end
 
         thread.join
@@ -51,7 +51,8 @@ module Temporal
 
       private
 
-      attr_reader :namespace, :task_queue, :connection, :workflow_lookup, :config, :middleware, :workflow_middleware, :options, :thread
+      attr_reader :namespace, :task_queue, :connection, :workflow_lookup, :config, :middleware, :workflow_middleware,
+                  :options, :thread
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
@@ -62,6 +63,9 @@ module Temporal
       end
 
       def poll_loop
+        # Prevent the poller thread from silently dying
+        Thread.current.abort_on_exception = true
+
         last_poll_time = Time.now
         metrics_tags = { namespace: namespace, task_queue: task_queue }.freeze
 
@@ -71,8 +75,9 @@ module Temporal
           return if shutting_down?
 
           time_diff_ms = ((Time.now - last_poll_time) * 1000).round
-          Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_POLLER_TIME_SINCE_LAST_POLL, time_diff_ms, metrics_tags)
-          Temporal.logger.debug("Polling workflow task queue", { namespace: namespace, task_queue: task_queue })
+          Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_POLLER_TIME_SINCE_LAST_POLL, time_diff_ms,
+                                  metrics_tags)
+          Temporal.logger.debug('Polling workflow task queue', { namespace: namespace, task_queue: task_queue })
 
           task = poll_for_task
           last_poll_time = Time.now
@@ -89,13 +94,15 @@ module Temporal
       end
 
       def poll_for_task
-        connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue, binary_checksum: binary_checksum)
+        connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue,
+                                            binary_checksum: binary_checksum)
       rescue ::GRPC::Cancelled
         # We're shutting down and we've already reported that in the logs
         nil
-      rescue StandardError => error
-        Temporal.logger.error("Unable to poll Workflow task queue", { namespace: namespace, task_queue: task_queue, error: error.inspect })
-        Temporal::ErrorHandler.handle(error, config)
+      rescue StandardError => e
+        Temporal.logger.error('Unable to poll Workflow task queue',
+                              { namespace: namespace, task_queue: task_queue, error: e.inspect })
+        Temporal::ErrorHandler.handle(e, config)
 
         sleep(poll_retry_seconds)
 
@@ -106,12 +113,14 @@ module Temporal
         middleware_chain = Middleware::Chain.new(middleware)
         workflow_middleware_chain = Middleware::Chain.new(workflow_middleware)
 
-        TaskProcessor.new(task, task_queue, namespace, workflow_lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum).process
+        TaskProcessor.new(task, task_queue, namespace, workflow_lookup, middleware_chain, workflow_middleware_chain,
+                          config, binary_checksum).process
       end
 
       def thread_pool
         @thread_pool ||= ThreadPool.new(
           options[:thread_pool_size],
+          @config,
           {
             pool_name: 'workflow_task_poller',
             namespace: namespace,

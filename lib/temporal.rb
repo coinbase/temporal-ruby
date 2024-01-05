@@ -8,6 +8,7 @@ require 'temporal/client'
 require 'temporal/metrics'
 require 'temporal/json'
 require 'temporal/errors'
+require 'temporal/schedule'
 require 'temporal/workflow/errors'
 
 module Temporal
@@ -30,10 +31,19 @@ module Temporal
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions,
                  :query_workflow_executions,
+                 :count_workflow_executions,
                  :add_custom_search_attributes,
                  :list_custom_search_attributes,
                  :remove_custom_search_attributes,
-                 :connection
+                 :connection,
+                 :list_schedules,
+                 :describe_schedule,
+                 :create_schedule,
+                 :delete_schedule,
+                 :update_schedule,
+                 :trigger_schedule,
+                 :pause_schedule,
+                 :unpause_schedule
 
   class << self
     def configure(&block)

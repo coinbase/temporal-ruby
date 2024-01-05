@@ -16,7 +16,7 @@ module Temporal
                 workflow_type: Temporalio::Api::Common::V1::WorkflowType.new(name: object.workflow_type),
                 task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(name: object.task_queue),
                 input: to_payloads(object.input),
-                workflow_run_timeout: object.timeouts[:execution],
+                workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],
                 retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
                 header: serialize_headers(object.headers),

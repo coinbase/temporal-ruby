@@ -1,3 +1,3 @@
 module Temporal
-  VERSION = '0.0.2'.freeze
+  VERSION = '0.1.1'.freeze
 end

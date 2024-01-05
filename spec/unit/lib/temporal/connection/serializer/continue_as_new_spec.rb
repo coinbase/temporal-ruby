@@ -4,11 +4,16 @@ require 'temporal/workflow/command'
 describe Temporal::Connection::Serializer::ContinueAsNew do
   describe 'to_proto' do
     it 'produces a protobuf' do
+      timeouts = {
+        execution: 1000,
+        run: 100,
+        task: 10
+      }
       command = Temporal::Workflow::Command::ContinueAsNew.new(
         workflow_type: 'my-workflow-type',
         task_queue: 'my-task-queue',
         input: ['one', 'two'],
-        timeouts: Temporal.configuration.timeouts,
+        timeouts: timeouts,
         headers: {'foo-header': 'bar'},
         memo: {'foo-memo': 'baz'},
         search_attributes: {'foo-search-attribute': 'qux'},
@@ -33,6 +38,9 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
       expect(attribs.header.fields['foo-header'].data).to eq('"bar"')
       expect(attribs.memo.fields['foo-memo'].data).to eq('"baz"')
       expect(attribs.search_attributes.indexed_fields['foo-search-attribute'].data).to eq('"qux"')
+
+      expect(attribs.workflow_run_timeout.seconds).to eq(timeouts[:run])
+      expect(attribs.workflow_task_timeout.seconds).to eq(timeouts[:task])
     end
   end
 end

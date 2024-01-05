@@ -48,6 +48,14 @@ module Temporal
       def time_out
         @state = TIMED_OUT_STATE
       end
+
+      def closed?
+        @state == COMPLETED_STATE ||
+          @state == CANCELED_STATE ||
+          @state == FAILED_STATE ||
+          @state == TIMED_OUT_STATE ||
+          @state == TERMINATED_STATE
+      end
     end
   end
 end
