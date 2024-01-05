@@ -5,9 +5,10 @@ require 'temporal/middleware/chain'
 require 'temporal/scheduled_thread_pool'
 
 describe Temporal::Activity::TaskProcessor do
-  subject { described_class.new(task, namespace, lookup, middleware_chain, config, heartbeat_thread_pool) }
+  subject { described_class.new(task, task_queue, namespace, lookup, middleware_chain, config, heartbeat_thread_pool) }
 
   let(:namespace) { 'test-namespace' }
+  let(:task_queue) { 'test-queue' }
   let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
   let(:task) do
     Fabricate(
@@ -149,9 +150,11 @@ describe Temporal::Activity::TaskProcessor do
             .with(
               Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME,
               an_instance_of(Integer),
-              activity: activity_name,
-              namespace: namespace,
-              workflow: workflow_name
+              hash_including({
+                activity: activity_name,
+                namespace: namespace,
+                workflow: workflow_name
+              })
             )
         end
 
@@ -165,6 +168,7 @@ describe Temporal::Activity::TaskProcessor do
               an_instance_of(Integer),
               activity: activity_name,
               namespace: namespace,
+              task_queue: task_queue,
               workflow: workflow_name
             )
         end
@@ -240,9 +244,11 @@ describe Temporal::Activity::TaskProcessor do
             .with(
               Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME,
               an_instance_of(Integer),
-              activity: activity_name,
-              namespace: namespace,
-              workflow: workflow_name
+              hash_including({
+                activity: activity_name,
+                namespace: namespace,
+                workflow: workflow_name
+              })
             )
         end
 
@@ -256,6 +262,7 @@ describe Temporal::Activity::TaskProcessor do
               an_instance_of(Integer),
               activity: activity_name,
               namespace: namespace,
+              task_queue: task_queue,
               workflow: workflow_name
             )
         end

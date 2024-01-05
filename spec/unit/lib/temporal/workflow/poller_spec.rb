@@ -113,7 +113,7 @@ describe Temporal::Workflow::Poller do
 
         expect(Temporal::Workflow::TaskProcessor)
           .to have_received(:new)
-          .with(task, namespace, lookup, empty_middleware_chain, empty_middleware_chain, config, binary_checksum)
+          .with(task, task_queue, namespace, lookup, empty_middleware_chain, empty_middleware_chain, config, binary_checksum)
         expect(task_processor).to have_received(:process)
       end
 
@@ -151,7 +151,7 @@ describe Temporal::Workflow::Poller do
           expect(Temporal::Middleware::Chain).to have_received(:new).with(workflow_middleware)
           expect(Temporal::Workflow::TaskProcessor)
             .to have_received(:new)
-            .with(task, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
+            .with(task, task_queue, namespace, lookup, middleware_chain, workflow_middleware_chain, config, binary_checksum)
         end
       end
     end

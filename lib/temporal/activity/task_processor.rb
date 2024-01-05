@@ -12,8 +12,9 @@ module Temporal
     class TaskProcessor
       include Concerns::Payloads
 
-      def initialize(task, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool)
+      def initialize(task, task_queue, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool)
         @task = task
+        @task_queue = task_queue
         @namespace = namespace
         @metadata = Metadata.generate_activity_metadata(task, namespace)
         @task_token = task.task_token
@@ -28,7 +29,7 @@ module Temporal
         start_time = Time.now
 
         Temporal.logger.debug("Processing Activity task", metadata.to_h)
-        Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME, queue_time_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
+        Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_QUEUE_TIME, queue_time_ms, metric_tags)
 
         context = Activity::Context.new(connection, metadata, config, heartbeat_thread_pool)
 
@@ -52,13 +53,22 @@ module Temporal
         end
 
         time_diff_ms = ((Time.now - start_time) * 1000).round
-        Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_LATENCY, time_diff_ms, activity: activity_name, namespace: namespace, workflow: metadata.workflow_name)
+        Temporal.metrics.timing(Temporal::MetricKeys::ACTIVITY_TASK_LATENCY, time_diff_ms, metric_tags)
         Temporal.logger.debug("Activity task processed", metadata.to_h.merge(execution_time: time_diff_ms))
+      end
+
+      def metric_tags
+        {
+          activity: activity_name,
+          namespace: namespace,
+          task_queue: task_queue,
+          workflow: metadata.workflow_name
+        }
       end
 
       private
 
-      attr_reader :task, :namespace, :task_token, :activity_name, :activity_class,
+      attr_reader :task, :task_queue, :namespace, :task_token, :activity_name, :activity_class,
       :middleware_chain, :metadata, :config, :heartbeat_thread_pool
 
       def connection
