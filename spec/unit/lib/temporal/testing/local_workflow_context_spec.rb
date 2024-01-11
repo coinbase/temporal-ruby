@@ -64,6 +64,18 @@ describe Temporal::Testing::LocalWorkflowContext do
     end
   end
 
+  class TestInputSerialization < Temporal::Activity
+    def execute(input)
+      'good stuff'
+    end
+  end
+
+  class TestOutputSerialization < Temporal::Activity
+    def execute
+      lambda { 'hell no' }
+    end
+  end
+
   class MetadataCapturingActivity < Temporal::Activity
     def execute
       # activity.metadata is private, which we work around in order to write unit tests that
@@ -159,6 +171,21 @@ describe Temporal::Testing::LocalWorkflowContext do
       expect(result.workflow_id).to eq(workflow_id)
       expect(result.workflow_name).to eq(workflow_name)
       expect(result.workflow_run_id).to eq(run_id)
+    end
+
+    it 'raises error if activity output is non-deserializable' do
+      expect {
+        workflow_context.execute_activity!(TestOutputSerialization)
+      }.to raise_error(TypeError)
+    end
+
+    it 'raises error if activity input is non-serializable' do
+      data = []
+      data << data
+
+      expect {
+        workflow_context.execute_activity!(TestInputSerialization, data)
+      }.to raise_error(NoMemoryError)
     end
   end
 

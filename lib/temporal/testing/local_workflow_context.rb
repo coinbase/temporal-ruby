@@ -6,10 +6,13 @@ require 'temporal/metadata/activity'
 require 'temporal/workflow/future'
 require 'temporal/workflow/history/event_target'
 require 'temporal/workflow/context_helpers'
+require 'temporal/concerns/payloads'
 
 module Temporal
   module Testing
     class LocalWorkflowContext
+      include Concerns::Payloads
+
       attr_reader :metadata, :config
 
       def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.configuration)
@@ -68,7 +71,11 @@ module Temporal
         context = LocalActivityContext.new(metadata)
 
         begin
+          test_serialization(input)
+
           result = activity_class.execute_in_context(context, input)
+
+          test_serialization([result])
         rescue StandardError => e
           # Capture any failure from running the activity into the future
           # instead of raising immediately in order to match the behavior of
@@ -245,6 +252,11 @@ module Temporal
       def next_event_id
         @last_event_id += 1
         @last_event_id
+      end
+
+      def test_serialization(input)
+        input = to_payloads(input)
+        from_payloads(input)
       end
     end
   end
