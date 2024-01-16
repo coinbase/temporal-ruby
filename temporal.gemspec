@@ -14,6 +14,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   spec.files         = Dir["{lib,rbi}/**/*.*"] + %w(temporal.gemspec Gemfile LICENSE README.md)
 
+  spec.add_dependency 'base64'
   spec.add_dependency 'grpc'
   spec.add_dependency 'oj'
 
