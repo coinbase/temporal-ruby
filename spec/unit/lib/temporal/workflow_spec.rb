@@ -65,7 +65,7 @@ describe Temporal::Workflow do
       it 'does not raise an ArgumentError' do
         expect {
           described_class.execute_in_context(ctx, input)
-        }.not_to raise_error(ArgumentError, 'wrong number of arguments (given 2, expected 1; required keywords: b, c)')
+        }.not_to raise_error
       end
     end
   end
