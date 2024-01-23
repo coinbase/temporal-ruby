@@ -12,15 +12,8 @@ describe 'Converter', :integration do
         ]
       )
     end
-    let(:client) { Temporal::Client.new(config) }
-
-    example.run
-  ensure
-    Temporal.configure do |config|
-      config.task_queue = task_queue
-      config.payload_codec = Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
-    end
   end
+  let(:client) { Temporal::Client.new(config) }
 
   it 'can encrypt payloads' do
     workflow_id = SecureRandom.uuid

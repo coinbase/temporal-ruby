@@ -26,7 +26,7 @@ module Temporal
           status: Temporal::Workflow::Status::API_STATUS_MAP.fetch(response.status),
           history_length: response.history_length,
           memo: converter.from_payload_map(response.memo.fields),
-          search_attributes: converter.search_attributes
+          search_attributes: search_attributes
         ).freeze
       end
 

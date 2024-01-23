@@ -17,7 +17,7 @@ module Temporal
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers, :capabilities
-    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :converter, :credentials, :identity,
+    attr_accessor :connection_type, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
                   :payload_codec, :legacy_signals, :no_signals_in_first_task
 
@@ -116,7 +116,7 @@ module Temporal
     end
 
     def converter
-      @converter_wrapper ||= ConverterWrapper.new(@converter)
+      @converter_wrapper ||= ConverterWrapper.new(@converter, @payload_codec)
     end
 
     def converter=(new_converter)

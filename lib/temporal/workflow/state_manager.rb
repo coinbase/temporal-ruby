@@ -165,7 +165,7 @@ module Temporal
 
       private
 
-      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
+      attr_reader :commands, :dispatcher, :converter, :command_tracker, :marker_ids, :side_effects, :releases, :config
 
       def use_signals_first(raw_events)
         # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST

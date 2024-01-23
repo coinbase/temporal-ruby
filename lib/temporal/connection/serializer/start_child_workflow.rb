@@ -7,7 +7,6 @@ module Temporal
     module Serializer
       class StartChildWorkflow < Base
 
-
         PARENT_CLOSE_POLICY = {
           terminate: Temporalio::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_TERMINATE,
           abandon: Temporalio::Api::Enums::V1::ParentClosePolicy::PARENT_CLOSE_POLICY_ABANDON,
