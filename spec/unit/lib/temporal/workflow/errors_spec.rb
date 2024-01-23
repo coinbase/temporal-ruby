@@ -27,6 +27,8 @@ class MyFancyError < Exception
 end
 
 describe Temporal::Workflow::Errors do
+  let(:config) { Temporal::Configuration.new }
+
   describe '.generate_error' do
     it "instantiates properly when the client has the error" do
       message = "An error message"
@@ -38,7 +40,7 @@ describe Temporal::Workflow::Errors do
         error_class: SomeError.to_s
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, config.converter)
       expect(e).to be_a(SomeError)
       expect(e.message).to eq(message)
       expect(e.backtrace).to eq(stack_trace)
@@ -68,7 +70,7 @@ describe Temporal::Workflow::Errors do
         error_class: 'NonexistentError',
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, config.converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("NonexistentError: An error message")
       expect(e.backtrace).to eq(stack_trace)
@@ -94,7 +96,7 @@ describe Temporal::Workflow::Errors do
         error_class: ErrorWithTwoArgs.to_s,
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, config.converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("ErrorWithTwoArgs: An error message")
       expect(e.backtrace).to eq(stack_trace)
@@ -127,7 +129,7 @@ describe Temporal::Workflow::Errors do
         error_class: ErrorThatRaisesInInitialize.to_s,
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, config.converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("ErrorThatRaisesInInitialize: An error message")
       expect(e.backtrace).to eq(stack_trace)

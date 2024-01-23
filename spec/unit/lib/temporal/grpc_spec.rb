@@ -4,6 +4,7 @@ require 'temporal/workflow/query_result'
 describe Temporal::Connection::GRPC do
   let(:identity) { 'my-identity' }
   let(:binary_checksum) { 'v1.0.0' }
+  let(:config) { Temporal::Configuration.new }
   let(:grpc_stub) { double('grpc stub') }
   let(:grpc_operator_stub) { double('grpc stub') }
   let(:namespace) { 'test-namespace' }
@@ -11,7 +12,7 @@ describe Temporal::Connection::GRPC do
   let(:run_id) { SecureRandom.uuid }
   let(:now) { Time.now}
 
-  subject { Temporal::Connection::GRPC.new(nil, nil, identity, :this_channel_is_insecure) }
+  subject { Temporal::Connection::GRPC.new(nil, nil, identity, :this_channel_is_insecure, config.converter) }
 
   class TestDeserializer
     extend Temporal::Concerns::Payloads

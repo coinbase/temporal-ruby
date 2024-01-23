@@ -249,7 +249,7 @@ module Temporal
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        return ResultConverter.from_result_payloads(payloads)
+        return config.converter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -257,7 +257,7 @@ module Temporal
       when 'WORKFLOW_EXECUTION_CANCELED'
         raise Temporal::WorkflowCanceled
       when 'WORKFLOW_EXECUTION_FAILED'
-        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure)
+        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure, config.converter)
       when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
         new_run_id = closed_event.attributes.new_execution_run_id
         # Throw to let the caller know they're not getting the result
@@ -328,7 +328,7 @@ module Temporal
     #   for reference
     # @param details [String, Array, nil] optional details to be stored in history
     def terminate_workflow(workflow_id, namespace: nil, run_id: nil, reason: nil, details: nil)
-      namespace ||= Temporal.configuration.namespace
+      namespace ||= config.namespace
 
       connection.terminate_workflow_execution(
         namespace: namespace,
@@ -353,7 +353,7 @@ module Temporal
         run_id: run_id
       )
 
-      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info)
+      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info, config.converter)
     end
 
     # Manually complete an activity
@@ -550,11 +550,6 @@ module Temporal
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end
 
-    class ResultConverter
-      extend Concerns::Payloads
-    end
-    private_constant :ResultConverter
-
     private
 
     attr_reader :config
@@ -596,6 +591,5 @@ module Temporal
 
       raise ArgumentError, 'Only one filter is allowed' if filter.size > 1
     end
-
   end
 end

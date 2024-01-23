@@ -1,11 +1,9 @@
 require 'temporal/connection/serializer/base'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
     module Serializer
       class Failure < Base
-        include Concerns::Payloads
 
         def initialize(error, serialize_whole_error: false, max_bytes: 200_000)
           @serialize_whole_error = serialize_whole_error
@@ -15,7 +13,7 @@ module Temporal
 
         def to_proto
           if @serialize_whole_error
-            details = to_details_payloads(object)
+            details = converter.to_details_payloads(object)
             if details.payloads.first.data.size > @max_bytes
               Temporal.logger.error(
                 "Could not serialize exception because it's too large, so we are using a fallback that may not "\
@@ -25,10 +23,10 @@ module Temporal
               )
               # Fallback to a more conservative serialization if the payload is too big to avoid
               # sending a huge amount of data to temporal and putting it in the history.
-              details = to_details_payloads(object.message)
+              details = converter.to_details_payloads(object.message)
             end
           else
-            details = to_details_payloads(object.message)
+            details = converter.to_details_payloads(object.message)
           end
           Temporalio::Api::Failure::V1::Failure.new(
             message: object.message,

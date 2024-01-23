@@ -14,13 +14,10 @@ require 'temporal/connection/serializer/failure'
 require 'temporal/connection/serializer/backfill'
 require 'temporal/connection/serializer/schedule'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
     class GRPC
-      include Concerns::Payloads
-
       HISTORY_EVENT_FILTER = {
         all: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
         close: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT
@@ -57,10 +54,11 @@ module Temporal
 
       CONNECTION_TIMEOUT_SECONDS = 60
 
-      def initialize(host, port, identity, credentials, options = {})
+      def initialize(host, port, identity, credentials, converter, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
         @credentials = credentials
+        @converter = converter
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -134,20 +132,20 @@ module Temporal
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporalio::Api::Common::V1::Header.new(
-            fields: to_payload_map(headers || {})
+            fields: converter.to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
           memo: Temporalio::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map_without_codec(search_attributes || {})
+            indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           )
         )
 
@@ -229,8 +227,8 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
-          query_results: query_results.transform_values { |value| Serializer.serialize(value) },
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command, converter) },
+          query_results: query_results.transform_values { |value| Serializer.serialize(value, converter) },
           binary_checksum: binary_checksum,
           sdk_metadata: if new_sdk_flags_used.any?
                           Temporalio::Api::Sdk::V1::WorkflowTaskCompletedMetadata.new(
@@ -249,7 +247,7 @@ module Temporal
           identity: identity,
           task_token: task_token,
           cause: cause,
-          failure: Serializer::Failure.new(exception).to_proto,
+          failure: Serializer::Failure.new(exception, converter).to_proto,
           binary_checksum: binary_checksum
         )
         client.respond_workflow_task_failed(request)
@@ -277,7 +275,7 @@ module Temporal
         request = Temporalio::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -292,7 +290,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          result: to_result_payloads(result)
+          result: converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed(request)
       end
@@ -304,7 +302,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: to_result_payloads(result)
+          result: converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -315,7 +313,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          failure: Serializer::Failure.new(exception, serialize_whole_error: serialize_whole_error).to_proto
+          failure: Serializer::Failure.new(exception, converter, serialize_whole_error: serialize_whole_error).to_proto
         )
         client.respond_activity_task_failed(request)
       end
@@ -327,7 +325,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, converter).to_proto
         )
         client.respond_activity_task_failed_by_id(request)
       end
@@ -336,7 +334,7 @@ module Temporal
         request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -358,7 +356,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: to_signal_payloads(input),
+          input: converter.to_signal_payloads(input),
           identity: identity
         )
         client.signal_workflow_execution(request)
@@ -377,9 +375,9 @@ module Temporal
         search_attributes: nil
       )
         proto_header_fields = if headers.nil?
-                                to_payload_map({})
+                                converter.to_payload_map({})
                               elsif headers.instance_of?(Hash)
-                                to_payload_map(headers)
+                                converter.to_payload_map(headers)
                               else
                                 # Preserve backward compatability for headers specified using proto objects
                                 warn '[DEPRECATION] Specify headers using a hash rather than protobuf objects'
@@ -397,7 +395,7 @@ module Temporal
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
@@ -407,9 +405,9 @@ module Temporal
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
-          signal_input: to_signal_payloads(signal_input),
+          signal_input: converter.to_signal_payloads(signal_input),
           memo: Temporalio::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: to_payload_map_without_codec(search_attributes || {})
@@ -456,7 +454,7 @@ module Temporal
             run_id: run_id
           ),
           reason: reason,
-          details: to_details_payloads(details)
+          details: converter.to_details_payloads(details)
         )
 
         client.terminate_workflow_execution(request)
@@ -792,7 +790,7 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :converter, :options, :poll_mutex, :poll_request
 
       def client
         @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(

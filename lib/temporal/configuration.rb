@@ -9,14 +9,15 @@ require 'temporal/connection/converter/payload/json'
 require 'temporal/connection/converter/payload/proto_json'
 require 'temporal/connection/converter/composite'
 require 'temporal/connection/converter/codec/chain'
+require 'temporal/converter_wrapper'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, :credentials, :identity, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :converter, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers, :capabilities
-    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
+    attr_accessor :connection_type, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
                   :payload_codec, :legacy_signals, :no_signals_in_first_task
 
@@ -114,13 +115,23 @@ module Temporal
       @timeouts = DEFAULT_TIMEOUTS.merge(new_timeouts)
     end
 
+    def converter
+      @converter_wrapper ||= ConverterWrapper.new(@converter, @payload_codec)
+    end
+
+    def converter=(new_converter)
+      @converter = new_converter
+      @converter_wrapper = nil
+    end
+
     def for_connection
       Connection.new(
         type: connection_type,
         host: host,
         port: port,
         credentials: credentials,
-        identity: identity || default_identity
+        identity: identity || default_identity,
+        converter: converter
       ).freeze
     end
 

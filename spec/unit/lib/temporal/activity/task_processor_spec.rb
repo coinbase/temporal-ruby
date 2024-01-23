@@ -17,7 +17,7 @@ describe Temporal::Activity::TaskProcessor do
       input: config.converter.to_payloads(input)
     )
   end
-  let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace) }
+  let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace, config.converter) }
   let(:workflow_name) { task.workflow_type.name }
   let(:activity_name) { 'TestActivity' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
@@ -40,7 +40,7 @@ describe Temporal::Activity::TaskProcessor do
         .and_return(connection)
       allow(Temporal::Metadata)
         .to receive(:generate_activity_metadata)
-        .with(task, namespace)
+        .with(task, namespace, config.converter)
         .and_return(metadata)
       allow(Temporal::Activity::Context).to receive(:new).with(connection, metadata, config,
                                                                heartbeat_thread_pool).and_return(context)

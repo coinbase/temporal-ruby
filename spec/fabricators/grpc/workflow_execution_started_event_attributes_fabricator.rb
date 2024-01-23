@@ -11,9 +11,6 @@ Fabricator(
   attempt 1
   task_queue { Fabricate(:api_task_queue) }
   header do |attrs|
-    fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
-      h[field] = Temporal.configuration.converter.to_payload(value)
-    end
-    Temporalio::Api::Common::V1::Header.new(fields: fields)
+    Temporalio::Api::Common::V1::Header.new(fields: $converter.to_payload_map(attrs[:headers] || {}))
   end
 end
