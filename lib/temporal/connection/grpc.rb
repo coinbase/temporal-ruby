@@ -804,8 +804,16 @@ module Temporal
           channel_args["grpc.keepalive_time_ms"] = options[:keepalive_time_ms]
         end
 
-        if options[:retry_connection]
+        if options[:retry_connection] || options[:retry_policy]
           channel_args["grpc.enable_retries"] = 1
+
+          retry_policy = options[:retry_policy] || {
+            retryableStatusCodes: ["UNAVAILABLE"],
+            maxAttempts: 3,
+            initialBackoff: "0.1s",
+            backoffMultiplier: 2.0,
+            maxBackoff: "0.3s"
+          }
 
           channel_args["grpc.service_config"] = ::JSON.generate(
             methodConfig: [
@@ -815,13 +823,7 @@ module Temporal
                     service: "temporal.api.workflowservice.v1.WorkflowService",
                   }
                 ],
-                retryPolicy: {
-                  retryableStatusCodes: ["UNAVAILABLE"],
-                  maxAttempts: 3,
-                  initialBackoff: "0.1s",
-                  backoffMultiplier: 2.0,
-                  maxBackoff: "0.3s"
-                }
+                retryPolicy: retry_policy
               }
             ]
           )

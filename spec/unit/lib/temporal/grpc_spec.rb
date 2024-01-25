@@ -887,5 +887,44 @@ describe Temporal::Connection::GRPC do
         subject.send(:client)
       end
     end
+
+    context "when passing a custom retry policy" do
+      subject { Temporal::Connection::GRPC.new(nil, nil, identity, :this_channel_is_insecure, retry_policy: retry_policy) }
+
+      let(:retry_policy) do
+        {
+          retryableStatusCodes: ["UNAVAILABLE", "INTERNAL"],
+          maxAttempts: 1,
+          initialBackoff: "0.2s",
+          backoffMultiplier: 1.0,
+          maxBackoff: "0.5s"
+        }
+      end
+
+      it "passes the policy to the channel args" do
+        expect(Temporalio::Api::WorkflowService::V1::WorkflowService::Stub).to receive(:new).with(
+          ":",
+          :this_channel_is_insecure,
+          timeout: 60,
+          interceptors: [instance_of(Temporal::Connection::ClientNameVersionInterceptor)],
+          channel_args: {
+            "grpc.enable_retries" => 1,
+            "grpc.service_config" => {
+              methodConfig: [
+                {
+                  name: [
+                    {
+                      service: "temporal.api.workflowservice.v1.WorkflowService",
+                    }
+                  ],
+                  retryPolicy: retry_policy
+                }
+              ]
+            }.to_json
+          }
+        )
+        subject.send(:client)
+      end
+    end
   end
 end
