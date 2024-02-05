@@ -2,6 +2,7 @@ require 'grpc'
 require 'time'
 require 'google/protobuf/well_known_types'
 require 'securerandom'
+require 'json'
 require 'gen/temporal/api/filter/v1/message_pb'
 require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 require 'gen/temporal/api/operatorservice/v1/service_services_pb'
@@ -795,11 +796,45 @@ module Temporal
       attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
 
       def client
-        @client ||= Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
+        return @client if @client
+
+        channel_args = {}
+
+        if options[:keepalive_time_ms]
+          channel_args["grpc.keepalive_time_ms"] = options[:keepalive_time_ms]
+        end
+
+        if options[:retry_connection] || options[:retry_policy]
+          channel_args["grpc.enable_retries"] = 1
+
+          retry_policy = options[:retry_policy] || {
+            retryableStatusCodes: ["UNAVAILABLE"],
+            maxAttempts: 3,
+            initialBackoff: "0.1s",
+            backoffMultiplier: 2.0,
+            maxBackoff: "0.3s"
+          }
+
+          channel_args["grpc.service_config"] = ::JSON.generate(
+            methodConfig: [
+              {
+                name: [
+                  {
+                    service: "temporal.api.workflowservice.v1.WorkflowService",
+                  }
+                ],
+                retryPolicy: retry_policy
+              }
+            ]
+          )
+        end
+
+        @client = Temporalio::Api::WorkflowService::V1::WorkflowService::Stub.new(
           url,
           credentials,
           timeout: CONNECTION_TIMEOUT_SECONDS,
-          interceptors: [ClientNameVersionInterceptor.new]
+          interceptors: [ClientNameVersionInterceptor.new],
+          channel_args: channel_args
         )
       end
 
