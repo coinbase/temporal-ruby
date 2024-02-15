@@ -16,13 +16,13 @@ module Temporal
       end
 
       def retry_policy(*args)
-        return @retry_policy if args.empty?
-        @retry_policy = args.first
+        return @@retry_policy if args.empty?
+        @@retry_policy = args.first
       end
 
       def timeouts(*args)
-        return @timeouts if args.empty?
-        @timeouts = args.first
+        return @@timeouts if args.empty?
+        @@timeouts = args.first
       end
 
       def headers(*args)

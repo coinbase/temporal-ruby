@@ -179,6 +179,21 @@ describe Temporal::ExecutionOptions do
             'HeaderB' => 'ValueB' # overriden by options
           )
         end
+
+        context 'when there is options on the parent class' do
+          class TestSubWorkflow < TestWorkflow
+          end
+
+          let(:object) { TestSubWorkflow }
+
+          it 'uses the options for retry_policy and timeouts from the parent class' do
+            expect(subject.retry_policy).to be_an_instance_of(Temporal::RetryPolicy)
+            expect(subject.retry_policy.interval).to eq(2)
+            expect(subject.retry_policy.backoff).to eq(2)
+            expect(subject.retry_policy.max_attempts).to eq(10)
+            expect(subject.timeouts).to eq(schedule_to_close: 20, start_to_close: 10)
+          end
+        end
       end
 
       context 'with defaults given' do
