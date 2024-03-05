@@ -413,6 +413,7 @@ There are actually two types of workflow middleware in Temporal Ruby SDK:
 
 *Workflow Task Middleware*: This middleware is executed around each workflow task, of which there will be many for each workflow.
 
+### Example
 To add a middleware, you need to define a class that responds to the call method. Within the call method, you should call yield to allow the next middleware in the stack (or the workflow/activity method itself if there are no more middlewares) to execute. Here's an example:
 
 ```
