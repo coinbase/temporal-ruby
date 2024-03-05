@@ -400,6 +400,36 @@ arguments are identical to the `Temporal.start_workflow` API.
 set it to allow as many invocations as you need. You can also set it to `nil`, which will use a
 default value of 10 years.*
 
+## Middleware
+Middleware sits between the execution of your workflows/activities and the Temporal SDK, allowing you to insert custom code before or after the execution.
+
+### Activity Middleware Stack
+Middleware added to the activity middleware stack will be executed around each activity method. This is useful when you want to perform a certain task before and/or after each activity execution, such as logging, error handling, or measuring execution time.
+
+### Workflow Middleware Stack
+There are actually two types of workflow middleware in Temporal Ruby SDK:
+
+*Workflow Middleware*: This middleware is executed around each entire workflow. This is similar to activity middleware, but for workflows.
+
+*Workflow Task Middleware*: This middleware is executed around each workflow task, of which there will be many for each workflow.
+
+### Example
+To add a middleware, you need to define a class that responds to the call method. Within the call method, you should call yield to allow the next middleware in the stack (or the workflow/activity method itself if there are no more middlewares) to execute. Here's an example:
+
+```
+class MyMiddleware
+  def call(metadata)
+    puts "Before execution"
+    yield
+    puts "After execution"
+    result
+  end
+end
+```
+
+You can add this middleware to the stack like so `worker.add_activity_middleware(MyMiddleware)`
+
+Please note that the order of middleware in the stack matters. The middleware that is added last will be the first one to execute. In the example above, MyMiddleware will execute before any other middleware in the stack.
 
 ## Breaking Changes
 
