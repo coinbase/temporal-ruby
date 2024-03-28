@@ -32,7 +32,7 @@ module Temporal
         private
 
         def generate_struct
-          Class.new(Dry::Struct::Value) { transform_keys(&:to_sym) }
+          Class.new(Dry::Struct) { transform_keys(&:to_sym) }
         end
       end
     end
