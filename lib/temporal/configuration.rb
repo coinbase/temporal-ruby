@@ -122,7 +122,7 @@ module Temporal
         port: port,
         credentials: credentials,
         identity: identity || default_identity,
-        connection_options: connection_options
+        connection_options: connection_options.merge(use_error_serialization_v2: @use_error_serialization_v2)
       ).freeze
     end
 

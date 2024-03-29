@@ -311,7 +311,7 @@ module Temporal
       end
 
       def respond_activity_task_failed(namespace:, task_token:, exception:)
-        serialize_whole_error = Temporal.configuration.use_error_serialization_v2
+        serialize_whole_error = options.fetch(:use_error_serialization_v2, Temporal.configuration.use_error_serialization_v2)
         request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskFailedRequest.new(
           namespace: namespace,
           identity: identity,
