@@ -52,7 +52,7 @@ jobs:
 
       - name: Wait for dependencies to settle
         run: |
-          sleep 10
+          sleep 20
 
       - name: Register namespace
         run: |
