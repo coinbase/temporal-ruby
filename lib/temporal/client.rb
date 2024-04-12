@@ -414,7 +414,7 @@ module Temporal
         break if next_page_token.empty?
       end
 
-      Workflow::History.new(response.history.events)
+      Workflow::History.new(events)
     end
 
     def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)

@@ -899,7 +899,7 @@ describe Temporal::Client do
     it 'gets full history with pagination' do
       completed_event = Fabricate(:workflow_completed_event, result: nil)
       response_1 = Fabricate(:workflow_execution_history, events: [completed_event], next_page_token: 'a')
-      response_2 = Fabricate(:workflow_execution_history, events: [completed_event], next_page_token: nil)
+      response_2 = Fabricate(:workflow_execution_history, events: [completed_event], next_page_token: '')
 
       allow(connection)
         .to receive(:get_workflow_execution_history)
