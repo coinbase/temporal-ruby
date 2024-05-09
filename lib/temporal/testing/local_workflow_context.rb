@@ -180,6 +180,10 @@ module Temporal
         raise exception
       end
 
+      def continue_as_new(*input, **args)
+        raise NotImplementedError, 'not yet available for testing'
+      end
+
       def wait_for_all(*futures)
         futures.each(&:wait)
 
