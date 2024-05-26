@@ -4,6 +4,7 @@ require "temporal/errors"
 require "temporal/metadata/workflow_task"
 require "temporal/middleware/chain"
 require "temporal/workflow/executor"
+require "temporal/workflow/stack_trace_tracker"
 
 module Temporal
   module Testing
@@ -90,14 +91,28 @@ module Temporal
           history,
           metadata,
           @config,
-          false,
+          true,
           Middleware::Chain.new([])
         )
 
-        run_result = executor.run
+        run_result = begin
+          executor.run
+        rescue => e
+          query = Struct.new(:query_type, :query_args).new(
+            Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME,
+            nil
+          )
+          query_result = executor.process_queries(
+            {"stack_trace" => query}
+          )
+          # Override the stack trace to the point in the workflow code where the failure occured, not the
+          # point in the StateManager where non-determinism is detected
+          e.set_backtrace(query_result["stack_trace"].result)
+          raise ReplayError, e
+        end
 
         if run_result.commands.any?
-          raise ReplayError, "Workflow task is issuing new commands: #{run_result.commands}"
+          raise ReplayError, "Workflow task is issuing new commands when it should complete: #{run_result.commands}"
         end
       end
 
