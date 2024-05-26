@@ -33,7 +33,7 @@ module Temporal
 
       def run
         dispatcher.register_handler(
-          History::EventTarget.workflow,
+          History::EventTarget.start_workflow,
           'started',
           &method(:execute_workflow)
         )

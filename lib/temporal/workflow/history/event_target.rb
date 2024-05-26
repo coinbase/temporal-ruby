@@ -14,8 +14,13 @@ module Temporal
         MARKER_TYPE                           = :marker
         EXTERNAL_WORKFLOW_TYPE                = :external_workflow
         CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE = :cancel_external_workflow_request
-        WORKFLOW_TYPE                         = :workflow
         CANCEL_WORKFLOW_REQUEST_TYPE          = :cancel_workflow_request
+        WORKFLOW_TYPE                         = :workflow
+        COMPLETE_WORKFLOW_TYPE                = :complete_workflow
+        CONTINUE_AS_NEW_WORKFLOW_TYPE         = :continue_as_new_workflow
+        FAIL_WORKFLOW_TYPE                    = :fail_workflow
+        SIGNAL_WORKFLOW_TYPE                  = :signal_workflow
+        START_WORKFLOW_TYPE                   = :start_workflow
         UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE = :upsert_search_attributes_request
 
         # NOTE: The order is important, first prefix match wins (will be a longer match)
@@ -35,13 +40,21 @@ module Temporal
           'REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION' => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
           'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'          => UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE,
           'WORKFLOW_EXECUTION_CANCEL'                  => CANCEL_WORKFLOW_REQUEST_TYPE,
+          'WORKFLOW_EXECUTION_COMPLETED'               => COMPLETE_WORKFLOW_TYPE,
+          'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'        => CONTINUE_AS_NEW_WORKFLOW_TYPE,
+          'WORKFLOW_EXECUTION_FAILED'                  => FAIL_WORKFLOW_TYPE,
+          'WORKFLOW_EXECUTION_SIGNALED'                => SIGNAL_WORKFLOW_TYPE,
+          'WORKFLOW_EXECUTION_STARTED'                 => START_WORKFLOW_TYPE,
+          # This is a fall-through type for various event types that workflow code cannot
+          # react to, either because they're externally triggered (workflow termination,
+          # timeout) or use an unsupported feature (workflow cancellation, updates).
           'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
         }.freeze
 
         attr_reader :id, :type
 
-        def self.workflow
-          @workflow ||= new(1, WORKFLOW_TYPE)
+        def self.start_workflow
+          @workflow ||= new(1, START_WORKFLOW_TYPE)
         end
 
         def self.from_event(event)

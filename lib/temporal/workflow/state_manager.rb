@@ -255,17 +255,19 @@ module Temporal
 
           state_machine.start
           dispatch(
-            History::EventTarget.workflow,
+            History::EventTarget.start_workflow,
             'started',
             from_payloads(event.attributes.input),
             event
           )
 
         when 'WORKFLOW_EXECUTION_COMPLETED'
-          # todo
+          # should only be triggered in query execution and replay testing
+          discard_command(history_target)
 
         when 'WORKFLOW_EXECUTION_FAILED'
-          # todo
+          # should only be triggered in query execution and replay testing
+          discard_command(history_target)
 
         when 'WORKFLOW_EXECUTION_TIMED_OUT'
           # todo
@@ -366,7 +368,8 @@ module Temporal
           # todo
 
         when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
-          # todo
+          # should only be triggered in query execution and replay testing
+          discard_command(history_target)
 
         when 'START_CHILD_WORKFLOW_EXECUTION_INITIATED'
           state_machine.schedule
@@ -446,8 +449,12 @@ module Temporal
             History::EventTarget::TIMER_TYPE
           when Command::CancelTimer
             History::EventTarget::CANCEL_TIMER_REQUEST_TYPE
-          when Command::CompleteWorkflow, Command::FailWorkflow
-            History::EventTarget::WORKFLOW_TYPE
+          when Command::CompleteWorkflow
+            History::EventTarget::COMPLETE_WORKFLOW_TYPE
+          when Command::ContinueAsNew
+            History::EventTarget::CONTINUE_AS_NEW_WORKFLOW_TYPE
+          when Command::FailWorkflow
+            History::EventTarget::FAIL_WORKFLOW_TYPE
           when Command::StartChildWorkflow
             History::EventTarget::CHILD_WORKFLOW_TYPE
           when Command::UpsertSearchAttributes
@@ -465,7 +472,7 @@ module Temporal
 
       NONDETERMINISM_ERROR_SUGGESTION =
         'Likely, either you have made a version-unsafe change to your workflow or have non-deterministic '\
-        'behavior in your workflow.  See https://docs.temporal.io/docs/java/versioning/#introduction-to-versioning.'.freeze
+        'behavior in your workflow. See https://docs.temporal.io/docs/java/versioning/#introduction-to-versioning.'.freeze
 
       def discard_command(history_target)
         # Pop the first command from the list, it is expected to match
@@ -480,7 +487,7 @@ module Temporal
         return unless history_target != replay_target
 
         raise NonDeterministicWorkflowError,
-              "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
+              "Unexpected command. The replaying code is issuing: #{replay_target}, "\
               "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
       end
 
