@@ -47,8 +47,7 @@ module Temporal
       end
 
       def logger
-        @logger ||= ReplayAwareLogger.new(Temporal.logger)
-        @logger.replay = state_manager.replay?
+        @logger ||= ReplayAwareLogger.new(@config.logger) { state_manager.replay? }
         @logger
       end
 
