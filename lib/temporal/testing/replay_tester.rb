@@ -107,7 +107,7 @@ module Temporal
           )
           # Override the stack trace to the point in the workflow code where the failure occured, not the
           # point in the StateManager where non-determinism is detected
-          e.set_backtrace(query_result["stack_trace"].result)
+          e.set_backtrace("Fiber backtraces: " + query_result["stack_trace"].result)
           raise ReplayError, e
         end
 

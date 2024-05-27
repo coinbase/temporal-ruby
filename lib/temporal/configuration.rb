@@ -18,7 +18,7 @@ module Temporal
     attr_reader :timeouts, :error_handlers, :capabilities
     attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
-                  :payload_codec, :legacy_signals, :no_signals_in_first_task, :connection_options
+                  :payload_codec, :legacy_signals, :no_signals_in_first_task, :connection_options, :log_on_workflow_replay
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -85,6 +85,7 @@ module Temporal
       @header_propagators = []
       @capabilities = Capabilities.new(self)
       @connection_options = {}
+      @log_on_workflow_replay = false
 
       # Signals previously were incorrectly replayed in order within a workflow task window, rather
       # than at the beginning. Correcting this changes the determinism of any workflow with signals.
