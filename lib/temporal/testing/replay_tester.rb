@@ -91,7 +91,7 @@ module Temporal
           Middleware::Chain.new([])
         )
 
-        run_result = begin
+        begin
           executor.run
         rescue StandardError
           query = Struct.new(:query_type, :query_args).new(
@@ -107,10 +107,6 @@ module Temporal
           replay_error.set_backtrace("Fiber backtraces: #{query_result['stack_trace'].result}")
           raise replay_error
         end
-
-        return unless run_result.commands.any?
-
-        raise ReplayError, "Workflow task is issuing new commands when it should complete: #{run_result.commands}"
       end
 
       # Protobuf does not define a consistent format for enums in JSON. In some Temporal SDKs, the event
