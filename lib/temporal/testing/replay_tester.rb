@@ -93,7 +93,7 @@ module Temporal
 
         run_result = begin
           executor.run
-        rescue StandardError => e
+        rescue StandardError
           query = Struct.new(:query_type, :query_args).new(
             Temporal::Workflow::StackTraceTracker::STACK_TRACE_QUERY_NAME,
             nil
@@ -101,10 +101,11 @@ module Temporal
           query_result = executor.process_queries(
             { 'stack_trace' => query }
           )
+          replay_error = ReplayError.new('Workflow code failed to replay successfully against history')
           # Override the stack trace to the point in the workflow code where the failure occured, not the
           # point in the StateManager where non-determinism is detected
-          e.set_backtrace('Fiber backtraces: ' + query_result['stack_trace'].result)
-          raise ReplayError, e
+          replay_error.set_backtrace("Fiber backtraces: #{query_result['stack_trace'].result}")
+          raise replay_error
         end
 
         return unless run_result.commands.any?
