@@ -33,8 +33,7 @@ module Temporal
       #   See that function's comment for more details.
       def replay_history_json_file(workflow_class, path)
         json = File.read(path)
-        raw_history = Temporalio::Api::History::V1::History.decode_json(json, ignore_unknown_fields: true)
-        replay_history(workflow_class, Workflow::History.new(raw_history.events))
+        replay_history_json(workflow_class, json)
       end
 
       # Runs a replay test on a JSON string directly. See comment on replay_history_json_file more details.
@@ -52,10 +51,7 @@ module Temporal
       # IMPORTANT: This file is a binary file, not a text file. The protobuf obtained from get_workflow_history_protobuf
       # must be written using binary file options.
       def replay_history_protobuf_file(workflow_class, path)
-        protobuf = File.open(path, 'rb') do |f|
-          f.read
-        end
-
+        protobuf = File.open(path, 'rb', &:read)
         replay_history_protobuf(workflow_class, protobuf)
       end
 
