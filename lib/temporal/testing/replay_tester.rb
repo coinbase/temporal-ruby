@@ -29,7 +29,7 @@ module Temporal
       #
       # Common problems and solutions:
       # - "Unexpected event UNSPECIFIED". This can occur if the history was downloaded with Java-style enum values, which
-      #   can happen in certain versions of certain SDKs. USe the correct_event_types function below to convert these.
+      #   can happen in certain versions of certain SDKs. Use the correct_event_types function below to convert these.
       #   See that function's comment for more details.
       def replay_history_json_file(workflow_class, path)
         json = File.read(path)
@@ -63,7 +63,7 @@ module Temporal
         replay_history(workflow_class, Workflow::History.new(raw_history.events))
       end
 
-      # Runs a replay test by using the specifiec Temporal::Workflow::History object. This can only be obtained by
+      # Runs a replay test by using the specific Temporal::Workflow::History object. This can only be obtained by
       # calling the .get_workflow_history method on the Temporal client to download a history from Temporal server
       # into memory.
       #
