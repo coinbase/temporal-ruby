@@ -3,7 +3,7 @@ module Temporal
     class ReplayAwareLogger
       SEVERITIES = %i[debug info warn error fatal unknown].freeze
 
-      def initialize(main_logger, &replaying)
+      def initialize(main_logger, replaying:)
         @main_logger = main_logger
         @replaying = replaying
       end
