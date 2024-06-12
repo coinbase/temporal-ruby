@@ -109,29 +109,6 @@ module Temporal
           raise replay_error
         end
       end
-
-      # Protobuf does not define a consistent format for enums in JSON. In some Temporal SDKs, the event
-      # type enum takes the form 'WorkflowTaskScheduled' but here it needs to be EVENT_TYPE_WORKFLOW_TASK_SCHEDULED.
-      # This code parses the JSON, reformats these fields, then regenerates the JSON. This should not be necessary
-      # for histories downloaded from recent versions of the Temporal CLI, Temporal UI, or using methods
-      # on Temporal::Client.
-      #
-      # If the pretty_print optional parameter is set to true, it outputs in a more human
-      # readable form on output.
-      def self.correct_event_types(text, pretty_print: true)
-        json_hash = ::JSON.parse(text)
-        json_hash['events'].each do |event|
-          unless event['eventType'].start_with?('EVENT_TYPE')
-            event['eventType'] = 'EVENT_TYPE_' + event['eventType'].gsub(/(.)([A-Z])/, '\\1_\\2').upcase
-          end
-        end
-
-        if pretty_print
-          ::JSON.pretty_generate(json_hash)
-        else
-          ::JSON.generate(json_hash)
-        end
-      end
     end
   end
 end
