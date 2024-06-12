@@ -44,6 +44,22 @@ describe Temporal::Testing::ReplayTester do
     )
   end
 
+  def remove_first_history_event(json_args)
+    obj = JSON.load(do_nothing_json)
+    obj['events'].shift
+    JSON.generate(obj)
+  end
+
+  it 'replay missing start workflow execution event' do
+    replay_tester.replay_history_json(
+      TestReplayWorkflow,
+      remove_first_history_event(do_nothing_json)
+    )
+    raise('Expected error to raise')
+  rescue Temporal::Testing::ReplayError => e
+    expect(e.message).to eq("History does not start with workflow_execution_started event")
+  end
+
   def set_workflow_args_in_history(json_args)
     obj = JSON.load(do_nothing_json)
     obj['events'][0]['workflowExecutionStartedEventAttributes']['input']['payloads'][0]['data'] = Base64.strict_encode64(

@@ -67,14 +67,20 @@ module Temporal
         # This code roughly resembles the workflow TaskProcessor but with history being fed in rather
         # than being pulled via a workflow task, no query support, no metrics, and other
         # simplifications. Fake metadata needs to be provided.
+        start_workflow_event = history.find_event_by_id(1)
+        if start_workflow_event.nil? || start_workflow_event.type != "WORKFLOW_EXECUTION_STARTED"
+          raise ReplayError, "History does not start with workflow_execution_started event"
+        end
+
         metadata = Temporal::Metadata::WorkflowTask.new(
           namespace: 'replay-test',
           id: 1,
           task_token: '',
           attempt: 1,
-          workflow_run_id: 'run_id',
-          workflow_id: 'workflow_id',
-          workflow_name: history.find_event_by_id(1).attributes.workflow_type.name
+          workflow_run_id: "run_id",
+          workflow_id: "workflow_id",
+          # Protobuf deserialization will ensure this tree is present
+          workflow_name: start_workflow_event.attributes.workflow_type.name
         )
 
         executor = Workflow::Executor.new(
