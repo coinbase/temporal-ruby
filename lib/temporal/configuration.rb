@@ -85,6 +85,7 @@ module Temporal
       @header_propagators = []
       @capabilities = Capabilities.new(self)
       @connection_options = {}
+      # Setting this to true can be useful when debugging workflow code or running replay tests
       @log_on_workflow_replay = false
 
       # Signals previously were incorrectly replayed in order within a workflow task window, rather

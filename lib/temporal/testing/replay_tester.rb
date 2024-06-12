@@ -13,12 +13,7 @@ module Temporal
 
     class ReplayTester
       def initialize(config: Temporal.configuration)
-        # Duplicate the configuration so that this doesn't interfere with other tests in the
-        # same process that are not replay tests
-        @config = config.dup.tap do |c|
-          # Otherwise, replay tests will produce no logs. This helps with test debugging.
-          c.log_on_workflow_replay = true
-        end
+        @config = config
       end
 
       # Runs a replay test by loading a file from the given file path that contains JSON. This JSON can be
