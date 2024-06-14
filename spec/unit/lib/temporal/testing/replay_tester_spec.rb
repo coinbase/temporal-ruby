@@ -97,7 +97,7 @@ describe Temporal::Testing::ReplayTester do
     )
   end
 
-  it "replay continues an new when history succeeded" do
+  it "replay continues as new when history completed" do
     # The linked history will cause an error because it will cause the workflow to continue
     # as new on replay when in the history, it completed successfully.
 
