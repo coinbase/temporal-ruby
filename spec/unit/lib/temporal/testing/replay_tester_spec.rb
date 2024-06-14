@@ -34,26 +34,30 @@ describe Temporal::Testing::ReplayTester do
 
   let(:replay_tester) { Temporal::Testing::ReplayTester.new }
   let(:do_nothing_json) do
-    File.read('spec/unit/lib/temporal/testing/replay_histories/do_nothing.json')
+    File.read(
+      'spec/unit/lib/temporal/testing/replay_histories/do_nothing.json'
+    )
+  end
+  let(:do_nothing) do
+    Temporal::Workflow::History::Serialization.from_json(do_nothing_json)
   end
 
   it 'replay do nothing successful' do
-    replay_tester.replay_history_json(
+    replay_tester.replay_history(
       TestReplayWorkflow,
-      do_nothing_json
+      do_nothing
     )
   end
 
-  def remove_first_history_event(json_args)
-    obj = JSON.load(do_nothing_json)
-    obj['events'].shift
-    JSON.generate(obj)
+  def remove_first_history_event(history)
+    history.events.shift
+    history
   end
 
   it 'replay missing start workflow execution event' do
-    replay_tester.replay_history_json(
+    replay_tester.replay_history(
       TestReplayWorkflow,
-      remove_first_history_event(do_nothing_json)
+      remove_first_history_event(do_nothing)
     )
     raise('Expected error to raise')
   rescue Temporal::Testing::ReplayError => e
@@ -65,14 +69,15 @@ describe Temporal::Testing::ReplayTester do
     obj['events'][0]['workflowExecutionStartedEventAttributes']['input']['payloads'][0]['data'] = Base64.strict_encode64(
       json_args
     )
-    JSON.generate(obj)
+    new_json = JSON.generate(obj)
+    Temporal::Workflow::History::Serialization.from_json(new_json)
   end
 
   it 'replay extra activity' do
     # The linked history will cause an error because it will cause an activity run even though
     # there isn't one in the history.
 
-    replay_tester.replay_history_json(
+    replay_tester.replay_history(
       TestReplayWorkflow,
       set_workflow_args_in_history('{":run_activity":true}')
     )
@@ -92,7 +97,7 @@ describe Temporal::Testing::ReplayTester do
     # The linked history will cause an error because it will cause the workflow to continue
     # as new on replay when in the history, it completed successfully.
 
-    replay_tester.replay_history_json(
+    replay_tester.replay_history(
       TestReplayWorkflow,
       set_workflow_args_in_history('{":result":"continue_as_new"}')
     )
@@ -112,7 +117,7 @@ describe Temporal::Testing::ReplayTester do
     # The linked history will cause an error because it will cause the workflow to keep running
     # when in the history, it completed successfully.
 
-    replay_tester.replay_history_json(
+    replay_tester.replay_history(
       TestReplayWorkflow,
       set_workflow_args_in_history('{":result":"await"}')
     )

@@ -6,6 +6,7 @@ require 'temporal/activity/async_token'
 require 'temporal/workflow'
 require 'temporal/workflow/context_helpers'
 require 'temporal/workflow/history'
+require 'temporal/workflow/history/serialization'
 require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
 require 'temporal/workflow/status'
@@ -422,13 +423,7 @@ module Temporal
         workflow_id: workflow_id,
         run_id: run_id
       )
-      json = history_response.history.to_json
-      if pretty_print
-        # pretty print JSON to make it more debuggable
-        ::JSON.pretty_generate(::JSON.load(json))
-      else
-        json
-      end
+      Temporal::Workflow::History::Serialization.to_json(history_response.history)
     end
 
     # Fetch workflow's execution history as protobuf binary. This output can be used for replay testing.
@@ -447,7 +442,7 @@ module Temporal
 
       # Protobuf for Ruby unfortunately does not support textproto. Plain binary provides
       # a less debuggable, but compact option.
-      history_response.history.to_proto
+      Temporal::Workflow::History::Serialization.to_protobuf(history_response.history)
     end
 
     def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
