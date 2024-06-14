@@ -1,10 +1,10 @@
-require 'gen/temporal/api/history/v1/message_pb'
-require 'json'
-require 'temporal/errors'
-require 'temporal/metadata/workflow_task'
-require 'temporal/middleware/chain'
-require 'temporal/workflow/executor'
-require 'temporal/workflow/stack_trace_tracker'
+require "gen/temporal/api/history/v1/message_pb"
+require "json"
+require "temporal/errors"
+require "temporal/metadata/workflow_task"
+require "temporal/middleware/chain"
+require "temporal/workflow/executor"
+require "temporal/workflow/stack_trace_tracker"
 
 module Temporal
   module Testing
@@ -34,7 +34,7 @@ module Temporal
         metadata = Temporal::Metadata::WorkflowTask.new(
           namespace: config.namespace,
           id: 1,
-          task_token: '',
+          task_token: "",
           attempt: 1,
           workflow_run_id: "run_id",
           workflow_id: "workflow_id",
@@ -59,12 +59,12 @@ module Temporal
             nil
           )
           query_result = executor.process_queries(
-            { 'stack_trace' => query }
+            {"stack_trace" => query}
           )
-          replay_error = ReplayError.new('Workflow code failed to replay successfully against history')
+          replay_error = ReplayError.new("Workflow code failed to replay successfully against history")
           # Override the stack trace to the point in the workflow code where the failure occured, not the
           # point in the StateManager where non-determinism is detected
-          replay_error.set_backtrace("Fiber backtraces: #{query_result['stack_trace'].result}")
+          replay_error.set_backtrace("Fiber backtraces: #{query_result["stack_trace"].result}")
           raise replay_error
         end
       end

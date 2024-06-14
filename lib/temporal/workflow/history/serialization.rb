@@ -46,12 +46,12 @@ module Temporal
         end
 
         def self.from_protobuf_file(path)
-          self.from_protobuf(File.open(path, 'rb', &:read))
+          self.from_protobuf(File.open(path, "rb", &:read))
         end
-        
+
         def self.to_protobuf_file(raw_history, path)
           protobuf = self.to_protobuf(raw_history)
-          File.open(path, 'wb') do |f|
+          File.open(path, "wb") do |f|
             f.write(protobuf)
           end
         end
