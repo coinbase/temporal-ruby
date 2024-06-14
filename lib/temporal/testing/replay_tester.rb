@@ -16,6 +16,8 @@ module Temporal
         @config = config
       end
 
+      attr_reader :config
+
       # Runs a replay test by using the specific Temporal::Workflow::History object. Instances of these objects
       # can be obtained using various from_ methods in Temporal::Workflow::History::Serialization.
       #
@@ -30,7 +32,7 @@ module Temporal
         end
 
         metadata = Temporal::Metadata::WorkflowTask.new(
-          namespace: 'replay-test',
+          namespace: config.namespace,
           id: 1,
           task_token: '',
           attempt: 1,
@@ -44,7 +46,7 @@ module Temporal
           workflow_class,
           history,
           metadata,
-          @config,
+          config,
           true,
           Middleware::Chain.new([])
         )
