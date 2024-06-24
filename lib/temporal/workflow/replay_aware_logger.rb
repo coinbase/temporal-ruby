@@ -3,11 +3,9 @@ module Temporal
     class ReplayAwareLogger
       SEVERITIES = %i[debug info warn error fatal unknown].freeze
 
-      attr_writer :replay
-
-      def initialize(main_logger, replay = true)
+      def initialize(main_logger, replaying:)
         @main_logger = main_logger
-        @replay = replay
+        @replaying = replaying
       end
 
       SEVERITIES.each do |severity|
@@ -29,7 +27,7 @@ module Temporal
       attr_reader :main_logger
 
       def replay?
-        @replay
+        @replaying.call
       end
     end
   end
