@@ -229,25 +229,29 @@ module Temporal
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       max_timeout = Temporal::Connection::GRPC::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
       history_response = nil
-      begin
-        history_response = connection.get_workflow_execution_history(
-          namespace: execution_options.namespace,
-          workflow_id: workflow_id,
-          run_id: run_id,
-          wait_for_new_event: true,
-          event_type: :close,
-          timeout: timeout || max_timeout,
-        )
-      rescue GRPC::DeadlineExceeded => e
-        message = if timeout
-          "Timed out after your specified limit of timeout: #{timeout} seconds"
-        else
-          "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
+      while(true) do
+        begin
+          history_response = connection.get_workflow_execution_history(
+            namespace: execution_options.namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            wait_for_new_event: true,
+            event_type: :close,
+            timeout: timeout || max_timeout,
+          )
+        rescue GRPC::DeadlineExceeded => e
+          message = if timeout
+            "Timed out after your specified limit of timeout: #{timeout} seconds"
+          else
+            "Timed out after #{max_timeout} seconds, which is the maximum supported amount."
+          end
+          raise TimeoutError.new(message)
         end
-        raise TimeoutError.new(message)
+        history = Workflow::History.new(history_response.history.events)
+        closed_event = history.events.first
+
+        break unless closed_event.nil?
       end
-      history = Workflow::History.new(history_response.history.events)
-      closed_event = history.events.first
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
