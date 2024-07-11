@@ -229,7 +229,7 @@ module Temporal
       execution_options = ExecutionOptions.new(workflow, options, config.default_execution_options)
       max_timeout = Temporal::Connection::GRPC::SERVER_MAX_GET_WORKFLOW_EXECUTION_HISTORY_POLL
       history_response = nil
-      while(true) do
+      loop do
         begin
           history_response = connection.get_workflow_execution_history(
             namespace: execution_options.namespace,
@@ -250,7 +250,7 @@ module Temporal
         history = Workflow::History.new(history_response.history.events)
         closed_event = history.events.first
 
-        break unless closed_event.nil?
+        break if closed_event
       end
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
