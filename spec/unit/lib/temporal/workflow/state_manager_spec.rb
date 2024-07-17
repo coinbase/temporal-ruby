@@ -59,7 +59,7 @@ describe Temporal::Workflow::StateManager do
 
       it 'dispatcher invoked for start' do
         expect(dispatcher).to receive(:dispatch).with(
-          Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+          Temporal::Workflow::History::EventTarget.start_workflow, 'started', instance_of(Array)
         ).once
         state_manager.apply(history.next_window)
       end
@@ -88,7 +88,7 @@ describe Temporal::Workflow::StateManager do
           ]
         ).once.ordered
         expect(dispatcher).to receive(:dispatch).with(
-          Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+          Temporal::Workflow::History::EventTarget.start_workflow, 'started', instance_of(Array)
         ).once.ordered
 
         state_manager.apply(history.next_window)
@@ -119,7 +119,7 @@ describe Temporal::Workflow::StateManager do
           allow(connection).to receive(:get_system_info).and_return(system_info)
 
           expect(dispatcher).to receive(:dispatch).with(
-            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+            Temporal::Workflow::History::EventTarget.start_workflow, 'started', instance_of(Array)
           ).once.ordered
           expect(dispatcher).to receive(:dispatch).with(
             Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
@@ -140,7 +140,7 @@ describe Temporal::Workflow::StateManager do
           allow(connection).to receive(:get_system_info).and_return(system_info)
 
           expect(dispatcher).to receive(:dispatch).with(
-            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+            Temporal::Workflow::History::EventTarget.start_workflow, 'started', instance_of(Array)
           ).once.ordered
           expect(dispatcher).to receive(:dispatch).with(
             Temporal::Workflow::Signal.new(signal_entry.workflow_execution_signaled_event_attributes.signal_name),
@@ -173,7 +173,7 @@ describe Temporal::Workflow::StateManager do
             ]
           ).once.ordered
           expect(dispatcher).to receive(:dispatch).with(
-            Temporal::Workflow::History::EventTarget.workflow, 'started', instance_of(Array)
+            Temporal::Workflow::History::EventTarget.start_workflow, 'started', instance_of(Array)
           ).once.ordered
 
           state_manager.apply(history.next_window)
@@ -204,7 +204,7 @@ describe Temporal::Workflow::StateManager do
 
       it 'marker handled first' do
         activity_target = nil
-        dispatcher.register_handler(Temporal::Workflow::History::EventTarget.workflow, 'started') do
+        dispatcher.register_handler(Temporal::Workflow::History::EventTarget.start_workflow, 'started') do
           activity_target, = state_manager.schedule(
             Temporal::Workflow::Command::ScheduleActivity.new(
               activity_id: activity_entry.event_id,
@@ -249,7 +249,7 @@ describe Temporal::Workflow::StateManager do
       activity_target = nil
       signaled = false
 
-      dispatcher.register_handler(Temporal::Workflow::History::EventTarget.workflow, 'started') do
+      dispatcher.register_handler(Temporal::Workflow::History::EventTarget.start_workflow, 'started') do
         activity_target, = state_manager.schedule(
           Temporal::Workflow::Command::ScheduleActivity.new(
             activity_id: activity_entry.event_id,

@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+# This script regenerates the workflow history files used in the example replay tests
+# under examples/spec/replay/histories. It starts the necessary workflow, sends some
+# signals, awaits workflow completion, then collects the history into JSON and protobuf
+# binary file formats.
+#
+# To use this, start your Temporal server and bin/worker first. This script can then
+# be run without any arguments. It will overwrite existing history files in the tree.
+#
+# NOTE: By default, collected history files contain the host names of the machines
+# where the worker and this script are run because the default identity is pid@hostname.
+# If you'd like, you can override this by setting an identity in the configuration in
+# init.rb.
+
+require_relative "../init"
+require_relative "../workflows/signal_with_start_workflow"
+
+workflow_id = SecureRandom.uuid
+run_id = Temporal.start_workflow(
+  SignalWithStartWorkflow,
+  "hit",
+  options: {
+    workflow_id: workflow_id,
+    timeouts: {
+      execution: 30
+    },
+    signal_name: "miss",
+    signal_input: 1
+  }
+)
+Temporal.logger.info("Started workflow", {workflow_id: workflow_id, run_id: run_id})
+sleep(1)
+Temporal.signal_workflow(SignalWithStartWorkflow, "miss", workflow_id, run_id, 2)
+sleep(1)
+Temporal.signal_workflow(SignalWithStartWorkflow, "hit", workflow_id, run_id, 3)
+Temporal.await_workflow_result(SignalWithStartWorkflow, workflow_id: workflow_id, run_id: run_id)
+
+# Save in JSON, exactly like would be downloaded from Temporal UI
+history_json = Temporal.get_workflow_history_json(workflow_id: workflow_id, run_id: run_id)
+filename = File.expand_path("../spec/replay/histories/signal_with_start.json", File.dirname(__FILE__))
+File.open(filename, "w") do |f|
+  f.write(history_json)
+end
+
+# Save in protobuf binary format
+history_binary = Temporal.get_workflow_history_protobuf(workflow_id: workflow_id, run_id: run_id)
+filename = File.expand_path("../spec/replay/histories/signal_with_start.protobin", File.dirname(__FILE__))
+File.open(filename, "wb") do |f|
+  f.write(history_binary)
+end
