@@ -449,6 +449,31 @@ describe Temporal::Client do
       )
     end
 
+    it 'retries if there is till there is no closed event' do
+      completed_event = Fabricate(:workflow_completed_event, result: nil)
+      response_with_no_closed_event = Fabricate(:workflow_execution_history, events: [])
+      response_with_closed_event = Fabricate(:workflow_execution_history, events: [completed_event])
+
+      expect(connection)
+        .to receive(:get_workflow_execution_history)
+        .with(
+          namespace: 'some-namespace',
+          workflow_id: workflow_id,
+          run_id: run_id,
+          wait_for_new_event: true,
+          event_type: :close,
+          timeout: 30,
+        )
+        .and_return(response_with_no_closed_event, response_with_closed_event)
+
+
+        subject.await_workflow_result(
+        NamespacedWorkflow,
+        workflow_id: workflow_id,
+        run_id: run_id,
+      )
+    end
+
     it 'can override the namespace' do 
       completed_event = Fabricate(:workflow_completed_event, result: nil)
       response = Fabricate(:workflow_execution_history, events: [completed_event])
