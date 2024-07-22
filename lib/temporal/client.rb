@@ -400,13 +400,23 @@ module Temporal
     #
     # @return [Temporal::Workflow::History] workflow's execution history
     def get_workflow_history(namespace: nil, workflow_id:, run_id:)
-      history_response = connection.get_workflow_execution_history(
-        namespace: namespace || config.default_execution_options.namespace,
-        workflow_id: workflow_id,
-        run_id: run_id
-      )
+      next_page_token = nil
+      events = []
+      loop do
+        response =
+          connection.get_workflow_execution_history(
+            namespace: namespace || config.default_execution_options.namespace,
+            workflow_id: workflow_id,
+            run_id: run_id,
+            next_page_token: next_page_token,
+          )
+        events.concat(response.history.events.to_a)
+        next_page_token = response.next_page_token
 
-      Workflow::History.new(history_response.history.events)
+        break if next_page_token.empty?
+      end
+
+      Workflow::History.new(events)
     end
 
     # Fetch workflow's execution history as JSON. This output can be used for replay testing.
@@ -459,12 +469,12 @@ module Temporal
 
     def query_workflow_executions(namespace, query, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
-      
+
       Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
     # Count the number of workflows matching the provided query
-    # 
+    #
     # @param namespace [String]
     # @param query [String]
     #
@@ -500,7 +510,7 @@ module Temporal
     def list_schedules(namespace, maximum_page_size:, next_page_token: '')
       connection.list_schedules(namespace: namespace, maximum_page_size: maximum_page_size, next_page_token: next_page_token)
     end
- 
+
     # Describe a schedule in a namespace
     #
     # @param namespace [String] namespace to list schedules in

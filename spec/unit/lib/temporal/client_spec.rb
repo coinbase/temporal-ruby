@@ -300,7 +300,7 @@ describe Temporal::Client do
     it 'raises when signal_input is given but signal_name is not' do
       expect do
         subject.start_workflow(
-          TestStartWorkflow, 
+          TestStartWorkflow,
           [42, 54],
           [43, 55],
           options: { signal_input: 'what do you get if you multiply six by nine?', }
@@ -361,7 +361,7 @@ describe Temporal::Client do
 
   describe '#describe_namespace' do
     before { allow(connection).to receive(:describe_namespace).and_return(Temporalio::Api::WorkflowService::V1::DescribeNamespaceResponse.new) }
-    
+
     it 'passes the namespace to the connection' do
       result = subject.describe_namespace('new-namespace')
 
@@ -381,7 +381,7 @@ describe Temporal::Client do
         .to have_received(:signal_workflow_execution)
         .with(
           namespace: 'default-test-namespace',
-          signal: 'signal', 
+          signal: 'signal',
           workflow_id: 'workflow_id',
           run_id: 'run_id',
           input: nil,
@@ -395,7 +395,7 @@ describe Temporal::Client do
         .to have_received(:signal_workflow_execution)
         .with(
           namespace: 'default-test-namespace',
-          signal: 'signal', 
+          signal: 'signal',
           workflow_id: 'workflow_id',
           run_id: 'run_id',
           input: 'input',
@@ -409,7 +409,7 @@ describe Temporal::Client do
         .to have_received(:signal_workflow_execution)
         .with(
           namespace: 'other-test-namespace',
-          signal: 'signal', 
+          signal: 'signal',
           workflow_id: 'workflow_id',
           run_id: 'run_id',
           input: nil,
@@ -449,7 +449,7 @@ describe Temporal::Client do
       )
     end
 
-    it 'can override the namespace' do 
+    it 'can override the namespace' do
       completed_event = Fabricate(:workflow_completed_event, result: nil)
       response = Fabricate(:workflow_execution_history, events: [completed_event])
 
@@ -534,7 +534,7 @@ describe Temporal::Client do
       end.to raise_error(Temporal::WorkflowCanceled)
     end
 
-    it 'raises TimeoutError when the server times out' do 
+    it 'raises TimeoutError when the server times out' do
       response = Fabricate(:workflow_execution_history, events: [])
       expect(connection)
         .to receive(:get_workflow_execution_history)
@@ -895,6 +895,32 @@ describe Temporal::Client do
     end
   end
 
+  describe '#get_workflow_history' do
+    it 'gets full history with pagination' do
+      completed_event = Fabricate(:workflow_completed_event, result: nil)
+      response_1 = Fabricate(:workflow_execution_history, events: [completed_event], next_page_token: 'a')
+      response_2 = Fabricate(:workflow_execution_history, events: [completed_event], next_page_token: '')
+
+      allow(connection)
+        .to receive(:get_workflow_execution_history)
+        .and_return(response_1, response_2)
+
+      subject.get_workflow_history(namespace: namespace, workflow_id: workflow_id, run_id: run_id)
+
+      expect(connection)
+        .to have_received(:get_workflow_execution_history)
+        .with(namespace: namespace, workflow_id: workflow_id, run_id: run_id, next_page_token: nil)
+        .ordered
+
+      expect(connection)
+        .to have_received(:get_workflow_execution_history)
+        .with(namespace: namespace, workflow_id: workflow_id, run_id: run_id, next_page_token: 'a')
+        .ordered
+
+      expect(connection).to have_received(:get_workflow_execution_history).exactly(2).times
+    end
+  end
+
   describe '#list_open_workflow_executions' do
     let(:from) { Time.now - 600 }
     let(:now) { Time.now }
@@ -977,7 +1003,7 @@ describe Temporal::Client do
         end
       end
 
-      it 'returns the next page token and paginates correctly' do        
+      it 'returns the next page token and paginates correctly' do
         executions1 = subject.list_open_workflow_executions(namespace, from, max_page_size: 10)
         executions1.map do |execution|
           expect(execution).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
@@ -1009,7 +1035,7 @@ describe Temporal::Client do
           .once
       end
 
-      it 'returns the next page and paginates correctly' do        
+      it 'returns the next page and paginates correctly' do
         executions1 = subject.list_open_workflow_executions(namespace, from, max_page_size: 10)
         executions1.map do |execution|
           expect(execution).to be_an_instance_of(Temporal::Workflow::ExecutionInfo)
