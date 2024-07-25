@@ -9,7 +9,7 @@ module Temporal
   class Worker
     # activity_thread_pool_size: number of threads that the poller can use to run activities.
     #   can be set to 1 if you want no paralellism in your activities, at the cost of throughput.
-
+    #
     # binary_checksum: The binary checksum identifies the version of workflow worker code. It is set on each completed or failed workflow
     #   task. It is present in API responses that return workflow execution info, and is shown in temporal-web and tctl.
     #   It is traditionally a checksum of the application binary. However, Temporal server treats this as an opaque
@@ -21,13 +21,25 @@ module Temporal
     #   from workers with these bad versions.
     #
     #   See https://docs.temporal.io/docs/tctl/how-to-use-tctl/#recovery-from-bad-deployment----auto-reset-workflow
+    #
+    # activity_max_tasks_per_second: Optional: Sets the rate limiting on number of activities that can be executed per second
+    #
+    #   This limits new activities being started and activity attempts being scheduled. It does NOT
+    #   limit the number of concurrent activities being executed on this task queue.
+    #
+    #   This is managed by the server and controls activities per second for the entire task queue
+    #   across all the workers. Notice that the number is represented in double, so that you can set
+    #   it to less than 1 if needed. For example, set the number to 0.1 means you want your activity
+    #   to be executed once every 10 seconds. This can be used to protect down stream services from
+    #   flooding. The zero value of this uses the default value. Default is unlimited.
     def initialize(
       config = Temporal.configuration,
       activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum],
       activity_poll_retry_seconds: Temporal::Activity::Poller::DEFAULT_OPTIONS[:poll_retry_seconds],
-      workflow_poll_retry_seconds: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:poll_retry_seconds]
+      workflow_poll_retry_seconds: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:poll_retry_seconds],
+      activity_max_tasks_per_second: Temporal::Activity::Poller::DEFAULT_OPTIONS[:max_tasks_per_second]
     )
       @config = config
       @workflows = Hash.new { |hash, key| hash[key] = ExecutableLookup.new }
@@ -39,7 +51,8 @@ module Temporal
       @shutting_down = false
       @activity_poller_options = {
         thread_pool_size: activity_thread_pool_size,
-        poll_retry_seconds: activity_poll_retry_seconds
+        poll_retry_seconds: activity_poll_retry_seconds,
+        max_tasks_per_second: activity_max_tasks_per_second
       }
       @workflow_poller_options = {
         thread_pool_size: workflow_thread_pool_size,

@@ -256,7 +256,7 @@ module Temporal
         client.respond_workflow_task_failed(request)
       end
 
-      def poll_activity_task_queue(namespace:, task_queue:)
+      def poll_activity_task_queue(namespace:, task_queue:, max_tasks_per_second: 0)
         request = Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueRequest.new(
           identity: identity,
           namespace: namespace,
@@ -264,6 +264,12 @@ module Temporal
             name: task_queue
           )
         )
+
+        if max_tasks_per_second > 0
+          request.task_queue_metadata = Temporalio::Api::TaskQueue::V1::TaskQueueMetadata.new(
+            max_tasks_per_second: Google::Protobuf::DoubleValue.new(value: max_tasks_per_second)
+          )
+        end
 
         poll_mutex.synchronize do
           return unless can_poll?

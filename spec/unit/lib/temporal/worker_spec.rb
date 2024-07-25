@@ -293,7 +293,8 @@ describe Temporal::Worker do
           config,
           [],
           thread_pool_size: 20,
-          poll_retry_seconds: 0
+          poll_retry_seconds: 0,
+          max_tasks_per_second: 0
         )
         .and_return(activity_poller_1)
 
@@ -306,7 +307,8 @@ describe Temporal::Worker do
           config,
           [],
           thread_pool_size: 20,
-          poll_retry_seconds: 0
+          poll_retry_seconds: 0,
+          max_tasks_per_second: 0
         )
         .and_return(activity_poller_2)
 
@@ -333,7 +335,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
-          {thread_pool_size: 10, poll_retry_seconds: 0}
+          {thread_pool_size: 10, poll_retry_seconds: 0, max_tasks_per_second: 0}
         )
         .and_return(activity_poller)
 
@@ -406,7 +408,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
-          {thread_pool_size: 20, poll_retry_seconds: 10}
+          {thread_pool_size: 20, poll_retry_seconds: 10, max_tasks_per_second: 0}
         )
         .and_return(activity_poller)
 
@@ -439,6 +441,28 @@ describe Temporal::Worker do
       start_and_stop(worker)
 
       expect(workflow_poller).to have_received(:start)
+    end
+
+    it 'can have an activity poller that registers a task rate limit' do
+      activity_poller = instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil)
+      expect(Temporal::Activity::Poller)
+        .to receive(:new)
+        .with(
+          'default-namespace',
+          'default-task-queue',
+          an_instance_of(Temporal::ExecutableLookup),
+          an_instance_of(Temporal::Configuration),
+          [],
+          {thread_pool_size: 20, poll_retry_seconds: 0, max_tasks_per_second: 5}
+        )
+        .and_return(activity_poller)
+
+      worker = Temporal::Worker.new(activity_max_tasks_per_second: 5)
+      worker.register_activity(TestWorkerActivity)
+
+      start_and_stop(worker)
+
+      expect(activity_poller).to have_received(:start)
     end
 
     context 'when middleware is configured' do
@@ -492,7 +516,8 @@ describe Temporal::Worker do
             config,
             [entry_2],
             thread_pool_size: 20,
-            poll_retry_seconds: 0
+            poll_retry_seconds: 0,
+            max_tasks_per_second: 0
           )
           .and_return(activity_poller_1)
 

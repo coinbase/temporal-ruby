@@ -646,6 +646,49 @@ describe Temporal::Connection::GRPC do
     end
   end
 
+  describe '#poll_activity_task_queue' do
+    let(:task_queue) { 'test-task-queue' }
+    let(:temporal_response) do
+      Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueResponse.new
+    end
+    let(:poll_request) do
+      instance_double(
+        "GRPC::ActiveCall::Operation",
+        execute: temporal_response
+      )
+    end
+
+    before do
+      allow(grpc_stub).to receive(:poll_activity_task_queue).with(anything, return_op: true).and_return(poll_request)
+    end
+
+    it 'makes an API request' do
+      subject.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
+
+      expect(grpc_stub).to have_received(:poll_activity_task_queue) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.task_queue.name).to eq(task_queue)
+        expect(request.identity).to eq(identity)
+        expect(request.task_queue_metadata).to be_nil
+      end
+    end
+
+    it 'makes an API request with max_tasks_per_second in the metadata' do
+      subject.poll_activity_task_queue(namespace: namespace, task_queue: task_queue, max_tasks_per_second: 10)
+
+      expect(grpc_stub).to have_received(:poll_activity_task_queue) do |request|
+        expect(request).to be_an_instance_of(Temporalio::Api::WorkflowService::V1::PollActivityTaskQueueRequest)
+        expect(request.namespace).to eq(namespace)
+        expect(request.task_queue.name).to eq(task_queue)
+        expect(request.identity).to eq(identity)
+        expect(request.task_queue_metadata).to_not be_nil
+        expect(request.task_queue_metadata.max_tasks_per_second).to_not be_nil
+        expect(request.task_queue_metadata.max_tasks_per_second.value).to eq(10)
+      end
+    end
+  end
+
   describe '#add_custom_search_attributes' do
     it 'calls GRPC service with supplied arguments' do
       allow(grpc_operator_stub).to receive(:add_search_attributes)
