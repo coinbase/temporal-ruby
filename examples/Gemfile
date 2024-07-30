@@ -4,6 +4,6 @@ gem 'temporal-ruby', path: '../'
 
 gem 'dry-types', '>= 1.7.2'
 gem 'dry-struct', '~> 1.6.0'
-gem 'google-protobuf', '~> 3.19.6'
+gem 'google-protobuf', '~> 3.19'
 
 gem 'rspec', group: :test
