@@ -11,7 +11,8 @@ module Temporal
     class Poller
       DEFAULT_OPTIONS = {
         thread_pool_size: 20,
-        poll_retry_seconds: 0
+        poll_retry_seconds: 0,
+        max_tasks_per_second: 0 # unlimited
       }.freeze
 
       def initialize(namespace, task_queue, activity_lookup, config, middleware = [], options = {})
@@ -91,7 +92,8 @@ module Temporal
       end
 
       def poll_for_task
-        connection.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
+        connection.poll_activity_task_queue(namespace: namespace, task_queue: task_queue,
+                                            max_tasks_per_second: max_tasks_per_second)
       rescue ::GRPC::Cancelled
         # We're shutting down and we've already reported that in the logs
         nil
@@ -113,6 +115,10 @@ module Temporal
 
       def poll_retry_seconds
         @options[:poll_retry_seconds]
+      end
+
+      def max_tasks_per_second
+        @options[:max_tasks_per_second]
       end
 
       def thread_pool
