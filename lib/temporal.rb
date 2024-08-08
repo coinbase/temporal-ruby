@@ -28,6 +28,7 @@ module Temporal
                  :fetch_workflow_execution_info,
                  :complete_activity,
                  :fail_activity,
+                 :get_workflow_history,
                  :list_open_workflow_executions,
                  :list_closed_workflow_executions,
                  :query_workflow_executions,

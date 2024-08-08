@@ -61,6 +61,9 @@ describe Temporal do
       it_behaves_like 'a forwarded method', :complete_activity, 'test-token', StandardError.new
     end
 
+    describe '.get_workflow_history' do
+      it_behaves_like 'a forwarded method', :get_workflow_history, 'test-namespace', 'x', 'y'
+    end
   end
 
   describe '.configure' do
