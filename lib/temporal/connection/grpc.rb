@@ -122,7 +122,8 @@ module Temporal
         headers: nil,
         cron_schedule: nil,
         memo: nil,
-        search_attributes: nil
+        search_attributes: nil,
+        start_delay: nil
       )
         request = Temporalio::Api::WorkflowService::V1::StartWorkflowExecutionRequest.new(
           identity: identity,
@@ -139,6 +140,7 @@ module Temporal
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
+          workflow_start_delay: start_delay,
           request_id: SecureRandom.uuid,
           header: Temporalio::Api::Common::V1::Header.new(
             fields: to_payload_map(headers || {})
@@ -381,7 +383,8 @@ module Temporal
         headers: nil,
         cron_schedule: nil,
         memo: nil,
-        search_attributes: nil
+        search_attributes: nil,
+        start_delay: nil
       )
         proto_header_fields = if headers.nil?
                                 to_payload_map({})
@@ -408,6 +411,7 @@ module Temporal
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
+          workflow_start_delay: start_delay,
           request_id: SecureRandom.uuid,
           header: Temporalio::Api::Common::V1::Header.new(
             fields: proto_header_fields
