@@ -2,6 +2,13 @@ require 'temporal/retry_policy'
 require 'temporal/connection/serializer/retry_policy'
 
 describe Temporal::Connection::Serializer::RetryPolicy do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
+
   describe 'to_proto' do
     let(:example_policy) do
       Temporal::RetryPolicy.new(
@@ -14,7 +21,7 @@ describe Temporal::Connection::Serializer::RetryPolicy do
     end
 
     it 'converts to proto' do
-      proto = described_class.new(example_policy).to_proto
+      proto = described_class.new(example_policy, converter).to_proto
       expect(proto.initial_interval.seconds).to eq(1)
       expect(proto.backoff_coefficient).to eq(1.5)
       expect(proto.maximum_interval.seconds).to eq(5)

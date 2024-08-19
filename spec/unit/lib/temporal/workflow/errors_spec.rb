@@ -27,6 +27,13 @@ class MyFancyError < Exception
 end
 
 describe Temporal::Workflow::Errors do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
+
   describe '.generate_error' do
     it "instantiates properly when the client has the error" do
       message = "An error message"
@@ -47,7 +54,7 @@ describe Temporal::Workflow::Errors do
 
     it 'correctly deserializes a complex error' do
       error = MyFancyError.new('foo', 'bar')
-      failure = Temporal::Connection::Serializer::Failure.new(error, serialize_whole_error: true).to_proto
+      failure = Temporal::Connection::Serializer::Failure.new(error, converter, serialize_whole_error: true).to_proto
 
       e = Temporal::Workflow::Errors.generate_error(failure)
       expect(e).to be_a(MyFancyError)

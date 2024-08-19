@@ -130,7 +130,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy, converter).to_proto,
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
@@ -212,7 +212,7 @@ module Temporal
       end
 
       def respond_query_task_completed(namespace:, task_token:, query_result:)
-        query_result_proto = Serializer.serialize(query_result)
+        query_result_proto = Serializer.serialize(query_result, converter)
         request = Temporalio::Api::WorkflowService::V1::RespondQueryTaskCompletedRequest.new(
           task_token: task_token,
           namespace: namespace,
@@ -229,8 +229,8 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          commands: Array(commands).map { |(_, command)| Serializer.serialize(command) },
-          query_results: query_results.transform_values { |value| Serializer.serialize(value) },
+          commands: Array(commands).map { |(_, command)| Serializer.serialize(command, converter) },
+          query_results: query_results.transform_values { |value| Serializer.serialize(value, converter) },
           binary_checksum: binary_checksum,
           sdk_metadata: if new_sdk_flags_used.any?
                           Temporalio::Api::Sdk::V1::WorkflowTaskCompletedMetadata.new(
@@ -249,7 +249,7 @@ module Temporal
           identity: identity,
           task_token: task_token,
           cause: cause,
-          failure: Serializer::Failure.new(exception).to_proto,
+          failure: Serializer::Failure.new(exception, converter).to_proto,
           binary_checksum: binary_checksum
         )
         client.respond_workflow_task_failed(request)
@@ -321,7 +321,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          failure: Serializer::Failure.new(exception, serialize_whole_error: serialize_whole_error).to_proto
+          failure: Serializer::Failure.new(exception, converter, serialize_whole_error: serialize_whole_error).to_proto
         )
         client.respond_activity_task_failed(request)
       end
@@ -333,7 +333,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          failure: Serializer::Failure.new(exception).to_proto
+          failure: Serializer::Failure.new(exception, converter).to_proto
         )
         client.respond_activity_task_failed_by_id(request)
       end
@@ -399,7 +399,7 @@ module Temporal
             name: workflow_name
           ),
           workflow_id: workflow_id,
-          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy).to_proto,
+          workflow_id_reuse_policy: Temporal::Connection::Serializer::WorkflowIdReusePolicy.new(workflow_id_reuse_policy, converter).to_proto,
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
@@ -694,20 +694,21 @@ module Temporal
           if trigger_immediately
             initial_patch.trigger_immediately = Temporalio::Api::Schedule::V1::TriggerImmediatelyRequest.new(
               overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(
-                schedule.policies&.overlap_policy
+                schedule.policies&.overlap_policy,
+                converter
               ).to_proto
             )
           end
 
           if backfill
-            initial_patch.backfill_request += [Temporal::Connection::Serializer::Backfill.new(backfill).to_proto]
+            initial_patch.backfill_request += [Temporal::Connection::Serializer::Backfill.new(backfill, converter).to_proto]
           end
         end
 
         request = Temporalio::Api::WorkflowService::V1::CreateScheduleRequest.new(
           namespace: namespace,
           schedule_id: schedule_id,
-          schedule: Temporal::Connection::Serializer::Schedule.new(schedule).to_proto,
+          schedule: Temporal::Connection::Serializer::Schedule.new(schedule, converter).to_proto,
           identity: identity,
           request_id: SecureRandom.uuid,
           memo: Temporalio::Api::Common::V1::Memo.new(
@@ -738,7 +739,7 @@ module Temporal
         request = Temporalio::Api::WorkflowService::V1::UpdateScheduleRequest.new(
           namespace: namespace,
           schedule_id: schedule_id,
-          schedule: Temporal::Connection::Serializer::Schedule.new(schedule).to_proto,
+          schedule: Temporal::Connection::Serializer::Schedule.new(schedule, converter).to_proto,
           conflict_token: conflict_token,
           identity: identity,
           request_id: SecureRandom.uuid
@@ -758,7 +759,8 @@ module Temporal
           patch: Temporalio::Api::Schedule::V1::SchedulePatch.new(
             trigger_immediately: Temporalio::Api::Schedule::V1::TriggerImmediatelyRequest.new(
               overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(
-                overlap_policy
+                overlap_policy,
+                converter
               ).to_proto
             ),
           ),

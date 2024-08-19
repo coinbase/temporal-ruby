@@ -1,14 +1,17 @@
 require 'temporal/connection/serializer/failure'
 require 'temporal/workflow/command'
 
-class TestDeserializer
-  include Temporal::Concerns::Payloads
-end
-
 describe Temporal::Connection::Serializer::Failure do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
+
   describe 'to_proto' do
     it 'produces a protobuf' do
-      result = described_class.new(StandardError.new('test')).to_proto
+      result = described_class.new(StandardError.new('test'), converter).to_proto
 
       expect(result).to be_an_instance_of(Temporalio::Api::Failure::V1::Failure)
     end
@@ -31,10 +34,10 @@ describe Temporal::Connection::Serializer::Failure do
     it 'Serializes round-trippable full errors when asked to' do
       # Make sure serializing various bits round-trips
       e = MyError.new(['seven', 'three'], "Bar", bad_class: NaughtyClass)
-      failure_proto = described_class.new(e, serialize_whole_error: true).to_proto
+      failure_proto = described_class.new(e, converter, serialize_whole_error: true).to_proto
       expect(failure_proto.application_failure_info.type).to eq("MyError")
 
-      deserialized_error = TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details)
+      deserialized_error = converter.from_details_payloads(failure_proto.application_failure_info.details)
       expect(deserialized_error).to be_an_instance_of(MyError)
       expect(deserialized_error.message).to eq("Hello, Bar!")
       expect(deserialized_error.foo).to eq(['seven', 'three'])
@@ -53,21 +56,21 @@ describe Temporal::Connection::Serializer::Failure do
     it 'deals with too-large serialization using the old path' do
       e = MyBigError.new('Uh oh!')
       # Normal serialization path
-      failure_proto = described_class.new(e, serialize_whole_error: true, max_bytes: 1000).to_proto
+      failure_proto = described_class.new(e, converter, serialize_whole_error: true, max_bytes: 1000).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
       deserialized_error = TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details)
       expect(deserialized_error).to be_an_instance_of(MyBigError)
       expect(deserialized_error.big_payload).to eq('123456789012345678901234567890123456789012345678901234567890')
 
       # Exercise legacy serialization mechanism
-      failure_proto = described_class.new(e, serialize_whole_error: false).to_proto
+      failure_proto = described_class.new(e, converter, serialize_whole_error: false).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
       old_style_deserialized_error = MyBigError.new(TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details))
       expect(old_style_deserialized_error).to be_an_instance_of(MyBigError)
       expect(old_style_deserialized_error.message).to eq('Uh oh!')
 
       # If the payload size exceeds the max_bytes, we fallback to the old-style serialization.
-      failure_proto = described_class.new(e, serialize_whole_error: true, max_bytes: 50).to_proto
+      failure_proto = described_class.new(e, converter, serialize_whole_error: true, max_bytes: 50).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
       avoids_truncation_error = MyBigError.new(TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details))
       expect(avoids_truncation_error).to be_an_instance_of(MyBigError)
@@ -82,7 +85,7 @@ describe Temporal::Connection::Serializer::Failure do
 
       allow(Temporal.logger).to receive(:error)
       max_bytes = 50
-      described_class.new(e, serialize_whole_error: true, max_bytes: max_bytes).to_proto
+      described_class.new(e, converter, serialize_whole_error: true, max_bytes: max_bytes).to_proto
       expect(Temporal.logger)
         .to have_received(:error)
         .with(
@@ -99,7 +102,7 @@ describe Temporal::Connection::Serializer::Failure do
 
     it 'successfully processes an error with no constructor arguments' do 
       e = MyArglessError.new
-      failure_proto = described_class.new(e, serialize_whole_error: true).to_proto
+      failure_proto = described_class.new(e, converter, serialize_whole_error: true).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyArglessError')
     end
 

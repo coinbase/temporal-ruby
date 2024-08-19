@@ -5,8 +5,6 @@ module Temporal
   module Connection
     module Serializer
       class SignalExternalWorkflow < Base
-        include Concerns::Payloads
-
         def to_proto
           Temporalio::Api::Command::V1::Command.new(
             command_type: Temporalio::Api::Enums::V1::CommandType::COMMAND_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION,
@@ -15,7 +13,7 @@ module Temporal
                 namespace: object.namespace,
                 execution: serialize_execution(object.execution),
                 signal_name: object.signal_name,
-                input: to_signal_payloads(object.input),
+                input: converter.to_signal_payloads(object.input),
                 control: "", # deprecated
                 child_workflow_only: object.child_workflow_only
               )

@@ -11,7 +11,7 @@ module Temporal
           Temporalio::Api::Schedule::V1::BackfillRequest.new(
             start_time: serialize_time(object.start_time),
             end_time: serialize_time(object.end_time),
-            overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(object.overlap_policy).to_proto
+            overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(object.overlap_policy, converter).to_proto
           )
         end
 

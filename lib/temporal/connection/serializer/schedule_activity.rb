@@ -21,7 +21,7 @@ module Temporal
                 schedule_to_start_timeout: object.timeouts[:schedule_to_start],
                 start_to_close_timeout: object.timeouts[:start_to_close],
                 heartbeat_timeout: object.timeouts[:heartbeat],
-                retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy).to_proto,
+                retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy, converter).to_proto,
                 header: serialize_headers(object.headers)
               )
           )
