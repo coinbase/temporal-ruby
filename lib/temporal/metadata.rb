@@ -8,9 +8,7 @@ module Temporal
   module Metadata
 
     class << self
-      include Concerns::Payloads
-
-      def generate_activity_metadata(task, namespace)
+      def generate_activity_metadata(task, namespace, converter)
         Metadata::Activity.new(
           namespace: namespace,
           id: task.activity_id,
@@ -20,8 +18,8 @@ module Temporal
           workflow_run_id: task.workflow_execution.run_id,
           workflow_id: task.workflow_execution.workflow_id,
           workflow_name: task.workflow_type.name,
-          headers: from_payload_map(task.header&.fields || {}),
-          heartbeat_details: from_details_payloads(task.heartbeat_details),
+          headers: converter.from_payload_map(task.header&.fields || {}),
+          heartbeat_details: converter.from_details_payloads(task.heartbeat_details),
           scheduled_at: task.scheduled_time.to_time,
           current_attempt_scheduled_at: task.current_attempt_scheduled_time.to_time,
           heartbeat_timeout: task.heartbeat_timeout.seconds
@@ -44,7 +42,7 @@ module Temporal
 
       # @param event [Temporal::Workflow::History::Event] Workflow started history event
       # @param task_metadata [Temporal::Metadata::WorkflowTask] workflow task metadata
-      def generate_workflow_metadata(event, task_metadata)
+      def generate_workflow_metadata(event, task_metadata, converter)
         Metadata::Workflow.new(
           name: event.attributes.workflow_type.name,
           id: task_metadata.workflow_id,
@@ -54,9 +52,9 @@ module Temporal
           attempt: event.attributes.attempt,
           namespace: task_metadata.namespace,
           task_queue: event.attributes.task_queue.name,
-          headers: from_payload_map(event.attributes.header&.fields || {}),
+          headers: converter.from_payload_map(event.attributes.header&.fields || {}),
           run_started_at: event.timestamp,
-          memo: from_payload_map(event.attributes.memo&.fields || {}),
+          memo: converter.from_payload_map(event.attributes.memo&.fields || {}),
         )
       end
     end

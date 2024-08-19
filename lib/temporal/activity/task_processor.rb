@@ -14,7 +14,7 @@ module Temporal
         @task = task
         @task_queue = task_queue
         @namespace = namespace
-        @metadata = Metadata.generate_activity_metadata(task, namespace)
+        @metadata = Metadata.generate_activity_metadata(task, namespace, config.converter)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
         @activity_class = activity_lookup.find(activity_name)
