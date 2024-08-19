@@ -12,8 +12,6 @@ require 'temporal/workflow/signal'
 module Temporal
   class Workflow
     class StateManager
-      include Concerns::Payloads
-
       SIDE_EFFECT_MARKER = 'SIDE_EFFECT'.freeze
       RELEASE_MARKER = 'RELEASE'.freeze
 
@@ -34,6 +32,7 @@ module Temporal
         @replay = false
         @search_attributes = {}
         @config = config
+        @converter = config.converter
 
         # Current flags in use, built up from workflow task completed history entries
         @sdk_flags = Set.new
@@ -167,7 +166,7 @@ module Temporal
 
       private
 
-      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config
+      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config, :converter
 
       def use_signals_first(raw_events)
         # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST
@@ -250,14 +249,14 @@ module Temporal
         case event.type
         when 'WORKFLOW_EXECUTION_STARTED'
           unless event.attributes.search_attributes.nil?
-            search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
+            search_attributes.merge!(converter.from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
           end
 
           state_machine.start
           dispatch(
             History::EventTarget.start_workflow,
             'started',
-            from_payloads(event.attributes.input),
+            converter.from_payloads(event.attributes.input),
             event
           )
 
@@ -296,7 +295,7 @@ module Temporal
 
         when 'ACTIVITY_TASK_COMPLETED'
           state_machine.complete
-          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', converter.from_result_payloads(event.attributes.result))
 
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
@@ -319,7 +318,7 @@ module Temporal
         when 'ACTIVITY_TASK_CANCELED'
           state_machine.cancel
           dispatch(history_target, 'failed',
-                   Temporal::ActivityCanceled.new(from_details_payloads(event.attributes.details)))
+                   Temporal::ActivityCanceled.new(converter.from_details_payloads(event.attributes.details)))
 
         when 'TIMER_STARTED'
           state_machine.start
@@ -356,13 +355,13 @@ module Temporal
 
         when 'MARKER_RECORDED'
           state_machine.complete
-          handle_marker(event.id, event.attributes.marker_name, from_details_payloads(event.attributes.details['data']))
+          handle_marker(event.id, event.attributes.marker_name, converter.from_details_payloads(event.attributes.details['data']))
 
         when 'WORKFLOW_EXECUTION_SIGNALED'
           # relies on Signal#== for matching in Dispatcher
           signal_target = Signal.new(event.attributes.signal_name)
           dispatch(signal_target, 'signaled', event.attributes.signal_name,
-                   from_signal_payloads(event.attributes.input))
+                   converter.from_signal_payloads(event.attributes.input))
 
         when 'WORKFLOW_EXECUTION_TERMINATED'
           # todo
@@ -388,7 +387,7 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_COMPLETED'
           state_machine.complete
-          dispatch(history_target, 'completed', from_result_payloads(event.attributes.result))
+          dispatch(history_target, 'completed', converter.from_result_payloads(event.attributes.result))
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
@@ -427,7 +426,7 @@ module Temporal
           dispatch(history_target, 'completed')
 
         when 'UPSERT_WORKFLOW_SEARCH_ATTRIBUTES'
-          search_attributes.merge!(from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
+          search_attributes.merge!(converter.from_payload_map(event.attributes.search_attributes&.indexed_fields || {}))
           # no need to track state; this is just a synchronous API call.
           discard_command(history_target)
 

@@ -10,8 +10,6 @@ require 'temporal/metric_keys'
 module Temporal
   class Activity
     class TaskProcessor
-      include Concerns::Payloads
-
       def initialize(task, task_queue, namespace, activity_lookup, middleware_chain, config, heartbeat_thread_pool)
         @task = task
         @task_queue = task_queue
@@ -38,7 +36,7 @@ module Temporal
         end
 
         result = middleware_chain.invoke(metadata) do
-          activity_class.execute_in_context(context, from_payloads(task.input))
+          activity_class.execute_in_context(context, config.converter.from_payloads(task.input))
         end
 
         # Do not complete asynchronous activities, these should be completed manually

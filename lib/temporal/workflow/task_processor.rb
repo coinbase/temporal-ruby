@@ -9,15 +9,13 @@ require 'temporal/metric_keys'
 module Temporal
   class Workflow
     class TaskProcessor
-      Query = Struct.new(:query) do
-        include Concerns::Payloads
-
+      Query = Struct.new(:query, :converter) do
         def query_type
           query.query_type
         end
 
         def query_args
-          from_query_payloads(query.query_args)
+          converter.from_query_payloads(query.query_args)
         end
       end
 
@@ -125,10 +123,10 @@ module Temporal
       def parse_queries
         # Support for deprecated query style
         if legacy_query_task?
-          { LEGACY_QUERY_KEY => Query.new(task.query) }
+          { LEGACY_QUERY_KEY => Query.new(task.query, config.converter) }
         else
           task.queries.each_with_object({}) do |(query_id, query), result|
-            result[query_id] = Query.new(query)
+            result[query_id] = Query.new(query, config.converter)
           end
         end
       end

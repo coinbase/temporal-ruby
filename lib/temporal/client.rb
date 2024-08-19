@@ -251,7 +251,7 @@ module Temporal
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        return ResultConverter.from_result_payloads(payloads)
+        return config.converter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -597,11 +597,6 @@ module Temporal
     def connection
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end
-
-    class ResultConverter
-      extend Concerns::Payloads
-    end
-    private_constant :ResultConverter
 
     private
 
