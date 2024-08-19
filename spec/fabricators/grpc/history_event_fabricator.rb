@@ -1,5 +1,4 @@
 require 'securerandom'
-require 'temporal/concerns/payloads'
 
 Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
   event_id { 1 }

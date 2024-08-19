@@ -2,7 +2,6 @@ require 'temporal/errors'
 require 'temporal/metadata/activity'
 require 'temporal/metadata/workflow'
 require 'temporal/metadata/workflow_task'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Metadata

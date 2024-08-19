@@ -1,5 +1,4 @@
 require 'temporal/connection/serializer/base'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection

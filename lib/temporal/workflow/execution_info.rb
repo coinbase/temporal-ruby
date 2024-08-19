@@ -1,4 +1,3 @@
-require 'temporal/concerns/payloads'
 require 'temporal/workflow/status'
 
 module Temporal

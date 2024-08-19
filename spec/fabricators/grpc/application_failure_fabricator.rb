@@ -1,5 +1,3 @@
-require 'temporal/concerns/payloads'
-
 # Simulates Temporal::Connection::Serializer::Failure
 Fabricator(:api_application_failure, from: Temporalio::Api::Failure::V1::Failure) do
   transient :error_class, :backtrace

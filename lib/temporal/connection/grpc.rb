@@ -15,7 +15,6 @@ require 'temporal/connection/serializer/failure'
 require 'temporal/connection/serializer/backfill'
 require 'temporal/connection/serializer/schedule'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection

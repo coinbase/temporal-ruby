@@ -1,6 +1,5 @@
 require 'temporal/connection/serializer/query_failure'
 require 'temporal/workflow/query_result'
-require 'temporal/concerns/payloads'
 
 describe Temporal::Connection::Serializer::QueryAnswer do
   let(:converter) do

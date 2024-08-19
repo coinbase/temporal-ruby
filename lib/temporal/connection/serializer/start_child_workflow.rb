@@ -1,7 +1,6 @@
 require 'temporal/connection/serializer/base'
 require 'temporal/connection/serializer/retry_policy'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
