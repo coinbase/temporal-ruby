@@ -45,7 +45,7 @@ describe Temporal::Workflow::Errors do
         error_class: SomeError.to_s
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, converter)
       expect(e).to be_a(SomeError)
       expect(e.message).to eq(message)
       expect(e.backtrace).to eq(stack_trace)
@@ -56,7 +56,7 @@ describe Temporal::Workflow::Errors do
       error = MyFancyError.new('foo', 'bar')
       failure = Temporal::Connection::Serializer::Failure.new(error, converter, serialize_whole_error: true).to_proto
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, converter)
       expect(e).to be_a(MyFancyError)
       expect(e.foo).to eq('foo')
       expect(e.bar).to eq('bar')
@@ -75,7 +75,7 @@ describe Temporal::Workflow::Errors do
         error_class: 'NonexistentError',
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("NonexistentError: An error message")
       expect(e.backtrace).to eq(stack_trace)
@@ -101,7 +101,7 @@ describe Temporal::Workflow::Errors do
         error_class: ErrorWithTwoArgs.to_s,
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("ErrorWithTwoArgs: An error message")
       expect(e.backtrace).to eq(stack_trace)
@@ -134,7 +134,7 @@ describe Temporal::Workflow::Errors do
         error_class: ErrorThatRaisesInInitialize.to_s,
       )
 
-      e = Temporal::Workflow::Errors.generate_error(failure)
+      e = Temporal::Workflow::Errors.generate_error(failure, converter)
       expect(e).to be_a(StandardError)
       expect(e.message).to eq("ErrorThatRaisesInInitialize: An error message")
       expect(e.backtrace).to eq(stack_trace)

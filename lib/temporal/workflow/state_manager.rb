@@ -300,11 +300,11 @@ module Temporal
         when 'ACTIVITY_TASK_FAILED'
           state_machine.fail
           dispatch(history_target, 'failed',
-                   Temporal::Workflow::Errors.generate_error(event.attributes.failure, ActivityException))
+                   Temporal::Workflow::Errors.generate_error(event.attributes.failure, converter, ActivityException))
 
         when 'ACTIVITY_TASK_TIMED_OUT'
           state_machine.time_out
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, converter))
 
         when 'ACTIVITY_TASK_CANCEL_REQUESTED'
           state_machine.requested
@@ -391,11 +391,11 @@ module Temporal
 
         when 'CHILD_WORKFLOW_EXECUTION_FAILED'
           state_machine.fail
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, converter))
 
         when 'CHILD_WORKFLOW_EXECUTION_CANCELED'
           state_machine.cancel
-          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure))
+          dispatch(history_target, 'failed', Temporal::Workflow::Errors.generate_error(event.attributes.failure, converter))
 
         when 'CHILD_WORKFLOW_EXECUTION_TIMED_OUT'
           state_machine.time_out
