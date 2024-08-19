@@ -1,12 +1,6 @@
 require 'securerandom'
 require 'temporal/concerns/payloads'
 
-class TestSerializer
-  extend Temporal::Concerns::Payloads
-end
-
-include Temporal::Concerns::Payloads
-
 Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
   event_id { 1 }
   event_time { Time.now }
@@ -17,9 +11,9 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED }
   event_time { Time.now }
   workflow_execution_started_event_attributes do |attrs|
-    header_fields = to_payload_map(attrs[:headers] || {})
+    header_fields = TEST_CONVERTER.to_payload_map(attrs[:headers] || {})
     header = Temporalio::Api::Common::V1::Header.new(fields: header_fields)
-    indexed_fields = attrs[:search_attributes] ? to_payload_map(attrs[:search_attributes]) : nil
+    indexed_fields = attrs[:search_attributes] ? TEST_CONVERTER.to_payload_map(attrs[:search_attributes]) : nil
 
     Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),
@@ -142,7 +136,7 @@ Fabricator(:api_activity_task_canceled_event, from: :api_history_event) do
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_CANCELED }
   activity_task_canceled_event_attributes do |attrs|
     Temporalio::Api::History::V1::ActivityTaskCanceledEventAttributes.new(
-      details: TestSerializer.to_details_payloads('ACTIVITY_ID_NOT_STARTED'),
+      details: TEST_CONVERTER.to_details_payloads('ACTIVITY_ID_NOT_STARTED'),
       scheduled_event_id: attrs[:event_id] - 2,
       started_event_id: nil,
       identity: 'test-worker@test-host'
@@ -197,7 +191,7 @@ Fabricator(:api_upsert_search_attributes_event, from: :api_history_event) do
   transient :search_attributes
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES }
   upsert_workflow_search_attributes_event_attributes do |attrs|
-    indexed_fields = attrs[:search_attributes] ? to_payload_map(attrs[:search_attributes]) : nil
+    indexed_fields = attrs[:search_attributes] ? TEST_CONVERTER.to_payload_map(attrs[:search_attributes]) : nil
     Temporalio::Api::History::V1::UpsertWorkflowSearchAttributesEventAttributes.new(
       workflow_task_completed_event_id: attrs[:event_id] - 1,
       search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
@@ -213,7 +207,7 @@ Fabricator(:api_marker_recorded_event, from: :api_history_event) do
     Temporalio::Api::History::V1::MarkerRecordedEventAttributes.new(
       workflow_task_completed_event_id: attrs[:event_id] - 1,
       marker_name: 'SIDE_EFFECT',
-      details: to_payload_map({})
+      details: TEST_CONVERTER.to_payload_map({})
     )
   end
 end

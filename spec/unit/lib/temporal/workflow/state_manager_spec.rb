@@ -229,7 +229,7 @@ describe Temporal::Workflow::StateManager do
           state_manager.schedule(
             Temporal::Workflow::Command::RecordMarker.new(
               name: marker_entry.marker_recorded_event_attributes.marker_name,
-              details: to_payload_map({})
+              details: TEST_CONVERTER.to_payload_map({})
             )
           )
 

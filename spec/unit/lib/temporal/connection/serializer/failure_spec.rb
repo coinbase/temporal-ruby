@@ -58,21 +58,21 @@ describe Temporal::Connection::Serializer::Failure do
       # Normal serialization path
       failure_proto = described_class.new(e, converter, serialize_whole_error: true, max_bytes: 1000).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
-      deserialized_error = TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details)
+      deserialized_error = converter.from_details_payloads(failure_proto.application_failure_info.details)
       expect(deserialized_error).to be_an_instance_of(MyBigError)
       expect(deserialized_error.big_payload).to eq('123456789012345678901234567890123456789012345678901234567890')
 
       # Exercise legacy serialization mechanism
       failure_proto = described_class.new(e, converter, serialize_whole_error: false).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
-      old_style_deserialized_error = MyBigError.new(TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details))
+      old_style_deserialized_error = MyBigError.new(converter.from_details_payloads(failure_proto.application_failure_info.details))
       expect(old_style_deserialized_error).to be_an_instance_of(MyBigError)
       expect(old_style_deserialized_error.message).to eq('Uh oh!')
 
       # If the payload size exceeds the max_bytes, we fallback to the old-style serialization.
       failure_proto = described_class.new(e, converter, serialize_whole_error: true, max_bytes: 50).to_proto
       expect(failure_proto.application_failure_info.type).to eq('MyBigError')
-      avoids_truncation_error = MyBigError.new(TestDeserializer.new.from_details_payloads(failure_proto.application_failure_info.details))
+      avoids_truncation_error = MyBigError.new(converter.from_details_payloads(failure_proto.application_failure_info.details))
       expect(avoids_truncation_error).to be_an_instance_of(MyBigError)
       expect(avoids_truncation_error.message).to eq('Uh oh!')
 
