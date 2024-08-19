@@ -75,7 +75,8 @@ module Temporal
       private
 
       def payload_converter
-        Temporal.configuration.converter
+        # TODO: Temporary fix, should fo away before the PR
+        Temporal.configuration.converter.send(:converter)
       end
 
       def payload_codec

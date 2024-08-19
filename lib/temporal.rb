@@ -51,6 +51,9 @@ module Temporal
   class << self
     def configure(&block)
       yield config
+      # Reset the singleton client after configuration was altered to ensure
+      # it is initialized with the latest attributes
+      @default_client = nil
     end
 
     def configuration

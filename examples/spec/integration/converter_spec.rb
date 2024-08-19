@@ -3,16 +3,20 @@ require 'lib/crypt_payload_codec'
 require 'grpc/errors'
 
 describe 'Converter', :integration do
+  let(:codec) do
+    Temporal::Connection::Converter::Codec::Chain.new(
+      payload_codecs: [
+        Temporal::CryptPayloadCodec.new
+      ]
+    )
+  end
+
   around(:each) do |example|
     task_queue = Temporal.configuration.task_queue
 
     Temporal.configure do |config|
       config.task_queue = 'crypt'
-      config.payload_codec = Temporal::Connection::Converter::Codec::Chain.new(
-        payload_codecs: [
-          Temporal::CryptPayloadCodec.new
-        ]
-      )
+      config.payload_codec = codec
     end
 
     example.run
@@ -67,8 +71,6 @@ describe 'Converter', :integration do
     completion_event = events[:EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED].first
     result = completion_event.workflow_execution_completed_event_attributes.result
 
-    payload_codec = Temporal.configuration.payload_codec
-
-    expect(payload_codec.decodes(result).payloads.first.data).to eq('"Hello World, Tom"')
+    expect(codec.decodes(result).payloads.first.data).to eq('"Hello World, Tom"')
   end
 end
