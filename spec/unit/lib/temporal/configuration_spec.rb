@@ -62,4 +62,50 @@ describe Temporal::Configuration do
       expect(subject.for_connection).to have_attributes(identity: new_identity)
     end
   end
+
+  describe '#converter' do
+    it 'wraps the provided converter and codec' do
+      converter_wrapper = subject.converter
+
+      expect(converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(converter_wrapper.send(:converter)).to eq(described_class::DEFAULT_CONVERTER)
+      expect(converter_wrapper.send(:codec)).to eq(described_class::DEFAULT_PAYLOAD_CODEC)
+    end
+  end
+
+  describe '#converter=' do
+    let(:converter) { instance_double(Temporal::Connection::Converter::Composite) }
+
+    it 'resets the wrapper when converter has changed' do
+      old_converter_wrapper = subject.converter
+
+      expect(old_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(old_converter_wrapper.send(:converter)).to eq(described_class::DEFAULT_CONVERTER)
+
+      subject.converter = converter
+      new_converter_wrapper = subject.converter
+
+      expect(new_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(new_converter_wrapper.send(:converter)).to eq(converter)
+      expect(new_converter_wrapper.send(:codec)).to eq(old_converter_wrapper.send(:codec))
+    end
+  end
+
+  describe '#payload_codec=' do
+    let(:codec) { Temporal::Connection::Converter::Codec::Base.new }
+
+    it 'resets the wrapper when converter has changed' do
+      old_converter_wrapper = subject.converter
+
+      expect(old_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(old_converter_wrapper.send(:codec)).to eq(described_class::DEFAULT_PAYLOAD_CODEC)
+
+      subject.payload_codec = codec
+      new_converter_wrapper = subject.converter
+
+      expect(new_converter_wrapper).to be_a(Temporal::ConverterWrapper)
+      expect(new_converter_wrapper.send(:codec)).to eq(codec)
+      expect(new_converter_wrapper.send(:converter)).to eq(old_converter_wrapper.send(:converter))
+    end
+  end
 end

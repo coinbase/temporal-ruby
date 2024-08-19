@@ -1,4 +1,5 @@
 require 'temporal/capabilities'
+require 'temporal/converter_wrapper'
 require 'temporal/logger'
 require 'temporal/metrics_adapters/null'
 require 'temporal/middleware/header_propagator_chain'
@@ -15,10 +16,10 @@ module Temporal
     Connection = Struct.new(:type, :host, :port, :credentials, :identity, :connection_options, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
-    attr_reader :timeouts, :error_handlers, :capabilities
-    attr_accessor :connection_type, :converter, :use_error_serialization_v2, :host, :port, :credentials, :identity,
+    attr_reader :timeouts, :error_handlers, :capabilities, :payload_codec
+    attr_accessor :connection_type, :use_error_serialization_v2, :host, :port, :credentials, :identity,
                   :logger, :metrics_adapter, :namespace, :task_queue, :headers, :search_attributes, :header_propagators,
-                  :payload_codec, :legacy_signals, :no_signals_in_first_task, :connection_options, :log_on_workflow_replay
+                  :legacy_signals, :no_signals_in_first_task, :connection_options, :log_on_workflow_replay
 
     # See https://docs.temporal.io/blog/activity-timeouts/ for general docs.
     # We want an infinite execution timeout for cron schedules and other perpetual workflows.
@@ -146,6 +147,20 @@ module Temporal
 
     def header_propagator_chain
       Middleware::HeaderPropagatorChain.new(header_propagators)
+    end
+
+    def converter
+      @converter_wrapper ||= ConverterWrapper.new(@converter, @payload_codec)
+    end
+
+    def converter=(new_converter)
+      @converter = new_converter
+      @converter_wrapper = nil
+    end
+
+    def payload_codec=(new_codec)
+      @payload_codec = new_codec
+      @converter_wrapper = nil
     end
 
     private
