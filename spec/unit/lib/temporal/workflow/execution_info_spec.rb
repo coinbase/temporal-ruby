@@ -1,7 +1,13 @@
 require 'temporal/workflow/execution_info'
 
 describe Temporal::Workflow::ExecutionInfo do
-  subject { described_class.generate_from(api_info) }
+  subject { described_class.generate_from(api_info, converter) }
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
   let(:api_info) { Fabricate(:api_workflow_execution_info, workflow: 'TestWorkflow', workflow_id: '') }
 
   describe '.generate_for' do
@@ -25,7 +31,7 @@ describe Temporal::Workflow::ExecutionInfo do
     it 'deserializes if search_attributes is nil' do
       api_info.search_attributes = nil
 
-      result = described_class.generate_from(api_info)
+      result = described_class.generate_from(api_info, converter)
       expect(result.search_attributes).to eq({})
     end
   end

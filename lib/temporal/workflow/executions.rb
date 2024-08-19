@@ -9,7 +9,8 @@ module Temporal
         next_page_token: nil
       }.freeze
 
-      def initialize(connection:, status:, request_options:)
+      def initialize(converter, connection:, status:, request_options:)
+        @converter = converter
         @connection = connection
         @status = status
         @request_options = DEFAULT_REQUEST_OPTIONS.merge(request_options)
@@ -20,7 +21,7 @@ module Temporal
       end
 
       def next_page
-        self.class.new(connection: @connection, status: @status, request_options: @request_options.merge(next_page_token: next_page_token))
+        self.class.new(@converter, connection: @connection, status: @status, request_options: @request_options.merge(next_page_token: next_page_token))
       end
 
       def each
@@ -42,7 +43,7 @@ module Temporal
           )
 
           paginated_executions = response.executions.map do |raw_execution|
-            execution = Temporal::Workflow::ExecutionInfo.generate_from(raw_execution) 
+            execution = Temporal::Workflow::ExecutionInfo.generate_from(raw_execution, @converter)
             if block_given?
               yield execution
             end
