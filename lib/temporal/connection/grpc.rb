@@ -20,8 +20,6 @@ require 'temporal/concerns/payloads'
 module Temporal
   module Connection
     class GRPC
-      include Concerns::Payloads
-
       HISTORY_EVENT_FILTER = {
         all: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
         close: Temporalio::Api::Enums::V1::HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT
@@ -58,10 +56,11 @@ module Temporal
 
       CONNECTION_TIMEOUT_SECONDS = 60
 
-      def initialize(host, port, identity, credentials, options = {})
+      def initialize(host, port, identity, credentials, converter, options = {})
         @url = "#{host}:#{port}"
         @identity = identity
         @credentials = credentials
+        @converter = converter
         @poll = true
         @poll_mutex = Mutex.new
         @poll_request = nil
@@ -135,20 +134,20 @@ module Temporal
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
           request_id: SecureRandom.uuid,
           header: Temporalio::Api::Common::V1::Header.new(
-            fields: to_payload_map(headers || {})
+            fields: converter.to_payload_map(headers || {})
           ),
           cron_schedule: cron_schedule,
           memo: Temporalio::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map_without_codec(search_attributes || {})
+            indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           )
         )
 
@@ -284,7 +283,7 @@ module Temporal
         request = Temporalio::Api::WorkflowService::V1::RecordActivityTaskHeartbeatRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.record_activity_task_heartbeat(request)
@@ -299,7 +298,7 @@ module Temporal
           namespace: namespace,
           identity: identity,
           task_token: task_token,
-          result: to_result_payloads(result)
+          result: converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed(request)
       end
@@ -311,7 +310,7 @@ module Temporal
           workflow_id: workflow_id,
           run_id: run_id,
           activity_id: activity_id,
-          result: to_result_payloads(result)
+          result: converter.to_result_payloads(result)
         )
         client.respond_activity_task_completed_by_id(request)
       end
@@ -343,7 +342,7 @@ module Temporal
         request = Temporalio::Api::WorkflowService::V1::RespondActivityTaskCanceledRequest.new(
           namespace: namespace,
           task_token: task_token,
-          details: to_details_payloads(details),
+          details: converter.to_details_payloads(details),
           identity: identity
         )
         client.respond_activity_task_canceled(request)
@@ -365,7 +364,7 @@ module Temporal
             run_id: run_id
           ),
           signal_name: signal,
-          input: to_signal_payloads(input),
+          input: converter.to_signal_payloads(input),
           identity: identity
         )
         client.signal_workflow_execution(request)
@@ -384,9 +383,9 @@ module Temporal
         search_attributes: nil
       )
         proto_header_fields = if headers.nil?
-                                to_payload_map({})
+                                converter.to_payload_map({})
                               elsif headers.instance_of?(Hash)
-                                to_payload_map(headers)
+                                converter.to_payload_map(headers)
                               else
                                 # Preserve backward compatability for headers specified using proto objects
                                 warn '[DEPRECATION] Specify headers using a hash rather than protobuf objects'
@@ -404,7 +403,7 @@ module Temporal
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
             name: task_queue
           ),
-          input: to_payloads(input),
+          input: converter.to_payloads(input),
           workflow_execution_timeout: execution_timeout,
           workflow_run_timeout: run_timeout,
           workflow_task_timeout: task_timeout,
@@ -414,12 +413,12 @@ module Temporal
           ),
           cron_schedule: cron_schedule,
           signal_name: signal_name,
-          signal_input: to_signal_payloads(signal_input),
+          signal_input: converter.to_signal_payloads(signal_input),
           memo: Temporalio::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map_without_codec(search_attributes || {})
+            indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           )
         )
 
@@ -463,7 +462,7 @@ module Temporal
             run_id: run_id
           ),
           reason: reason,
-          details: to_details_payloads(details)
+          details: converter.to_details_payloads(details)
         )
 
         client.terminate_workflow_execution(request)
@@ -577,7 +576,7 @@ module Temporal
           ),
           query: Temporalio::Api::Query::V1::WorkflowQuery.new(
             query_type: query,
-            query_args: to_query_payloads(args)
+            query_args: converter.to_query_payloads(args)
           )
         )
         if query_reject_condition
@@ -599,7 +598,7 @@ module Temporal
         elsif !response.query_result
           raise Temporal::QueryFailed, 'Invalid response from server'
         else
-          from_query_payloads(response.query_result)
+          converter.from_query_payloads(response.query_result)
         end
       end
 
@@ -649,8 +648,8 @@ module Temporal
           schedules: resp.schedules.map do |schedule|
             Temporal::Schedule::ScheduleListEntry.new(
               schedule_id: schedule.schedule_id,
-              memo: from_payload_map(schedule.memo&.fields || {}),
-              search_attributes: from_payload_map_without_codec(schedule.search_attributes&.indexed_fields || {}),
+              memo: converter.from_payload_map(schedule.memo&.fields || {}),
+              search_attributes: converter.from_payload_map_without_codec(schedule.search_attributes&.indexed_fields || {}),
               info: schedule.info
             )
           end,
@@ -674,8 +673,8 @@ module Temporal
         Temporal::Schedule::DescribeScheduleResponse.new(
           schedule: resp.schedule,
           info: resp.info,
-          memo: from_payload_map(resp.memo&.fields || {}),
-          search_attributes: from_payload_map_without_codec(resp.search_attributes&.indexed_fields || {}),
+          memo: converter.from_payload_map(resp.memo&.fields || {}),
+          search_attributes: converter.from_payload_map_without_codec(resp.search_attributes&.indexed_fields || {}),
           conflict_token: resp.conflict_token
         )
       end
@@ -712,10 +711,10 @@ module Temporal
           identity: identity,
           request_id: SecureRandom.uuid,
           memo: Temporalio::Api::Common::V1::Memo.new(
-            fields: to_payload_map(memo || {})
+            fields: converter.to_payload_map(memo || {})
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
-            indexed_fields: to_payload_map_without_codec(search_attributes || {})
+            indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           )
         )
         client.create_schedule(request)
@@ -799,7 +798,7 @@ module Temporal
 
       private
 
-      attr_reader :url, :identity, :credentials, :options, :poll_mutex, :poll_request
+      attr_reader :url, :identity, :credentials, :converter, :options, :poll_mutex, :poll_request
 
       def client
         return @client if @client

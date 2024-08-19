@@ -13,7 +13,7 @@ require 'temporal/connection/converter/codec/chain'
 
 module Temporal
   class Configuration
-    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :connection_options, keyword_init: true)
+    Connection = Struct.new(:type, :host, :port, :credentials, :identity, :converter, :connection_options, keyword_init: true)
     Execution = Struct.new(:namespace, :task_queue, :timeouts, :headers, :search_attributes, keyword_init: true)
 
     attr_reader :timeouts, :error_handlers, :capabilities, :payload_codec
@@ -125,6 +125,7 @@ module Temporal
         port: port,
         credentials: credentials,
         identity: identity || default_identity,
+        converter: converter,
         connection_options: connection_options.merge(use_error_serialization_v2: @use_error_serialization_v2)
       ).freeze
     end
