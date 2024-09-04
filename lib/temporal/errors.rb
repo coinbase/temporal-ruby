@@ -26,7 +26,7 @@ module Temporal
 
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
-  # With v2 serialization (set with Temporal.configuration set with use_error_serialization_v2=true) you can
+  # With v2 serialization (set with Temporal::Configuration#use_error_serialization_v2=true) you can
   # throw any exception from an activity and expect that it can be handled by the workflow.
   class ActivityException < ClientError; end
 

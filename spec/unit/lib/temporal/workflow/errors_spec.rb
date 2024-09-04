@@ -109,7 +109,7 @@ describe Temporal::Workflow::Errors do
         .to have_received(:error)
         .with(
           "Could not instantiate original error. Defaulting to StandardError. "\
-          "Make sure the worker running your activities is setting Temporal.configuration.use_error_serialization_v2. "\
+          "Make sure the worker running your activities is configured with use_error_serialization_v2. "\
           "If so, make sure the original error serialized by searching your logs for 'unserializable_error'. "\
           "If not, you're using legacy serialization, and it's likely that "\
           "your error's initializer takes something other than exactly one positional argument.",
@@ -142,7 +142,7 @@ describe Temporal::Workflow::Errors do
         .to have_received(:error)
         .with(
           "Could not instantiate original error. Defaulting to StandardError. "\
-          "Make sure the worker running your activities is setting Temporal.configuration.use_error_serialization_v2. "\
+          "Make sure the worker running your activities is configured with use_error_serialization_v2. "\
           "If so, make sure the original error serialized by searching your logs for 'unserializable_error'. "\
           "If not, you're using legacy serialization, and it's likely that "\
           "your error's initializer takes something other than exactly one positional argument.",
