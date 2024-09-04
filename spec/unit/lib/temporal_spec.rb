@@ -67,19 +67,24 @@ describe Temporal do
     it 'calls a block with the configuration' do
       expect do |block|
         described_class.configure(&block)
-      end.to yield_with_args(described_class.configuration)
+      end.to yield_with_args(described_class.send(:config))
     end
   end
 
   describe '.configuration' do
+    before { allow(described_class).to receive(:warn) }
+
     it 'returns Temporal::Configuration object' do
       expect(described_class.configuration).to be_an_instance_of(Temporal::Configuration)
+      expect(described_class)
+        .to have_received(:warn)
+        .with('[DEPRECATION] This method is now deprecated without a substitution')
     end
   end
 
   describe '.logger' do
     it 'returns preconfigured Temporal logger' do
-      expect(described_class.logger).to eq(described_class.configuration.logger)
+      expect(described_class.logger).to eq(described_class.send(:config).logger)
     end
   end
   

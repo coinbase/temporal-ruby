@@ -759,7 +759,7 @@ describe Temporal::Client do
       expect(connection)
         .to have_received(:terminate_workflow_execution)
         .with(
-          namespace: 'default-namespace',
+          namespace: 'default-test-namespace',
           workflow_id: 'my-workflow',
           reason: 'just stop it',
           details: nil,
