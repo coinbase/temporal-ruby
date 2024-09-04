@@ -179,6 +179,47 @@ Temporal.configure do |config|
 end
 ```
 
+## Configuration
+
+This gem is optimised for the smoothest out-of-the-box experience, which is achieved using a global
+configuration:
+
+```ruby
+Temporal.configure do |config|
+  config.host = '127.0.0.1' # sets global host
+  ...
+end
+
+Temporal::Worker.new # uses global host
+Temporal.start_workflow(...) # uses global host
+```
+
+This will work just fine for simpler use-cases, however at some point you might need to setup
+multiple clients and workers within the same instance of your app (e.g. you have different Temporal
+hosts, need to use different codecs/converters for different parts of your app, etc). Should this be
+the case we recommend using explicit local configurations for each client/worker:
+
+```ruby
+config_1 = Temporal::Configuration.new
+config_1.host = 'temporal-01'
+
+config_2 = Temporal::Configuration.new
+config_2.host = 'temporal-01'
+
+worker_1 = Temporal::Worker.new(config_1)
+worker_2 = Temporal::Worker.new(config_2)
+
+client_1 = Temporal::Client.new(config_1)
+client_1.start_workflow(...)
+
+client_2 = Temporal::Client.new(config_2)
+client_2.start_workflow(...)
+```
+
+*NOTE: Almost all the methods on the `Temporal` module are delegated to the default client that's
+initialized using global configuration. The same methods can be used directly on your own client
+instances.*
+
 ## Workflows
 
 A workflow is defined using pure Ruby code, however it should contain only a high-level
