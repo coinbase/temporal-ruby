@@ -1,7 +1,7 @@
 require 'workflows/hello_world_workflow'
 require 'workflows/long_workflow'
 
-describe 'Temporal.start_workflow' do
+describe 'Temporal.start_workflow', :integration do
   let(:workflow_id) { SecureRandom.uuid }
 
   it 'starts a workflow using a class reference' do
@@ -21,15 +21,15 @@ describe 'Temporal.start_workflow' do
   it 'starts a workflow using a string reference' do
     run_id = Temporal.start_workflow('HelloWorldWorkflow', 'Test', options: {
       workflow_id: workflow_id,
-      namespace: Temporal.configuration.namespace,
-      task_queue: Temporal.configuration.task_queue
+      namespace: integration_spec_namespace,
+      task_queue: integration_spec_task_queue
     })
 
     result = Temporal.await_workflow_result(
       'HelloWorldWorkflow',
       workflow_id: workflow_id,
       run_id: run_id,
-      namespace: Temporal.configuration.namespace
+      namespace: integration_spec_namespace
     )
 
     expect(result).to eq('Hello World, Test')
@@ -82,11 +82,11 @@ describe 'Temporal.start_workflow' do
     })
 
     execution_1 = Temporal.fetch_workflow_execution_info(
-      Temporal.configuration.namespace,
+      integration_spec_namespace,
       workflow_id,
       run_id_1)
     execution_2 = Temporal.fetch_workflow_execution_info(
-      Temporal.configuration.namespace,
+      integration_spec_namespace,
       workflow_id,
       run_id_2)
 

@@ -22,7 +22,7 @@ describe "Temporal.list_schedules", :integration do
         "HelloWorldWorkflow",
         "Test",
         options: {
-          task_queue: Temporal.configuration.task_queue
+          task_queue: integration_spec_task_queue
         }
       )
     )
