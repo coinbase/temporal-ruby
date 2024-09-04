@@ -16,7 +16,7 @@ describe MetadataWorkflow, :integration do
       run_id: run_id,
     )
 
-    expect(actual_result.task_queue).to eq(Temporal.configuration.task_queue)
+    expect(actual_result.task_queue).to eq(integration_spec_task_queue)
   end
 
   it 'workflow can retrieve its headers' do

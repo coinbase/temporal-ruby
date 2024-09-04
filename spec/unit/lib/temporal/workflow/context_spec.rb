@@ -27,7 +27,7 @@ describe Temporal::Workflow::Context do
   end
   let(:metadata_hash) { Fabricate(:workflow_metadata).to_h }
   let(:metadata) { Temporal::Metadata::Workflow.new(**metadata_hash) }
-  let(:config) { Temporal.configuration }
+  let(:config) { Temporal::Configuration.new }
 
   let(:workflow_context) do
     Temporal::Workflow::Context.new(

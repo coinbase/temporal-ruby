@@ -126,7 +126,7 @@ module Temporal
         credentials: credentials,
         identity: identity || default_identity,
         converter: converter,
-        connection_options: connection_options.merge(use_error_serialization_v2: @use_error_serialization_v2)
+        connection_options: connection_options.merge(use_error_serialization_v2: use_error_serialization_v2)
       ).freeze
     end
 

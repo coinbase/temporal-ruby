@@ -21,7 +21,7 @@ module Helpers
   def fetch_history(workflow_id, run_id, options = {})
     connection = Temporal.send(:default_client).send(:connection)
     options = {
-      namespace: Temporal.configuration.namespace,
+      namespace: integration_spec_namespace,
       workflow_id: workflow_id,
       run_id: run_id,
     }.merge(options)
@@ -30,6 +30,10 @@ module Helpers
   end
 
   def integration_spec_namespace
-    ENV.fetch('TEMPORAL_NAMESPACE', 'ruby-samples')
+    ENV.fetch('TEMPORAL_NAMESPACE', DEFAULT_NAMESPACE)
+  end
+
+  def integration_spec_task_queue
+    ENV.fetch('TEMPORAL_TASK_QUEUE', DEFAULT_TASK_QUEUE)
   end
 end

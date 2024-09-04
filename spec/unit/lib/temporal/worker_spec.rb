@@ -344,7 +344,7 @@ describe Temporal::Worker do
         .to receive(:new)
               .and_return(workflow_poller)
 
-      worker = Temporal::Worker.new(activity_thread_pool_size: 10)
+      worker = Temporal::Worker.new(config, activity_thread_pool_size: 10)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
@@ -389,7 +389,7 @@ describe Temporal::Worker do
         )
         .and_return(workflow_poller)
 
-      worker = Temporal::Worker.new(binary_checksum: binary_checksum)
+      worker = Temporal::Worker.new(config, binary_checksum: binary_checksum)
       worker.register_workflow(TestWorkerWorkflow)
       worker.register_activity(TestWorkerActivity)
 
@@ -412,7 +412,7 @@ describe Temporal::Worker do
         )
         .and_return(activity_poller)
 
-      worker = Temporal::Worker.new(activity_poll_retry_seconds: 10)
+      worker = Temporal::Worker.new(config, activity_poll_retry_seconds: 10)
       worker.register_activity(TestWorkerActivity)
 
       start_and_stop(worker)
@@ -435,7 +435,7 @@ describe Temporal::Worker do
         )
         .and_return(workflow_poller)
 
-      worker = Temporal::Worker.new(workflow_poll_retry_seconds: 10)
+      worker = Temporal::Worker.new(config, workflow_poll_retry_seconds: 10)
       worker.register_workflow(TestWorkerWorkflow)
 
       start_and_stop(worker)
@@ -457,7 +457,7 @@ describe Temporal::Worker do
         )
         .and_return(activity_poller)
 
-      worker = Temporal::Worker.new(activity_max_tasks_per_second: 5)
+      worker = Temporal::Worker.new(config, activity_max_tasks_per_second: 5)
       worker.register_activity(TestWorkerActivity)
 
       start_and_stop(worker)

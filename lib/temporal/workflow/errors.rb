@@ -26,7 +26,7 @@ module Temporal
             exception_or_message = converter.from_details_payloads(details)
             # v1 serialization only supports StandardErrors with a single "message" argument.
             # v2 serialization supports complex errors using our converters to serialize them.
-            # enable v2 serialization in activities with Temporal.configuration.use_error_serialization_v2
+            # enable v2 serialization in activities with Temporal::Configuration#use_error_serialization_v2
             if exception_or_message.is_a?(Exception)
               exception = exception_or_message
             else
@@ -37,7 +37,7 @@ module Temporal
             exception = default_exception_class.new(message)
             Temporal.logger.error(
               "Could not instantiate original error. Defaulting to StandardError. Make sure the worker running " \
-              "your activities is setting Temporal.configuration.use_error_serialization_v2. If so, make sure the " \
+              "your activities is configured with use_error_serialization_v2. If so, make sure the " \
               "original error serialized by searching your logs for 'unserializable_error'. If not, you're using "\
               "legacy serialization, and it's likely that "\
               "your error's initializer takes something other than exactly one positional argument.",

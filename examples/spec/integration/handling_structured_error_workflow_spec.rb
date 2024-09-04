@@ -5,8 +5,6 @@ describe HandlingStructuredErrorWorkflow, :integration do
   # That worker runs a task queue, error_serialization_v2.  This setup code will
   # route workflow requests to that task queue.
   around(:each) do |example|
-    task_queue = Temporal.configuration.task_queue
-
     Temporal.configure do |config|
       config.task_queue = 'error_serialization_v2'
     end
@@ -14,7 +12,7 @@ describe HandlingStructuredErrorWorkflow, :integration do
     example.run
   ensure
     Temporal.configure do |config|
-      config.task_queue = task_queue
+      config.task_queue = integration_spec_task_queue
     end
   end
 

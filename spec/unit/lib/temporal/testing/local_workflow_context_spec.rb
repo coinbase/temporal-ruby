@@ -9,6 +9,7 @@ describe Temporal::Testing::LocalWorkflowContext do
   let(:run_id) { 'run_id_1' }
   let(:execution) { Temporal::Testing::WorkflowExecution.new }
   let(:task_queue) { 'my_test_queue' }
+  let(:config) { Temporal::Configuration.new }
   let(:workflow_context) do
     Temporal::Testing::LocalWorkflowContext.new(
       execution,
@@ -27,13 +28,14 @@ describe Temporal::Testing::LocalWorkflowContext do
         headers: {},
         run_started_at: Time.now,
         memo: {},
-      )
+      ),
+      config
     )
   end
   let(:async_token) do
     # Generate the async token
     Temporal::Activity::AsyncToken.encode(
-      Temporal.configuration.namespace,
+      config.namespace,
       1, # activity ID starts at 1 for each workflow
       workflow_id,
       run_id

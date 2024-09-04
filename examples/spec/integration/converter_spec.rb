@@ -12,8 +12,6 @@ describe 'Converter', :integration do
   end
 
   around(:each) do |example|
-    task_queue = Temporal.configuration.task_queue
-
     Temporal.configure do |config|
       config.task_queue = 'crypt'
       config.payload_codec = codec
@@ -22,7 +20,7 @@ describe 'Converter', :integration do
     example.run
   ensure
     Temporal.configure do |config|
-      config.task_queue = task_queue
+      config.task_queue = integration_spec_task_queue
       config.payload_codec = Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
     end
   end

@@ -2,7 +2,7 @@ require 'workflows/hello_world_workflow'
 require 'workflows/query_workflow'
 require 'temporal/reset_reapply_type'
 
-describe 'Temporal.reset_workflow' do
+describe 'Temporal.reset_workflow', :integration do
   it 'can reset a closed workflow to the beginning' do
     workflow_id = SecureRandom.uuid
     original_run_id = Temporal.start_workflow(
@@ -19,7 +19,7 @@ describe 'Temporal.reset_workflow' do
     expect(original_result).to eq('Hello World, Test')
 
     new_run_id = Temporal.reset_workflow(
-      Temporal.configuration.namespace,
+      integration_spec_namespace,
       workflow_id,
       original_run_id,
       strategy: Temporal::ResetStrategy::FIRST_WORKFLOW_TASK
@@ -36,7 +36,7 @@ describe 'Temporal.reset_workflow' do
   def reset_hello_world_workflow_twice(workflow_id, original_run_id, request_id:)
     2.times.map do
       new_run_id = Temporal.reset_workflow(
-        Temporal.configuration.namespace,
+        integration_spec_namespace,
         workflow_id,
         original_run_id,
         strategy: Temporal::ResetStrategy::FIRST_WORKFLOW_TASK,
@@ -130,7 +130,7 @@ describe 'Temporal.reset_workflow' do
     workflow_id, original_run_id = start_query_workflow_and_signal_three_times.values_at(:workflow_id, :run_id)
 
     new_run_id = Temporal.reset_workflow(
-      Temporal.configuration.namespace,
+      integration_spec_namespace,
       workflow_id,
       original_run_id,
       strategy: Temporal::ResetStrategy::FIRST_WORKFLOW_TASK,
@@ -147,7 +147,7 @@ describe 'Temporal.reset_workflow' do
     workflow_id, original_run_id = start_query_workflow_and_signal_three_times.values_at(:workflow_id, :run_id)
 
     new_run_id = Temporal.reset_workflow(
-      Temporal.configuration.namespace,
+      integration_spec_namespace,
       workflow_id,
       original_run_id,
       strategy: Temporal::ResetStrategy::FIRST_WORKFLOW_TASK,

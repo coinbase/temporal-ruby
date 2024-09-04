@@ -18,7 +18,7 @@ describe "Temporal.update_schedule", :integration do
         "HelloWorldWorkflow",
         "Test",
         options: {
-          task_queue: Temporal.configuration.task_queue
+          task_queue: integration_spec_task_queue
         }
       ),
       policies: Temporal::Schedule::SchedulePolicies.new(
@@ -42,7 +42,7 @@ describe "Temporal.update_schedule", :integration do
         "HelloWorldWorkflow",
         "UpdatedInput",
         options: {
-          task_queue: Temporal.configuration.task_queue
+          task_queue: integration_spec_task_queue
         }
       ),
       policies: Temporal::Schedule::SchedulePolicies.new(
