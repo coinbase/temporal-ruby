@@ -12,7 +12,7 @@ Fabricator(
   task_queue { Fabricate(:api_task_queue) }
   header do |attrs|
     fields = (attrs[:headers] || {}).each_with_object({}) do |(field, value), h|
-      h[field] = Temporal.configuration.converter.to_payload(value)
+      h[field] = TEST_CONVERTER.to_payload(value)
     end
     Temporalio::Api::Common::V1::Header.new(fields: fields)
   end

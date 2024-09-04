@@ -33,9 +33,9 @@ module Temporal
         Workflow::QueryResult::Failure => Serializer::QueryFailure,
       }.freeze
 
-      def self.serialize(object)
+      def self.serialize(object, converter)
         serializer = SERIALIZERS_MAP[object.class]
-        serializer.new(object).to_proto
+        serializer.new(object, converter).to_proto
       end
     end
   end

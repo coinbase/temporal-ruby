@@ -1,8 +1,15 @@
 require 'temporal/metadata'
 
 describe Temporal::Metadata do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
+
   describe '.generate_activity_metadata' do
-    subject { described_class.generate_activity_metadata(data, namespace) }
+    subject { described_class.generate_activity_metadata(data, namespace, converter) }
 
     let(:data) { Fabricate(:api_activity_task) }
     let(:namespace) { 'test-namespace' }
@@ -46,7 +53,7 @@ describe Temporal::Metadata do
   end
 
   context '.generate_workflow_metadata' do
-    subject { described_class.generate_workflow_metadata(event, task_metadata) }
+    subject { described_class.generate_workflow_metadata(event, task_metadata, converter) }
     let(:event) { Temporal::Workflow::History::Event.new(Fabricate(:api_workflow_execution_started_event)) }
     let(:task_metadata) { Fabricate(:workflow_task_metadata) }
     let(:namespace) { nil }

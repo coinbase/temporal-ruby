@@ -9,7 +9,7 @@ module Temporal
           return unless object
 
           Temporalio::Api::Schedule::V1::SchedulePolicies.new(
-            overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(object.overlap_policy).to_proto,
+            overlap_policy: Temporal::Connection::Serializer::ScheduleOverlapPolicy.new(object.overlap_policy, converter).to_proto,
             catchup_window: object.catchup_window,
             pause_on_failure: object.pause_on_failure
           )

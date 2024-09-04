@@ -4,6 +4,12 @@ require "temporal/schedule/calendar"
 require "temporal/connection/serializer/schedule_spec"
 
 describe Temporal::Connection::Serializer::ScheduleSpec do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
   let(:example_spec) do
     Temporal::Schedule::ScheduleSpec.new(
       cron_expressions: ["@hourly"],
@@ -33,7 +39,7 @@ describe Temporal::Connection::Serializer::ScheduleSpec do
 
   describe "to_proto" do
     it "produces well-formed protobuf" do
-      result = described_class.new(example_spec).to_proto
+      result = described_class.new(example_spec, converter).to_proto
 
       expect(result).to(be_a(Temporalio::Api::Schedule::V1::ScheduleSpec))
       expect(result.cron_string).to(eq(["@hourly"]))

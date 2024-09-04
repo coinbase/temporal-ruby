@@ -3,6 +3,12 @@ require "temporal/schedule/start_workflow_action"
 require "temporal/connection/serializer/schedule_action"
 
 describe Temporal::Connection::Serializer::ScheduleAction do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
   let(:timeouts) { {run: 100, task: 10} }
 
   let(:example_action) do
@@ -24,7 +30,7 @@ describe Temporal::Connection::Serializer::ScheduleAction do
   describe "to_proto" do
     it "raises an error if an invalid action is specified" do
       expect do
-        described_class.new(123).to_proto
+        described_class.new(123, converter).to_proto
       end
         .to(raise_error(Temporal::Connection::ArgumentError)) do |e|
           expect(e.message).to(eq("Unknown action type Integer"))
@@ -32,7 +38,7 @@ describe Temporal::Connection::Serializer::ScheduleAction do
     end
 
     it "produces well-formed protobuf" do
-      result = described_class.new(example_action).to_proto
+      result = described_class.new(example_action, converter).to_proto
 
       expect(result).to(be_a(Temporalio::Api::Schedule::V1::ScheduleAction))
 

@@ -16,6 +16,7 @@ module Temporal
   class Client
     def initialize(config)
       @config = config
+      @converter = config.converter
     end
 
     # Start a workflow with an optional signal
@@ -251,7 +252,7 @@ module Temporal
       case closed_event.type
       when 'WORKFLOW_EXECUTION_COMPLETED'
         payloads = closed_event.attributes.result
-        return ResultConverter.from_result_payloads(payloads)
+        return converter.from_result_payloads(payloads)
       when 'WORKFLOW_EXECUTION_TIMED_OUT'
         raise Temporal::WorkflowTimedOut
       when 'WORKFLOW_EXECUTION_TERMINATED'
@@ -259,7 +260,7 @@ module Temporal
       when 'WORKFLOW_EXECUTION_CANCELED'
         raise Temporal::WorkflowCanceled
       when 'WORKFLOW_EXECUTION_FAILED'
-        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure)
+        raise Temporal::Workflow::Errors.generate_error(closed_event.attributes.failure, converter)
       when 'WORKFLOW_EXECUTION_CONTINUED_AS_NEW'
         new_run_id = closed_event.attributes.new_execution_run_id
         # Throw to let the caller know they're not getting the result
@@ -355,7 +356,7 @@ module Temporal
         run_id: run_id
       )
 
-      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info)
+      Workflow::ExecutionInfo.generate_from(response.workflow_execution_info, converter)
     end
 
     # Manually complete an activity
@@ -458,19 +459,19 @@ module Temporal
     def list_open_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :workflow, :workflow_id)
 
-      Temporal::Workflow::Executions.new(connection: connection, status: :open, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
+      Temporal::Workflow::Executions.new(converter, connection: connection, status: :open, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
     def list_closed_workflow_executions(namespace, from, to = Time.now, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
-      Temporal::Workflow::Executions.new(connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
+      Temporal::Workflow::Executions.new(converter, connection: connection, status: :closed, request_options: { namespace: namespace, from: from, to: to, next_page_token: next_page_token, max_page_size: max_page_size}.merge(filter))
     end
 
     def query_workflow_executions(namespace, query, filter: {}, next_page_token: nil, max_page_size: nil)
       validate_filter(filter, :status, :workflow, :workflow_id)
 
-      Temporal::Workflow::Executions.new(connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
+      Temporal::Workflow::Executions.new(converter, connection: connection, status: :all, request_options: { namespace: namespace, query: query, next_page_token: next_page_token, max_page_size: max_page_size }.merge(filter))
     end
 
     # Count the number of workflows matching the provided query
@@ -598,14 +599,9 @@ module Temporal
       @connection ||= Temporal::Connection.generate(config.for_connection)
     end
 
-    class ResultConverter
-      extend Concerns::Payloads
-    end
-    private_constant :ResultConverter
-
     private
 
-    attr_reader :config
+    attr_reader :config, :converter
 
     def compute_run_timeout(execution_options)
       execution_options.timeouts[:run] || execution_options.timeouts[:execution]

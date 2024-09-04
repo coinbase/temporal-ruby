@@ -2,6 +2,12 @@ require "temporal/schedule/schedule_state"
 require "temporal/connection/serializer/schedule_state"
 
 describe Temporal::Connection::Serializer::ScheduleState do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
   let(:example_state) do
     Temporal::Schedule::ScheduleState.new(
       notes: "some notes",
@@ -13,7 +19,7 @@ describe Temporal::Connection::Serializer::ScheduleState do
 
   describe "to_proto" do
     it "produces well-formed protobuf" do
-      result = described_class.new(example_state).to_proto
+      result = described_class.new(example_state, converter).to_proto
 
       expect(result).to(be_a(Temporalio::Api::Schedule::V1::ScheduleState))
       expect(result.notes).to(eq("some notes"))

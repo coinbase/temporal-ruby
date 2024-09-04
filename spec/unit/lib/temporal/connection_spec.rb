@@ -25,6 +25,7 @@ describe Temporal::Connection do
       expect(subject).to be_kind_of(Temporal::Connection::GRPC)
       expect(subject.send(:identity)).not_to be_nil
       expect(subject.send(:credentials)).to eq(:this_channel_is_insecure)
+      expect(subject.send(:converter)).to eq(config.converter)
     end
   end
 
@@ -35,6 +36,7 @@ describe Temporal::Connection do
       expect(subject).to be_kind_of(Temporal::Connection::GRPC)
       expect(subject.send(:identity)).not_to be_nil
       expect(subject.send(:credentials)).to be_kind_of(GRPC::Core::ChannelCredentials)
+      expect(subject.send(:converter)).to eq(config.converter)
     end
   end
 
@@ -45,6 +47,7 @@ describe Temporal::Connection do
       expect(subject).to be_kind_of(Temporal::Connection::GRPC)
       expect(subject.send(:identity)).not_to be_nil
       expect(subject.send(:credentials)).to be_kind_of(GRPC::Core::CallCredentials)
+      expect(subject.send(:converter)).to eq(config.converter)
     end
   end
 
@@ -61,6 +64,7 @@ describe Temporal::Connection do
       expect(subject).to be_kind_of(Temporal::Connection::GRPC)
       expect(subject.send(:identity)).not_to be_nil
       expect(subject.send(:credentials)).to be_kind_of(GRPC::Core::ChannelCredentials)
+      expect(subject.send(:converter)).to eq(config.converter)
     end
   end
 end

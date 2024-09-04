@@ -2,6 +2,13 @@ require 'temporal/connection/serializer/continue_as_new'
 require 'temporal/workflow/command'
 
 describe Temporal::Connection::Serializer::ContinueAsNew do
+  let(:converter) do
+    Temporal::ConverterWrapper.new(
+      Temporal::Configuration::DEFAULT_CONVERTER,
+      Temporal::Configuration::DEFAULT_PAYLOAD_CODEC
+    )
+  end
+
   describe 'to_proto' do
     it 'produces a protobuf' do
       timeouts = {
@@ -19,7 +26,7 @@ describe Temporal::Connection::Serializer::ContinueAsNew do
         search_attributes: {'foo-search-attribute': 'qux'},
       )
 
-      result = described_class.new(command).to_proto
+      result = described_class.new(command, converter).to_proto
 
       expect(result).to be_an_instance_of(Temporalio::Api::Command::V1::Command)
       expect(result.command_type).to eql(
