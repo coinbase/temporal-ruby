@@ -41,6 +41,7 @@ module Temporal
     # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
     # @option options [Hash] :headers
     # @option options [Hash] :search_attributes
+    # @option options [Integer] :start_delay determines the amount of seconds to wait before initiating a Workflow
     #
     # @return [String] workflow's run ID
     def start_workflow(workflow, *input, options: {}, **args)
@@ -67,6 +68,7 @@ module Temporal
           headers: config.header_propagator_chain.inject(execution_options.headers),
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
+          start_delay: execution_options.start_delay
         )
       else
         raise ArgumentError, 'If signal_input is provided, you must also provide signal_name' if signal_name.nil?
@@ -85,7 +87,8 @@ module Temporal
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
           signal_name: signal_name,
-          signal_input: signal_input
+          signal_input: signal_input,
+          start_delay: execution_options.start_delay
         )
       end
 

@@ -52,20 +52,21 @@ describe Temporal::Client do
         subject.start_workflow(TestStartWorkflow, 42)
         expect(connection)
           .to have_received(:start_workflow_execution)
-                .with(
-                  namespace: 'default-test-namespace',
-                  workflow_id: an_instance_of(String),
-                  workflow_name: 'TestStartWorkflow',
-                  task_queue: 'default-test-task-queue',
-                  input: [42],
-                  task_timeout: config.timeouts[:task],
-                  run_timeout: config.timeouts[:run],
-                  execution_timeout: config.timeouts[:execution],
-                  workflow_id_reuse_policy: nil,
-                  headers: { 'test' => 'asdf' },
-                  memo: {},
-                  search_attributes: {},
-                )
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: an_instance_of(String),
+            workflow_name: 'TestStartWorkflow',
+            task_queue: 'default-test-task-queue',
+            input: [42],
+            task_timeout: config.timeouts[:task],
+            run_timeout: config.timeouts[:run],
+            execution_timeout: config.timeouts[:execution],
+            workflow_id_reuse_policy: nil,
+            headers: { 'test' => 'asdf' },
+            memo: {},
+            search_attributes: {},
+            start_delay: 0
+          )
       end
     end
 
@@ -94,6 +95,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            start_delay: 0
           )
       end
 
@@ -109,6 +111,7 @@ describe Temporal::Client do
             workflow_id_reuse_policy: :reject,
             memo: { 'MemoKey1' => 'MemoValue1' },
             search_attributes: { 'SearchAttribute1' => 256 },
+            start_delay: 10
           }
         )
 
@@ -127,6 +130,7 @@ describe Temporal::Client do
             headers: { 'Foo' => 'Bar' },
             memo: { 'MemoKey1' => 'MemoValue1' },
             search_attributes: { 'SearchAttribute1' => 256 },
+            start_delay: 10
           )
       end
 
@@ -154,6 +158,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            start_delay: 0
           )
       end
 
@@ -175,6 +180,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            start_delay: 0
           )
       end
 
@@ -198,6 +204,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            start_delay: 0
           )
       end
     end
@@ -225,6 +232,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            start_delay: 0
           )
       end
     end
@@ -255,6 +263,7 @@ describe Temporal::Client do
           search_attributes: {},
           signal_name: 'the question',
           signal_input: expected_signal_argument,
+          start_delay: 0
         )
     end
 

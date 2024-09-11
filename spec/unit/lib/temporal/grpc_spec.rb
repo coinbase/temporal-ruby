@@ -66,6 +66,7 @@ describe Temporal::Connection::GRPC do
         execution_timeout: 1,
         run_timeout: 2,
         task_timeout: 3,
+        start_delay: 10,
         memo: {},
         search_attributes: {
           'foo-int-attribute' => 256,
@@ -90,6 +91,7 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_execution_timeout.seconds).to eq(1)
         expect(request.workflow_run_timeout.seconds).to eq(2)
         expect(request.workflow_task_timeout.seconds).to eq(3)
+        expect(request.workflow_start_delay.seconds).to eq(10)
         expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
         expect(request.search_attributes.indexed_fields).to eq({
           'foo-int-attribute' => Temporalio::Api::Common::V1::Payload.new(data: '256', metadata: { 'encoding' => 'json/plain' }),
@@ -138,6 +140,7 @@ describe Temporal::Connection::GRPC do
         execution_timeout: 1,
         run_timeout: 2,
         task_timeout: 3,
+        start_delay: 10,
         workflow_id_reuse_policy: :allow,
         signal_name: 'the question',
         signal_input: 'what do you get if you multiply six by nine?'
@@ -153,6 +156,7 @@ describe Temporal::Connection::GRPC do
         expect(request.workflow_execution_timeout.seconds).to eq(1)
         expect(request.workflow_run_timeout.seconds).to eq(2)
         expect(request.workflow_task_timeout.seconds).to eq(3)
+        expect(request.workflow_start_delay.seconds).to eq(10)
         expect(request.signal_name).to eq('the question')
         expect(request.signal_input.payloads[0].data).to eq('"what do you get if you multiply six by nine?"')
         expect(request.workflow_id_reuse_policy).to eq(:WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE)
