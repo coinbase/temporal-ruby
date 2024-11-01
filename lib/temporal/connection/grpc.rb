@@ -187,8 +187,18 @@ module Temporal
           wait_new_event: wait_for_new_event,
           history_event_filter_type: HISTORY_EVENT_FILTER[event_type]
         )
-        deadline = timeout ? Time.now + timeout : nil
-        client.get_workflow_execution_history(request, deadline: deadline)
+
+        loop do
+          deadline = timeout ? Time.now + timeout : nil
+          response = client.get_workflow_execution_history(request, deadline: deadline)
+
+          if wait_for_new_event && response.history.events.empty? && !response.next_page_token.empty?
+            request.next_page_token = response.next_page_token
+            next
+          end
+          
+          return response
+        end
       end
 
       def poll_workflow_task_queue(namespace:, task_queue:, binary_checksum:)
