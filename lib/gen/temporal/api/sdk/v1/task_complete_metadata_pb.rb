@@ -5,7 +5,7 @@
 require 'google/protobuf'
 
 
-descriptor_data = "\n0temporal/api/sdk/v1/task_complete_metadata.proto\x12\x13temporal.api.sdk.v1\"Q\n\x1dWorkflowTaskCompletedMetadata\x12\x17\n\x0f\x63ore_used_flags\x18\x01 \x03(\r\x12\x17\n\x0flang_used_flags\x18\x02 \x03(\rB\x87\x01\n\x16io.temporal.api.sdk.v1B\x19TaskCompleteMetadataProtoP\x01Z\x1dgo.temporal.io/api/sdk/v1;sdk\xaa\x02\x15Temporalio.Api.Sdk.V1\xea\x02\x18Temporalio::Api::Sdk::V1b\x06proto3"
+descriptor_data = "\n0temporal/api/sdk/v1/task_complete_metadata.proto\x12\x13temporal.api.sdk.v1\"x\n\x1dWorkflowTaskCompletedMetadata\x12\x17\n\x0f\x63ore_used_flags\x18\x01 \x03(\r\x12\x17\n\x0flang_used_flags\x18\x02 \x03(\r\x12\x10\n\x08sdk_name\x18\x03 \x01(\t\x12\x13\n\x0bsdk_version\x18\x04 \x01(\tB\x87\x01\n\x16io.temporal.api.sdk.v1B\x19TaskCompleteMetadataProtoP\x01Z\x1dgo.temporal.io/api/sdk/v1;sdk\xaa\x02\x15Temporalio.Api.Sdk.V1\xea\x02\x18Temporalio::Api::Sdk::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)

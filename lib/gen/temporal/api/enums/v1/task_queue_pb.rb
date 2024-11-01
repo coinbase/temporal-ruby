@@ -5,7 +5,7 @@
 require 'google/protobuf'
 
 
-descriptor_data = "\n&temporal/api/enums/v1/task_queue.proto\x12\x15temporal.api.enums.v1*h\n\rTaskQueueKind\x12\x1f\n\x1bTASK_QUEUE_KIND_UNSPECIFIED\x10\x00\x12\x1a\n\x16TASK_QUEUE_KIND_NORMAL\x10\x01\x12\x1a\n\x16TASK_QUEUE_KIND_STICKY\x10\x02*l\n\rTaskQueueType\x12\x1f\n\x1bTASK_QUEUE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n\x18TASK_QUEUE_TYPE_WORKFLOW\x10\x01\x12\x1c\n\x18TASK_QUEUE_TYPE_ACTIVITY\x10\x02\x42\x86\x01\n\x18io.temporal.api.enums.v1B\x0eTaskQueueProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
+descriptor_data = "\n&temporal/api/enums/v1/task_queue.proto\x12\x15temporal.api.enums.v1*h\n\rTaskQueueKind\x12\x1f\n\x1bTASK_QUEUE_KIND_UNSPECIFIED\x10\x00\x12\x1a\n\x16TASK_QUEUE_KIND_NORMAL\x10\x01\x12\x1a\n\x16TASK_QUEUE_KIND_STICKY\x10\x02*\x87\x01\n\rTaskQueueType\x12\x1f\n\x1bTASK_QUEUE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n\x18TASK_QUEUE_TYPE_WORKFLOW\x10\x01\x12\x1c\n\x18TASK_QUEUE_TYPE_ACTIVITY\x10\x02\x12\x19\n\x15TASK_QUEUE_TYPE_NEXUS\x10\x03*\xd2\x01\n\x10TaskReachability\x12!\n\x1dTASK_REACHABILITY_UNSPECIFIED\x10\x00\x12#\n\x1fTASK_REACHABILITY_NEW_WORKFLOWS\x10\x01\x12(\n$TASK_REACHABILITY_EXISTING_WORKFLOWS\x10\x02\x12$\n TASK_REACHABILITY_OPEN_WORKFLOWS\x10\x03\x12&\n\"TASK_REACHABILITY_CLOSED_WORKFLOWS\x10\x04*\xd1\x01\n\x17\x42uildIdTaskReachability\x12*\n&BUILD_ID_TASK_REACHABILITY_UNSPECIFIED\x10\x00\x12(\n$BUILD_ID_TASK_REACHABILITY_REACHABLE\x10\x01\x12\x34\n0BUILD_ID_TASK_REACHABILITY_CLOSED_WORKFLOWS_ONLY\x10\x02\x12*\n&BUILD_ID_TASK_REACHABILITY_UNREACHABLE\x10\x03*h\n\x15\x44\x65scribeTaskQueueMode\x12(\n$DESCRIBE_TASK_QUEUE_MODE_UNSPECIFIED\x10\x00\x12%\n!DESCRIBE_TASK_QUEUE_MODE_ENHANCED\x10\x01\x42\x86\x01\n\x18io.temporal.api.enums.v1B\x0eTaskQueueProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
@@ -16,6 +16,9 @@ module Temporalio
       module V1
         TaskQueueKind = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.TaskQueueKind").enummodule
         TaskQueueType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.TaskQueueType").enummodule
+        TaskReachability = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.TaskReachability").enummodule
+        BuildIdTaskReachability = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.BuildIdTaskReachability").enummodule
+        DescribeTaskQueueMode = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.DescribeTaskQueueMode").enummodule
       end
     end
   end

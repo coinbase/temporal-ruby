@@ -5,7 +5,7 @@
 require 'google/protobuf'
 
 
-descriptor_data = "\n!temporal/api/enums/v1/reset.proto\x12\x15temporal.api.enums.v1*r\n\x10ResetReapplyType\x12\"\n\x1eRESET_REAPPLY_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n\x19RESET_REAPPLY_TYPE_SIGNAL\x10\x01\x12\x1b\n\x17RESET_REAPPLY_TYPE_NONE\x10\x02\x42\x82\x01\n\x18io.temporal.api.enums.v1B\nResetProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
+descriptor_data = "\n!temporal/api/enums/v1/reset.proto\x12\x15temporal.api.enums.v1*\xb9\x01\n\x17ResetReapplyExcludeType\x12*\n&RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED\x10\x00\x12%\n!RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL\x10\x01\x12%\n!RESET_REAPPLY_EXCLUDE_TYPE_UPDATE\x10\x02\x12$\n RESET_REAPPLY_EXCLUDE_TYPE_NEXUS\x10\x03*\x97\x01\n\x10ResetReapplyType\x12\"\n\x1eRESET_REAPPLY_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n\x19RESET_REAPPLY_TYPE_SIGNAL\x10\x01\x12\x1b\n\x17RESET_REAPPLY_TYPE_NONE\x10\x02\x12#\n\x1fRESET_REAPPLY_TYPE_ALL_ELIGIBLE\x10\x03*n\n\tResetType\x12\x1a\n\x16RESET_TYPE_UNSPECIFIED\x10\x00\x12\"\n\x1eRESET_TYPE_FIRST_WORKFLOW_TASK\x10\x01\x12!\n\x1dRESET_TYPE_LAST_WORKFLOW_TASK\x10\x02\x42\x82\x01\n\x18io.temporal.api.enums.v1B\nResetProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
@@ -14,7 +14,9 @@ module Temporalio
   module Api
     module Enums
       module V1
+        ResetReapplyExcludeType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ResetReapplyExcludeType").enummodule
         ResetReapplyType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ResetReapplyType").enummodule
+        ResetType = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.ResetType").enummodule
       end
     end
   end

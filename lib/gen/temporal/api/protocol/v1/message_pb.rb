@@ -7,7 +7,7 @@ require 'google/protobuf'
 require 'google/protobuf/any_pb'
 
 
-descriptor_data = "\n&temporal/api/protocol/v1/message.proto\x12\x18temporal.api.protocol.v1\x1a\x19google/protobuf/any.proto\"\x95\x01\n\x07Message\x12\n\n\x02id\x18\x01 \x01(\t\x12\x1c\n\x14protocol_instance_id\x18\x02 \x01(\t\x12\x12\n\x08\x65vent_id\x18\x03 \x01(\x03H\x00\x12\x17\n\rcommand_index\x18\x04 \x01(\x03H\x00\x12\"\n\x04\x62ody\x18\x05 \x01(\x0b\x32\x14.google.protobuf.AnyB\x0f\n\rsequencing_idB\x92\x01\n\x1bio.temporal.api.protocol.v1B\x0cMessageProtoP\x01Z\'go.temporal.io/api/protocol/v1;protocol\xaa\x02\x19Temporalt.Api.Protocol.V1\xea\x02\x1dTemporalio::Api::Protocol::V1b\x06proto3"
+descriptor_data = "\n&temporal/api/protocol/v1/message.proto\x12\x18temporal.api.protocol.v1\x1a\x19google/protobuf/any.proto\"\x95\x01\n\x07Message\x12\n\n\x02id\x18\x01 \x01(\t\x12\x1c\n\x14protocol_instance_id\x18\x02 \x01(\t\x12\x12\n\x08\x65vent_id\x18\x03 \x01(\x03H\x00\x12\x17\n\rcommand_index\x18\x04 \x01(\x03H\x00\x12\"\n\x04\x62ody\x18\x05 \x01(\x0b\x32\x14.google.protobuf.AnyB\x0f\n\rsequencing_idB\x93\x01\n\x1bio.temporal.api.protocol.v1B\x0cMessageProtoP\x01Z\'go.temporal.io/api/protocol/v1;protocol\xaa\x02\x1aTemporalio.Api.Protocol.V1\xea\x02\x1dTemporalio::Api::Protocol::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)

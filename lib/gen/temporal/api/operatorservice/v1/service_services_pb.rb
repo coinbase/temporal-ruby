@@ -56,10 +56,6 @@ module Temporalio
             # ListSearchAttributes returns comprehensive information about search attributes.
             rpc :ListSearchAttributes, ::Temporalio::Api::OperatorService::V1::ListSearchAttributesRequest, ::Temporalio::Api::OperatorService::V1::ListSearchAttributesResponse
             # DeleteNamespace synchronously deletes a namespace and asynchronously reclaims all namespace resources.
-            # (-- api-linter: core::0135::method-signature=disabled
-            #     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
-            # (-- api-linter: core::0135::response-message-name=disabled
-            #     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
             rpc :DeleteNamespace, ::Temporalio::Api::OperatorService::V1::DeleteNamespaceRequest, ::Temporalio::Api::OperatorService::V1::DeleteNamespaceResponse
             # AddOrUpdateRemoteCluster adds or updates remote cluster.
             rpc :AddOrUpdateRemoteCluster, ::Temporalio::Api::OperatorService::V1::AddOrUpdateRemoteClusterRequest, ::Temporalio::Api::OperatorService::V1::AddOrUpdateRemoteClusterResponse
@@ -67,6 +63,25 @@ module Temporalio
             rpc :RemoveRemoteCluster, ::Temporalio::Api::OperatorService::V1::RemoveRemoteClusterRequest, ::Temporalio::Api::OperatorService::V1::RemoveRemoteClusterResponse
             # ListClusters returns information about Temporal clusters.
             rpc :ListClusters, ::Temporalio::Api::OperatorService::V1::ListClustersRequest, ::Temporalio::Api::OperatorService::V1::ListClustersResponse
+            # Get a registered Nexus endpoint by ID. The returned version can be used for optimistic updates.
+            rpc :GetNexusEndpoint, ::Temporalio::Api::OperatorService::V1::GetNexusEndpointRequest, ::Temporalio::Api::OperatorService::V1::GetNexusEndpointResponse
+            # Create a Nexus endpoint. This will fail if an endpoint with the same name is already registered with a status of
+            # ALREADY_EXISTS.
+            # Returns the created endpoint with its initial version. You may use this version for subsequent updates.
+            rpc :CreateNexusEndpoint, ::Temporalio::Api::OperatorService::V1::CreateNexusEndpointRequest, ::Temporalio::Api::OperatorService::V1::CreateNexusEndpointResponse
+            # Optimistically update a Nexus endpoint based on provided version as obtained via the `GetNexusEndpoint` or
+            # `ListNexusEndpointResponse` APIs. This will fail with a status of FAILED_PRECONDITION if the version does not
+            # match.
+            # Returns the updated endpoint with its updated version. You may use this version for subsequent updates. You don't
+            # need to increment the version yourself. The server will increment the version for you after each update.
+            rpc :UpdateNexusEndpoint, ::Temporalio::Api::OperatorService::V1::UpdateNexusEndpointRequest, ::Temporalio::Api::OperatorService::V1::UpdateNexusEndpointResponse
+            # Delete an incoming Nexus service by ID.
+            rpc :DeleteNexusEndpoint, ::Temporalio::Api::OperatorService::V1::DeleteNexusEndpointRequest, ::Temporalio::Api::OperatorService::V1::DeleteNexusEndpointResponse
+            # List all Nexus endpoints for the cluster, sorted by ID in ascending order. Set page_token in the request to the
+            # next_page_token field of the previous response to get the next page of results. An empty next_page_token
+            # indicates that there are no more results. During pagination, a newly added service with an ID lexicographically
+            # earlier than the previous page's last endpoint's ID may be missed.
+            rpc :ListNexusEndpoints, ::Temporalio::Api::OperatorService::V1::ListNexusEndpointsRequest, ::Temporalio::Api::OperatorService::V1::ListNexusEndpointsResponse
           end
 
           Stub = Service.rpc_stub_class

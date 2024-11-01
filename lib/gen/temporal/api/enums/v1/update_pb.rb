@@ -5,7 +5,7 @@
 require 'google/protobuf'
 
 
-descriptor_data = "\n\"temporal/api/enums/v1/update.proto\x12\x15temporal.api.enums.v1*\x8b\x02\n%UpdateWorkflowExecutionLifecycleStage\x12\x39\n5UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_UNSPECIFIED\x10\x00\x12\x36\n2UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_ADMITTED\x10\x01\x12\x36\n2UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_ACCEPTED\x10\x02\x12\x37\n3UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_COMPLETED\x10\x03\x42\x83\x01\n\x18io.temporal.api.enums.v1B\x0bUpdateProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
+descriptor_data = "\n\"temporal/api/enums/v1/update.proto\x12\x15temporal.api.enums.v1*\x8b\x02\n%UpdateWorkflowExecutionLifecycleStage\x12\x39\n5UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_UNSPECIFIED\x10\x00\x12\x36\n2UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_ADMITTED\x10\x01\x12\x36\n2UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_ACCEPTED\x10\x02\x12\x37\n3UPDATE_WORKFLOW_EXECUTION_LIFECYCLE_STAGE_COMPLETED\x10\x03*s\n\x19UpdateAdmittedEventOrigin\x12,\n(UPDATE_ADMITTED_EVENT_ORIGIN_UNSPECIFIED\x10\x00\x12(\n$UPDATE_ADMITTED_EVENT_ORIGIN_REAPPLY\x10\x01\x42\x83\x01\n\x18io.temporal.api.enums.v1B\x0bUpdateProtoP\x01Z!go.temporal.io/api/enums/v1;enums\xaa\x02\x17Temporalio.Api.Enums.V1\xea\x02\x1aTemporalio::Api::Enums::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
@@ -15,6 +15,7 @@ module Temporalio
     module Enums
       module V1
         UpdateWorkflowExecutionLifecycleStage = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.UpdateWorkflowExecutionLifecycleStage").enummodule
+        UpdateAdmittedEventOrigin = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.enums.v1.UpdateAdmittedEventOrigin").enummodule
       end
     end
   end

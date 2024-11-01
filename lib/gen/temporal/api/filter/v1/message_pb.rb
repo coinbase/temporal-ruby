@@ -5,11 +5,10 @@
 require 'google/protobuf'
 
 require 'google/protobuf/timestamp_pb'
-require 'dependencies/gogoproto/gogo_pb'
 require 'temporal/api/enums/v1/workflow_pb'
 
 
-descriptor_data = "\n$temporal/api/filter/v1/message.proto\x12\x16temporal.api.filter.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!dependencies/gogoproto/gogo.proto\x1a$temporal/api/enums/v1/workflow.proto\">\n\x17WorkflowExecutionFilter\x12\x13\n\x0bworkflow_id\x18\x01 \x01(\t\x12\x0e\n\x06run_id\x18\x02 \x01(\t\"\"\n\x12WorkflowTypeFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x81\x01\n\x0fStartTimeFilter\x12\x37\n\rearliest_time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x04\x90\xdf\x1f\x01\x12\x35\n\x0blatest_time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x04\x90\xdf\x1f\x01\"N\n\x0cStatusFilter\x12>\n\x06status\x18\x01 \x01(\x0e\x32..temporal.api.enums.v1.WorkflowExecutionStatusB\x89\x01\n\x19io.temporal.api.filter.v1B\x0cMessageProtoP\x01Z#go.temporal.io/api/filter/v1;filter\xaa\x02\x18Temporalio.Api.Filter.V1\xea\x02\x1bTemporalio::Api::Filter::V1b\x06proto3"
+descriptor_data = "\n$temporal/api/filter/v1/message.proto\x12\x16temporal.api.filter.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$temporal/api/enums/v1/workflow.proto\">\n\x17WorkflowExecutionFilter\x12\x13\n\x0bworkflow_id\x18\x01 \x01(\t\x12\x0e\n\x06run_id\x18\x02 \x01(\t\"\"\n\x12WorkflowTypeFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\"u\n\x0fStartTimeFilter\x12\x31\n\rearliest_time\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12/\n\x0blatest_time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"N\n\x0cStatusFilter\x12>\n\x06status\x18\x01 \x01(\x0e\x32..temporal.api.enums.v1.WorkflowExecutionStatusB\x89\x01\n\x19io.temporal.api.filter.v1B\x0cMessageProtoP\x01Z#go.temporal.io/api/filter/v1;filter\xaa\x02\x18Temporalio.Api.Filter.V1\xea\x02\x1bTemporalio::Api::Filter::V1b\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
