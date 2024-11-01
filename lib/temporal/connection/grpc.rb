@@ -624,6 +624,18 @@ module Temporal
         client.describe_task_queue(request)
       end
 
+      def describe_task_queue_enhanced(namespace:, task_queue:)
+        request = Temporalio::Api::WorkflowService::V1::DescribeTaskQueueRequest.new(
+          namespace: namespace,
+          task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
+            name: task_queue
+          ),
+          api_mode: Temporalio::Api::Enums::V1::DescribeTaskQueueMode::DESCRIBE_TASK_QUEUE_MODE_ENHANCED,
+          report_stats: true
+        )
+        client.describe_task_queue(request)
+      end
+
       def cancel_polling_request
         poll_mutex.synchronize do
           @poll = false
