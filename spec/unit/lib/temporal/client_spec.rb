@@ -556,6 +556,30 @@ describe Temporal::Client do
           )
         end.to raise_error(Temporal::TimeoutError)
     end
+
+    it 'recurring polling until a close event is received'
+      completed_event = Fabricate(:workflow_completed_event, result: nil)
+      response_with_no_closed_event = Fabricate(:workflow_execution_history, events: [], _next_page_token: 'test_token')
+      response_with_closed_event = Fabricate(:workflow_execution_history, events: [completed_event])
+
+      expect(connection)
+        .to receive(:get_workflow_execution_history)
+        .with(
+          namespace: 'default-test-namespace',
+          workflow_id: workflow_id,
+          run_id: run_id,
+          wait_for_new_event: true,
+          event_type: :close,
+          timeout: 30,
+        )
+        .and_return(response_with_no_closed_event, response_with_closed_event)
+
+        subject.await_workflow_result(
+          TestStartWorkflow,
+          workflow_id: workflow_id,
+          run_id: run_id,
+        )
+    end
   end
 
   describe '#reset_workflow' do
