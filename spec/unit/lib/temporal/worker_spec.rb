@@ -248,12 +248,17 @@ describe Temporal::Worker do
   end
 
   describe '#start' do
-    let(:workflow_poller_1) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
-    let(:workflow_poller_2) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
-    let(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
-    let(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let!(:workflow_poller_1) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let!(:workflow_poller_2) { instance_double(Temporal::Workflow::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let!(:activity_poller_1) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
+    let!(:activity_poller_2) { instance_double(Temporal::Activity::Poller, start: nil, stop_polling: nil, cancel_pending_requests: nil, wait: nil) }
 
     it 'starts a poller for each namespace/task list combination' do
+      allow(Temporal::Workflow::Poller)
+        .to receive(:new)
+        .with(any_args)
+        .and_call_original
+
       allow(Temporal::Workflow::Poller)
         .to receive(:new)
         .with(

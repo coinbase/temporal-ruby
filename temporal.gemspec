@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry'
   # TODO: Investigate spec failure surfacing in RSpec 3.11
   spec.add_development_dependency 'rspec', '~> 3.10.0'
+  spec.add_development_dependency 'google-protobuf', '~> 3.25'
   spec.add_development_dependency 'fabrication'
   spec.add_development_dependency 'grpc-tools'
   spec.add_development_dependency 'yard'
