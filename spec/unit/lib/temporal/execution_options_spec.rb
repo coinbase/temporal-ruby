@@ -99,10 +99,11 @@ describe Temporal::ExecutionOptions do
             task_queue: 'test-task-queue',
             retry_policy: { interval: 1, backoff: 2, max_attempts: 5 },
             timeouts: { start_to_close: 10 },
-            headers: { 'TestHeader' => 'Test' }
+            headers: { 'TestHeader' => 'Test' },
+            start_delay: 10
           }
         end
-  
+
         it 'is initialized with full options' do
           expect(subject.name).to eq(options[:name])
           expect(subject.namespace).to eq(options[:namespace])
@@ -113,12 +114,13 @@ describe Temporal::ExecutionOptions do
           expect(subject.retry_policy.max_attempts).to eq(options[:retry_policy][:max_attempts])
           expect(subject.timeouts).to eq(options[:timeouts])
           expect(subject.headers).to eq(options[:headers])
+          expect(subject.start_delay).to eq(options[:start_delay])
         end
       end
-  
+
       context 'when retry policy options are invalid' do
         let(:options) { { retry_policy: { max_attempts: 10 } } }
-  
+
         it 'raises' do
           expect { subject }.to raise_error(
             Temporal::RetryPolicy::InvalidRetryPolicy,
