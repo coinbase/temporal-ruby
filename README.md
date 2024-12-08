@@ -104,7 +104,7 @@ require 'path/to/hello_world_workflow'
 Temporal.start_workflow(HelloWorldWorkflow)
 ```
 
-Congratulation you've just created and executed a distributed workflow!
+Congratulations! You've just created and executed a distributed workflow!
 
 To view more details about your execution, point your browser to
 <http://localhost:8088/namespace/ruby-samples/workflows?range=last-3-hours&status=CLOSED>.
@@ -165,7 +165,7 @@ end
 
 ### Combining Credentials
 
-To configure both SSL and OAuth2 token cedentials use `compose` method:
+To configure both SSL and OAuth2 token credentials use `compose` method:
 
 ```ruby
 Temporal.configure do |config|
