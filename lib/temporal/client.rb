@@ -11,6 +11,7 @@ require 'temporal/workflow/execution_info'
 require 'temporal/workflow/executions'
 require 'temporal/workflow/status'
 require 'temporal/reset_strategy'
+require 'temporal/reset_reapply_type'
 
 module Temporal
   class Client

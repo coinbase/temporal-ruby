@@ -1,6 +1,5 @@
 require 'workflows/hello_world_workflow'
 require 'workflows/query_workflow'
-require 'temporal/reset_reapply_type'
 
 describe 'Temporal.reset_workflow', :integration do
   it 'can reset a closed workflow to the beginning' do
