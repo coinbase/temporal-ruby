@@ -20,7 +20,7 @@ module Temporal
         @last_heartbeat_throttled = false
       end
 
-      attr_reader :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
+      attr_reader :metadata, :heartbeat_check_scheduled, :cancel_requested, :last_heartbeat_throttled
 
       def async
         @async = true
@@ -113,7 +113,7 @@ module Temporal
 
       private
 
-      attr_reader :connection, :metadata, :heartbeat_thread_pool, :config, :heartbeat_mutex, :last_heartbeat_details
+      attr_reader :connection, :heartbeat_thread_pool, :config, :heartbeat_mutex, :last_heartbeat_details
 
       def task_token
         metadata.task_token

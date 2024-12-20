@@ -189,4 +189,10 @@ describe Temporal::Activity::Context do
       expect(subject.name).to eq('TestActivity')
     end
   end
+
+  describe '#metadata' do
+    it 'returns metadata' do
+      expect(subject.metadata).to eq(metadata)
+    end
+  end
 end
