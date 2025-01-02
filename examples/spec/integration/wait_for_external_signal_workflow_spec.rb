@@ -11,7 +11,7 @@ describe WaitForExternalSignalWorkflow do
       run_id = Temporal.start_workflow(
         WaitForExternalSignalWorkflow,
         signal_name,
-        options: {workflow_id: receiver_workflow_id}
+        options: {workflow_id: receiver_workflow_id, timeouts: { execution: 30 }}
       )
 
       Temporal.start_workflow(
@@ -42,14 +42,14 @@ describe WaitForExternalSignalWorkflow do
       Temporal.start_workflow(
         WaitForExternalSignalWorkflow,
         signal_name,
-        options: {workflow_id: receiver_workflow_id}
+        options: {workflow_id: receiver_workflow_id, timeouts: { execution: 30 }}
       )
 
       run_id = Temporal.start_workflow(
         SendSignalToExternalWorkflow,
         signal_name,
         receiver_workflow_id,
-        options: {workflow_id: sender_workflow_id}
+        options: {workflow_id: sender_workflow_id, timeouts: { execution: 30 }}
       )
 
       result = Temporal.await_workflow_result(
@@ -68,7 +68,7 @@ describe WaitForExternalSignalWorkflow do
         SendSignalToExternalWorkflow,
         signal_name,
         receiver_workflow_id,
-        options: {workflow_id: sender_workflow_id})
+        options: {workflow_id: sender_workflow_id, timeouts: { execution: 30 } })
 
       result = Temporal.await_workflow_result(
         SendSignalToExternalWorkflow,
@@ -76,7 +76,7 @@ describe WaitForExternalSignalWorkflow do
         run_id: run_id,
       )
 
-      expect(result).to eq(:failed)
+      expect(result).to match("Failed to send external signal because execution with workflow ID '#{receiver_workflow_id}' could not be found or has already completed")
     end
   end
 end

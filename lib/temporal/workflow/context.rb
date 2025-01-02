@@ -439,9 +439,9 @@ module Temporal
           future.success_callbacks.each { |callback| call_in_fiber(callback, result) }
         end
 
-        dispatcher.register_handler(target, 'failed') do |exception|
-          future.fail(exception)
-          future.failure_callbacks.each { |callback| call_in_fiber(callback, exception) }
+        dispatcher.register_handler(target, 'failed') do |error|
+          future.fail(error)
+          future.failure_callbacks.each { |callback| call_in_fiber(callback, error) }
         end
 
         future

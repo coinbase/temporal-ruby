@@ -221,3 +221,40 @@ Fabricator(:api_workflow_execution_signaled_event, from: :api_history_event) do
     )
   end
 end
+
+Fabricator(:api_signal_external_workflow_execution_initiated, from: :api_history_event) do
+  transient :workflow_id, :run_id
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED }
+  signal_external_workflow_execution_initiated_event_attributes do |attrs|
+    Temporalio::Api::History::V1::SignalExternalWorkflowExecutionInitiatedEventAttributes.new(
+      signal_name: 'a_signal',
+      input: nil,
+      workflow_task_completed_event_id: attrs[:event_id] - 1,
+      workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(workflow_id: attrs[:workflow_id], run_id: attrs[:run_id])
+    )
+  end
+end
+
+Fabricator(:api_external_workflow_execution_signaled, from: :api_history_event) do
+  transient :workflow_id, :run_id
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_EXTERNAL_WORKFLOW_EXECUTION_SIGNALED }
+  external_workflow_execution_signaled_event_attributes do |attrs|
+    Temporalio::Api::History::V1::ExternalWorkflowExecutionSignaledEventAttributes.new(
+      initiated_event_id: attrs[:event_id] - 1,
+      workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(workflow_id: attrs[:workflow_id], run_id: attrs[:run_id])
+    )
+  end
+end
+
+Fabricator(:api_signal_external_workflow_execution_failed, from: :api_history_event) do
+  transient :workflow_id, :run_id
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED }
+  signal_external_workflow_execution_failed_event_attributes do |attrs|
+    Temporalio::Api::History::V1::SignalExternalWorkflowExecutionFailedEventAttributes.new(
+      initiated_event_id: attrs[:event_id] - 1,
+      workflow_task_completed_event_id: attrs[:event_id] - 2,
+      workflow_execution: Temporalio::Api::Common::V1::WorkflowExecution.new(workflow_id: attrs[:workflow_id], run_id: attrs[:run_id]),
+      cause: Temporalio::Api::Enums::V1::SignalExternalWorkflowExecutionFailedCause::SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_EXTERNAL_WORKFLOW_EXECUTION_NOT_FOUND
+    )
+  end
+end

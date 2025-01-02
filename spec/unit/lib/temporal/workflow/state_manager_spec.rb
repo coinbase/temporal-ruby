@@ -433,6 +433,92 @@ describe Temporal::Workflow::StateManager do
         end
       end
     end
+
+    context "external signal" do
+      context "successful" do
+        let(:history) do
+          Temporal::Workflow::History.new(
+            [
+              Fabricate(:api_workflow_execution_started_event, event_id: 1),
+              Fabricate(:api_workflow_task_scheduled_event, event_id: 2),
+              Fabricate(:api_workflow_task_started_event, event_id: 3),
+              Fabricate(:api_workflow_task_completed_event, event_id: 4),
+              Fabricate(:api_signal_external_workflow_execution_initiated, event_id: 5),
+              Fabricate(:api_external_workflow_execution_signaled, event_id: 6),
+              Fabricate(:api_workflow_task_scheduled_event, event_id: 7),
+              Fabricate(:api_workflow_task_started_event, event_id: 8)
+            ]
+          )
+        end
+
+        it "signaled successfully" do
+          signal_workflow_command = Temporal::Workflow::Command::SignalExternalWorkflow.new
+          history_target = Temporal::Workflow::History::EventTarget.new(5, Temporal::Workflow::History::EventTarget::EXTERNAL_WORKFLOW_TYPE)
+
+          dispatcher.register_handler(
+            Temporal::Workflow::History::EventTarget.start_workflow,
+            'started'
+          ) do
+            state_manager.schedule(signal_workflow_command)
+          end
+
+          success = false
+          dispatcher.register_handler(
+            history_target,
+            'completed'
+          ) do
+            success = true
+          end
+
+          state_manager.apply(history.next_window)
+          state_manager.apply(history.next_window)
+
+          expect(success).to be(true)
+        end
+      end
+
+      context "failed" do
+        let(:history) do
+          Temporal::Workflow::History.new(
+            [
+              Fabricate(:api_workflow_execution_started_event, event_id: 1),
+              Fabricate(:api_workflow_task_scheduled_event, event_id: 2),
+              Fabricate(:api_workflow_task_started_event, event_id: 3),
+              Fabricate(:api_workflow_task_completed_event, event_id: 4),
+              Fabricate(:api_signal_external_workflow_execution_initiated, event_id: 5),
+              Fabricate(:api_signal_external_workflow_execution_failed, event_id: 6),
+              Fabricate(:api_workflow_task_scheduled_event, event_id: 7),
+              Fabricate(:api_workflow_task_started_event, event_id: 8)
+            ]
+          )
+        end
+
+        it "failed to signal" do
+          signal_workflow_command = Temporal::Workflow::Command::SignalExternalWorkflow.new
+          history_target = Temporal::Workflow::History::EventTarget.new(5, Temporal::Workflow::History::EventTarget::EXTERNAL_WORKFLOW_TYPE)
+
+          dispatcher.register_handler(
+            Temporal::Workflow::History::EventTarget.start_workflow,
+            'started'
+          ) do
+            state_manager.schedule(signal_workflow_command)
+          end
+
+          failed = nil
+          dispatcher.register_handler(
+            history_target,
+            'failed'
+          ) do |error|
+            failed = error
+          end
+
+          state_manager.apply(history.next_window)
+          state_manager.apply(history.next_window)
+
+          expect(failed).to be_instance_of(Temporal::ExternalSignalExecutionNotFoundError)
+        end
+      end
+    end
   end
 
   describe '#history_size' do

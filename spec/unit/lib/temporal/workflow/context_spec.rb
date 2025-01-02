@@ -262,6 +262,69 @@ describe Temporal::Workflow::Context do
     end
   end
 
+  describe '#signal_external_workflow' do
+    let(:workflow) { 'workflow_type' }
+    let(:signal_name) { 'my_signal' }
+    let(:signal_input) { {foo: 'bar'} }
+    let(:workflow_id) { '12345' }
+    let(:run_id) { 'abcdef' }
+    let(:target) do
+      Temporal::Workflow::History::EventTarget.new(27, Temporal::Workflow::History::EventTarget::EXTERNAL_WORKFLOW_TYPE)
+    end
+
+    def send_signal
+      expect(state_manager).to receive(:schedule).with(
+        Temporal::Workflow::Command::SignalExternalWorkflow.new(
+          namespace: 'default-namespace',
+          execution: {
+            workflow_id: workflow_id,
+            run_id: run_id
+          },
+          signal_name: signal_name,
+          input: signal_input,
+          child_workflow_only: false
+        )
+      ).and_return(target)
+
+      workflow_context.signal_external_workflow(workflow, signal_name, workflow_id, run_id, signal_input)
+    end
+
+    it 'send signal successfully' do
+      future = send_signal
+
+      expect(future.finished?).to be(false)
+      expect(future.failed?).to be(false)
+
+      dispatcher.dispatch(target, 'completed')
+
+      expect(future.finished?).to be(true)
+      expect(future.failed?).to be(false)
+
+      # no waiting for this
+      future.wait
+
+      expect(future.get).to eq(nil)
+    end
+
+    it 'send signal to not found workflow' do
+      future = send_signal
+
+      expect(future.finished?).to be(false)
+      expect(future.failed?).to be(false)
+
+      error = Temporal::ExternalSignalExecutionNotFoundError.new
+      dispatcher.dispatch(target, 'failed', error)
+
+      expect(future.finished?).to be(true)
+      expect(future.failed?).to be(true)
+
+      # no waiting for either of these
+      future.wait
+
+      expect(future.get).to eq(error)
+    end
+  end
+
   describe '#upsert_search_attributes' do
     it 'does not accept nil' do
       expect do

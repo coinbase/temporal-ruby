@@ -24,6 +24,20 @@ module Temporal
   # Represents when a child workflow is terminated
   class ChildWorkflowTerminatedError < Error; end
 
+  # Base class for the set of errors that can result from sending an external
+  # signal in a workflow to another workflow
+  class ExternalSignalError < Error; end
+
+  # Occurs when the target workflow execution does not exist or has already been completed
+  class ExternalSignalExecutionNotFoundError < ExternalSignalError; end
+
+  # Occurs when the namespace of the target workflow does not exist
+  class ExternalSignalNamespaceNotFoundError < ExternalSignalError; end
+
+  # Occurs when the maximum signals per second per workflow execution is exceeded. For self
+  # hosted Temporal server, this is configured via history.maximumSignalsPerExecution.
+  class ExternalSignalLimitExceededError < ExternalSignalError; end
+
   # A superclass for activity exceptions raised explicitly
   # with the intent to propagate to a workflow
   # With v2 serialization (set with Temporal::Configuration#use_error_serialization_v2=true) you can

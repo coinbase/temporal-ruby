@@ -78,6 +78,25 @@ module Temporal
         end
       end
 
+      def self.generate_error_for_external_signal(cause:, namespace:, workflow_id:)
+        case cause
+        when :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_EXTERNAL_WORKFLOW_EXECUTION_NOT_FOUND
+          Temporal::ExternalSignalExecutionNotFoundError.new(
+            "Failed to send external signal because execution with workflow ID '#{workflow_id}' could not be found or has already completed"
+          )
+        when :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_NAMESPACE_NOT_FOUND
+          Temporal::ExternalSignalNamespaceNotFoundError.new(
+            "Failed to send external signal because namespace #{namespace} could not be found"
+          )
+        when :SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED_CAUSE_SIGNAL_COUNT_LIMIT_EXCEEDED
+          Temporal::ExternalSignalLimitExceededError.new(
+            "Failed to send external signal because per workflow limit was exceeded"
+          )
+        else
+          Temporal::ExternalSignalError.new("Failed to send external workflow signal with unknown cause: #{cause}")
+        end
+      end
+
       private_class_method def self.safe_constantize(const)
         Object.const_get(const) if Object.const_defined?(const)
       rescue NameError
