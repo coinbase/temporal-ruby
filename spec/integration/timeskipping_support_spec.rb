@@ -31,7 +31,7 @@ describe 'Timeskipping' do
     conn = Temporal::Testing::Connection.new("localhost", 7233)
     run_id = Temporal.start_workflow(
       TimeskippableWorkflow,
-      25_000_000, # it continues as new if this arg is > 1
+      25_000_000, 
       options: {
         workflow_id: workflow_id,
         task_queue: Temporal.configuration.task_queue,
@@ -61,7 +61,7 @@ describe 'Timeskipping' do
     client = Temporal::Testing::Client.new(Temporal.send :config)
     run_id = Temporal.start_workflow(
       TimeskippableWorkflow,
-      25_000_000, # it continues as new if this arg is > 1
+      25_000_000,
       options: {
         workflow_id: workflow_id,
         task_queue: Temporal.configuration.task_queue,
