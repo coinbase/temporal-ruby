@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 module Temporal
   module Testing
+    # TestingClient expects the java `temporal-test-server` to be running and to have been
+    # enabled with timeskipping with
+    # `./temporal-test-server {port} --enable-time-skipping`
     class Client < Temporal::Client
       def initialize(config = {})
         super(config)
@@ -13,6 +16,7 @@ module Temporal
 
       def await_workflow_result(workflow, workflow_id:, run_id: nil, timeout: nil, namespace: nil)
         begin
+          # WorkflowTaskTimeout seems to happen with this SDK so sleep as workaround
           sleep(0.25)
           @timeskipping_connection.unlock_time_skipping
           super

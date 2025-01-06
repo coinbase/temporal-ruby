@@ -25,7 +25,7 @@ describe 'Timeskipping' do
     @worker.stop
     @worker_thread.kill.join
   end
-  it 'should connect to timeskipping server' do
+  it 'should work with timeskipping api directly' do
 
     workflow_id = SecureRandom.uuid
     conn = Temporal::Testing::Connection.new("localhost", 7233)
@@ -40,8 +40,8 @@ describe 'Timeskipping' do
     conn.unlock_time_skipping_with_sleep(20_000_000)
     Temporal.signal_workflow(TimeskippableWorkflow, 'unblock', workflow_id, run_id)
     begin
+      # WorkflowTaskTimeout seems to happen with this SDK so sleep as workaround
       sleep(0.5)
-
       conn.unlock_time_skipping
 
       result = Temporal.await_workflow_result(
@@ -51,9 +51,8 @@ describe 'Timeskipping' do
     ensure
       conn.lock_time_skipping
     end
-    p "result: #{result}"
-    expect(result).not_to be_nil
-    # end
+    expect(result).to eq "unblocked:true;timer:false"
+
   end
   it 'should use testing client' do
 
@@ -68,24 +67,12 @@ describe 'Timeskipping' do
         task_queue: Temporal.configuration.task_queue,
       },
       )
-
+    client.sleep(20_000_000)
     client.signal_workflow(TimeskippableWorkflow, 'unblock', workflow_id, run_id)
-    result = Temporal.await_workflow_result(
+    result = client.await_workflow_result(
       TimeskippableWorkflow,
       workflow_id: workflow_id,
       )
-    p "result: #{result}"
-    expect(result).not_to be_nil
-
+    expect(result).to eq "unblocked:true;timer:false"
   end
 end
-
-# works multiple times when
-# 1. start_workflow
-# 2. unlock_time_skipping_with_sleep
-# 3. signal workflow
-# 4. sleep(2)
-# 5. unlock_time_skipping
-# 6. lock_time_skipping
-
-
