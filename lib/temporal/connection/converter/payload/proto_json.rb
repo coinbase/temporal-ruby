@@ -15,7 +15,7 @@ module Temporal
             # TODO: Add error handling.
             message_type = payload.metadata['messageType']
             descriptor = Google::Protobuf::DescriptorPool.generated_pool.lookup(message_type)
-            descriptor.msgclass.decode_json(payload.data)
+            descriptor.msgclass.decode_json(payload.data, ignore_unknown_fields: true)
           end
 
           def to_payload(data)

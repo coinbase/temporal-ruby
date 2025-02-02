@@ -29,4 +29,18 @@ describe Temporal::Connection::Converter::Payload::ProtoJSON do
 
     expect(subject.to_payload(input)).to be nil
   end
+
+  describe ".from_payload" do
+    it "ignores unknown fields" do
+      payload = Temporalio::Api::Common::V1::Payload.new(
+        metadata: {
+          'encoding' => described_class::ENCODING,
+          'messageType' => Temporalio::Api::Common::V1::Payload.descriptor.name,
+        },
+        data: { 'unknown' => 'field' }.to_json.b,
+      )
+
+      expect(subject.from_payload(payload)).to be_instance_of(Temporalio::Api::Common::V1::Payload)
+    end
+  end
 end
