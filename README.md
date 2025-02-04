@@ -148,6 +148,52 @@ Temporal.configure do |config|
 end
 ```
 
+### mTLS with Temporal Cloud
+
+Temporal Cloud recommends mTLS and gives instructions on how to issue root CA and end-entity certificates.
+To create and use these certificates, install the [tcld](https://docs.temporal.io/cloud/tcld) CLI and then run:
+
+```bash
+mkdir temporal-certs
+cd temporal-certs
+tcld gen ca --org temporal -d 1y --ca-cert ca.pem --ca-key ca.key
+```
+
+The contents of the generated ca.pem should be pasted into the "CA Certificates" section of your Namespace settings
+page in the Temporal Cloud UI. The namespace must be configured to allow mTLS auth for the authentication section
+to appear.
+
+Then create an end-entity certificate that your app will use via temporal-ruby to talk to Temporal Cloud:
+
+```bash
+tcld gen leaf --org temporal -d 364d --ca-cert ca.pem --ca-key ca.key --cert client.pem --key client.key
+```
+
+With these files, client.key and client.pem alone can be used to auth:
+
+```ruby
+Temporal.configure do |config|
+  config.host = "myapp-staging.b948c.tmprl.cloud"
+  config.port = 7233
+  config.namespace = "myapp-staging.b948c"
+  config.task_queue = "default"
+
+  # Load certificates
+  client_key = File.read("/tmp/temporal-certs-staging/client.key")
+  client_cert = File.read("/tmp/temporal-certs-staging/client.pem")
+
+  # Configure GRPC credentials
+  config.credentials = GRPC::Core::ChannelCredentials.new(
+    # "can be constructed with nil server roots" - https://github.com/grpc/grpc/blob/master/src/ruby/spec/channel_credentials_spec.rb#L45
+    nil,
+    client_key,
+    client_cert
+  )
+end
+```
+
+In a production app you probably want to store the contents of client.key/client.pem in ENV variables, a secure keychain, Rails credentials files, etc.
+
 ### OAuth2 Token
 
 Use gRPC Call Credentials to add OAuth2 token to gRPC calls:
