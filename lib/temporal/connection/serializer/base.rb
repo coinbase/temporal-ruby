@@ -1,6 +1,10 @@
 require 'oj'
-require 'gen/temporal/api/common/v1/message_pb'
-require 'gen/temporal/api/command/v1/message_pb'
+
+# Only require protos if not disabled
+unless ENV['COINBASE_TEMPORAL_RUBY_DISABLE_PROTO_LOAD'] == '1'
+  require 'gen/temporal/api/common/v1/message_pb'
+  require 'gen/temporal/api/command/v1/message_pb'
+end
 
 module Temporal
   module Connection
