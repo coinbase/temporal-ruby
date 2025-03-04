@@ -199,9 +199,11 @@ module Temporal
       end
 
       def wait_until(&unblock_condition)
-        raise 'You must pass an unblock condition block to wait_for' if unblock_condition.nil?
+        raise 'You must pass an unblock condition block to wait_until' if unblock_condition.nil?
 
-        Fiber.yield until unblock_condition.call
+        Fiber.new do
+          Fiber.yield until unblock_condition.call
+        end.resume
 
         return
       end
