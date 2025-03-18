@@ -29,7 +29,7 @@ module Temporal
         @metadata = Metadata.generate_workflow_task_metadata(task, namespace)
         @task_token = task.task_token
         @workflow_name = task.workflow_type.name
-        @workflow_class = workflow_lookup.find(workflow_name)
+        @workflow_lookup = workflow_lookup
         @middleware_chain = middleware_chain
         @workflow_middleware_chain = workflow_middleware_chain
         @config = config
@@ -42,6 +42,7 @@ module Temporal
         Temporal.logger.debug("Processing Workflow task", metadata.to_h)
         Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_TASK_QUEUE_TIME, queue_time_ms, metric_tags)
 
+        workflow_class = find_workflow_class
         raise Temporal::WorkflowNotRegistered, 'Workflow is not registered with this worker' unless workflow_class
 
         history = fetch_full_history
@@ -85,7 +86,11 @@ module Temporal
 
       private
 
-      attr_reader :task, :task_queue, :namespace, :task_token, :workflow_name, :workflow_class,
+      def find_workflow_class
+        workflow_lookup.find(workflow_name)
+      end
+
+      attr_reader :task, :task_queue, :namespace, :task_token, :workflow_name, :workflow_lookup,
                   :middleware_chain, :workflow_middleware_chain, :metadata, :config, :binary_checksum
 
       def connection

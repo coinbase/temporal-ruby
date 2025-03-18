@@ -310,5 +310,54 @@ describe Temporal::Activity::TaskProcessor do
         end
       end
     end
+
+    context 'when a namespaced activity is registered' do
+      let(:activity_name) { 'MyNamespace::TestActivity' }
+
+      module MyNamespace
+        class TestActivity
+          def self.execute_in_context(context, input)
+            'namespaced result'
+          end
+        end
+      end
+
+      let(:activity_class) { MyNamespace::TestActivity }
+
+      before do
+        allow(lookup).to receive(:find).with(activity_name).and_return(activity_class)
+        allow(activity_class).to receive(:execute_in_context).and_call_original
+      end
+
+      it 'correctly resolves and executes the namespaced activity' do
+        subject.process
+
+        expect(lookup).to have_received(:find).with(activity_name)
+        expect(activity_class).to have_received(:execute_in_context).with(context, input)
+      end
+
+      it 'completes the activity task with the correct result' do
+        subject.process
+
+        expect(connection)
+          .to have_received(:respond_activity_task_completed)
+          .with(namespace: namespace, task_token: task.task_token, result: 'namespaced result')
+      end
+
+      it 'sends metrics with the correct namespaced activity name' do
+        subject.process
+
+        expect(Temporal.metrics)
+          .to have_received(:timing)
+          .with(
+            Temporal::MetricKeys::ACTIVITY_TASK_LATENCY,
+            an_instance_of(Integer),
+            activity: activity_name,
+            namespace: namespace,
+            task_queue: task_queue,
+            workflow: workflow_name
+          )
+      end
+    end
   end
 end

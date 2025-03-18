@@ -18,7 +18,7 @@ describe Temporal::ExecutableLookup do
     it 'adds a class to the lookup map' do
       subject.add('foo', TestClass)
 
-      expect(subject.send(:executables)).to eq('foo' => TestClass)
+      expect(subject.send(:executables)).to eq('foo' => "TestClass")
     end
   end
 
