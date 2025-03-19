@@ -18,7 +18,7 @@ describe Temporal::ExecutableLookup do
     it 'adds a class to the lookup map' do
       subject.add('foo', TestClass)
 
-      expect(subject.send(:executables)).to eq('foo' => TestClass)
+      expect(subject.send(:executables)).to eq('foo' => "TestClass")
     end
   end
 
@@ -40,6 +40,16 @@ describe Temporal::ExecutableLookup do
 
     it 'returns nil if there were no matches' do
       expect(subject.find('bar')).to eq(nil)
+    end
+
+    it "still returns the class even it was unloaded and has a new object_id" do
+      original_object_id = stub_const('TestClass', Class.new).object_id
+      subject.add('foo', TestClass)
+
+      expected_class = stub_const('TestClass', Class.new)
+
+      expect(expected_class.object_id).not_to eq(original_object_id)
+      expect(subject.find('foo')).to be(expected_class)
     end
 
     it 'falls back to the dynamic executable' do

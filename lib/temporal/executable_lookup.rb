@@ -17,6 +17,8 @@ module Temporal
       end
     end
 
+    ExecutableNotFoundError = Class.new(StandardError)
+
     def initialize
       @executables = {}
     end
@@ -27,20 +29,32 @@ module Temporal
         raise SecondDynamicExecutableError, @fallback_executable_name
       end
 
-      @fallback_executable = executable
+      @fallback_executable_class_name = executable.is_a?(String) ? executable : executable.name
       @fallback_executable_name = name
     end
 
     def add(name, executable)
-      executables[name] = executable
+      executables[name] = executable.is_a?(String) ? executable : executable.name
     end
 
     def find(name)
-      executables[name] || @fallback_executable
+      if executables[name]
+        resolve_executable(executables[name])
+      elsif @fallback_executable_class_name
+        resolve_executable(@fallback_executable_class_name)
+      else
+        nil
+      end
     end
 
     private
 
-    attr_reader :executables, :fallback_executable, :fallback_executable_name
+    def resolve_executable(class_name)
+      Object.const_get(class_name)
+    rescue NameError
+      raise Temporal::ExecutableLookup::ExecutableNotFoundError, "Executable #{class_name} not found"
+    end
+
+    attr_reader :executables, :fallback_executable_name, :fallback_executable_class_name
   end
 end

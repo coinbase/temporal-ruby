@@ -1,3 +1,3 @@
 Fabricator(:api_activity_type, from: Temporalio::Api::Common::V1::ActivityType) do
-  name 'TestActivity'
+  name { |attrs| attrs[:name] || 'TestActivity' }
 end

@@ -16,7 +16,7 @@ module Temporal
         @metadata = Metadata.generate_activity_metadata(task, namespace, config.converter)
         @task_token = task.task_token
         @activity_name = task.activity_type.name
-        @activity_class = activity_lookup.find(activity_name)
+        @activity_lookup = activity_lookup
         @middleware_chain = middleware_chain
         @config = config
         @heartbeat_thread_pool = heartbeat_thread_pool
@@ -30,6 +30,7 @@ module Temporal
 
         context = Activity::Context.new(connection, metadata, config, heartbeat_thread_pool)
 
+        activity_class = find_activity_class
         if !activity_class
           raise ActivityNotRegistered, 'Activity is not registered with this worker'
         end
@@ -65,8 +66,8 @@ module Temporal
 
       private
 
-      attr_reader :task, :task_queue, :namespace, :task_token, :activity_name, :activity_class,
-      :middleware_chain, :metadata, :config, :heartbeat_thread_pool
+      attr_reader :task, :task_queue, :namespace, :task_token, :activity_name, :activity_lookup,
+                  :middleware_chain, :metadata, :config, :heartbeat_thread_pool
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)
@@ -76,6 +77,10 @@ module Temporal
         scheduled = task.current_attempt_scheduled_time.to_f
         started = task.started_time.to_f
         ((started - scheduled) * 1_000).round
+      end
+
+      def find_activity_class
+        activity_lookup.find(activity_name)
       end
 
       def respond_completed(result)
