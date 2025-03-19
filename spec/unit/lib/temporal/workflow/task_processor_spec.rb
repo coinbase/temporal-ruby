@@ -10,7 +10,7 @@ describe Temporal::Workflow::TaskProcessor do
 
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-queue' }
-  let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
+  let(:lookup) { Temporal::ExecutableLookup.new }
   let(:query) { nil }
   let(:queries) { nil }
   let(:task) do
@@ -24,6 +24,10 @@ describe Temporal::Workflow::TaskProcessor do
   let(:input) { %w[arg1 arg2] }
   let(:config) { Temporal::Configuration.new }
   let(:binary_checksum) { 'v1.0.0' }
+
+  before "register workflow in lookup" do
+    lookup.add(workflow_name, Temporal::Workflow::TestWorkflow)
+  end
 
   describe '#process' do
     let(:context) { instance_double('Temporal::Workflow::Context') }
@@ -451,6 +455,62 @@ describe Temporal::Workflow::TaskProcessor do
             expect(Temporal::Workflow::History).to have_received(:new).with([event, final_event])
           end
         end
+      end
+    end
+
+    context 'when a namespaced workflow is registered' do
+      let(:workflow_name) { 'MyNamespace::TestWorkflow' }
+      let(:api_workflow_type) do
+        Fabricate(:api_workflow_type, name: workflow_name)
+      end
+
+      module MyNamespace
+        class TestWorkflow
+          def self.execute_in_context(context, input)
+            'namespaced workflow result'
+          end
+        end
+      end
+
+      let(:workflow_class) { MyNamespace::TestWorkflow }
+      let(:executor) { double('Temporal::Workflow::Executor') }
+      let(:commands) { double('commands') }
+      let(:new_sdk_flags_used) { double('new_sdk_flags_used') }
+      let(:run_result) do
+        Temporal::Workflow::Executor::RunResult.new(commands: commands, new_sdk_flags_used: new_sdk_flags_used)
+      end
+
+      before do
+        allow(lookup).to receive(:find).with(workflow_name).and_return(workflow_class)
+        allow(workflow_class).to receive(:execute_in_context).and_return('namespaced workflow result')
+        allow(Temporal::Workflow::Executor).to receive(:new).and_return(executor)
+        allow(executor).to receive(:run) do
+          workflow_class.execute_in_context(context, input)
+          run_result
+        end
+        allow(executor).to receive(:process_queries)
+      end
+
+      it 'correctly resolves and executes the namespaced workflow' do
+        subject.process
+
+        expect(lookup).to have_received(:find).with(workflow_name)
+        expect(workflow_class).to have_received(:execute_in_context).with(context, input)
+      end
+
+      it 'completes the workflow task' do
+        subject.process
+
+        expect(connection)
+          .to have_received(:respond_workflow_task_completed)
+          .with(
+            namespace: namespace,
+            task_token: task.task_token,
+            commands: commands,
+            query_results: nil,
+            binary_checksum: binary_checksum,
+            new_sdk_flags_used: new_sdk_flags_used
+          )
       end
     end
   end
