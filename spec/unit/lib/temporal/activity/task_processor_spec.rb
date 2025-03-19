@@ -3,13 +3,14 @@ require 'temporal/configuration'
 require 'temporal/metric_keys'
 require 'temporal/middleware/chain'
 require 'temporal/scheduled_thread_pool'
+require 'temporal/executable_lookup'
 
 describe Temporal::Activity::TaskProcessor do
   subject { described_class.new(task, task_queue, namespace, lookup, middleware_chain, config, heartbeat_thread_pool) }
 
   let(:namespace) { 'test-namespace' }
   let(:task_queue) { 'test-queue' }
-  let(:lookup) { instance_double('Temporal::ExecutableLookup', find: nil) }
+  let(:lookup) { Temporal::ExecutableLookup.new }
   let(:task) do
     Fabricate(
       :api_activity_task,
@@ -19,7 +20,7 @@ describe Temporal::Activity::TaskProcessor do
   end
   let(:metadata) { Temporal::Metadata.generate_activity_metadata(task, namespace, config.converter) }
   let(:workflow_name) { task.workflow_type.name }
-  let(:activity_name) { 'TestActivity' }
+  let(:activity_name) { 'Temporal::MyActivity' }
   let(:connection) { instance_double('Temporal::Connection::GRPC') }
   let(:middleware_chain) { Temporal::Middleware::Chain.new }
   let(:config) { Temporal::Configuration.new }
@@ -94,10 +95,16 @@ describe Temporal::Activity::TaskProcessor do
     end
 
     context 'when activity is registered' do
-      let(:activity_class) { double('Temporal::Activity', execute_in_context: nil) }
+      let(:activity_class) do
+        stub_const('Temporal::MyActivity', Class.new do
+          def self.execute_in_context(context, input)
+            'result'
+          end
+        end)
+      end
 
-      before do
-        allow(lookup).to receive(:find).with(activity_name).and_return(activity_class)
+      before "register activity in lookup" do
+        lookup.add(activity_class.name, activity_class)
       end
 
       context 'when activity completes' do
@@ -308,55 +315,6 @@ describe Temporal::Activity::TaskProcessor do
               )
           end
         end
-      end
-    end
-
-    context 'when a namespaced activity is registered' do
-      let(:activity_name) { 'MyNamespace::TestActivity' }
-
-      module MyNamespace
-        class TestActivity
-          def self.execute_in_context(context, input)
-            'namespaced result'
-          end
-        end
-      end
-
-      let(:activity_class) { MyNamespace::TestActivity }
-
-      before do
-        allow(lookup).to receive(:find).with(activity_name).and_return(activity_class)
-        allow(activity_class).to receive(:execute_in_context).and_call_original
-      end
-
-      it 'correctly resolves and executes the namespaced activity' do
-        subject.process
-
-        expect(lookup).to have_received(:find).with(activity_name)
-        expect(activity_class).to have_received(:execute_in_context).with(context, input)
-      end
-
-      it 'completes the activity task with the correct result' do
-        subject.process
-
-        expect(connection)
-          .to have_received(:respond_activity_task_completed)
-          .with(namespace: namespace, task_token: task.task_token, result: 'namespaced result')
-      end
-
-      it 'sends metrics with the correct namespaced activity name' do
-        subject.process
-
-        expect(Temporal.metrics)
-          .to have_received(:timing)
-          .with(
-            Temporal::MetricKeys::ACTIVITY_TASK_LATENCY,
-            an_instance_of(Integer),
-            activity: activity_name,
-            namespace: namespace,
-            task_queue: task_queue,
-            workflow: workflow_name
-          )
       end
     end
   end

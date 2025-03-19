@@ -172,12 +172,12 @@ module Temporal
     def on_stopped_hook; end
 
     def workflow_poller_for(namespace, task_queue, lookup)
-      Workflow::Poller.new(namespace, task_queue, lookup.freeze, config, workflow_task_middleware, workflow_middleware,
+      Workflow::Poller.new(namespace, task_queue, lookup, config, workflow_task_middleware, workflow_middleware,
                            workflow_poller_options)
     end
 
     def activity_poller_for(namespace, task_queue, lookup)
-      Activity::Poller.new(namespace, task_queue, lookup.freeze, config, activity_middleware, activity_poller_options)
+      Activity::Poller.new(namespace, task_queue, lookup, config, activity_middleware, activity_poller_options)
     end
 
     def executable_registration(executable_class, options)

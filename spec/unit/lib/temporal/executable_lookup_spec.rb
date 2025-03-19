@@ -42,6 +42,16 @@ describe Temporal::ExecutableLookup do
       expect(subject.find('bar')).to eq(nil)
     end
 
+    it "still returns the class even it was unloaded and has a new object_id" do
+      original_object_id = stub_const('TestClass', Class.new).object_id
+      subject.add('foo', TestClass)
+
+      expected_class = stub_const('TestClass', Class.new)
+
+      expect(expected_class.object_id).not_to eq(original_object_id)
+      expect(subject.find('foo')).to be(expected_class)
+    end
+
     it 'falls back to the dynamic executable' do
       subject.add('TestClass', TestClass)
       subject.add_dynamic('MyDynamicActivity', MyDynamicActivity)

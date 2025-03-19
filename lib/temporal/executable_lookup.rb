@@ -17,6 +17,8 @@ module Temporal
       end
     end
 
+    ExecutableNotFoundError = Class.new(StandardError)
+
     def initialize
       @executables = {}
     end
@@ -48,12 +50,9 @@ module Temporal
     private
 
     def resolve_executable(class_name)
-      # Use Ruby's built-in constant lookup
-      class_name.split('::').inject(Object) do |mod, class_segment|
-        mod.const_get(class_segment)
-      end
+      Object.const_get(class_name)
     rescue NameError
-      nil
+      raise Temporal::ExecutableLookup::ExecutableNotFoundError, "Executable #{class_name} not found"
     end
 
     attr_reader :executables, :fallback_executable_name, :fallback_executable_class_name
