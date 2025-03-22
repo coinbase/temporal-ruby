@@ -80,7 +80,7 @@ describe Temporal::Connection::Serializer::Failure do
       expect(avoids_truncation_error).to eq(old_style_deserialized_error)
     end
 
-    it 'logs a helpful error when the payload is too large' do 
+    it 'logs a helpful error when the payload is too large' do
       e = MyBigError.new('Uh oh!')
 
       allow(Temporal.logger).to receive(:error)
@@ -90,10 +90,9 @@ describe Temporal::Connection::Serializer::Failure do
         .to have_received(:error)
         .with(
           "Could not serialize exception because it's too large, so we are using a fallback that may not deserialize "\
-          "correctly on the client.  First #{max_bytes} bytes:\n{\"^o\":\"MyBigError\",\"big_payload\":\"1234567890123456",
+          "correctly on the client.  First #{max_bytes} bytes:\n{\"^o\":\"MyBigError\",\"^i\":1,\"big_payload\":\"123456789",
           { unserializable_error: 'MyBigError' }
         )
-
     end
 
     class MyArglessError < RuntimeError
