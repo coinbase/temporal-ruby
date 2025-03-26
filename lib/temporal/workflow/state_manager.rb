@@ -66,7 +66,7 @@ module Temporal
         validate_append_command(command)
         commands << [command_id, command]
 
-        return [event_target_from(command_id, command), cancelation_id]
+        [History::EventTarget.from_command(command_id, command), cancelation_id]
       end
 
       def release?(release_name)
@@ -309,32 +309,6 @@ module Temporal
         end
       end
 
-      def event_target_from(command_id, command)
-        target_type =
-          case command
-          when Command::ScheduleActivity
-            History::EventTarget::ACTIVITY_TYPE
-          when Command::RequestActivityCancellation
-            History::EventTarget::CANCEL_ACTIVITY_REQUEST_TYPE
-          when Command::RecordMarker
-            History::EventTarget::MARKER_TYPE
-          when Command::StartTimer
-            History::EventTarget::TIMER_TYPE
-          when Command::CancelTimer
-            History::EventTarget::CANCEL_TIMER_REQUEST_TYPE
-          when Command::CompleteWorkflow, Command::FailWorkflow
-            History::EventTarget::WORKFLOW_TYPE
-          when Command::StartChildWorkflow
-            History::EventTarget::CHILD_WORKFLOW_TYPE
-          when Command::UpsertSearchAttributes
-            History::EventTarget::UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE
-          when Command::SignalExternalWorkflow
-            History::EventTarget::EXTERNAL_WORKFLOW_TYPE
-          end
-
-        History::EventTarget.new(command_id, target_type)
-      end
-
       def dispatch(history_target, name, *attributes)
         dispatcher.dispatch(history_target, name, attributes)
       end
@@ -352,8 +326,9 @@ module Temporal
             "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
         end
 
-        replay_target = event_target_from(replay_command_id, replay_command)
-        if history_target != replay_target
+        replay_target = History::EventTarget.from_command(replay_command_id, replay_command)
+
+        if history_target != replay_target || history_target.attributes != replay_target.attributes
           raise NonDeterministicWorkflowError,
             "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
             "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
