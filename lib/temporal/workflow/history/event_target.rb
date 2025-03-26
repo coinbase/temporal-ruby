@@ -5,6 +5,7 @@ module Temporal
     class History
       class EventTarget
         class UnexpectedEventType < InternalError; end
+        class UnexpectedDecisionType < InternalError; end
 
         ACTIVITY_TYPE                         = :activity
         CANCEL_ACTIVITY_REQUEST_TYPE          = :cancel_activity_request
@@ -19,7 +20,7 @@ module Temporal
         UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE = :upsert_search_attributes_request
 
         # NOTE: The order is important, first prefix match wins (will be a longer match)
-        TARGET_TYPES = {
+        EVENT_TARGET_TYPES = {
           'ACTIVITY_TASK_CANCEL_REQUESTED'             => CANCEL_ACTIVITY_REQUEST_TYPE,
           'ACTIVITY_TASK'                              => ACTIVITY_TYPE,
           'REQUEST_CANCEL_ACTIVITY_TASK'               => CANCEL_ACTIVITY_REQUEST_TYPE,
@@ -38,25 +39,54 @@ module Temporal
           'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
         }.freeze
 
-        attr_reader :id, :type
+        DECISION_TARGET_TYPES = {
+          'Cadence::Workflow::Decision::ScheduleActivity'            => ACTIVITY_TYPE,
+          'Cadence::Workflow::Decision::RequestActivityCancellation' => CANCEL_ACTIVITY_REQUEST_TYPE,
+          'Cadence::Workflow::Decision::RecordMarker'                => MARKER_TYPE,
+          'Cadence::Workflow::Decision::StartTimer'                  => TIMER_TYPE,
+          'Cadence::Workflow::Decision::CancelTimer'                 => CANCEL_TIMER_REQUEST_TYPE,
+          'Cadence::Workflow::Decision::CompleteWorkflow'            => WORKFLOW_TYPE,
+          'Cadence::Workflow::Decision::FailWorkflow'                => WORKFLOW_TYPE,
+          'Cadence::Workflow::Decision::StartChildWorkflow'          => CHILD_WORKFLOW_TYPE,
+        }.freeze
+
+        DECISION_ATTRIBUTE_LISTS = {
+          'Cadence::Workflow::Decision::ScheduleActivity'            => [:activity_id, :activity_type, :input],
+        }
+
+        attr_reader :id, :type, :attributes
 
         def self.workflow
           @workflow ||= new(1, WORKFLOW_TYPE)
         end
 
         def self.from_event(event)
-          _, target_type = TARGET_TYPES.find { |type, _| event.type.start_with?(type) }
+          _, target_type = EVENT_TARGET_TYPES.find { |type, _| event.type.start_with?(type) }
 
           unless target_type
             raise UnexpectedEventType, "Unexpected event #{event.type}"
           end
 
-          new(event.originating_event_id, target_type)
+          new(event.decision_id, target_type, attributes: event.target_attributes)
         end
 
-        def initialize(id, type)
+        def self.from_decision(decision_id, decision)
+          decision_type = decision.class.name
+          target_type = DECISION_TARGET_TYPES[decision_type]
+
+          unless target_type
+            raise UnexpectedDecisionType, "Unexpected decision type #{decision_type}"
+          end
+
+          attribute_list = DECISION_ATTRIBUTE_LISTS.fetch(decision_type, [])
+
+          new(decision_id, target_type, attributes: decision.to_h.slice(*attribute_list))
+        end
+
+        def initialize(id, type, attributes: {})
           @id = id
           @type = type
+          @attributes = attributes
 
           freeze
         end
@@ -74,7 +104,7 @@ module Temporal
         end
 
         def to_s
-          "#{type} (#{id})"
+          "#{type}: #{id} (#{attributes})"
         end
       end
     end
