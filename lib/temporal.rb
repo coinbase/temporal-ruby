@@ -56,9 +56,8 @@ module Temporal
       @default_client = nil
     end
 
-    def configuration
-      warn '[DEPRECATION] This method is now deprecated without a substitution'
-      config
+    def config
+      @config ||= Configuration.new
     end
 
     def logger
@@ -75,9 +74,6 @@ module Temporal
       @default_client ||= Client.new(config)
     end
 
-    def config
-      @config ||= Configuration.new
-    end
 
   end
 end
