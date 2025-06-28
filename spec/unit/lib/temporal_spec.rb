@@ -71,14 +71,10 @@ describe Temporal do
     end
   end
 
-  describe '.configuration' do
-    before { allow(described_class).to receive(:warn) }
+  describe '.config' do
 
-    it 'returns Temporal::Configuration object' do
-      expect(described_class.configuration).to be_an_instance_of(Temporal::Configuration)
-      expect(described_class)
-        .to have_received(:warn)
-        .with('[DEPRECATION] This method is now deprecated without a substitution')
+    it 'returns configured Temporal::Configuration object' do
+      expect(described_class.config).to be_an_instance_of(Temporal::Configuration)
     end
   end
 

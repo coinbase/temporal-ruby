@@ -12,7 +12,7 @@ module Temporal
     end
 
     class ReplayTester
-      def initialize(config: Temporal.configuration)
+      def initialize(config: Temporal.config)
         @config = config
       end
 

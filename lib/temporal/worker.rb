@@ -33,7 +33,7 @@ module Temporal
     #   to be executed once every 10 seconds. This can be used to protect down stream services from
     #   flooding. The zero value of this uses the default value. Default is unlimited.
     def initialize(
-      config = Temporal.configuration,
+      config = Temporal.config,
       activity_thread_pool_size: Temporal::Activity::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       workflow_thread_pool_size: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:thread_pool_size],
       binary_checksum: Temporal::Workflow::Poller::DEFAULT_OPTIONS[:binary_checksum],

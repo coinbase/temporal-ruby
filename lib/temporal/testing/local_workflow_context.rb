@@ -12,7 +12,7 @@ module Temporal
     class LocalWorkflowContext
       attr_reader :metadata, :config
 
-      def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.configuration)
+      def initialize(execution, workflow_id, run_id, disabled_releases, metadata, config = Temporal.config)
         @last_event_id = 0
         @execution = execution
         @run_id = run_id
