@@ -14,6 +14,7 @@ require 'temporal/connection/serializer'
 require 'temporal/connection/serializer/failure'
 require 'temporal/connection/serializer/backfill'
 require 'temporal/connection/serializer/schedule'
+require 'temporal/connection/serializer/priority'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
 
 module Temporal
@@ -117,6 +118,7 @@ module Temporal
         task_timeout:,
         input: nil,
         workflow_id_reuse_policy: nil,
+        priority: nil,
         headers: nil,
         cron_schedule: nil,
         memo: nil,
@@ -149,7 +151,8 @@ module Temporal
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
-          )
+          ),
+          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority).to_proto : nil
         )
 
         client.start_workflow_execution(request)
@@ -378,6 +381,7 @@ module Temporal
         task_queue:,
         execution_timeout:, run_timeout:, task_timeout:, signal_name:, signal_input:, input: nil,
         workflow_id_reuse_policy: nil,
+        priority: nil,
         headers: nil,
         cron_schedule: nil,
         memo: nil,
@@ -422,7 +426,8 @@ module Temporal
           ),
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
-          )
+          ),
+          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority).to_proto : nil
         )
 
         client.signal_with_start_workflow_execution(request)

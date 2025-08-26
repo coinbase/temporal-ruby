@@ -114,6 +114,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :continued_failure, :message, 18, "temporal.api.failure.v1.Failure"
       optional :last_completion_result, :message, 19, "temporal.api.common.v1.Payloads"
       optional :workflow_start_delay, :message, 20, "google.protobuf.Duration"
+      optional :priority, :message, 27, "temporal.api.common.v1.Priority"
     end
     add_message "temporal.api.workflowservice.v1.StartWorkflowExecutionResponse" do
       optional :run_id, :string, 1
@@ -348,6 +349,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :header, :message, 19, "temporal.api.common.v1.Header"
       optional :workflow_start_delay, :message, 20, "google.protobuf.Duration"
       optional :skip_generate_workflow_task, :bool, 21
+      optional :priority, :message, 19, "temporal.api.common.v1.Priority"
     end
     add_message "temporal.api.workflowservice.v1.SignalWithStartWorkflowExecutionResponse" do
       optional :run_id, :string, 1
