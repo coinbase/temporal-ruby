@@ -349,7 +349,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :header, :message, 19, "temporal.api.common.v1.Header"
       optional :workflow_start_delay, :message, 20, "google.protobuf.Duration"
       optional :skip_generate_workflow_task, :bool, 21
-      optional :priority, :message, 19, "temporal.api.common.v1.Priority"
+      optional :priority, :message, 26, "temporal.api.common.v1.Priority"
     end
     add_message "temporal.api.workflowservice.v1.SignalWithStartWorkflowExecutionResponse" do
       optional :run_id, :string, 1
