@@ -198,7 +198,8 @@ module Temporal
           identity: identity,
           namespace: namespace,
           task_queue: Temporalio::Api::TaskQueue::V1::TaskQueue.new(
-            name: task_queue
+            name: task_queue,
+            kind: Temporalio::Api::Enums::V1::TaskQueueKind::TASK_QUEUE_KIND_NORMAL
           ),
           binary_checksum: binary_checksum
         )
