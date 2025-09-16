@@ -152,7 +152,7 @@ module Temporal
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           ),
-          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority).to_proto : nil
+          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority, converter).to_proto : nil
         )
 
         client.start_workflow_execution(request)
@@ -427,7 +427,7 @@ module Temporal
           search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
             indexed_fields: converter.to_payload_map_without_codec(search_attributes || {})
           ),
-          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority).to_proto : nil
+          priority: priority ? Temporal::Connection::Serializer::Priority.new(priority, converter).to_proto : nil
         )
 
         client.signal_with_start_workflow_execution(request)

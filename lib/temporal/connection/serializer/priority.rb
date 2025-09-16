@@ -9,9 +9,9 @@ module Temporal
 
           # Create a Priority proto object
           Temporalio::Api::Common::V1::Priority.new(
-            priority_key: object.priority_key,
-            fairness_key: object.fairness_key,
-            fairness_weight: object.fairness_weight
+            priority_key: object.priority_key || 0,
+            fairness_key: object.fairness_key || '',
+            fairness_weight: object.fairness_weight || 0.0
           )
         end
       end
