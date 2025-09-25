@@ -38,6 +38,7 @@ module Temporal
     #   options[:signal_input] is specified.
     # @option options [String, Array, nil] :signal_input corresponds to the 'input' argument to signal_workflow
     # @option options [Hash] :retry_policy check Temporal::RetryPolicy for available options
+    # @option options [Hash] :priority check Temporal::Priority for available options
     # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
     # @option options [Hash] :headers
     # @option options [Hash] :search_attributes
@@ -68,6 +69,7 @@ module Temporal
           headers: config.header_propagator_chain.inject(execution_options.headers),
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
+          priority: execution_options.priority,
           start_delay: execution_options.start_delay
         )
       else
@@ -86,6 +88,7 @@ module Temporal
           headers: config.header_propagator_chain.inject(execution_options.headers),
           memo: execution_options.memo,
           search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
+          priority: execution_options.priority,
           signal_name: signal_name,
           signal_input: signal_input,
           start_delay: execution_options.start_delay
@@ -109,6 +112,7 @@ module Temporal
     # @option options [String] :namespace
     # @option options [String] :task_queue
     # @option options [Hash] :retry_policy check Temporal::RetryPolicy for available options
+    # @option options [Hash] :priority check Temporal::Priority for available options
     # @option options [Hash] :timeouts check Temporal::Configuration::DEFAULT_TIMEOUTS
     # @option options [Hash] :headers
     # @option options [Hash] :search_attributes
@@ -137,6 +141,7 @@ module Temporal
         cron_schedule: cron_schedule,
         memo: execution_options.memo,
         search_attributes: Workflow::Context::Helpers.process_search_attributes(execution_options.search_attributes),
+        priority: execution_options.priority,
       )
 
       response.run_id

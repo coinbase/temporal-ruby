@@ -143,6 +143,7 @@ module Temporal
           namespace: execution_options.namespace,
           task_queue: execution_options.task_queue,
           retry_policy: execution_options.retry_policy,
+          priority: execution_options.priority,
           parent_close_policy: parent_close_policy,
           timeouts: execution_options.timeouts,
           headers: config.header_propagator_chain.inject(execution_options.headers),

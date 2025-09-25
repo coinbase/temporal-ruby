@@ -65,6 +65,7 @@ describe Temporal::Client do
             headers: { 'test' => 'asdf' },
             memo: {},
             search_attributes: {},
+            priority: nil,
             start_delay: 0
           )
       end
@@ -95,6 +96,7 @@ describe Temporal::Client do
             headers: {},
             memo: {},
             search_attributes: {},
+            priority: nil,
             start_delay: 0
           )
       end
@@ -235,6 +237,35 @@ describe Temporal::Client do
             start_delay: 0
           )
       end
+
+              it 'starts a workflow with priority options' do
+          subject.start_workflow(
+            TestStartWorkflow,
+            42,
+            options: {
+              priority: { priority_key: 10, fairness_key: 'production', fairness_weight: 0.8 }
+            }
+          )
+
+        expect(connection)
+          .to have_received(:start_workflow_execution)
+          .with(
+            namespace: 'default-test-namespace',
+            workflow_id: an_instance_of(String),
+            workflow_name: 'TestStartWorkflow',
+            task_queue: 'default-test-task-queue',
+            input: [42],
+            task_timeout: config.timeouts[:task],
+            run_timeout: config.timeouts[:run],
+            execution_timeout: config.timeouts[:execution],
+            workflow_id_reuse_policy: nil,
+            headers: {},
+            memo: {},
+            search_attributes: {},
+            priority: an_instance_of(Temporal::Priority),
+            start_delay: 0
+          )
+      end
     end
   end
 
@@ -263,6 +294,7 @@ describe Temporal::Client do
           search_attributes: {},
           signal_name: 'the question',
           signal_input: expected_signal_argument,
+          priority: nil,
           start_delay: 0
         )
     end

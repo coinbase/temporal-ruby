@@ -107,6 +107,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :header, :message, 14, "temporal.api.common.v1.Header"
       optional :memo, :message, 15, "temporal.api.common.v1.Memo"
       optional :search_attributes, :message, 16, "temporal.api.common.v1.SearchAttributes"
+      optional :priority, :message, 18, "temporal.api.common.v1.Priority"
     end
     add_message "temporal.api.command.v1.ProtocolMessageCommandAttributes" do
       optional :message_id, :string, 1

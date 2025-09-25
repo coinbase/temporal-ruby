@@ -1,9 +1,10 @@
 require 'temporal/concerns/executable'
 require 'temporal/retry_policy'
+require 'temporal/priority'
 
 module Temporal
   class ExecutionOptions
-    attr_reader :name, :namespace, :task_queue, :retry_policy, :timeouts, :headers, :memo, :search_attributes,
+    attr_reader :name, :namespace, :task_queue, :retry_policy, :priority, :timeouts, :headers, :memo, :search_attributes,
                 :start_delay
 
     def initialize(object, options, defaults = nil)
@@ -12,6 +13,7 @@ module Temporal
       @namespace = options[:namespace]
       @task_queue = options[:task_queue] || options[:task_list]
       @retry_policy = options[:retry_policy] || {}
+      @priority = options[:priority] || {}
       @timeouts = options[:timeouts] || {}
       @headers = options[:headers] || {}
       @memo = options[:memo] || {}
@@ -23,6 +25,7 @@ module Temporal
         @namespace ||= object.namespace
         @task_queue ||= object.task_queue
         @retry_policy = object.retry_policy.merge(@retry_policy) if object.retry_policy
+        @priority = object.priority.merge(@priority) if object.priority
         @timeouts = object.timeouts.merge(@timeouts) if object.timeouts
         @headers = object.headers.merge(@headers) if object.headers
       end
@@ -41,6 +44,13 @@ module Temporal
       else
         @retry_policy = Temporal::RetryPolicy.new(@retry_policy)
         @retry_policy.validate!
+      end
+
+      if @priority.empty?
+        @priority = nil
+      else
+        @priority = Temporal::Priority.new(@priority)
+        @priority.validate!
       end
 
       freeze

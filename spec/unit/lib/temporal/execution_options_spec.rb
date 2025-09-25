@@ -128,6 +128,32 @@ describe Temporal::ExecutionOptions do
           )
         end
       end
+
+      context 'when priority options are provided' do
+        let(:options) do
+          {
+            priority: { priority_key: 10, fairness_key: 'production', fairness_weight: 0.8 }
+          }
+        end
+
+        it 'is initialized with priority' do
+          expect(subject.priority).to be_an_instance_of(Temporal::Priority)
+          expect(subject.priority.priority_key).to eq(10)
+          expect(subject.priority.fairness_key).to eq('production')
+          expect(subject.priority.fairness_weight).to eq(0.8)
+        end
+      end
+
+      context 'when priority options are invalid' do
+        let(:options) { { priority: { priority_key: 'invalid' } } }
+
+        it 'raises' do
+          expect { subject }.to raise_error(
+            Temporal::Priority::InvalidPriority,
+            'PriorityKey must be a number'
+          )
+        end
+      end
     end
 
 
@@ -136,6 +162,7 @@ describe Temporal::ExecutionOptions do
         namespace 'namespace'
         task_queue 'task-queue'
         retry_policy interval: 1, backoff: 2, max_attempts: 5
+        priority priority_key: 5, fairness_key: 'test-fairness', fairness_weight: 0.75
         timeouts start_to_close: 10
         headers 'HeaderA' => 'TestA', 'HeaderB' => 'TestB'
       end
@@ -151,6 +178,10 @@ describe Temporal::ExecutionOptions do
         expect(subject.retry_policy.interval).to eq(1)
         expect(subject.retry_policy.backoff).to eq(2)
         expect(subject.retry_policy.max_attempts).to eq(5)
+        expect(subject.priority).to be_an_instance_of(Temporal::Priority)
+        expect(subject.priority.priority_key).to eq(5)
+        expect(subject.priority.fairness_key).to eq('test-fairness')
+        expect(subject.priority.fairness_weight).to eq(0.75)
         expect(subject.timeouts).to eq(start_to_close: 10)
         expect(subject.headers).to eq('HeaderA' => 'TestA', 'HeaderB' => 'TestB')
       end
@@ -161,6 +192,7 @@ describe Temporal::ExecutionOptions do
             name: 'OtherTestWorkflow',
             task_queue: 'test-task-queue',
             retry_policy: { interval: 2, max_attempts: 10 },
+            priority: { priority_key: 15, fairness_key: 'production', fairness_weight: 0.9 },
             timeouts: { schedule_to_close: 20 },
             headers: { 'TestHeader' => 'Value', 'HeaderB' => 'ValueB' }
           }
@@ -174,6 +206,10 @@ describe Temporal::ExecutionOptions do
           expect(subject.retry_policy.interval).to eq(2)
           expect(subject.retry_policy.backoff).to eq(2)
           expect(subject.retry_policy.max_attempts).to eq(10)
+          expect(subject.priority).to be_an_instance_of(Temporal::Priority)
+          expect(subject.priority.priority_key).to eq(15)
+          expect(subject.priority.fairness_key).to eq('production')
+          expect(subject.priority.fairness_weight).to eq(0.9)
           expect(subject.timeouts).to eq(schedule_to_close: 20, start_to_close: 10)
           expect(subject.headers).to eq(
             'TestHeader' => 'Value',
