@@ -1,5 +1,6 @@
 require 'temporal/connection/serializer/base'
 require 'temporal/connection/serializer/retry_policy'
+require 'temporal/connection/serializer/priority'
 require 'temporal/connection/serializer/workflow_id_reuse_policy'
 
 module Temporal
@@ -26,6 +27,7 @@ module Temporal
                 workflow_run_timeout: object.timeouts[:run],
                 workflow_task_timeout: object.timeouts[:task],
                 retry_policy: Temporal::Connection::Serializer::RetryPolicy.new(object.retry_policy, converter).to_proto,
+                priority: Temporal::Connection::Serializer::Priority.new(object.priority, converter).to_proto,
                 parent_close_policy: serialize_parent_close_policy(object.parent_close_policy),
                 header: serialize_headers(object.headers),
                 cron_schedule: object.cron_schedule,

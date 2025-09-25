@@ -29,6 +29,11 @@ module Temporal
         return @headers if args.empty?
         @headers = args.first
       end
+
+      def priority(*args)
+        return @priority if args.empty?
+        @priority = args.first
+      end
     end
   end
 end

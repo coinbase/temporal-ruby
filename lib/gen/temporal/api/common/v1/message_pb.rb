@@ -56,6 +56,11 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     add_message "temporal.api.common.v1.WorkerVersionCapabilities" do
       optional :build_id, :string, 1
     end
+    add_message "temporal.api.common.v1.Priority" do
+      optional :priority_key, :int32, 1
+      optional :fairness_key, :string, 2
+      optional :fairness_weight, :float, 3
+    end
   end
 end
 
@@ -76,6 +81,7 @@ module Temporalio
         MeteringMetadata = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.MeteringMetadata").msgclass
         WorkerVersionStamp = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.WorkerVersionStamp").msgclass
         WorkerVersionCapabilities = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.WorkerVersionCapabilities").msgclass
+        Priority = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("temporal.api.common.v1.Priority").msgclass
       end
     end
   end

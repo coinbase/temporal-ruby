@@ -62,4 +62,20 @@ shared_examples 'an executable' do
       expect(described_class.instance_variable_get(:@timeouts)).to eq(:test)
     end
   end
+
+  describe '.priority' do
+    after { described_class.remove_instance_variable(:@priority) }
+
+    it 'gets current priority' do
+      described_class.instance_variable_set(:@priority, :test)
+
+      expect(described_class.priority).to eq(:test)
+    end
+
+    it 'sets new priority' do
+      described_class.priority(:test)
+
+      expect(described_class.instance_variable_get(:@priority)).to eq(:test)
+    end
+  end
 end
