@@ -78,8 +78,6 @@ module Temporal
           command_type = command.class.name
           target_type = WORKFLOW_TARGET_TYPES[command_type]
 
-          Temporal.logger.info("Command type: #{command_type}, command dump: #{command.inspect}")
-
           unless target_type
             raise UnexpectedCommandType, "Unexpected command type #{command_type}"
           end
