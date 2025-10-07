@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'temporal/concerns/payloads'
+require 'temporal/json'
 
 class TestSerializer
   extend Temporal::Concerns::Payloads
@@ -10,9 +11,10 @@ include Temporal::Concerns::Payloads
 Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
   event_id { 1 }
   event_time { Time.now }
+  transient input: nil
 end
 
-Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
+Fabricator(:api_workflow_execution_started_eevent, from: :api_history_event) do
   transient :headers, :search_attributes
   event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED }
   event_time { Time.now }
@@ -24,7 +26,7 @@ Fabricator(:api_workflow_execution_started_event, from: :api_history_event) do
     Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),
       task_queue: Fabricate(:api_task_queue),
-      input: nil,
+      input: Temporal::JSON.serialize(attrs[:input]),
       workflow_execution_timeout: 60,
       workflow_task_timeout: 15,
       original_execution_run_id: SecureRandom.uuid,

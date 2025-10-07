@@ -1,7 +1,11 @@
+require 'temporal/concerns/input_deserializer'
+
 module Temporal
   class Workflow
     class History
       class Event
+        include ::Temporal::Concerns::InputDeserializer
+        include Concerns::Payloads
         EVENT_TYPES = %w[
           ACTIVITY_TASK_STARTED
           ACTIVITY_TASK_COMPLETED
@@ -49,6 +53,19 @@ module Temporal
             attributes.initiated_event_id
           else
             id
+          end
+        end
+
+        def target_attributes
+          case type
+          when 'ACTIVITY_TASK_SCHEDULED'
+            {
+              activity_id: attributes.activity_id&.to_i, # activity_id is a string from thrift
+              activity_type: attributes.activity_type&.name,
+              input: from_payloads(attributes.input)
+            }
+          else
+            {}
           end
         end
 

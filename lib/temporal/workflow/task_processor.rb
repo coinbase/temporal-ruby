@@ -94,6 +94,7 @@ module Temporal
 
       def fetch_full_history
         events = task.history.events.to_a
+    
         next_page_token = task.next_page_token
         while !next_page_token.empty? do
           response = connection.get_workflow_execution_history(
