@@ -84,6 +84,20 @@ describe Temporal::Workflow::Poller do
         .at_least(2).times
     end
 
+    it 'reports poll latency' do
+      poll(nil)
+
+      expect(Temporal.metrics)
+        .to have_received(:timing)
+        .with(
+          Temporal::MetricKeys::WORKFLOW_POLLER_POLL_LATENCY,
+          an_instance_of(Integer),
+          namespace: namespace,
+          task_queue: task_queue
+        )
+        .at_least(2).times
+    end
+
     it 'reports polling completed with received_task false' do
       poll(nil)
 

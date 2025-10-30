@@ -79,7 +79,11 @@ module Temporal
                                   metrics_tags)
           Temporal.logger.debug('Polling workflow task queue', { namespace: namespace, task_queue: task_queue })
 
+          poll_time = Time.now
           task = poll_for_task
+          poll_time_diff_ms = ((Time.now - poll_time) * 1000).round
+          Temporal.metrics.timing(Temporal::MetricKeys::WORKFLOW_POLLER_POLL_LATENCY, poll_time_diff_ms, metrics_tags)
+
           last_poll_time = Time.now
 
           Temporal.metrics.increment(
