@@ -32,7 +32,7 @@ describe Temporal::Workflow::StateManager do
         )
 
         state_manager.schedule(terminal_command)
-        expect(state_manager.workflows.length).to eq(1)
+        expect(state_manager.commands.length).to eq(1)
         expect do
           state_manager.schedule(next_command)
         end.to raise_error(Temporal::WorkflowAlreadyCompletingError)
@@ -74,11 +74,11 @@ describe Temporal::Workflow::StateManager do
         end
 
         it 'applies' do
-          expect(subject.decisions.length).to eq(1)
+          expect(subject.commands.length).to eq(1)
 
           subject.apply(window)
 
-          expect(subject.decisions.length).to eq(0)
+          expect(subject.commands.length).to eq(0)
         end
       end
 

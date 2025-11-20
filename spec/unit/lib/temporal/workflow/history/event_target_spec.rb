@@ -43,7 +43,7 @@ describe Temporal::Workflow::History::EventTarget do
     subject { described_class.from_command(42, decision) }
 
     context 'when decision is ScheduleActivity' do
-      let(:raw_decision) { { activity_type: 'foo', activity_id: 123, input: ['bar'], domain: 'domain' } }
+      let(:raw_decision) { { activity_type: 'foo', activity_id: 123, input: ['bar'] } }
       let(:decision) { Temporal::Workflow::Command::ScheduleActivity.new(**raw_decision) }
 
       it 'sets id, type' do
@@ -102,6 +102,11 @@ describe Temporal::Workflow::History::EventTarget do
         expect(subject).to eq(false)
       end
     end
+  end
+
+  describe '.from_event for specific event types' do
+    subject { described_class.from_event(event) }
+    let(:event) { Temporal::Workflow::History::Event.new(raw_event) }
 
     context 'when event is ACTIVITY_CANCELED' do
       let(:raw_event) { Fabricate(:api_activity_task_canceled_event) }
