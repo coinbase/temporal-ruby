@@ -135,7 +135,7 @@ module Temporal
       hostname = `hostname`
       pid = Process.pid
 
-      "#{pid}@#{hostname}".freeze
+      @default_identity ||= "#{pid}@#{hostname}".freeze
     end
   end
 end
