@@ -90,7 +90,9 @@ Temporal::Worker.new(
   workflow_thread_pool_size: 10, # how many threads poll for workflows
   binary_checksum: nil, # identifies the version of workflow worker code
   activity_poll_retry_seconds: 0, # how many seconds to wait after unsuccessful poll for activities
-  workflow_poll_retry_seconds: 0  # how many seconds to wait after unsuccessful poll for workflows
+  workflow_poll_retry_seconds: 0,  # how many seconds to wait after unsuccessful poll for workflows
+  activity_poller_threads: 1, # how many poller threads run for activities
+  workflow_poller_threads: 1, # how many poller threads run for workflows
 )
 ```
 

@@ -11,6 +11,7 @@ module Temporal
     class Poller
       DEFAULT_OPTIONS = {
         thread_pool_size: 20,
+        poller_threads: 1,
         poll_retry_seconds: 0
       }.freeze
 
@@ -26,7 +27,9 @@ module Temporal
 
       def start
         @shutting_down = false
-        @thread = Thread.new(&method(:poll_loop))
+        @threads = Array.new(options[:poller_threads]) do |_i|
+          Thread.new(&method(:poll_loop))
+        end
       end
 
       def stop_polling
@@ -43,14 +46,14 @@ module Temporal
           raise "Activity poller waiting for shutdown completion without being in shutting_down state!"
         end
 
-        thread.join
+        threads.each(&:join)
         thread_pool.shutdown
         heartbeat_thread_pool.shutdown
       end
 
       private
 
-      attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :thread
+      attr_reader :namespace, :task_queue, :activity_lookup, :config, :middleware, :options, :threads
 
       def connection
         @connection ||= Temporal::Connection.generate(config.for_connection)

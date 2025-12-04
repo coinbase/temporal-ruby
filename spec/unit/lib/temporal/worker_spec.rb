@@ -247,6 +247,7 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
+          poller_threads: 1,
           binary_checksum: nil,
           poll_retry_seconds: 0
         )
@@ -262,6 +263,7 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
+          poller_threads: 1,
           binary_checksum: nil,
           poll_retry_seconds: 0
         )
@@ -276,6 +278,7 @@ describe Temporal::Worker do
           config,
           [],
           thread_pool_size: 20,
+          poller_threads: 1,
           poll_retry_seconds: 0
         )
         .and_return(activity_poller_1)
@@ -289,6 +292,7 @@ describe Temporal::Worker do
           config,
           [],
           thread_pool_size: 20,
+          poller_threads: 1,
           poll_retry_seconds: 0
         )
         .and_return(activity_poller_2)
@@ -316,7 +320,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
-          {thread_pool_size: 10, poll_retry_seconds: 0}
+          {thread_pool_size: 10, poller_threads: 1, poll_retry_seconds: 0}
         )
         .and_return(activity_poller)
 
@@ -365,6 +369,7 @@ describe Temporal::Worker do
           [],
           [],
           thread_pool_size: 10,
+          poller_threads: 1,
           binary_checksum: binary_checksum,
           poll_retry_seconds: 0
         )
@@ -389,7 +394,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::ExecutableLookup),
           an_instance_of(Temporal::Configuration),
           [],
-          {thread_pool_size: 20, poll_retry_seconds: 10}
+          {thread_pool_size: 20, poller_threads: 1, poll_retry_seconds: 10}
         )
         .and_return(activity_poller)
 
@@ -413,7 +418,7 @@ describe Temporal::Worker do
           an_instance_of(Temporal::Configuration),
           [],
           [],
-          {binary_checksum: nil, poll_retry_seconds: 10, thread_pool_size: 10}
+          {binary_checksum: nil, poll_retry_seconds: 10, thread_pool_size: 10, poller_threads: 1}
         )
         .and_return(workflow_poller)
 
@@ -463,6 +468,7 @@ describe Temporal::Worker do
             [entry_1],
             [entry_3],
             thread_pool_size: 10,
+            poller_threads: 1,
             binary_checksum: nil,
             poll_retry_seconds: 0
           )
@@ -477,6 +483,7 @@ describe Temporal::Worker do
             config,
             [entry_2],
             thread_pool_size: 20,
+            poller_threads: 1,
             poll_retry_seconds: 0
           )
           .and_return(activity_poller_1)
