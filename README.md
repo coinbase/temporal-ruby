@@ -508,7 +508,7 @@ which got updated to:
 ```ruby
 class MyWorkflow < Temporal::Workflow
   def execute
-    Activity1.execute!
+    ActivityOld1.execute!
 
     if workflow.has_release?(:fix_1)
       ActivityNew1.execute!
@@ -519,7 +519,7 @@ class MyWorkflow < Temporal::Workflow
     if workflow.has_release?(:fix_1)
       ActivityNew2.execute!
     else
-      ActivityOld.execute!
+      ActivityOld2.execute!
     end
 
     if workflow.has_release?(:fix_2)
@@ -534,7 +534,7 @@ end
 If the release got deployed while the original workflow was waiting on a timer, `ActivityNew1` and
 `ActivityNew2` won't get executed, because they are part of the same change (same release_name),
 however `ActivityNew3` will get executed, since the release wasn't yet checked at the time. And for
-every new execution of the workflow — all new activities will get executed, while `ActivityOld` will
+every new execution of the workflow — all new activities will get executed, while `ActivityOld2` will
 not.
 
 Later on you can clean it up and drop all the checks if you don't have any older workflows running
