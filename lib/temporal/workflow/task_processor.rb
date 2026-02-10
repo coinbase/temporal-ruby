@@ -5,6 +5,7 @@ require 'temporal/workflow/executor'
 require 'temporal/workflow/history'
 require 'temporal/workflow/stack_trace_tracker'
 require 'temporal/metric_keys'
+require 'gen/temporal/api/enums/v1/failed_cause_pb'
 
 module Temporal
   class Workflow
