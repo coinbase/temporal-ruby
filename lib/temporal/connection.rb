@@ -1,13 +1,13 @@
-require 'temporal/connection/grpc'
-
 module Temporal
   module Connection
+    autoload :GRPC, 'temporal/connection/grpc'
+
     CLIENT_TYPES_MAP = {
-      grpc: Temporal::Connection::GRPC
+      grpc: :GRPC
     }.freeze
 
     def self.generate(configuration)
-      connection_class = CLIENT_TYPES_MAP[configuration.type]
+      connection_class = const_get(CLIENT_TYPES_MAP.fetch(configuration.type))
       host = configuration.host
       port = configuration.port
       credentials = configuration.credentials

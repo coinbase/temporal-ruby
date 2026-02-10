@@ -88,6 +88,7 @@ module Temporal
       end
 
       def poll_for_task
+        require 'grpc/errors'
         connection.poll_activity_task_queue(namespace: namespace, task_queue: task_queue)
       rescue ::GRPC::Cancelled
         # We're shutting down and we've already reported that in the logs

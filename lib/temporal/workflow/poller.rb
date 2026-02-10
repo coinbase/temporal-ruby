@@ -1,4 +1,3 @@
-require 'grpc/errors'
 require 'temporal/connection'
 require 'temporal/thread_pool'
 require 'temporal/middleware/chain'
@@ -89,6 +88,7 @@ module Temporal
       end
 
       def poll_for_task
+        require 'grpc/errors'
         connection.poll_workflow_task_queue(namespace: namespace, task_queue: task_queue, binary_checksum: binary_checksum)
       rescue ::GRPC::Cancelled
         # We're shutting down and we've already reported that in the logs
