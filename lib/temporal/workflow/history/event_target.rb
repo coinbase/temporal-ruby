@@ -107,6 +107,57 @@ module Temporal
           [id, type].hash
         end
 
+        # Value-aware comparison for attributes that handles plain Ruby objects
+        # without custom == (e.g., workflow/activity Request classes).
+        #
+        # During replay, Temporal deserializes inputs from history and compares
+        # them to the current execution. Ruby's default Object#== uses object
+        # identity, so two Request objects with identical data compare as unequal,
+        # causing false NonDeterministicWorkflowError. This method falls back to
+        # instance-variable comparison for objects that don't define their own ==.
+        def attributes_equal?(other_attributes)
+          return true if attributes == other_attributes
+          return false if attributes.nil? || other_attributes.nil?
+          return false if attributes.keys.sort != other_attributes.keys.sort
+
+          attributes.all? do |key, value|
+            self.class.deep_value_equal?(value, other_attributes[key])
+          end
+        end
+
+        def self.deep_value_equal?(a, b)
+          # Fast path: identical object
+          return true if a.equal?(b)
+
+          # Standard types that define meaningful ==
+          return a == b if a.is_a?(String) || a.is_a?(Numeric) || a.is_a?(Symbol) ||
+                           a.is_a?(TrueClass) || a.is_a?(FalseClass) || a.nil?
+
+          # Arrays: compare element-by-element
+          if a.is_a?(Array) && b.is_a?(Array)
+            return false if a.length != b.length
+            return a.zip(b).all? { |x, y| deep_value_equal?(x, y) }
+          end
+
+          # Hashes: compare key-by-key
+          if a.is_a?(Hash) && b.is_a?(Hash)
+            return false if a.keys.sort_by(&:to_s) != b.keys.sort_by(&:to_s)
+            return a.all? { |k, v| deep_value_equal?(v, b[k]) }
+          end
+
+          # If the class defines its own == (not inherited from BasicObject/Object)
+          eq_owner = a.class.instance_method(:==).owner
+          return a == b if eq_owner != ::BasicObject && eq_owner != ::Object
+
+          # Fallback: compare by class + instance variables for plain objects
+          return false unless a.class == b.class
+          return true if a.instance_variables.empty? && b.instance_variables.empty?
+
+          a.instance_variables.all? do |var|
+            deep_value_equal?(a.instance_variable_get(var), b.instance_variable_get(var))
+          end
+        end
+
         def to_s
           "#{type}: #{id} (#{attributes})"
         end

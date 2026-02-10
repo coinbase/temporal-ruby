@@ -328,7 +328,7 @@ module Temporal
 
         replay_target = History::EventTarget.from_command(replay_command_id, replay_command)
 
-        if history_target != replay_target || history_target.attributes != replay_target.attributes
+        if history_target != replay_target || !replay_target.attributes_equal?(history_target.attributes)
           raise NonDeterministicWorkflowError,
             "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
             "but the history of previous executions recorded: #{history_target}. " + NONDETERMINISM_ERROR_SUGGESTION
