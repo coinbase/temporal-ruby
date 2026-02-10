@@ -1,7 +1,0 @@
-module Temporal
-<<<<<<< HEAD
-  VERSION = '0.1.1'.freeze
-=======
-  VERSION = '0.0.4'.freeze
->>>>>>> c036b28 (Improvement for more deterministic workflow behavior)
-end
