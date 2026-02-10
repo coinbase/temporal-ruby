@@ -1,4 +1,5 @@
 require 'temporal/concerns/input_deserializer'
+require 'temporal/concerns/payloads'
 
 module Temporal
   class Workflow
