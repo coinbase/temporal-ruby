@@ -66,7 +66,7 @@ module Temporal
         validate_append_command(command)
         commands << [command_id, command]
 
-        [History::EventTarget.from_decision(decision_id, decision), cancelation_id]
+        [History::EventTarget.from_command(command_id, command), cancelation_id]
       end
 
       def release?(release_name)
@@ -326,7 +326,7 @@ module Temporal
             "A command in the history of previous executions, #{history_target}, was not scheduled upon replay. " + NONDETERMINISM_ERROR_SUGGESTION
         end
 
-        replay_target = History::EventTarget.from_decision(replay_command_id, replay_command)
+        replay_target = History::EventTarget.from_command(replay_command_id, replay_command)
         if history_target != replay_target || history_target.attributes != replay_target.attributes
           raise NonDeterministicWorkflowError,
             "Unexpected command.  The replaying code is issuing: #{replay_target}, "\

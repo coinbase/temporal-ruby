@@ -41,4 +41,31 @@ describe Temporal::Workflow::History::Event do
       it { is_expected.to eq(raw_event.event_id) }
     end
   end
+
+
+  describe '#target_attributes' do
+    subject { described_class.new(raw_event).target_attributes }
+
+    context 'when event is ActivityTaskScheduled' do
+      let(:input) { ['foo', 'bar', { 'foo' => 'bar' }] }
+      let(:raw_event) do
+        Fabricate(:activity_task_scheduled_event_thrift, eventId: 42, input: input)
+      end
+
+      it {
+        is_expected.to eq({ activity_id: 42, activity_type: 'TestActivity', input: input })
+      }
+    end
+
+    context 'when event is WorkflowTaskScheduled' do
+      let(:input) { ['foo', 'bar', { 'foo' => 'bar' }] }
+      let(:raw_event) do
+        Fabricate(:workflow_task_scheduled_event_thrift, eventId: 42)
+      end
+
+      it {
+        is_expected.to eq({})
+      }
+    end
+  end
 end

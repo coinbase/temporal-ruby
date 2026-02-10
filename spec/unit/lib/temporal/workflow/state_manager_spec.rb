@@ -32,9 +32,96 @@ describe Temporal::Workflow::StateManager do
         )
 
         state_manager.schedule(terminal_command)
+        expect(state_manager.commands.length).to eq(1)
         expect do
           state_manager.schedule(next_command)
         end.to raise_error(Temporal::WorkflowAlreadyCompletingError)
+      end
+    end
+  end
+
+
+  describe '#apply' do
+    subject { described_class.new(dispatcher) }
+
+    let(:dispatcher) { instance_double(Temporal::Workflow::Dispatcher) }
+    let(:event) { Temporal::Workflow::History::Event.new(raw_event) }
+    let(:window) do
+      window = Temporal::Workflow::History::Window.new
+      window.add(event)
+      window
+    end
+
+    before do
+      allow(window).to receive(:replay?).and_return(true)
+    end
+
+    describe 'ActivityTaskScheduled event' do
+      let(:input) { ['foo', 'bar', { 'foo' => 'bar' }] }
+      let(:raw_event) { Fabricate(:activity_task_scheduled_event_thrift, eventId: 1, input: input) }
+
+      before do
+        subject.schedule(decision)
+      end
+
+      context 'event matchs previous decision' do
+        let(:decision) do
+          Temporal::Workflow::Command::ScheduleActivity.new(
+            activity_type: 'TestActivity',
+            activity_id: 1,
+            input: input
+          )
+        end
+
+        it 'applies' do
+          expect(subject.commands.length).to eq(1)
+
+          subject.apply(window)
+
+          expect(subject.commands.length).to eq(0)
+        end
+      end
+
+      context 'event does not matchs previous decision activity name' do
+        let(:decision) do
+          Temporal::Workflow::Command::ScheduleActivity.new(
+            activity_type: 'AnotherTestActivity',
+            activity_id: 1,
+            input: input
+          )
+        end
+
+        it 'raises NonDeterministicWorkflowError' do
+          expect { subject.apply(window) }.to raise_error(Temporal::NonDeterministicWorkflowError)
+        end
+      end
+
+      context 'event does not matchs previous decision activity id' do
+        let(:decision) do
+          Temporal::Workflow::Command::ScheduleActivity.new(
+            activity_type: 'TestActivity',
+            activity_id: 2,
+            input: input
+          )
+        end
+
+        it 'raises NonDeterministicWorkflowError' do
+          expect { subject.apply(window) }.to raise_error(Temporal::NonDeterministicWorkflowError)
+        end
+      end
+
+      context 'event does not matchs previous decision activity input' do
+        let(:decision) do
+          Temporal::Workflow::Command::ScheduleActivity.new(
+            activity_type: 'TestActivity',
+            activity_id: 1,
+            input: ['foo', 'bar', { 'foo' => 'foo' }]
+          )
+        end
+
+        it 'raises NonDeterministicWorkflowError' do
+          expect { subject.apply(window) }.to raise_error(Temporal::NonDeterministicWorkflowError)
+        end
       end
     end
   end

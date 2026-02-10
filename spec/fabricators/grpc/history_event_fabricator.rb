@@ -9,7 +9,8 @@ end
 include Temporal::Concerns::Payloads
 
 Fabricator(:api_history_event, from: Temporalio::Api::History::V1::HistoryEvent) do
-  event_id { 1 }
+  transient :eventId, :input
+  event_id { |attrs| attrs[:eventId] || attrs[:event_id] || 1 }
   event_time { Time.now }
   transient input: nil
 end
@@ -26,7 +27,7 @@ Fabricator(:api_workflow_execution_started_eevent, from: :api_history_event) do
     Temporalio::Api::History::V1::WorkflowExecutionStartedEventAttributes.new(
       workflow_type: Fabricate(:api_workflow_type),
       task_queue: Fabricate(:api_task_queue),
-      input: Temporal::JSON.serialize(attrs[:input]),
+      input: to_payloads(attrs[:input]),
       workflow_execution_timeout: 60,
       workflow_task_timeout: 15,
       original_execution_run_id: SecureRandom.uuid,
@@ -198,6 +199,36 @@ Fabricator(:api_upsert_search_attributes_event, from: :api_history_event) do
       search_attributes: Temporalio::Api::Common::V1::SearchAttributes.new(
         indexed_fields: indexed_fields
       )
+    )
+  end
+end
+
+# Thrift-style fabricators for backward compatibility
+Fabricator(:activity_task_scheduled_event_thrift, from: :api_history_event) do
+  transient :input, :eventId
+  event_id { |attrs| attrs[:eventId] || attrs[:event_id] || 1 }
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_ACTIVITY_TASK_SCHEDULED }
+  activity_task_scheduled_event_attributes do |attrs|
+    eid = attrs[:eventId] || attrs[:event_id] || 1
+    Temporalio::Api::History::V1::ActivityTaskScheduledEventAttributes.new(
+      activity_id: eid.to_s,
+      activity_type: Temporalio::Api::Common::V1::ActivityType.new(name: 'TestActivity'),
+      input: to_payloads(attrs[:input]),
+      workflow_task_completed_event_id: eid - 1,
+      task_queue: Fabricate(:api_task_queue)
+    )
+  end
+end
+
+Fabricator(:workflow_task_scheduled_event_thrift, from: :api_history_event) do
+  transient :eventId
+  event_id { |attrs| attrs[:eventId] || attrs[:event_id] || 1 }
+  event_type { Temporalio::Api::Enums::V1::EventType::EVENT_TYPE_WORKFLOW_TASK_SCHEDULED }
+  workflow_task_scheduled_event_attributes do |attrs|
+    Temporalio::Api::History::V1::WorkflowTaskScheduledEventAttributes.new(
+      task_queue: Fabricate(:api_task_queue),
+      start_to_close_timeout: 15,
+      attempt: 0
     )
   end
 end

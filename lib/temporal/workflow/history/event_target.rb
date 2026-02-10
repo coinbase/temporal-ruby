@@ -5,7 +5,7 @@ module Temporal
     class History
       class EventTarget
         class UnexpectedEventType < InternalError; end
-        class UnexpectedDecisionType < InternalError; end
+        class UnexpectedCommandType < InternalError; end
 
         ACTIVITY_TYPE                         = :activity
         CANCEL_ACTIVITY_REQUEST_TYPE          = :cancel_activity_request
@@ -39,21 +39,24 @@ module Temporal
           'WORKFLOW_EXECUTION'                         => WORKFLOW_TYPE,
         }.freeze
 
-        DECISION_TARGET_TYPES = {
-          'Cadence::Workflow::Decision::ScheduleActivity'            => ACTIVITY_TYPE,
-          'Cadence::Workflow::Decision::RequestActivityCancellation' => CANCEL_ACTIVITY_REQUEST_TYPE,
-          'Cadence::Workflow::Decision::RecordMarker'                => MARKER_TYPE,
-          'Cadence::Workflow::Decision::StartTimer'                  => TIMER_TYPE,
-          'Cadence::Workflow::Decision::CancelTimer'                 => CANCEL_TIMER_REQUEST_TYPE,
-          'Cadence::Workflow::Decision::CompleteWorkflow'            => WORKFLOW_TYPE,
-          'Cadence::Workflow::Decision::FailWorkflow'                => WORKFLOW_TYPE,
-          'Cadence::Workflow::Decision::StartChildWorkflow'          => CHILD_WORKFLOW_TYPE,
+        WORKFLOW_TARGET_TYPES = {
+          'Temporal::Workflow::Command::ScheduleActivity'            => ACTIVITY_TYPE,
+          'Temporal::Workflow::Command::RequestActivityCancellation' => CANCEL_ACTIVITY_REQUEST_TYPE,
+          'Temporal::Workflow::Command::RecordMarker'                => MARKER_TYPE,
+          'Temporal::Workflow::Command::StartTimer'                  => TIMER_TYPE,
+          'Temporal::Workflow::Command::CancelTimer'                 => CANCEL_TIMER_REQUEST_TYPE,
+          'Temporal::Workflow::Command::CompleteWorkflow'            => WORKFLOW_TYPE,
+          'Temporal::Workflow::Command::FailWorkflow'                => WORKFLOW_TYPE,
+          'Temporal::Workflow::Command::StartChildWorkflow'          => CHILD_WORKFLOW_TYPE,
+          'Temporal::Workflow::Command::SignalExternalWorkflow'      => EXTERNAL_WORKFLOW_TYPE,
+          'Temporal::Workflow::Command::CancelExternalWorkflow'      => CANCEL_EXTERNAL_WORKFLOW_REQUEST_TYPE,
+          'Temporal::Workflow::Command::UpsertSearchAttributes'      => UPSERT_SEARCH_ATTRIBUTES_REQUEST_TYPE,
+          'Temporal::Workflow::Command::ContinueAsNew'               => WORKFLOW_TYPE,
         }.freeze
 
-        DECISION_ATTRIBUTE_LISTS = {
-          'Cadence::Workflow::Decision::ScheduleActivity'            => [:activity_id, :activity_type, :input],
+        COMMAND_ATTRIBUTE_LISTS = {
+          'Temporal::Workflow::Command::ScheduleActivity'            => [:activity_id, :activity_type, :input],
         }
-
         attr_reader :id, :type, :attributes
 
         def self.workflow
@@ -67,20 +70,20 @@ module Temporal
             raise UnexpectedEventType, "Unexpected event #{event.type}"
           end
 
-          new(event.decision_id, target_type, attributes: event.target_attributes)
+          new(event.originating_event_id, target_type, attributes: event.target_attributes)
         end
 
-        def self.from_decision(decision_id, decision)
-          decision_type = decision.class.name
-          target_type = DECISION_TARGET_TYPES[decision_type]
+        def self.from_command(command_id, command)
+          command_type = command.class.name
+          target_type = WORKFLOW_TARGET_TYPES[command_type]
 
           unless target_type
-            raise UnexpectedDecisionType, "Unexpected decision type #{decision_type}"
+            raise UnexpectedCommandType, "Unexpected command type #{command_type}"
           end
 
-          attribute_list = DECISION_ATTRIBUTE_LISTS.fetch(decision_type, [])
+          attribute_list = COMMAND_ATTRIBUTE_LISTS.fetch(command_type, [])
 
-          new(decision_id, target_type, attributes: decision.to_h.slice(*attribute_list))
+          new(command_id, target_type, attributes: command.to_h.slice(*attribute_list))
         end
 
         def initialize(id, type, attributes: {})
