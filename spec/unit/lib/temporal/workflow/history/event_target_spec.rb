@@ -117,6 +117,21 @@ describe Temporal::Workflow::History::EventTarget do
       end
     end
 
+    let(:custom_eq_class) do
+      Class.new do
+        attr_reader :id, :name
+
+        def initialize(id:, name:)
+          @id = id
+          @name = name
+        end
+
+        def ==(other)
+          other.is_a?(self.class) && id == other.id
+        end
+      end
+    end
+
     context 'when attributes contain plain objects without custom ==' do
       let(:target_a) do
         described_class.new(1, :activity, attributes: {
@@ -141,6 +156,24 @@ describe Temporal::Workflow::History::EventTarget do
       it 'would fail with default != comparison' do
         # Prove that Ruby default == would fail (different object identities)
         expect(target_a.attributes != target_b.attributes).to be true
+      end
+    end
+
+    context 'when attributes contain objects with custom ==' do
+      let(:target_a) do
+        described_class.new(1, :activity, attributes: {
+          input: [custom_eq_class.new(id: 7, name: 'alpha')]
+        })
+      end
+
+      let(:target_b) do
+        described_class.new(1, :activity, attributes: {
+          input: [custom_eq_class.new(id: 7, name: 'beta')]
+        })
+      end
+
+      it 'uses the custom == implementation' do
+        expect(target_a.attributes_equal?(target_b.attributes)).to be true
       end
     end
 
