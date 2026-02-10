@@ -7,12 +7,7 @@ require 'gen/temporal/api/workflowservice/v1/service_services_pb'
 require 'gen/temporal/api/operatorservice/v1/service_services_pb'
 require 'gen/temporal/api/enums/v1/workflow_pb'
 require 'gen/temporal/api/enums/v1/common_pb'
-require 'temporal/connection/errors'
 require 'temporal/connection/interceptors/client_name_version_interceptor'
-require 'temporal/connection/serializer'
-require 'temporal/connection/serializer/failure'
-require 'temporal/connection/serializer/workflow_id_reuse_policy'
-require 'temporal/concerns/payloads'
 
 module Temporal
   module Connection
