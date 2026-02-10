@@ -74,6 +74,7 @@ module Temporal
         end
 
         def self.from_command(command_id, command)
+
           command_type = command.class.name
           target_type = WORKFLOW_TARGET_TYPES[command_type]
 

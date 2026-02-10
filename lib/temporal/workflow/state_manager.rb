@@ -327,6 +327,7 @@ module Temporal
         end
 
         replay_target = History::EventTarget.from_command(replay_command_id, replay_command)
+
         if history_target != replay_target || history_target.attributes != replay_target.attributes
           raise NonDeterministicWorkflowError,
             "Unexpected command.  The replaying code is issuing: #{replay_target}, "\
