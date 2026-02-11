@@ -217,6 +217,42 @@ describe Temporal::Workflow::History::EventTarget do
       end
     end
 
+    context 'when attributes contain hashes with symbol and string keys' do
+      let(:target_a) do
+        described_class.new(1, :activity, attributes: {
+          input: [{ foo: 'bar', nested: { baz: 1 } }]
+        })
+      end
+
+      let(:target_b) do
+        described_class.new(1, :activity, attributes: {
+          input: [{ 'foo' => 'bar', 'nested' => { 'baz' => 1 } }]
+        })
+      end
+
+      it 'treats symbol and string keys as equivalent' do
+        expect(target_a.attributes_equal?(target_b.attributes)).to be true
+      end
+    end
+
+    context 'when hashes contain duplicate symbol and string keys' do
+      let(:target_a) do
+        described_class.new(1, :activity, attributes: {
+          input: [{ foo: 'bar', 'foo' => 'bar' }]
+        })
+      end
+
+      let(:target_b) do
+        described_class.new(1, :activity, attributes: {
+          input: [{ 'foo' => 'bar' }]
+        })
+      end
+
+      it 'returns false to avoid ambiguous key comparisons' do
+        expect(target_a.attributes_equal?(target_b.attributes)).to be false
+      end
+    end
+
     context 'when attributes have different keys' do
       let(:target_a) do
         described_class.new(1, :activity, attributes: { a: 1 })

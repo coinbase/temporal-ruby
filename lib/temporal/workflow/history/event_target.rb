@@ -118,10 +118,14 @@ module Temporal
         def attributes_equal?(other_attributes)
           return true if attributes == other_attributes
           return false if attributes.nil? || other_attributes.nil?
-          return false if attributes.keys.sort != other_attributes.keys.sort
 
-          attributes.all? do |key, value|
-            self.class.deep_value_equal?(value, other_attributes[key])
+          normalized_attributes = self.class.normalize_hash_for_compare(attributes)
+          normalized_other = self.class.normalize_hash_for_compare(other_attributes)
+          return false if normalized_attributes.nil? || normalized_other.nil?
+          return false unless normalized_attributes.size == normalized_other.size
+
+          normalized_attributes.all? do |key, value|
+            normalized_other.key?(key) && self.class.deep_value_equal?(value, normalized_other[key])
           end
         end
 
@@ -139,10 +143,16 @@ module Temporal
             return a.zip(b).all? { |x, y| deep_value_equal?(x, y) }
           end
 
-          # Hashes: compare key-by-key
+          # Hashes: compare key-by-key (normalize symbol keys to strings)
           if a.is_a?(Hash) && b.is_a?(Hash)
-            return false if a.keys.sort_by(&:to_s) != b.keys.sort_by(&:to_s)
-            return a.all? { |k, v| deep_value_equal?(v, b[k]) }
+            normalized_a = normalize_hash_for_compare(a)
+            normalized_b = normalize_hash_for_compare(b)
+            return false if normalized_a.nil? || normalized_b.nil?
+            return false unless normalized_a.size == normalized_b.size
+
+            return normalized_a.all? do |key, value|
+              normalized_b.key?(key) && deep_value_equal?(value, normalized_b[key])
+            end
           end
 
           # If the class defines its own == (not inherited from BasicObject/Object)
@@ -160,6 +170,18 @@ module Temporal
 
         def to_s
           "#{type}: #{id} (#{attributes})"
+        end
+
+        def self.normalize_hash_for_compare(hash)
+          normalized = {}
+          hash.each do |key, value|
+            normalized_key = key.is_a?(Symbol) ? key.to_s : key
+            return nil if normalized.key?(normalized_key)
+
+            normalized[normalized_key] = value
+          end
+
+          normalized
         end
       end
     end
