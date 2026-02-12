@@ -1,5 +1,3 @@
-require 'grpc/errors'
-
 module Temporal
   module Connection
     module Retryer
@@ -12,6 +10,7 @@ module Temporal
       # https://github.com/temporalio/sdk-java/blob/ad8831d4a4d9d257baf3482ab49f1aa681895c0e/temporal-serviceclient/src/main/java/io/temporal/serviceclient/RpcRetryOptions.java#L32
       # No amount of retrying will help in these cases.
       def self.do_not_retry_errors
+        require 'grpc/errors'
         [
           ::GRPC::AlreadyExists,
           ::GRPC::Cancelled,

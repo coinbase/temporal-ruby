@@ -1,4 +1,6 @@
 require 'temporal/errors'
+require 'temporal/concerns/payloads'
+require 'gen/temporal/api/enums/v1/failed_cause_pb'
 
 module Temporal
   class Workflow
