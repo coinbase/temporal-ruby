@@ -5,6 +5,7 @@ module Temporal
   module Saga
     module Concern
       def run_saga(&block)
+        saga = nil
         saga = Temporal::Saga::Saga.new(workflow)
 
         block.call(saga)
@@ -14,7 +15,7 @@ module Temporal
         logger.error("Saga execution aborted", { error: error.inspect })
         logger.debug(error.backtrace.join("\n"))
 
-        saga.compensate
+        saga.compensate if saga
 
         Result.new(false, error)
       end
