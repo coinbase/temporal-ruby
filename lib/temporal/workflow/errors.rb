@@ -21,8 +21,8 @@ module Temporal
             message = "#{error_type}: #{failure.message}"
             exception_class = default_exception_class
           end
+          details = failure.application_failure_info.details
           begin
-            details = failure.application_failure_info.details
             exception_or_message = converter.from_details_payloads(details)
             # v1 serialization only supports StandardErrors with a single "message" argument.
             # v2 serialization supports complex errors using our converters to serialize them.
@@ -34,6 +34,12 @@ module Temporal
             end
           rescue StandardError => deserialization_error
             message = "#{exception_class}: #{message}"
+            serialized_error =
+              if details && details.respond_to?(:payloads) && details.payloads.first && details.payloads.first.respond_to?(:data)
+                details.payloads.first.data
+              else
+                nil
+              end
             exception = default_exception_class.new(message)
             Temporal.logger.error(
               "Could not instantiate original error. Defaulting to StandardError. Make sure the worker running " \
@@ -43,7 +49,7 @@ module Temporal
               "your error's initializer takes something other than exactly one positional argument.",
               {
                 original_error: error_type,
-                serialized_error: details.payloads.first.data,
+                serialized_error: serialized_error,
                 instantiation_error_class: deserialization_error.class.to_s,
                 instantiation_error_message: deserialization_error.message,
               },
