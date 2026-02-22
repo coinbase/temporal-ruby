@@ -462,7 +462,7 @@ To add a middleware, you need to define a class that responds to the call method
 class MyMiddleware
   def call(metadata)
     puts "Before execution"
-    yield
+    result = yield
     puts "After execution"
     result
   end
