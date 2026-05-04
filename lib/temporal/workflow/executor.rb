@@ -23,7 +23,7 @@ module Temporal
         @workflow_class = workflow_class
         @dispatcher = Dispatcher.new
         @query_registry = QueryRegistry.new
-        @state_manager = StateManager.new(dispatcher, config)
+        @state_manager = StateManager.new(dispatcher, config, task_metadata)
         @history = history
         @task_metadata = task_metadata
         @config = config
