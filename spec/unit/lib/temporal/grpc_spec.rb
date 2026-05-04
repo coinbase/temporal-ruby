@@ -667,7 +667,7 @@ describe Temporal::Connection::GRPC do
     end
 
     before do
-      allow(grpc_stub).to receive(:poll_activity_task_queue).with(anything, return_op: true).and_return(poll_request)
+      allow(grpc_stub).to receive(:poll_activity_task_queue).and_return(poll_request)
     end
 
     it 'makes an API request' do
