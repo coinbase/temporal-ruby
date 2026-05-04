@@ -5,8 +5,11 @@ require 'temporal/workflow/history/window'
 require 'temporal/workflow/signal'
 require 'temporal/workflow/state_manager'
 require 'temporal/errors'
+require 'temporal/metadata/workflow_task'
 
 describe Temporal::Workflow::StateManager do
+  let(:task_metadata) { Fabricate(:workflow_task_metadata) }
+
   describe '#schedule' do
     class MyWorkflow < Temporal::Workflow; end
 
@@ -24,7 +27,7 @@ describe Temporal::Workflow::StateManager do
       )
     ].each do |terminal_command|
       it "fails to validate if #{terminal_command.class} is not the last command scheduled" do
-        state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
+        state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new, task_metadata)
 
         next_command = Temporal::Workflow::Command::RecordMarker.new(
           name: Temporal::Workflow::StateManager::RELEASE_MARKER,
@@ -42,7 +45,7 @@ describe Temporal::Workflow::StateManager do
   describe '#apply' do
     let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
     let(:state_manager) do
-      Temporal::Workflow::StateManager.new(dispatcher, config)
+      Temporal::Workflow::StateManager.new(dispatcher, config, task_metadata)
     end
     let(:config) { Temporal::Configuration.new }
     let(:connection) { instance_double('Temporal::Connection::GRPC') }
@@ -450,7 +453,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'has correct event count' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, config)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, config, task_metadata)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
@@ -472,7 +475,7 @@ describe Temporal::Workflow::StateManager do
   describe "#final_commands" do
     let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
     let(:state_manager) do
-      Temporal::Workflow::StateManager.new(dispatcher, config)
+      Temporal::Workflow::StateManager.new(dispatcher, config, task_metadata)
     end
 
     let(:config) { Temporal::Configuration.new }
@@ -591,7 +594,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'initial merges with upserted' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new, task_metadata)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event))
@@ -619,7 +622,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'initial and upsert treated as empty hash' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new, task_metadata)
 
       window = Temporal::Workflow::History::Window.new
       window.add(Temporal::Workflow::History::Event.new(start_workflow_execution_event_no_search_attributes))
@@ -635,7 +638,7 @@ describe Temporal::Workflow::StateManager do
     end
 
     it 'multiple upserts merge' do
-      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new)
+      state_manager = described_class.new(Temporal::Workflow::Dispatcher.new, Temporal::Configuration.new, task_metadata)
 
       window_1 = Temporal::Workflow::History::Window.new
       window_1.add(Temporal::Workflow::History::Event.new(workflow_task_started_event))
@@ -661,6 +664,139 @@ describe Temporal::Workflow::StateManager do
           'CustomAttribute4' => 10
         }
       )
+    end
+  end
+
+  describe '#apply ignored event types' do
+    let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
+    let(:config) { Temporal::Configuration.new }
+    let(:task_metadata) do
+      Temporal::Metadata::WorkflowTask.new(
+        namespace: 'test-namespace',
+        id: 42,
+        task_token: 'test-token',
+        attempt: 1,
+        workflow_run_id: 'test-run-id',
+        workflow_id: 'test-workflow-id',
+        workflow_name: 'TestWorkflow',
+      )
+    end
+    let(:state_manager) { Temporal::Workflow::StateManager.new(dispatcher, config, task_metadata) }
+    let(:logger) { instance_double('Temporal::Logger', warn: nil) }
+
+    before do
+      allow(config).to receive(:logger).and_return(logger)
+    end
+
+    %w[
+      WORKFLOW_EXECUTION_OPTIONS_UPDATED
+      NEXUS_OPERATION_SCHEDULED
+      NEXUS_OPERATION_STARTED
+      NEXUS_OPERATION_COMPLETED
+      NEXUS_OPERATION_FAILED
+      NEXUS_OPERATION_CANCELED
+      NEXUS_OPERATION_TIMED_OUT
+      NEXUS_OPERATION_CANCEL_REQUESTED
+      NEXUS_OPERATION_CANCEL_REQUEST_COMPLETED
+      NEXUS_OPERATION_CANCEL_REQUEST_FAILED
+    ].each do |event_type|
+      it "ignores #{event_type} and logs a warning" do
+        event = instance_double(
+          Temporal::Workflow::History::Event,
+          id: 1,
+          type: event_type,
+          originating_event_id: 1,
+        )
+        window = Temporal::Workflow::History::Window.new
+        window.add(event)
+        window.freeze
+
+        expect(logger).to receive(:warn).with(
+          'Unsupported event ignored',
+          'namespace' => 'test-namespace',
+          'workflow_task_id' => 42,
+          'workflow_name' => 'TestWorkflow',
+          'workflow_id' => 'test-workflow-id',
+          'workflow_run_id' => 'test-run-id',
+          'attempt' => 1,
+          event_type: event_type,
+          event_id: 1,
+        )
+        expect { state_manager.apply(window) }.not_to raise_error
+      end
+    end
+  end
+
+  describe '#apply unknown events' do
+    let(:dispatcher) { Temporal::Workflow::Dispatcher.new }
+    let(:config) { Temporal::Configuration.new }
+    let(:task_metadata) do
+      Temporal::Metadata::WorkflowTask.new(
+        namespace: 'test-namespace',
+        id: 42,
+        task_token: 'test-token',
+        attempt: 1,
+        workflow_run_id: 'test-run-id',
+        workflow_id: 'test-workflow-id',
+        workflow_name: 'TestWorkflow',
+      )
+    end
+    let(:state_manager) { Temporal::Workflow::StateManager.new(dispatcher, config, task_metadata) }
+    let(:logger) { instance_double('Temporal::Logger', warn: nil) }
+
+    before do
+      allow(config).to receive(:logger).and_return(logger)
+    end
+
+    def build_window(event)
+      window = Temporal::Workflow::History::Window.new
+      window.add(event)
+      window.freeze
+    end
+
+    context 'when worker_may_ignore is true' do
+      let(:event) do
+        instance_double(
+          Temporal::Workflow::History::Event,
+          id: 1,
+          type: 'SOME_FUTURE_UNKNOWN_EVENT',
+          originating_event_id: 1,
+          worker_may_ignore: true,
+        )
+      end
+
+      it 'logs a warning and does not raise' do
+        expect(logger).to receive(:warn).with(
+          'Unknown event type ignored',
+          'namespace' => 'test-namespace',
+          'workflow_task_id' => 42,
+          'workflow_name' => 'TestWorkflow',
+          'workflow_id' => 'test-workflow-id',
+          'workflow_run_id' => 'test-run-id',
+          'attempt' => 1,
+          event_type: 'SOME_FUTURE_UNKNOWN_EVENT',
+          event_id: 1,
+        )
+        expect { state_manager.apply(build_window(event)) }.not_to raise_error
+      end
+    end
+
+    context 'when worker_may_ignore is false' do
+      let(:event) do
+        instance_double(
+          Temporal::Workflow::History::Event,
+          id: 1,
+          type: 'SOME_FUTURE_UNKNOWN_EVENT',
+          originating_event_id: 1,
+          worker_may_ignore: false,
+        )
+      end
+
+      it 'raises UnsupportedEvent' do
+        expect { state_manager.apply(build_window(event)) }.to raise_error(
+          Temporal::Workflow::StateManager::UnsupportedEvent
+        )
+      end
     end
   end
 end

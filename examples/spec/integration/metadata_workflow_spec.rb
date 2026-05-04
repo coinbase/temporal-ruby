@@ -51,7 +51,9 @@ describe MetadataWorkflow, :integration do
       workflow_id: workflow_id,
       run_id: run_id,
     )
-    expect(Time.now - actual_result.run_started_at).to be_between(0, 30)
+    # Lower bound is -1 to allow for clock skew between the dev server (Docker) and the host.
+    # Upper bound of 30s is generous slack for slow CI.
+    expect(Time.now - actual_result.run_started_at).to be_between(-1, 30)
   end
 
   it 'gets memo from workflow execution info' do

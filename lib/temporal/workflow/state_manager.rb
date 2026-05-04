@@ -19,8 +19,9 @@ module Temporal
 
       attr_reader :local_time, :search_attributes, :new_sdk_flags_used, :sdk_flags, :first_task_signals
 
-      def initialize(dispatcher, config)
+      def initialize(dispatcher, config, task_metadata)
         @dispatcher = dispatcher
+        @task_metadata = task_metadata
         @commands = []
         @marker_ids = Set.new
         @releases = {}
@@ -165,7 +166,7 @@ module Temporal
 
       private
 
-      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config, :converter
+      attr_reader :commands, :dispatcher, :command_tracker, :marker_ids, :side_effects, :releases, :config, :converter, :task_metadata
 
       def use_signals_first(raw_events)
         # The presence of SAVE_FIRST_TASK_SIGNALS implies HANDLE_SIGNALS_FIRST
@@ -241,9 +242,35 @@ module Temporal
         end
       end
 
+      IGNORED_EVENT_TYPES = %w[
+        WORKFLOW_EXECUTION_OPTIONS_UPDATED
+        NEXUS_OPERATION_SCHEDULED
+        NEXUS_OPERATION_STARTED
+        NEXUS_OPERATION_COMPLETED
+        NEXUS_OPERATION_FAILED
+        NEXUS_OPERATION_CANCELED
+        NEXUS_OPERATION_TIMED_OUT
+        NEXUS_OPERATION_CANCEL_REQUESTED
+        NEXUS_OPERATION_CANCEL_REQUEST_COMPLETED
+        NEXUS_OPERATION_CANCEL_REQUEST_FAILED
+      ].freeze
+
       def apply_event(event)
+        if IGNORED_EVENT_TYPES.include?(event.type)
+          config.logger.warn('Unsupported event ignored', task_metadata.to_h.merge(event_type: event.type, event_id: event.id))
+          return
+        end
+
         state_machine = command_tracker[event.originating_event_id]
-        history_target = History::EventTarget.from_event(event)
+        begin
+          history_target = History::EventTarget.from_event(event)
+        rescue History::EventTarget::UnexpectedEventType
+          if event.worker_may_ignore
+            config.logger.warn('Unknown event type ignored', task_metadata.to_h.merge(event_type: event.type, event_id: event.id))
+            return
+          end
+          raise UnsupportedEvent, event.type
+        end
 
         case event.type
         when 'WORKFLOW_EXECUTION_STARTED'
@@ -430,7 +457,11 @@ module Temporal
           discard_command(history_target)
 
         else
-          raise UnsupportedEvent, event.type
+          if event.worker_may_ignore
+            config.logger.warn('Unknown event ignored', task_metadata.to_h.merge(event_type: event.type, event_id: event.id))
+          else
+            raise UnsupportedEvent, event.type
+          end
         end
       end
 
