@@ -1,4 +1,5 @@
 require 'temporal/workflow/history/event'
+require 'temporal/api/history/v1/message_pb'
 
 describe Temporal::Workflow::History::Event do
   subject { described_class.new(raw_event) }
@@ -23,6 +24,27 @@ describe Temporal::Workflow::History::Event do
 
     it 'sets correct attributes' do
       expect(subject.attributes).to eq(raw_event.workflow_execution_started_event_attributes)
+    end
+
+    context 'when the event attributes are unknown to the generated proto' do
+      let(:raw_event) do
+        event = Temporalio::Api::History::V1::HistoryEvent.decode(unknown_attributes_event_payload)
+        event.event_time = Google::Protobuf::Timestamp.new(seconds: Time.now.to_i)
+        event
+      end
+      let(:unknown_attributes_event_payload) do
+        [
+          0x08, 99, # event_id
+          0x18, 99, # event_type
+          0xA2, 0x03, 0x00, # unknown oneof attributes field
+          0xE0, 0x12, 0x01 # worker_may_ignore
+        ].pack('C*')
+      end
+
+      it 'keeps the event constructable so worker_may_ignore can be read' do
+        expect(subject.attributes).to be_nil
+        expect(subject.worker_may_ignore).to eq(true)
+      end
     end
   end
 
