@@ -32,12 +32,15 @@ describe Temporal::Workflow::History::Event do
         event.event_time = Google::Protobuf::Timestamp.new(seconds: Time.now.to_i)
         event
       end
+      # Field 5000, wire type 2 (length-delimited), length 0:
+      #   tag = (5000 << 3) | 2 = 40002
+      #   varint(40002) = [0xC2, 0xB8, 0x02]
       let(:unknown_attributes_event_payload) do
         [
-          0x08, 99, # event_id
-          0x18, 99, # event_type
-          0xA2, 0x03, 0x00, # unknown oneof attributes field
-          0xE0, 0x12, 0x01 # worker_may_ignore
+          0x08, 99, # event_id = 99
+          0x18, 99, # event_type = 99 (unknown enum value)
+          0xC2, 0xB8, 0x02, 0x00, # unknown oneof attributes at field 5000, length 0
+          0xE0, 0x12, 0x01 # worker_may_ignore = true (field 300)
         ].pack('C*')
       end
 
