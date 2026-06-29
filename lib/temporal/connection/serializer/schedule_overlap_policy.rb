@@ -1,4 +1,5 @@
 require "temporal/connection/serializer/base"
+require "gen/temporal/api/enums/v1/schedule_pb"
 
 module Temporal
   module Connection
