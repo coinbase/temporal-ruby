@@ -1,5 +1,10 @@
 require "temporal/connection/serializer/base"
 
+# Only require protos if not disabled
+unless ENV['COINBASE_TEMPORAL_RUBY_DISABLE_PROTO_LOAD'] == '1'
+  require "gen/temporal/api/enums/v1/schedule_pb"
+end
+
 module Temporal
   module Connection
     module Serializer

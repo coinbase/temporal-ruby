@@ -25,7 +25,7 @@
 #
 
 require 'grpc'
-require 'temporal/api/workflowservice/v1/service_pb'
+require 'temporal/api/workflowservice/v1/service_pb' unless ENV['COINBASE_TEMPORAL_RUBY_DISABLE_PROTO_LOAD'] == '1'
 
 module Temporalio
   module Api
