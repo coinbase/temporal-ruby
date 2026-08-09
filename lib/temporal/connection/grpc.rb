@@ -808,7 +808,7 @@ module Temporal
       def client
         return @client if @client
 
-        channel_args = {}
+        channel_args = default_authority_channel_args
 
         if options[:keepalive_time_ms]
           channel_args["grpc.keepalive_time_ms"] = options[:keepalive_time_ms]
@@ -849,12 +849,26 @@ module Temporal
       end
 
       def operator_client
-        @operator_client ||= Temporalio::Api::OperatorService::V1::OperatorService::Stub.new(
-          url,
-          credentials,
+        return @operator_client if @operator_client
+
+        stub_options = {
           timeout: CONNECTION_TIMEOUT_SECONDS,
           interceptors: [ClientNameVersionInterceptor.new]
+        }
+        channel_args = default_authority_channel_args
+        stub_options[:channel_args] = channel_args unless channel_args.empty?
+
+        @operator_client = Temporalio::Api::OperatorService::V1::OperatorService::Stub.new(
+          url,
+          credentials,
+          **stub_options
         )
+      end
+
+      def default_authority_channel_args
+        return {} unless options[:default_authority]
+
+        { "grpc.default_authority" => options[:default_authority] }
       end
 
       def can_poll?

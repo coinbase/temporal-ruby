@@ -194,6 +194,20 @@ Temporal::Worker.new # uses global host
 Temporal.start_workflow(...) # uses global host
 ```
 
+When the resolver target and the TLS/HTTP2 authority differ, set the authority
+explicitly through the connection options. This is useful when an absolute DNS
+name is required for resolution but the certificate is issued for the canonical
+undotted hostname:
+
+```ruby
+Temporal.configure do |config|
+  config.host = 'temporal.example.com.'
+  config.connection_options = {
+    default_authority: 'temporal.example.com'
+  }
+end
+```
+
 This will work just fine for simpler use-cases, however at some point you might need to setup
 multiple clients and workers within the same instance of your app (e.g. you have different Temporal
 hosts, need to use different codecs/converters for different parts of your app, etc). Should this be
