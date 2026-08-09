@@ -904,6 +904,37 @@ describe Temporal::Connection::GRPC do
       end
     end
 
+    context "when default_authority is passed" do
+      let(:options) { { default_authority: "temporal.example.com" } }
+
+      it "passes the authority to the workflow service channel" do
+        expect(Temporalio::Api::WorkflowService::V1::WorkflowService::Stub).to receive(:new).with(
+          ":",
+          :this_channel_is_insecure,
+          timeout: 60,
+          interceptors: [instance_of(Temporal::Connection::ClientNameVersionInterceptor)],
+          channel_args: {
+            "grpc.default_authority" => "temporal.example.com"
+          }
+        )
+        subject.send(:client)
+      end
+
+      it "passes the authority to the operator service channel" do
+        allow(subject).to receive(:operator_client).and_call_original
+        expect(Temporalio::Api::OperatorService::V1::OperatorService::Stub).to receive(:new).with(
+          ":",
+          :this_channel_is_insecure,
+          timeout: 60,
+          interceptors: [instance_of(Temporal::Connection::ClientNameVersionInterceptor)],
+          channel_args: {
+            "grpc.default_authority" => "temporal.example.com"
+          }
+        )
+        subject.send(:operator_client)
+      end
+    end
+
     context "when passing retry_connection" do
       let(:options) { { retry_connection: true } }
 
