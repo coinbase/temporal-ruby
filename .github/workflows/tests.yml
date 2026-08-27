@@ -94,6 +94,10 @@ jobs:
         run: |
           cd examples && bin/worker &
 
+      - name: Wait for workers
+        run: |
+          sleep 10
+
       - name: Run RSpec
         env:
           USE_ERROR_SERIALIZATION_V2: 1

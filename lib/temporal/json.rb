@@ -58,9 +58,10 @@ module Temporal
       when Hash
         STRUCT_DIRECTIVE_KEYS.each do |key|
           next unless obj.key?(key)
+          next if anonymous_struct_directive?(obj[key])
 
           name = class_name_from_directive(obj[key])
-          unless name && registered_class?(name)
+          unless name && allowed_struct_class?(name)
             raise Temporal::JSONDisallowedClassError,
                   "json/plain payload requested disallowed class #{obj[key].inspect}"
           end
@@ -110,12 +111,29 @@ module Temporal
 
     def self.allowed_instance_class?(name)
       return true if registered_class?(name)
+      return true if library_class?(name)
       return true if ALLOWED_CLASS_SUFFIXES.any? { |suffix| name.end_with?(suffix) } && resolve_constant(name)
 
       klass = resolve_constant(name)
       klass.is_a?(Class) && klass <= Exception
     end
     private_class_method :allowed_instance_class?
+
+    def self.allowed_struct_class?(name)
+      registered_class?(name) || library_class?(name)
+    end
+    private_class_method :allowed_struct_class?
+
+    def self.library_class?(name)
+      name.start_with?('Temporal::') && resolve_constant(name).is_a?(Class)
+    end
+    private_class_method :library_class?
+
+    # Oj encodes Struct.new(:a, :b).new(...) as ^u with member names, not a class.
+    def self.anonymous_struct_directive?(value)
+      value.is_a?(Array) && value.first.is_a?(Array) && value.first.all? { |member| member.is_a?(String) }
+    end
+    private_class_method :anonymous_struct_directive?
 
     def self.allowed_class_reference?(name)
       return true if registered_class?(name)

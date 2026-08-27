@@ -174,5 +174,43 @@ describe Temporal::JSON do
       expect(loaded).to be_a(TemporalJSONSpecFixtures::DummyWidget)
       expect(loaded.name).to eq('ok')
     end
+
+    it 'round-trips Temporal::Metadata::Workflow' do
+      require 'temporal/metadata/workflow'
+
+      metadata = Temporal::Metadata::Workflow.new(
+        namespace: 'ns',
+        id: 'wid',
+        name: 'WorkflowName',
+        run_id: 'rid',
+        parent_id: nil,
+        parent_run_id: nil,
+        attempt: 1,
+        task_queue: 'default',
+        headers: {},
+        run_started_at: Time.at(1_700_000_000),
+        memo: {}
+      )
+      loaded = described_class.deserialize(described_class.serialize(metadata))
+
+      expect(loaded).to be_a(Temporal::Metadata::Workflow)
+      expect(loaded.id).to eq('wid')
+      expect(loaded.task_queue).to eq('default')
+    end
+
+    it 'round-trips an anonymous Struct' do
+      response = Struct.new(:workflow_id, :run_id).new('wid', 'rid')
+      loaded = described_class.deserialize(described_class.serialize(response))
+
+      expect(loaded.workflow_id).to eq('wid')
+      expect(loaded.run_id).to eq('rid')
+    end
+
+    it 'rejects a named Struct class that is not registered' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize('{"^u":["Range",1,7,false]}')
+      end.to raise_error(Temporal::JSONDisallowedClassError, /Range/)
+    end
   end
 end
