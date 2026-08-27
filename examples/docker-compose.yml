@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   temporal:
-    image: temporalio/auto-setup:latest
+    image: temporalio/auto-setup:1.22.4
     ports:
      - "7233:7233"
     environment:
@@ -14,7 +14,7 @@ services:
       - cassandra
 
   temporal-web:
-    image: temporalio/web:latest
+    image: temporalio/web:1.15.0
     environment:
       - "TEMPORAL_GRPC_ENDPOINT=temporal:7233"
     ports:
@@ -23,6 +23,6 @@ services:
       - temporal
 
   cassandra:
-    image: cassandra:3.11
+    image: cassandra:3.11.16
     ports:
       - "9042:9042"

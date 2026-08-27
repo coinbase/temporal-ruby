@@ -52,7 +52,13 @@ jobs:
 
       - name: Wait for Temporal
         run: |
-          timeout 180 bash -c 'until echo >/dev/tcp/127.0.0.1/7233; do sleep 2; done'
+          if timeout 300 bash -c 'until echo >/dev/tcp/127.0.0.1/7233; do sleep 2; done'; then
+            exit 0
+          fi
+          echo "Temporal did not listen on 7233"
+          docker compose -f examples/docker-compose.yml ps -a
+          docker compose -f examples/docker-compose.yml logs --no-color --tail 400
+          exit 1
 
       - name: Register namespace
         run: |
