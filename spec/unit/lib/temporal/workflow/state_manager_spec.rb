@@ -126,6 +126,97 @@ describe Temporal::Workflow::StateManager do
     end
   end
 
+  describe '#apply compatibility with ignorable events' do
+    let(:state_manager) { described_class.new(dispatcher) }
+    let(:dispatcher) { instance_double(Temporal::Workflow::Dispatcher) }
+    let(:window) do
+      instance_double(
+        Temporal::Workflow::History::Window,
+        replay?: true,
+        local_time: nil,
+        last_event_id: 0,
+        markers: [],
+        events: [event]
+      )
+    end
+
+    before do
+      allow(Temporal.logger).to receive(:warn)
+    end
+
+    context 'when the event type is known to be safe to ignore' do
+      let(:event) { double('history event', type: 'NEXUS_OPERATION_STARTED', id: 10) }
+
+      it 'logs and ignores the event' do
+        expect { state_manager.apply(window) }.not_to raise_error
+        expect(Temporal.logger).to have_received(:warn).with(
+          'Unsupported event ignored',
+          event_type: 'NEXUS_OPERATION_STARTED',
+          event_id: 10
+        )
+      end
+    end
+
+    context 'when an unknown event may be ignored by the worker' do
+      let(:event) do
+        double(
+          'history event',
+          type: 'SOME_NEW_EVENT',
+          id: 11,
+          originating_event_id: 11,
+          worker_may_ignore: true
+        )
+      end
+
+      it 'logs and ignores the event' do
+        expect { state_manager.apply(window) }.not_to raise_error
+        expect(Temporal.logger).to have_received(:warn).with(
+          'Unknown event type ignored',
+          event_type: 'SOME_NEW_EVENT',
+          event_id: 11
+        )
+      end
+    end
+
+    context 'when an unknown event may not be ignored by the worker' do
+      let(:event) do
+        double(
+          'history event',
+          type: 'SOME_NEW_EVENT',
+          id: 12,
+          originating_event_id: 12,
+          worker_may_ignore: false
+        )
+      end
+
+      it 'raises an unsupported event error' do
+        expect { state_manager.apply(window) }.to raise_error(described_class::UnsupportedEvent, 'SOME_NEW_EVENT')
+      end
+    end
+
+    context 'when a known event target has an unhandled event type but may be ignored' do
+      let(:event) do
+        double(
+          'history event',
+          type: 'WORKFLOW_EXECUTION_UPDATE_ACCEPTED',
+          id: 13,
+          originating_event_id: 13,
+          target_attributes: {},
+          worker_may_ignore: true
+        )
+      end
+
+      it 'logs and ignores the event' do
+        expect { state_manager.apply(window) }.not_to raise_error
+        expect(Temporal.logger).to have_received(:warn).with(
+          'Unknown event ignored',
+          event_type: 'WORKFLOW_EXECUTION_UPDATE_ACCEPTED',
+          event_id: 13
+        )
+      end
+    end
+  end
+
   describe '#search_attributes' do
     let(:initial_search_attributes) do
       {

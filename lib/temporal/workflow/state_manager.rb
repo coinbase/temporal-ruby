@@ -123,9 +123,36 @@ module Temporal
         end
       end
 
+      IGNORED_EVENT_TYPES = %w[
+        WORKFLOW_EXECUTION_OPTIONS_UPDATED
+        NEXUS_OPERATION_SCHEDULED
+        NEXUS_OPERATION_STARTED
+        NEXUS_OPERATION_COMPLETED
+        NEXUS_OPERATION_FAILED
+        NEXUS_OPERATION_CANCELED
+        NEXUS_OPERATION_TIMED_OUT
+        NEXUS_OPERATION_CANCEL_REQUESTED
+        NEXUS_OPERATION_CANCEL_REQUEST_COMPLETED
+        NEXUS_OPERATION_CANCEL_REQUEST_FAILED
+      ].freeze
+
       def apply_event(event)
+        if IGNORED_EVENT_TYPES.include?(event.type)
+          log_ignored_event('Unsupported event ignored', event)
+          return
+        end
+
         state_machine = command_tracker[event.originating_event_id]
-        history_target = History::EventTarget.from_event(event)
+        history_target = begin
+          History::EventTarget.from_event(event)
+        rescue History::EventTarget::UnexpectedEventType
+          if event.worker_may_ignore
+            log_ignored_event('Unknown event type ignored', event)
+            return
+          end
+
+          raise UnsupportedEvent, event.type
+        end
 
         case event.type
         when 'WORKFLOW_EXECUTION_STARTED'
@@ -305,8 +332,16 @@ module Temporal
           discard_command(history_target)
 
         else
-          raise UnsupportedEvent, event.type
+          if event.worker_may_ignore
+            log_ignored_event('Unknown event ignored', event)
+          else
+            raise UnsupportedEvent, event.type
+          end
         end
+      end
+
+      def log_ignored_event(message, event)
+        Temporal.logger.warn(message, event_type: event.type, event_id: event.id)
       end
 
       def dispatch(history_target, name, *attributes)

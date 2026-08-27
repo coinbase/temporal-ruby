@@ -30,13 +30,14 @@ module Temporal
 
         PREFIX = 'EVENT_TYPE_'.freeze
 
-        attr_reader :id, :timestamp, :type, :attributes
+        attr_reader :id, :timestamp, :type, :attributes, :worker_may_ignore
 
         def initialize(raw_event)
           @id = raw_event.event_id
           @timestamp = raw_event.event_time.to_time
           @type = raw_event.event_type.to_s.gsub(PREFIX, '')
           @attributes = extract_attributes(raw_event)
+          @worker_may_ignore = raw_event.worker_may_ignore
 
           freeze
         end
@@ -74,6 +75,8 @@ module Temporal
 
         def extract_attributes(raw_event)
           attributes_name = raw_event.attributes
+          return nil if attributes_name.nil?
+
           raw_event.public_send(attributes_name)
         end
       end
