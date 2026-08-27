@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.7
+## 0.0.8
 
 - Backport worker_may_ignore history event handling from the 0.1.x line
 - Skip known Nexus/options-updated events and unknown worker-ignorable events
