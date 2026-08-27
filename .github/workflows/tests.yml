@@ -37,7 +37,7 @@ jobs:
 
       - name: Start dependencies
         run: |
-          docker-compose \
+          docker compose \
             -f examples/docker-compose.yml \
             up -d
 
