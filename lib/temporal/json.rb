@@ -17,6 +17,11 @@ module Temporal
     CLASS_REFERENCE_DIRECTIVE_KEYS = %w[^c ^C].freeze
     STRUCT_DIRECTIVE_KEYS = %w[^u].freeze
     ALLOWED_CLASS_SUFFIXES = %w[::Request ::Response].freeze
+    # Oj dumps these on a raised Exception (~bt_locations). They are not gadget classes.
+    ALLOWED_STDLIB_CLASSES = %w[
+      Thread::Backtrace
+      Thread::Backtrace::Location
+    ].freeze
 
     ALLOWED_CLASSES = Set.new
     ALLOWED_CLASSES_MUTEX = Mutex.new
@@ -112,6 +117,7 @@ module Temporal
     def self.allowed_instance_class?(name)
       return true if registered_class?(name)
       return true if library_class?(name)
+      return true if ALLOWED_STDLIB_CLASSES.include?(name) && resolve_constant(name)
       return true if ALLOWED_CLASS_SUFFIXES.any? { |suffix| name.end_with?(suffix) } && resolve_constant(name)
 
       klass = resolve_constant(name)

@@ -116,6 +116,18 @@ describe Temporal::JSON do
       expect(loaded.code).to eq(7)
     end
 
+    it 'round-trips a raised Exception including backtrace locations' do
+      begin
+        raise TemporalJSONSpecFixtures::DummyError.new('boom', code: 7)
+      rescue TemporalJSONSpecFixtures::DummyError => error
+        loaded = described_class.deserialize(described_class.serialize(error))
+
+        expect(loaded).to be_a(TemporalJSONSpecFixtures::DummyError)
+        expect(loaded.message).to eq('boom')
+        expect(loaded.code).to eq(7)
+      end
+    end
+
     it 'reconstitutes a loaded class reference via ^c' do
       expect(described_class.deserialize('{"^c":"String"}')).to eq(String)
     end
