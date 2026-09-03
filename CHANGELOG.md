@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.7
+
+- Fail-closed `json/plain` deserialize: Oj `mode: :object` no longer instantiates arbitrary classes. Instances are reconstituted only for loaded `::Request` / `::Response` types, loaded Exception subclasses (error serialization v2), and `Temporal::JSON.allow_class`. Class references (`^c`) require a loaded constant. Encode and the `json/plain` encoding name are unchanged (SECBUGS-174).
+
 ## 0.0.6
 
 - Defer gRPC loading via autoload for fork safety

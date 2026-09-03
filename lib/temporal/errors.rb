@@ -2,6 +2,8 @@ module Temporal
   # Superclass for all Temporal errors
   class Error < StandardError; end
 
+  class JSONDisallowedClassError < Error; end
+
   # Superclass for errors specific to Temporal worker itself
   class InternalError < Error; end
 

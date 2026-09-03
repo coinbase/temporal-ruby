@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "transfers-master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "transfers-master" ]
 
 jobs:
   test_gem:
