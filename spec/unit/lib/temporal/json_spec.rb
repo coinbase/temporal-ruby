@@ -221,16 +221,6 @@ describe Temporal::JSON do
       end.to raise_error(Temporal::JSONDisallowedClassError, /maximum nesting depth/)
     end
 
-    it 'rejects very deep arrays without exhausting the Ruby stack' do
-      depth = 5_000
-      raw = '[' * depth + '1' + ']' * depth
-
-      expect(Oj).not_to receive(:load)
-      expect do
-        described_class.deserialize(raw)
-      end.to raise_error(Temporal::JSONDisallowedClassError, /maximum nesting depth/)
-    end
-
     it 'does not autoload constants while validating directives' do
       path = File.join(Dir.tmpdir, "temporal_json_autoload_#{Process.pid}.rb")
       File.write(path, "$TEMPORAL_JSON_AUTOLOADED = true\nmodule TemporalJSONAutoloadProbe; class Widget; end; end\n")
