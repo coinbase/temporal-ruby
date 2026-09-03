@@ -2,8 +2,13 @@
 
 ## 0.0.7
 
-- Fail-closed `json/plain` deserialize: Oj `mode: :object` no longer instantiates arbitrary classes. Duplicate hash keys (including container-valued keys) and excessive nesting are rejected in an Oj::Saj pass before load. Directive validation resolves only already-loaded constants and does not trigger `autoload`. Instances are reconstituted only for loaded `Temporal::` types, loaded `::Request` / `::Response` types, loaded Exception subclasses (error serialization v2), Oj odd-marshaller types (`Date`, `DateTime`, `Rational`), Oj Exception backtrace types (`Thread::Backtrace`), and `Temporal::JSON.allow_class`. Anonymous Structs (`^u` with member names) round-trip. Class references (`^c`) require a loaded constant. Encode and the `json/plain` encoding name are unchanged.
-- Declare runtime dependency on `google-protobuf` ~> 3.25 (generated stubs under `lib/gen/` require protobuf 3).
+- `json/plain` no longer builds arbitrary Ruby classes from encoded payloads. That was possible because Oj object mode can allocate any constant named in the payload.
+- Still round-trips first-party shapes: activity `Request` / `Response`, `Temporal::` types, Exception subclasses (including backtraces), `Date` / `DateTime` / `Rational`, anonymous Structs, and classes registered with `Temporal::JSON.allow_class`.
+- Rejects duplicate JSON object keys. Oj and `JSON.parse` disagree on duplicates, so a discarded value could still allocate a class.
+- Rejects constants that are only pending `autoload` until they are actually loaded.
+- Rejects JSON nested deeper than 512 levels.
+- Encoding name stays `json/plain`.
+- Runtime depends on `google-protobuf` ~> 3.25 (generated stubs under `lib/gen/` require protobuf 3).
 
 ## 0.0.6
 

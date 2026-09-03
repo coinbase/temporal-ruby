@@ -15,7 +15,7 @@ module Temporal
     MAX_NESTING = 512
     MAX_CLASS_NAME_LENGTH = 256
 
-    # ^o allocates instances. ^O is Oj's odd marshaller (Date, DateTime, Rational).
+    # ^o allocates instances. ^O encodes Date, DateTime, and Rational.
     # ^c / ^C look up Class objects. Oj emits ^c when an Exception ivar holds a Class
     # (see spec/unit/lib/temporal/connection/serializer/failure_spec.rb).
     INSTANCE_DIRECTIVE_KEYS = %w[^o].freeze
@@ -37,8 +37,9 @@ module Temporal
     DUPLICATE_KEY_ERROR = 'json/plain payload contains duplicate hash key'.freeze
     NESTING_DEPTH_ERROR = 'json/plain payload exceeds maximum nesting depth'.freeze
 
-    # Oj::Saj walks the raw bytes. JSON.parse collapses duplicate keys; Oj.load may
-    # instantiate discarded values. Reject duplicate keys and excessive nesting here.
+    # Walks raw bytes before JSON.parse / Oj.load. JSON.parse keeps the last duplicate
+    # key; Oj binds ^o on the first. A discarded object or array value can still allocate
+    # a class, so every hash key is recorded on scalar, object, and array entry.
     class PayloadStructureValidator < Oj::Saj
       def initialize
         @hash_key_sets = []
@@ -78,6 +79,8 @@ module Temporal
         raise Temporal::JSONDisallowedClassError, Temporal::JSON::NESTING_DEPTH_ERROR
       end
 
+      # Saj calls add_value for scalars and hash_start / array_start for containers.
+      # Skipping container entry is how duplicate ^u and duplicate "scope" slipped through.
       def note(key)
         return if key.nil?
 
@@ -97,9 +100,8 @@ module Temporal
       Oj.dump(value, OJ_OPTIONS)
     end
 
-    # Fail-closed json/plain: Oj mode :object instantiates any constant named in ^o.
-    # Reject duplicate hash keys and deep nesting with Oj::Saj, validate directives on a
-    # JSON tree, then Oj.load the original bytes so symbol keys and ^t stay compatible.
+    # Order matters: Saj first (duplicate keys / depth), then JSON.parse (allowlist on a
+    # collapsed tree), then Oj.load of the original bytes so ^t and symbol keys survive.
     def self.deserialize(value)
       return nil if value.nil?
 
@@ -111,6 +113,8 @@ module Temporal
       Oj.load(raw, OJ_OPTIONS)
     end
 
+    # Register an extra class name for json/plain object reconstitution. Use this for
+    # application types that are not ::Request / ::Response, Temporal::, or Exception.
     def self.allow_class(name)
       with_allowed_classes { |set| set.add(name.to_s) }
       name.to_s
@@ -254,6 +258,8 @@ module Temporal
     end
     private_class_method :anonymous_struct_directive?
 
+    # ^c reconstitutes a Class object, not an instance. Tightening this to Temporal:: /
+    # Exception / allow_class would break error v2 when an ivar holds an app class.
     def self.allowed_class_reference?(name)
       return false unless valid_constant_name?(name)
       return true if registered_class?(name)
