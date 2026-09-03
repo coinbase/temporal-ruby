@@ -8,9 +8,13 @@ module Temporal
   module JSON
     OJ_OPTIONS = {
       mode: :object,
-      # use ruby's built-in serialization.  If nil, OJ seems to default to ~15 decimal places of precision
+      # use ruby's built-in serialization.  If nil, Oj seems to default to ~15 decimal places of precision
       float_precision: 0
     }.freeze
+
+    MAX_NESTING = 512
+    MAX_KEY_LENGTH = 256
+    MAX_CLASS_NAME_LENGTH = 256
 
     # ^o allocates instances. ^O is Oj's odd marshaller (Date, DateTime, Rational).
     # ^c / ^C look up Class objects (error serialization v2).
@@ -30,49 +34,85 @@ module Temporal
     ALLOWED_CLASSES_MUTEX = Mutex.new
     private_constant :ALLOWED_CLASSES, :ALLOWED_CLASSES_MUTEX
 
-    # Oj::Saj sees every hash key assignment. JSON.parse collapses duplicate keys.
-    class DuplicateKeyValidator < Oj::Saj
+    DUPLICATE_KEY_ERROR = 'json/plain payload contains duplicate hash key'
+    NESTING_DEPTH_ERROR = 'json/plain payload exceeds maximum nesting depth'
+    OVERSIZED_KEY_ERROR = 'json/plain payload contains oversized hash key'
+
+    # Oj::Saj walks the raw bytes. JSON.parse collapses duplicate keys; Oj.load may
+    # instantiate discarded values. Reject duplicate keys and excessive nesting here.
+    class PayloadStructureValidator < Oj::Saj
       def initialize
         @hash_key_sets = []
+        @depth = 0
       end
 
-      def hash_start(_key)
+      def hash_start(key)
+        note(key)
+        bump_depth!
         @hash_key_sets << Set.new
       end
 
       def hash_end(_key)
         @hash_key_sets.pop
+        @depth -= 1
+      end
+
+      def array_start(key)
+        note(key)
+        bump_depth!
+      end
+
+      def array_end(_key)
+        @depth -= 1
       end
 
       def add_value(_value, key)
+        note(key)
+      end
+
+      private
+
+      def bump_depth!
+        @depth += 1
+        return if @depth <= Temporal::JSON::MAX_NESTING
+
+        raise Temporal::JSONDisallowedClassError, Temporal::JSON::NESTING_DEPTH_ERROR
+      end
+
+      def note(key)
         return if key.nil?
 
+        if key.is_a?(String) && key.length > Temporal::JSON::MAX_KEY_LENGTH
+          raise Temporal::JSONDisallowedClassError, Temporal::JSON::OVERSIZED_KEY_ERROR
+        end
+
         keys = @hash_key_sets.last
+        return if keys.nil?
+
         if keys.include?(key)
-          raise Temporal::JSONDisallowedClassError,
-                "json/plain payload contains duplicate key #{key.inspect}"
+          raise Temporal::JSONDisallowedClassError, Temporal::JSON::DUPLICATE_KEY_ERROR
         end
 
         keys << key
       end
     end
-    private_constant :DuplicateKeyValidator
+    private_constant :PayloadStructureValidator
 
     def self.serialize(value)
       Oj.dump(value, OJ_OPTIONS)
     end
 
     # Fail-closed json/plain: Oj mode :object instantiates any constant named in ^o.
-    # Reject duplicate hash keys with Oj::Saj, validate directives on a JSON tree, then
-    # Oj.load the original bytes so symbol keys and ^t stay compatible with encode.
+    # Reject duplicate hash keys and deep nesting with Oj::Saj, validate directives on a
+    # JSON tree, then Oj.load the original bytes so symbol keys and ^t stay compatible.
     def self.deserialize(value)
       return nil if value.nil?
 
       raw = value.to_s
       return nil if raw.empty?
 
-      assert_no_duplicate_hash_keys!(raw)
-      assert_safe!(::JSON.parse(raw, max_nesting: false))
+      assert_payload_structure!(raw)
+      assert_safe!(::JSON.parse(raw, max_nesting: MAX_NESTING))
       Oj.load(raw, OJ_OPTIONS)
     end
 
@@ -90,61 +130,69 @@ module Temporal
     end
     private_class_method :with_allowed_classes
 
-    def self.assert_no_duplicate_hash_keys!(raw)
-      Oj.saj_parse(DuplicateKeyValidator.new, raw)
+    def self.assert_payload_structure!(raw)
+      Oj.saj_parse(PayloadStructureValidator.new, raw)
     end
-    private_class_method :assert_no_duplicate_hash_keys!
+    private_class_method :assert_payload_structure!
 
     def self.assert_safe!(obj)
-      case obj
-      when Hash
-        STRUCT_DIRECTIVE_KEYS.each do |key|
-          next unless obj.key?(key)
-          next if anonymous_struct_directive?(obj[key])
-
-          name = class_name_from_directive(obj[key])
-          unless name && allowed_struct_class?(name)
-            raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{name.inspect}"
-          end
+      stack = [obj]
+      until stack.empty?
+        current = stack.pop
+        case current
+        when Hash
+          validate_hash_directives!(current)
+          current.each_value { |v| stack << v unless v.nil? }
+        when Array
+          current.each { |v| stack << v unless v.nil? }
         end
-
-        INSTANCE_DIRECTIVE_KEYS.each do |key|
-          next unless obj.key?(key)
-
-          name = class_name_from_directive(obj[key])
-          unless name && allowed_instance_class?(name)
-            raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{name.inspect}"
-          end
-        end
-
-        ODD_MARSHALLER_KEYS.each do |key|
-          next unless obj.key?(key)
-
-          name = class_name_from_directive(obj[key])
-          unless name && allowed_odd_class?(name)
-            raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{name.inspect}"
-          end
-        end
-
-        CLASS_REFERENCE_DIRECTIVE_KEYS.each do |key|
-          next unless obj.key?(key)
-
-          name = class_name_from_directive(obj[key])
-          unless name && allowed_class_reference?(name)
-            raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{name.inspect}"
-          end
-        end
-
-        obj.each_value { |v| assert_safe!(v) }
-      when Array
-        obj.each { |v| assert_safe!(v) }
       end
     end
     private_class_method :assert_safe!
+
+    def self.validate_hash_directives!(obj)
+      STRUCT_DIRECTIVE_KEYS.each do |key|
+        next unless obj.key?(key)
+        next if anonymous_struct_directive?(obj[key])
+
+        name = class_name_from_directive(obj[key])
+        unless name && allowed_struct_class?(name)
+          raise Temporal::JSONDisallowedClassError,
+                "json/plain payload requested disallowed class #{safe_class_label(name)}"
+        end
+      end
+
+      INSTANCE_DIRECTIVE_KEYS.each do |key|
+        next unless obj.key?(key)
+
+        name = class_name_from_directive(obj[key])
+        unless name && allowed_instance_class?(name)
+          raise Temporal::JSONDisallowedClassError,
+                "json/plain payload requested disallowed class #{safe_class_label(name)}"
+        end
+      end
+
+      ODD_MARSHALLER_KEYS.each do |key|
+        next unless obj.key?(key)
+
+        name = class_name_from_directive(obj[key])
+        unless name && allowed_odd_class?(name)
+          raise Temporal::JSONDisallowedClassError,
+                "json/plain payload requested disallowed class #{safe_class_label(name)}"
+        end
+      end
+
+      CLASS_REFERENCE_DIRECTIVE_KEYS.each do |key|
+        next unless obj.key?(key)
+
+        name = class_name_from_directive(obj[key])
+        unless name && allowed_class_reference?(name)
+          raise Temporal::JSONDisallowedClassError,
+                "json/plain payload requested disallowed class #{safe_class_label(name)}"
+        end
+      end
+    end
+    private_class_method :validate_hash_directives!
 
     def self.class_name_from_directive(value)
       case value
@@ -156,12 +204,28 @@ module Temporal
     end
     private_class_method :class_name_from_directive
 
+    def self.safe_class_label(name)
+      return '?' unless valid_constant_name?(name)
+
+      name
+    end
+    private_class_method :safe_class_label
+
+    def self.valid_constant_name?(name)
+      return false unless name.is_a?(String)
+      return false if name.empty? || name.length > MAX_CLASS_NAME_LENGTH
+
+      name.split('::').all? { |part| part.match?(/\A[A-Z]\w*\z/) }
+    end
+    private_class_method :valid_constant_name?
+
     def self.registered_class?(name)
       with_allowed_classes { |set| set.include?(name) }
     end
     private_class_method :registered_class?
 
     def self.allowed_instance_class?(name)
+      return false unless valid_constant_name?(name)
       return true if registered_class?(name)
       return true if library_class?(name)
       return true if ALLOWED_STDLIB_CLASSES.include?(name) && resolve_constant(name)
@@ -178,6 +242,8 @@ module Temporal
     private_class_method :allowed_odd_class?
 
     def self.allowed_struct_class?(name)
+      return false unless valid_constant_name?(name)
+
       registered_class?(name) || library_class?(name)
     end
     private_class_method :allowed_struct_class?
@@ -194,19 +260,21 @@ module Temporal
     private_class_method :anonymous_struct_directive?
 
     def self.allowed_class_reference?(name)
+      return false unless valid_constant_name?(name)
       return true if registered_class?(name)
 
       resolve_constant(name).is_a?(Module)
     end
     private_class_method :allowed_class_reference?
 
+    # Only resolve constants that are already loaded. const_get would trigger autoload.
     def self.resolve_constant(name)
-      parts = name.split('::')
-      parts.shift if parts.first.empty?
-      return nil if parts.empty?
+      return nil unless valid_constant_name?(name)
 
-      parts.reduce(Object) do |mod, part|
-        return nil unless mod.is_a?(Module) && mod.const_defined?(part, false)
+      name.split('::').reduce(Object) do |mod, part|
+        return nil unless mod.is_a?(Module)
+        return nil if mod.autoload?(part)
+        return nil unless mod.const_defined?(part, false)
 
         mod.const_get(part, false)
       end

@@ -153,7 +153,66 @@ describe Temporal::JSON do
         described_class.deserialize(
           '{"^o":"Gem::Requirement","^o":"TemporalJSONSpecFixtures::DummyActivity::Request"}'
         )
-      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate key/)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
+    end
+
+    it 'rejects duplicate ^u keys before Oj.load' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize('{"^u":["Gem::Requirement",1],"^u":[["a"],1]}')
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
+    end
+
+    it 'rejects duplicate scope when the first value is an object' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(
+          '{"^o":"TemporalJSONSpecFixtures::DummyActivity::Request","scope":{"^o":"Gem::Requirement"},"scope":"safe"}'
+        )
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
+    end
+
+    it 'rejects duplicate scope when the first value is an array' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize('{"scope":[1,2],"scope":"safe"}')
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
+    end
+
+    it 'rejects excessive nesting before Oj.load' do
+      depth = Temporal::JSON::MAX_NESTING + 2
+      raw = '[' * depth + '1' + ']' * depth
+
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(raw)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /maximum nesting depth/)
+    end
+
+    it 'rejects very deep arrays without exhausting the Ruby stack' do
+      depth = 5_000
+      raw = '[' * depth + '1' + ']' * depth
+
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(raw)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /maximum nesting depth/)
+    end
+
+    it 'does not autoload constants while validating directives' do
+      path = File.join(Dir.tmpdir, "temporal_json_autoload_#{Process.pid}.rb")
+      File.write(path, "$TEMPORAL_JSON_AUTOLOADED = true\nmodule TemporalJSONAutoloadProbe; class Widget; end; end\n")
+      $LOAD_PATH.unshift(File.dirname(path))
+      Object.autoload(:TemporalJSONAutoloadProbe, path.sub(/\.rb$/, ''))
+
+      expect do
+        described_class.deserialize('{"^o":"TemporalJSONAutoloadProbe::Widget"}')
+      end.to raise_error(Temporal::JSONDisallowedClassError, /Widget/)
+
+      expect(defined?($TEMPORAL_JSON_AUTOLOADED)).to be_nil
+    ensure
+      $LOAD_PATH.delete(File.dirname(path))
+      File.delete(path) if File.exist?(path)
     end
 
     it 'rejects nested duplicate ^o keys before Oj.load' do
@@ -162,7 +221,7 @@ describe Temporal::JSON do
         described_class.deserialize(
           '{"^o":"TemporalJSONSpecFixtures::DummyActivity::Request","scope":{"^o":"Gem::Requirement","^o":"TemporalJSONSpecFixtures::DummyActivity::Request","requirements":[[">=","0"]]}}'
         )
-      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate key/)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
     end
 
     it 'rejects Kernel gadget payloads before Oj.load' do
