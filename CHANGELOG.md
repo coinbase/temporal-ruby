@@ -3,7 +3,7 @@
 ## 0.0.7
 
 - `json/plain` no longer builds arbitrary Ruby classes from encoded payloads. That was possible because Oj object mode can allocate any constant named in the payload.
-- Still round-trips first-party shapes: activity `Request` / `Response`, `Temporal::` types, Exception subclasses (including backtraces), `Date` / `DateTime` / `Rational`, anonymous Structs, and classes registered with `Temporal::JSON.allow_class`.
+- Still round-trips first-party shapes: activity `Request` / `Response`, `Temporal::` types, Exception subclasses (including backtraces), `Date` / `DateTime` / `Rational`, anonymous Structs, and classes registered with `Temporal::JSON.allow_class` (including Oj `^O` dumps).
 - Rejects duplicate JSON object keys. Oj and `JSON.parse` disagree on duplicates, so a discarded value could still allocate a class.
 - Rejects constants that are only pending `autoload` until they are actually loaded.
 - Rejects JSON nested deeper than 512 levels.

@@ -20,7 +20,7 @@ module Temporal
     MAX_NESTING = 512
     MAX_CLASS_NAME_LENGTH = 256
 
-    # ^o allocates instances. ^O encodes Date, DateTime, and Rational.
+    # ^o allocates instances. ^O encodes Date, DateTime, Rational, and allow_class names.
     # ^c / ^C look up Class objects. Oj emits ^c when an Exception ivar holds a Class
     # (see spec/unit/lib/temporal/connection/serializer/failure_spec.rb).
     INSTANCE_DIRECTIVE_KEYS = %w[^o].freeze
@@ -241,7 +241,9 @@ module Temporal
     private_class_method :allowed_instance_class?
 
     def self.allowed_odd_class?(name)
-      ALLOWED_ODD_CLASSES.include?(name) && resolve_constant(name)
+      return false unless valid_constant_name?(name)
+
+      (registered_class?(name) || ALLOWED_ODD_CLASSES.include?(name)) && resolve_constant(name)
     end
     private_class_method :allowed_odd_class?
 

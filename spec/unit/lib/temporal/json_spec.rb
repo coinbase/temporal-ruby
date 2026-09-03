@@ -28,6 +28,15 @@ module TemporalJSONSpecFixtures
     end
   end
 
+  # Oj dumps this as ^O after Oj.register_odd.
+  class DummyOdd
+    attr_accessor :name
+
+    def self.create(name)
+      new.tap { |obj| obj.name = name }
+    end
+  end
+
   class DummyError < StandardError
     attr_reader :code
 
@@ -286,6 +295,39 @@ describe Temporal::JSON do
       loaded = described_class.deserialize(described_class.serialize(widget))
 
       expect(loaded).to be_a(TemporalJSONSpecFixtures::DummyWidget)
+      expect(loaded.name).to eq('ok')
+    end
+
+    it 'rejects an unregistered ^O class' do
+      Oj.register_odd(
+        TemporalJSONSpecFixtures::DummyOdd,
+        TemporalJSONSpecFixtures::DummyOdd,
+        :create,
+        :name
+      )
+      dumped = described_class.serialize(
+        TemporalJSONSpecFixtures::DummyOdd.create('x')
+      )
+
+      expect(dumped).to include('"^O"')
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(dumped)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /DummyOdd/)
+    end
+
+    it 'reconstitutes a ^O class registered with allow_class' do
+      Oj.register_odd(
+        TemporalJSONSpecFixtures::DummyOdd,
+        TemporalJSONSpecFixtures::DummyOdd,
+        :create,
+        :name
+      )
+      described_class.allow_class('TemporalJSONSpecFixtures::DummyOdd')
+      odd = TemporalJSONSpecFixtures::DummyOdd.create('ok')
+      loaded = described_class.deserialize(described_class.serialize(odd))
+
+      expect(loaded).to be_a(TemporalJSONSpecFixtures::DummyOdd)
       expect(loaded.name).to eq('ok')
     end
 
