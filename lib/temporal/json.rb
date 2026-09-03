@@ -13,11 +13,11 @@ module Temporal
     }.freeze
 
     MAX_NESTING = 512
-    MAX_KEY_LENGTH = 256
     MAX_CLASS_NAME_LENGTH = 256
 
     # ^o allocates instances. ^O is Oj's odd marshaller (Date, DateTime, Rational).
-    # ^c / ^C look up Class objects (error serialization v2).
+    # ^c / ^C look up Class objects. Oj emits ^c when an Exception ivar holds a Class
+    # (see spec/unit/lib/temporal/connection/serializer/failure_spec.rb).
     INSTANCE_DIRECTIVE_KEYS = %w[^o].freeze
     ODD_MARSHALLER_KEYS = %w[^O].freeze
     CLASS_REFERENCE_DIRECTIVE_KEYS = %w[^c ^C].freeze
@@ -34,9 +34,8 @@ module Temporal
     ALLOWED_CLASSES_MUTEX = Mutex.new
     private_constant :ALLOWED_CLASSES, :ALLOWED_CLASSES_MUTEX
 
-    DUPLICATE_KEY_ERROR = 'json/plain payload contains duplicate hash key'
-    NESTING_DEPTH_ERROR = 'json/plain payload exceeds maximum nesting depth'
-    OVERSIZED_KEY_ERROR = 'json/plain payload contains oversized hash key'
+    DUPLICATE_KEY_ERROR = 'json/plain payload contains duplicate hash key'.freeze
+    NESTING_DEPTH_ERROR = 'json/plain payload exceeds maximum nesting depth'.freeze
 
     # Oj::Saj walks the raw bytes. JSON.parse collapses duplicate keys; Oj.load may
     # instantiate discarded values. Reject duplicate keys and excessive nesting here.
@@ -81,10 +80,6 @@ module Temporal
 
       def note(key)
         return if key.nil?
-
-        if key.is_a?(String) && key.length > Temporal::JSON::MAX_KEY_LENGTH
-          raise Temporal::JSONDisallowedClassError, Temporal::JSON::OVERSIZED_KEY_ERROR
-        end
 
         keys = @hash_key_sets.last
         return if keys.nil?

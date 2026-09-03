@@ -172,6 +172,38 @@ describe Temporal::JSON do
       end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
     end
 
+    it 'rejects duplicate scope when the first value is a scalar' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize('{"scope":"safe","scope":{"^o":"Gem::Requirement"}}')
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate hash key/)
+    end
+
+    it 'allows the same key in separate objects' do
+      loaded = described_class.deserialize('[{"scope":"a"},{"scope":"b"}]')
+
+      expect(loaded).to eq([{ 'scope' => 'a' }, { 'scope' => 'b' }])
+    end
+
+    it 'accepts nesting at MAX_NESTING' do
+      depth = Temporal::JSON::MAX_NESTING
+      raw = '[' * depth + '1' + ']' * depth
+
+      node = described_class.deserialize(raw)
+      depth.times { node = node.first }
+      expect(node).to eq(1)
+    end
+
+    it 'rejects nesting one level above MAX_NESTING' do
+      depth = Temporal::JSON::MAX_NESTING + 1
+      raw = '[' * depth + '1' + ']' * depth
+
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(raw)
+      end.to raise_error(Temporal::JSONDisallowedClassError, /maximum nesting depth/)
+    end
+
     it 'rejects duplicate scope when the first value is an array' do
       expect(Oj).not_to receive(:load)
       expect do
