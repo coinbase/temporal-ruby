@@ -2,6 +2,7 @@ module Temporal
   # Superclass for all Temporal errors
   class Error < StandardError; end
 
+  # Raised when json/plain asks Oj to allocate a class that is not allowlisted.
   class JSONDisallowedClassError < Error; end
 
   # Superclass for errors specific to Temporal worker itself

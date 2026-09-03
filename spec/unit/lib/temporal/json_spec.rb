@@ -68,6 +68,7 @@ describe Temporal::JSON do
       expect(described_class.deserialize(nil)).to eq(nil)
     end
 
+    # First-party shapes that broke when deserialize became fail-closed.
     it 'round-trips Time via ^t' do
       time = Time.at(1_700_000_000)
       loaded = described_class.deserialize(described_class.serialize(time))
@@ -133,6 +134,7 @@ describe Temporal::JSON do
       expect(described_class.deserialize('{"^c":"String"}')).to eq(String)
     end
 
+    # Attack and structure-guard regressions. Oj.load must not run.
     it 'rejects ^c for an unloaded constant before Oj.load' do
       expect(Oj).not_to receive(:load)
       expect do
@@ -337,6 +339,7 @@ describe Temporal::JSON do
 end
 
 describe Temporal::Concerns::InputDeserializer do
+  # JSON.parse now runs before Oj.load, so this path must rescue JSON::ParserError too.
   let(:deserializer) do
     Class.new do
       include Temporal::Concerns::InputDeserializer

@@ -2,6 +2,7 @@ name: Tests
 
 on:
   push:
+    # This fork ships from transfers-master. Without it, PRs to that branch had no CI.
     branches: [ "master", "transfers-master" ]
   pull_request:
     branches: [ "master", "transfers-master" ]
@@ -35,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # ubuntu-latest no longer ships the docker-compose v1 binary.
       - name: Start dependencies
         run: |
           docker compose \
@@ -50,6 +52,7 @@ jobs:
         run: |
           cd examples && bundle install --path vendor/bundle
 
+      # auto-setup is not ready after a fixed sleep; wait until gRPC accepts connections.
       - name: Wait for Temporal
         run: |
           if timeout 300 bash -c 'until echo >/dev/tcp/127.0.0.1/7233; do sleep 2; done'; then
@@ -60,6 +63,7 @@ jobs:
           docker compose -f examples/docker-compose.yml logs --no-color --tail 400
           exit 1
 
+      # register_namespace can still race the server after 7233 is open.
       - name: Register namespace
         run: |
           cd examples
@@ -94,6 +98,7 @@ jobs:
         run: |
           cd examples && bin/worker &
 
+      # Workers are started in the background; they are not ready at process spawn.
       - name: Wait for workers
         run: |
           sleep 10

@@ -1,5 +1,6 @@
 version: '3.5'
 
+# Pin images. auto-setup:latest never bound gRPC :7233 with Cassandra 3.11 on GitHub runners.
 services:
   temporal:
     image: temporalio/auto-setup:1.22.4

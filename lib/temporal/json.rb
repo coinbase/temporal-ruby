@@ -1,4 +1,9 @@
-# Helper class for serializing/deserializing JSON
+# json/plain codec for Temporal payloads.
+#
+# deserialize:
+#   1. PayloadStructureValidator (Oj::Saj): reject duplicate keys and nesting > 512
+#   2. assert_safe! on JSON.parse: allowlist ^o / ^O / ^c / ^u class directives
+#   3. Oj.load original bytes: keep Time (^t) and symbol keys
 require 'json'
 require 'oj'
 require 'set'
