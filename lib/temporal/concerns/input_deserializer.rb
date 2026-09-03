@@ -3,7 +3,7 @@ module Temporal
     module InputDeserializer
       def deserialize(input)
         JSON.deserialize(input)
-      rescue Oj::ParseError
+      rescue Oj::ParseError, ::JSON::ParserError
         # Copied over from the Cadence side, similar situation happening with Temporal
         #
         # cadence official go-client serializes / deserializes input in a different format than this ruby client

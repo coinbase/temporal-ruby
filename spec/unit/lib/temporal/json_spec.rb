@@ -1,4 +1,5 @@
 require 'temporal/json'
+require 'temporal/concerns/input_deserializer'
 
 module TemporalJSONSpecFixtures
   module DummyActivity
@@ -146,6 +147,24 @@ describe Temporal::JSON do
       end.to raise_error(Temporal::JSONDisallowedClassError, /Gem::Requirement/)
     end
 
+    it 'rejects duplicate ^o keys before Oj.load' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(
+          '{"^o":"Gem::Requirement","^o":"TemporalJSONSpecFixtures::DummyActivity::Request"}'
+        )
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate key/)
+    end
+
+    it 'rejects nested duplicate ^o keys before Oj.load' do
+      expect(Oj).not_to receive(:load)
+      expect do
+        described_class.deserialize(
+          '{"^o":"TemporalJSONSpecFixtures::DummyActivity::Request","scope":{"^o":"Gem::Requirement","^o":"TemporalJSONSpecFixtures::DummyActivity::Request","requirements":[[">=","0"]]}}'
+        )
+      end.to raise_error(Temporal::JSONDisallowedClassError, /duplicate key/)
+    end
+
     it 'rejects Kernel gadget payloads before Oj.load' do
       expect(Oj).not_to receive(:load)
       expect do
@@ -224,5 +243,33 @@ describe Temporal::JSON do
         described_class.deserialize('{"^u":["Range",1,7,false]}')
       end.to raise_error(Temporal::JSONDisallowedClassError, /Range/)
     end
+
+    it 'round-trips Date via ^O odd marshaller' do
+      require 'date'
+
+      date = Date.new(2026, 9, 2)
+      loaded = described_class.deserialize(described_class.serialize(date))
+
+      expect(loaded).to eq(date)
+    end
+  end
+end
+
+describe Temporal::Concerns::InputDeserializer do
+  let(:deserializer) do
+    Class.new do
+      include Temporal::Concerns::InputDeserializer
+    end.new
+  end
+
+  it 'preserves newline-split go-client input' do
+    input = "1012474654\n\"second input\""
+    expect(deserializer.deserialize(input)).to eq([1_012_474_654, 'second input'])
+  end
+
+  it 'does not route JSONDisallowedClassError through the newline fallback' do
+    expect do
+      deserializer.deserialize('{"^o":"Gem::Requirement"}')
+    end.to raise_error(Temporal::JSONDisallowedClassError, /Gem::Requirement/)
   end
 end

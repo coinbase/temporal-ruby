@@ -12,11 +12,14 @@ module Temporal
       float_precision: 0
     }.freeze
 
-    # ^o / ^O allocate instances. ^c / ^C look up Class objects (error serialization v2).
-    INSTANCE_DIRECTIVE_KEYS = %w[^o ^O].freeze
+    # ^o allocates instances. ^O is Oj's odd marshaller (Date, DateTime, Rational).
+    # ^c / ^C look up Class objects (error serialization v2).
+    INSTANCE_DIRECTIVE_KEYS = %w[^o].freeze
+    ODD_MARSHALLER_KEYS = %w[^O].freeze
     CLASS_REFERENCE_DIRECTIVE_KEYS = %w[^c ^C].freeze
     STRUCT_DIRECTIVE_KEYS = %w[^u].freeze
     ALLOWED_CLASS_SUFFIXES = %w[::Request ::Response].freeze
+    ALLOWED_ODD_CLASSES = %w[Date DateTime Rational].freeze
     # Oj dumps these on a raised Exception (~bt_locations). They are not gadget classes.
     ALLOWED_STDLIB_CLASSES = %w[
       Thread::Backtrace
@@ -27,20 +30,49 @@ module Temporal
     ALLOWED_CLASSES_MUTEX = Mutex.new
     private_constant :ALLOWED_CLASSES, :ALLOWED_CLASSES_MUTEX
 
+    # Oj::Saj sees every hash key assignment. JSON.parse collapses duplicate keys.
+    class DuplicateKeyValidator < Oj::Saj
+      def initialize
+        @hash_key_sets = []
+      end
+
+      def hash_start(_key)
+        @hash_key_sets << Set.new
+      end
+
+      def hash_end(_key)
+        @hash_key_sets.pop
+      end
+
+      def add_value(_value, key)
+        return if key.nil?
+
+        keys = @hash_key_sets.last
+        if keys.include?(key)
+          raise Temporal::JSONDisallowedClassError,
+                "json/plain payload contains duplicate key #{key.inspect}"
+        end
+
+        keys << key
+      end
+    end
+    private_constant :DuplicateKeyValidator
+
     def self.serialize(value)
       Oj.dump(value, OJ_OPTIONS)
     end
 
-    # SECBUGS-174: Oj mode: :object instantiates any constant named in ^o.
-    # Walk a JSON.parse tree first and only then Oj.load the original bytes so
-    # symbol keys and ^t stay compatible with encode.
+    # Fail-closed json/plain: Oj mode :object instantiates any constant named in ^o.
+    # Reject duplicate hash keys with Oj::Saj, validate directives on a JSON tree, then
+    # Oj.load the original bytes so symbol keys and ^t stay compatible with encode.
     def self.deserialize(value)
       return nil if value.nil?
 
       raw = value.to_s
       return nil if raw.empty?
 
-      assert_safe!(::JSON.parse(raw))
+      assert_no_duplicate_hash_keys!(raw)
+      assert_safe!(::JSON.parse(raw, max_nesting: false))
       Oj.load(raw, OJ_OPTIONS)
     end
 
@@ -58,6 +90,11 @@ module Temporal
     end
     private_class_method :with_allowed_classes
 
+    def self.assert_no_duplicate_hash_keys!(raw)
+      Oj.saj_parse(DuplicateKeyValidator.new, raw)
+    end
+    private_class_method :assert_no_duplicate_hash_keys!
+
     def self.assert_safe!(obj)
       case obj
       when Hash
@@ -68,7 +105,7 @@ module Temporal
           name = class_name_from_directive(obj[key])
           unless name && allowed_struct_class?(name)
             raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{obj[key].inspect}"
+                  "json/plain payload requested disallowed class #{name.inspect}"
           end
         end
 
@@ -78,7 +115,17 @@ module Temporal
           name = class_name_from_directive(obj[key])
           unless name && allowed_instance_class?(name)
             raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{obj[key].inspect}"
+                  "json/plain payload requested disallowed class #{name.inspect}"
+          end
+        end
+
+        ODD_MARSHALLER_KEYS.each do |key|
+          next unless obj.key?(key)
+
+          name = class_name_from_directive(obj[key])
+          unless name && allowed_odd_class?(name)
+            raise Temporal::JSONDisallowedClassError,
+                  "json/plain payload requested disallowed class #{name.inspect}"
           end
         end
 
@@ -88,7 +135,7 @@ module Temporal
           name = class_name_from_directive(obj[key])
           unless name && allowed_class_reference?(name)
             raise Temporal::JSONDisallowedClassError,
-                  "json/plain payload requested disallowed class #{obj[key].inspect}"
+                  "json/plain payload requested disallowed class #{name.inspect}"
           end
         end
 
@@ -124,6 +171,11 @@ module Temporal
       klass.is_a?(Class) && klass <= Exception
     end
     private_class_method :allowed_instance_class?
+
+    def self.allowed_odd_class?(name)
+      ALLOWED_ODD_CLASSES.include?(name) && resolve_constant(name)
+    end
+    private_class_method :allowed_odd_class?
 
     def self.allowed_struct_class?(name)
       registered_class?(name) || library_class?(name)
