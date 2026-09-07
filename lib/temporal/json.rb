@@ -35,8 +35,8 @@ module Temporal
       Thread::Backtrace::Location
     ].freeze
 
-    ALLOWED_CLASSES = Set.new
-    ALLOWED_CLASSES_MUTEX = Mutex.new
+    ALLOWED_CLASSES = Set.new unless const_defined?(:ALLOWED_CLASSES, false)
+    ALLOWED_CLASSES_MUTEX = Mutex.new unless const_defined?(:ALLOWED_CLASSES_MUTEX, false)
     private_constant :ALLOWED_CLASSES, :ALLOWED_CLASSES_MUTEX
 
     DUPLICATE_KEY_ERROR = 'json/plain payload contains duplicate hash key'.freeze
@@ -121,8 +121,9 @@ module Temporal
     # Register an extra class name for json/plain object reconstitution. Use this for
     # application types that are not ::Request / ::Response, Temporal::, or Exception.
     def self.allow_class(name)
-      with_allowed_classes { |set| set.add(name.to_s) }
-      name.to_s
+      normalized = comparable_class_name(name)
+      with_allowed_classes { |set| set.add(normalized) } if normalized
+      normalized || name.to_s
     end
 
     def self.allowed_class_names
@@ -223,10 +224,28 @@ module Temporal
     end
     private_class_method :valid_constant_name?
 
+    # Set#include? uses eql?/hash. Also compare with == so an allowlisted
+    # payload name is not rejected when those disagree.
     def self.registered_class?(name)
-      with_allowed_classes { |set| set.include?(name) }
+      needle = comparable_class_name(name)
+      return false if needle.nil?
+
+      with_allowed_classes do |set|
+        next true if set.include?(needle)
+
+        set.any? { |allowed| allowed.to_s == needle }
+      end
     end
     private_class_method :registered_class?
+
+    def self.comparable_class_name(name)
+      s = name.is_a?(Module) ? name.name.to_s : name.to_s
+      return nil if s.empty?
+
+      utf = s.dup.force_encoding(Encoding::UTF_8)
+      utf.valid_encoding? ? utf : nil
+    end
+    private_class_method :comparable_class_name
 
     def self.allowed_instance_class?(name)
       return false unless valid_constant_name?(name)
@@ -249,8 +268,11 @@ module Temporal
 
     def self.allowed_struct_class?(name)
       return false unless valid_constant_name?(name)
+      return true if registered_class?(name)
+      return true if library_class?(name)
 
-      registered_class?(name) || library_class?(name)
+      klass = resolve_constant(name)
+      klass.is_a?(Class) && registered_class?(klass.name)
     end
     private_class_method :allowed_struct_class?
 

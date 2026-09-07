@@ -45,6 +45,8 @@ module TemporalJSONSpecFixtures
       @code = code
     end
   end
+
+  NamedMetadata = Struct.new(:tx_hash, :status, keyword_init: true)
 end
 
 describe Temporal::JSON do
@@ -298,6 +300,20 @@ describe Temporal::JSON do
       expect(loaded.name).to eq('ok')
     end
 
+    it 'keeps allow_class registrations when json.rb is loaded again' do
+      described_class.allow_class('TemporalJSONSpecFixtures::DummyWidget')
+      json_rb = $LOADED_FEATURES.find { |path| path.end_with?('/lib/temporal/json.rb') }
+      expect(json_rb).to include('temporal')
+
+      load json_rb
+
+      widget = TemporalJSONSpecFixtures::DummyWidget.new(name: 'ok')
+      loaded = described_class.deserialize(described_class.serialize(widget))
+
+      expect(loaded).to be_a(TemporalJSONSpecFixtures::DummyWidget)
+      expect(loaded.name).to eq('ok')
+    end
+
     it 'rejects an unregistered ^O class' do
       Oj.register_odd(
         TemporalJSONSpecFixtures::DummyOdd,
@@ -367,6 +383,23 @@ describe Temporal::JSON do
       expect do
         described_class.deserialize('{"^u":["Range",1,7,false]}')
       end.to raise_error(Temporal::JSONDisallowedClassError, /Range/)
+    end
+
+    it 'reconstitutes a named Struct registered with allow_class' do
+      described_class.allow_class('Range')
+      loaded = described_class.deserialize('{"^u":["Range",1,7,false]}')
+
+      expect(loaded).to eq(1..7)
+    end
+
+    it 'round-trips a keyword_init nested Struct registered with allow_class' do
+      described_class.allow_class('TemporalJSONSpecFixtures::NamedMetadata')
+      meta = TemporalJSONSpecFixtures::NamedMetadata.new(tx_hash: 'abc', status: 'ok')
+      loaded = described_class.deserialize(described_class.serialize(meta).b)
+
+      expect(loaded).to be_a(TemporalJSONSpecFixtures::NamedMetadata)
+      expect(loaded.tx_hash).to eq('abc')
+      expect(loaded.status).to eq('ok')
     end
 
     it 'round-trips Date via ^O odd marshaller' do
