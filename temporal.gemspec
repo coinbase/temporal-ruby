@@ -15,6 +15,8 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["{lib,rbi}/**/*.*"] + %w(temporal.gemspec Gemfile LICENSE README.md)
 
   spec.add_dependency 'grpc'
+  # lib/gen stubs use protobuf 3 DescriptorPool#build, which protobuf 4 removed.
+  spec.add_dependency 'google-protobuf', '~> 3.25'
   spec.add_dependency 'oj'
 
   spec.add_development_dependency 'pry'

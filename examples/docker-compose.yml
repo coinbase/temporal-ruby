@@ -1,8 +1,9 @@
 version: '3.5'
 
+# Pin images. auto-setup:latest never bound gRPC :7233 with Cassandra 3.11 on GitHub runners.
 services:
   temporal:
-    image: temporalio/auto-setup:latest
+    image: temporalio/auto-setup:1.22.4
     ports:
      - "7233:7233"
     environment:
@@ -14,7 +15,7 @@ services:
       - cassandra
 
   temporal-web:
-    image: temporalio/web:latest
+    image: temporalio/web:1.15.0
     environment:
       - "TEMPORAL_GRPC_ENDPOINT=temporal:7233"
     ports:
@@ -23,6 +24,6 @@ services:
       - temporal
 
   cassandra:
-    image: cassandra:3.11
+    image: cassandra:3.11.16
     ports:
       - "9042:9042"

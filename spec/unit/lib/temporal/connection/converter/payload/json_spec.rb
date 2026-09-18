@@ -3,6 +3,11 @@ require 'temporal/connection/converter/payload/json'
 describe Temporal::Connection::Converter::Payload::JSON do
   subject { described_class.new }
 
+  it 'keeps the json/plain encoding name' do
+    # Temporal stores this string on historical payloads. Renaming it would skip decode.
+    expect(subject.encoding).to eq('json/plain')
+  end
+
   describe 'round trip' do
     it 'safely handles non-ASCII encodable UTF characters' do
       input = { 'one' => 'one', two: :two, ':three' => '☻' }

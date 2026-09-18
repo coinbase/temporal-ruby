@@ -2,9 +2,10 @@ name: Tests
 
 on:
   push:
-    branches: [ "master" ]
+    # This fork ships from transfers-master. Without it, PRs to that branch had no CI.
+    branches: [ "master", "transfers-master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "transfers-master" ]
 
 jobs:
   test_gem:
@@ -35,9 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # ubuntu-latest no longer ships the docker-compose v1 binary.
       - name: Start dependencies
         run: |
-          docker-compose \
+          docker compose \
             -f examples/docker-compose.yml \
             up -d
 
@@ -50,13 +52,31 @@ jobs:
         run: |
           cd examples && bundle install --path vendor/bundle
 
-      - name: Wait for dependencies to settle
+      # auto-setup is not ready after a fixed sleep; wait until gRPC accepts connections.
+      - name: Wait for Temporal
         run: |
-          sleep 10
+          if timeout 300 bash -c 'until echo >/dev/tcp/127.0.0.1/7233; do sleep 2; done'; then
+            exit 0
+          fi
+          echo "Temporal did not listen on 7233"
+          docker compose -f examples/docker-compose.yml ps -a
+          docker compose -f examples/docker-compose.yml logs --no-color --tail 400
+          exit 1
 
+      # register_namespace can still race the server after 7233 is open.
       - name: Register namespace
         run: |
-          cd examples && bin/register_namespace ruby-samples
+          cd examples
+          for i in $(seq 1 30); do
+            if bin/register_namespace ruby-samples; then
+              exit 0
+            fi
+            echo "register_namespace failed, retry ${i}"
+            sleep 5
+          done
+          docker compose -f docker-compose.yml ps
+          docker compose -f docker-compose.yml logs --tail 200
+          exit 1
 
       - name: Wait for namespace to settle
         run: |
@@ -77,6 +97,11 @@ jobs:
           USE_ERROR_SERIALIZATION_V2: 1
         run: |
           cd examples && bin/worker &
+
+      # Workers are started in the background; they are not ready at process spawn.
+      - name: Wait for workers
+        run: |
+          sleep 10
 
       - name: Run RSpec
         env:

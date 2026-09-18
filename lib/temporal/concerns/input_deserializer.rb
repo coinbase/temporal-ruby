@@ -3,7 +3,9 @@ module Temporal
     module InputDeserializer
       def deserialize(input)
         JSON.deserialize(input)
-      rescue Oj::ParseError
+      rescue Oj::ParseError, ::JSON::ParserError
+        # JSON.parse now runs before Oj.load, so newline-split Go-client input raises
+        # JSON::ParserError instead of Oj::ParseError. Do not rescue JSONDisallowedClassError.
         # Copied over from the Cadence side, similar situation happening with Temporal
         #
         # cadence official go-client serializes / deserializes input in a different format than this ruby client
